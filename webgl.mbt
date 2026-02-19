@@ -8,180 +8,296 @@
 /// All blocks are split with `///|` per MoonBit conventions.
 
 ///|
-type Js = @js.Value
+#external
+type Canvas
 
 ///|
-/// JS-backed WebGL object aliases.
-type Canvas = Js
-type WebGL = Js
-type WebGLProgram = Js
-type WebGLShader = Js
-type WebGLBuffer = Js
-type WebGLTexture = Js
-type WebGLUniformLocation = Js
+#external
+type WebGL
 
 ///|
-fn global_get(name : String) -> Js {
+#external
+type WebGLProgram
+
+///|
+#external
+type WebGLShader
+
+///|
+#external
+type WebGLBuffer
+
+///|
+#external
+type WebGLTexture
+
+///|
+#external
+type WebGLUniformLocation
+
+///|
+pub impl @js.Cast for Canvas with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for Canvas with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
+pub impl @js.Cast for WebGL with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for WebGL with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
+pub impl @js.Cast for WebGLProgram with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for WebGLProgram with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
+pub impl @js.Cast for WebGLShader with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for WebGLShader with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
+pub impl @js.Cast for WebGLBuffer with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for WebGLBuffer with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
+pub impl @js.Cast for WebGLTexture with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for WebGLTexture with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
+pub impl @js.Cast for WebGLUniformLocation with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for WebGLUniformLocation with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
+fn global_get(name : String) -> @js.Value {
   @js.globalThis.get_with_string(name)
 }
 
 ///|
-fn v[T : @js.Cast](x : T) -> Js {
+fn[T] v(x : T) -> @js.Value {
   @js.Value::cast_from(x)
 }
 
 ///|
-fn no_args() -> Array[Js] {
+fn no_args() -> Array[@js.Value] {
   []
 }
 
 ///|
 pub fn get_canvas_by_id(id : String) -> Canvas? {
   let doc = global_get("document")
-  let el : @js.Nullable[Canvas] =
-    doc.apply_with_string("getElementById", [v(id)])
+  let el : @js.Nullable[Canvas] = doc.apply_with_string("getElementById", [
+    v(id),
+  ])
   el.to_option()
 }
 
 ///|
-pub fn get_webgl_context(canvas : Canvas) -> WebGL? {
-  let ctx : @js.Nullable[WebGL] =
-    canvas.apply_with_string("getContext", [v("webgl")])
+pub fn Canvas::get_webgl_context(self : Canvas) -> WebGL? {
+  let ctx : @js.Nullable[WebGL] = v(self).apply_with_string("getContext", [
+    v("webgl"),
+  ])
   ctx.to_option()
 }
 
 ///|
-pub fn get_webgl2_context(canvas : Canvas) -> WebGL? {
-  let ctx : @js.Nullable[WebGL] =
-    canvas.apply_with_string("getContext", [v("webgl2")])
+pub fn Canvas::get_webgl2_context(self : Canvas) -> WebGL? {
+  let ctx : @js.Nullable[WebGL] = v(self).apply_with_string("getContext", [
+    v("webgl2"),
+  ])
   ctx.to_option()
 }
 
 ///|
 /// Common WebGL constants.
-pub fn gl_const(gl : WebGL, name : String) -> Int {
-  gl.get_with_string(name)
+pub fn WebGL::constant(self : WebGL, name : String) -> Int {
+  v(self).get_with_string(name)
 }
 
 ///|
 /// Shader/program creation.
-pub fn gl_create_shader(gl : WebGL, kind : Int) -> WebGLShader? {
-  let shader : @js.Nullable[WebGLShader] =
-    gl.apply_with_string("createShader", [v(kind)])
+pub fn WebGL::create_shader(self : WebGL, kind : Int) -> WebGLShader? {
+  let shader : @js.Nullable[WebGLShader] = v(self).apply_with_string(
+    "createShader",
+    [v(kind)],
+  )
   shader.to_option()
 }
 
 ///|
-pub fn gl_shader_source(gl : WebGL, shader : WebGLShader, src : String) -> Unit {
-  (gl.apply_with_string("shaderSource", [shader, v(src)]))
+pub fn WebGL::shader_source(
+  self : WebGL,
+  shader : WebGLShader,
+  src : String,
+) -> Unit {
+  v(self).apply_with_string("shaderSource", [v(shader), v(src)])
 }
 
 ///|
-pub fn gl_compile_shader(gl : WebGL, shader : WebGLShader) -> Unit {
-  (gl.apply_with_string("compileShader", [shader]))
+pub fn WebGL::compile_shader(self : WebGL, shader : WebGLShader) -> Unit {
+  v(self).apply_with_string("compileShader", [v(shader)])
 }
 
 ///|
-pub fn gl_get_shader_parameter(
-  gl : WebGL,
+pub fn WebGL::get_shader_parameter(
+  self : WebGL,
   shader : WebGLShader,
   pname : Int,
 ) -> Bool {
-  gl.apply_with_string("getShaderParameter", [shader, v(pname)])
+  v(self).apply_with_string("getShaderParameter", [v(shader), v(pname)])
 }
 
 ///|
-pub fn gl_get_shader_info_log(gl : WebGL, shader : WebGLShader) -> String {
-  gl.apply_with_string("getShaderInfoLog", [shader])
+pub fn WebGL::get_shader_info_log(self : WebGL, shader : WebGLShader) -> String {
+  v(self).apply_with_string("getShaderInfoLog", [v(shader)])
 }
 
 ///|
-pub fn gl_create_program(gl : WebGL) -> WebGLProgram? {
-  let program : @js.Nullable[WebGLProgram] =
-    gl.apply_with_string("createProgram", no_args())
+pub fn WebGL::create_program(self : WebGL) -> WebGLProgram? {
+  let program : @js.Nullable[WebGLProgram] = v(self).apply_with_string(
+    "createProgram",
+    no_args(),
+  )
   program.to_option()
 }
 
 ///|
-pub fn gl_attach_shader(
-  gl : WebGL,
+pub fn WebGL::attach_shader(
+  self : WebGL,
   program : WebGLProgram,
   shader : WebGLShader,
 ) -> Unit {
-  (gl.apply_with_string("attachShader", [program, shader]))
+  v(self).apply_with_string("attachShader", [v(program), v(shader)])
 }
 
 ///|
-pub fn gl_link_program(gl : WebGL, program : WebGLProgram) -> Unit {
-  (gl.apply_with_string("linkProgram", [program]))
+pub fn WebGL::link_program(self : WebGL, program : WebGLProgram) -> Unit {
+  v(self).apply_with_string("linkProgram", [v(program)])
 }
 
 ///|
-pub fn gl_get_program_parameter(
-  gl : WebGL,
+pub fn WebGL::get_program_parameter(
+  self : WebGL,
   program : WebGLProgram,
   pname : Int,
 ) -> Bool {
-  gl.apply_with_string("getProgramParameter", [program, v(pname)])
+  v(self).apply_with_string("getProgramParameter", [v(program), v(pname)])
 }
 
 ///|
-pub fn gl_get_program_info_log(gl : WebGL, program : WebGLProgram) -> String {
-  gl.apply_with_string("getProgramInfoLog", [program])
+pub fn WebGL::get_program_info_log(
+  self : WebGL,
+  program : WebGLProgram,
+) -> String {
+  v(self).apply_with_string("getProgramInfoLog", [v(program)])
 }
 
 ///|
-pub fn gl_use_program(gl : WebGL, program : WebGLProgram) -> Unit {
-  (gl.apply_with_string("useProgram", [program]))
+pub fn WebGL::use_program(self : WebGL, program : WebGLProgram) -> Unit {
+  v(self).apply_with_string("useProgram", [v(program)])
 }
 
 ///|
 /// Buffers and attributes.
-pub fn gl_create_buffer(gl : WebGL) -> WebGLBuffer? {
-  let buf : @js.Nullable[WebGLBuffer] =
-    gl.apply_with_string("createBuffer", no_args())
+pub fn WebGL::create_buffer(self : WebGL) -> WebGLBuffer? {
+  let buf : @js.Nullable[WebGLBuffer] = v(self).apply_with_string(
+    "createBuffer",
+    no_args(),
+  )
   buf.to_option()
 }
 
 ///|
-pub fn gl_bind_buffer(gl : WebGL, target : Int, buf : WebGLBuffer) -> Unit {
-  (gl.apply_with_string("bindBuffer", [v(target), buf]))
+pub fn WebGL::bind_buffer(
+  self : WebGL,
+  target : Int,
+  buf : WebGLBuffer,
+) -> Unit {
+  v(self).apply_with_string("bindBuffer", [v(target), v(buf)])
 }
 
 ///|
-pub fn js_float32_array(data : Array[Double]) -> Js {
+pub fn js_float32_array(data : Array[Double]) -> @js.Value {
   let ctor = global_get("Float32Array")
   ctor.new([data])
 }
 
 ///|
-pub fn js_uint16_array(data : Array[Int]) -> Js {
+pub fn js_uint16_array(data : Array[Int]) -> @js.Value {
   let ctor = global_get("Uint16Array")
   ctor.new([data])
 }
 
 ///|
-pub fn gl_buffer_data(gl : WebGL, target : Int, data : Js, usage : Int) -> Unit {
-  (gl.apply_with_string("bufferData", [v(target), data, v(usage)]))
+pub fn js_uint8_array(data : Array[Int]) -> @js.Value {
+  let ctor = global_get("Uint8Array")
+  ctor.new([data])
 }
 
 ///|
-pub fn gl_get_attrib_location(
-  gl : WebGL,
+pub fn WebGL::buffer_data(
+  self : WebGL,
+  target : Int,
+  data : @js.Value,
+  usage : Int,
+) -> Unit {
+  v(self).apply_with_string("bufferData", [v(target), data, v(usage)])
+}
+
+///|
+pub fn WebGL::get_attrib_location(
+  self : WebGL,
   program : WebGLProgram,
   name : String,
 ) -> Int {
-  gl.apply_with_string("getAttribLocation", [program, v(name)])
+  v(self).apply_with_string("getAttribLocation", [v(program), v(name)])
 }
 
 ///|
-pub fn gl_enable_vertex_attrib_array(gl : WebGL, loc : Int) -> Unit {
-  (gl.apply_with_string("enableVertexAttribArray", [v(loc)]))
+pub fn WebGL::enable_vertex_attrib_array(self : WebGL, loc : Int) -> Unit {
+  v(self).apply_with_string("enableVertexAttribArray", [v(loc)])
 }
 
 ///|
-pub fn gl_vertex_attrib_pointer(
-  gl : WebGL,
+pub fn WebGL::vertex_attrib_pointer(
+  self : WebGL,
   loc : Int,
   size : Int,
   kind : Int,
@@ -189,93 +305,117 @@ pub fn gl_vertex_attrib_pointer(
   stride : Int,
   offset : Int,
 ) -> Unit {
-  (
-    gl.apply_with_string(
-      "vertexAttribPointer",
-      [v(loc), v(size), v(kind), v(normalized), v(stride), v(offset)],
-    ),
-  )
+  v(self).apply_with_string("vertexAttribPointer", [
+    v(loc),
+    v(size),
+    v(kind),
+    v(normalized),
+    v(stride),
+    v(offset),
+  ])
 }
 
 ///|
 /// Uniforms.
-pub fn gl_get_uniform_location(
-  gl : WebGL,
+pub fn WebGL::get_uniform_location(
+  self : WebGL,
   program : WebGLProgram,
   name : String,
 ) -> WebGLUniformLocation? {
-  let loc : @js.Nullable[WebGLUniformLocation] =
-    gl.apply_with_string("getUniformLocation", [program, v(name)])
+  let loc : @js.Nullable[WebGLUniformLocation] = v(self).apply_with_string(
+    "getUniformLocation",
+    [v(program), v(name)],
+  )
   loc.to_option()
 }
 
 ///|
-pub fn gl_uniform1f(gl : WebGL, loc : WebGLUniformLocation, v0 : Double) -> Unit {
-  (gl.apply_with_string("uniform1f", [loc, v(v0)]))
+pub fn WebGL::uniform1f(
+  self : WebGL,
+  loc : WebGLUniformLocation,
+  v0 : Double,
+) -> Unit {
+  v(self).apply_with_string("uniform1f", [v(loc), v(v0)])
 }
 
 ///|
-pub fn gl_uniform2f(
-  gl : WebGL,
+pub fn WebGL::uniform1i(
+  self : WebGL,
+  loc : WebGLUniformLocation,
+  v0 : Int,
+) -> Unit {
+  v(self).apply_with_string("uniform1i", [v(loc), v(v0)])
+}
+
+///|
+pub fn WebGL::uniform2f(
+  self : WebGL,
   loc : WebGLUniformLocation,
   v0 : Double,
   v1 : Double,
 ) -> Unit {
-  (gl.apply_with_string("uniform2f", [loc, v(v0), v(v1)]))
+  v(self).apply_with_string("uniform2f", [v(loc), v(v0), v(v1)])
 }
 
 ///|
-pub fn gl_uniform4f(
-  gl : WebGL,
+pub fn WebGL::uniform4f(
+  self : WebGL,
   loc : WebGLUniformLocation,
   v0 : Double,
   v1 : Double,
   v2 : Double,
   v3 : Double,
 ) -> Unit {
-  (
-    gl.apply_with_string("uniform4f", [loc, v(v0), v(v1), v(v2), v(v3)]),
-  )
+  v(self).apply_with_string("uniform4f", [v(loc), v(v0), v(v1), v(v2), v(v3)])
 }
 
 ///|
-pub fn gl_uniform_matrix4(
-  gl : WebGL,
+pub fn WebGL::uniform_matrix4(
+  self : WebGL,
   loc : WebGLUniformLocation,
   transpose : Bool,
-  data : Js,
+  data : @js.Value,
 ) -> Unit {
-  (
-    gl.apply_with_string("uniformMatrix4fv", [loc, v(transpose), data]),
-  )
+  v(self).apply_with_string("uniformMatrix4fv", [v(loc), v(transpose), data])
 }
 
 ///|
 /// Textures.
-pub fn gl_create_texture(gl : WebGL) -> WebGLTexture? {
-  let tex : @js.Nullable[WebGLTexture] =
-    gl.apply_with_string("createTexture", no_args())
+pub fn WebGL::create_texture(self : WebGL) -> WebGLTexture? {
+  let tex : @js.Nullable[WebGLTexture] = v(self).apply_with_string(
+    "createTexture",
+    no_args(),
+  )
   tex.to_option()
 }
 
 ///|
-pub fn gl_active_texture(gl : WebGL, unit : Int) -> Unit {
-  (gl.apply_with_string("activeTexture", [v(unit)]))
+pub fn WebGL::active_texture(self : WebGL, unit : Int) -> Unit {
+  v(self).apply_with_string("activeTexture", [v(unit)])
 }
 
 ///|
-pub fn gl_bind_texture(gl : WebGL, target : Int, tex : WebGLTexture) -> Unit {
-  (gl.apply_with_string("bindTexture", [v(target), tex]))
+pub fn WebGL::bind_texture(
+  self : WebGL,
+  target : Int,
+  tex : WebGLTexture,
+) -> Unit {
+  v(self).apply_with_string("bindTexture", [v(target), v(tex)])
 }
 
 ///|
-pub fn gl_tex_param_i(gl : WebGL, target : Int, pname : Int, value : Int) -> Unit {
-  (gl.apply_with_string("texParameteri", [v(target), v(pname), v(value)]))
+pub fn WebGL::tex_param_i(
+  self : WebGL,
+  target : Int,
+  pname : Int,
+  value : Int,
+) -> Unit {
+  v(self).apply_with_string("texParameteri", [v(target), v(pname), v(value)])
 }
 
 ///|
-pub fn gl_tex_image_2d(
-  gl : WebGL,
+pub fn WebGL::tex_image_2d(
+  self : WebGL,
   target : Int,
   level : Int,
   internal_format : Int,
@@ -284,62 +424,76 @@ pub fn gl_tex_image_2d(
   border : Int,
   format : Int,
   kind : Int,
-  data : Js,
+  data : @js.Value,
 ) -> Unit {
-  (
-    gl.apply_with_string(
-      "texImage2D",
-      [
-        v(target),
-        v(level),
-        v(internal_format),
-        v(width),
-        v(height),
-        v(border),
-        v(format),
-        v(kind),
-        data,
-      ],
-    ),
-  )
+  v(self).apply_with_string("texImage2D", [
+    v(target),
+    v(level),
+    v(internal_format),
+    v(width),
+    v(height),
+    v(border),
+    v(format),
+    v(kind),
+    data,
+  ])
 }
 
 ///|
-pub fn gl_generate_mipmap(gl : WebGL, target : Int) -> Unit {
-  (gl.apply_with_string("generateMipmap", [v(target)]))
+pub fn WebGL::generate_mipmap(self : WebGL, target : Int) -> Unit {
+  v(self).apply_with_string("generateMipmap", [v(target)])
 }
 
 ///|
 /// Frame setup and drawing.
-pub fn gl_viewport(gl : WebGL, x : Int, y : Int, w : Int, h : Int) -> Unit {
-  (gl.apply_with_string("viewport", [v(x), v(y), v(w), v(h)]))
+pub fn WebGL::viewport(
+  self : WebGL,
+  x : Int,
+  y : Int,
+  w : Int,
+  h : Int,
+) -> Unit {
+  v(self).apply_with_string("viewport", [v(x), v(y), v(w), v(h)])
 }
 
 ///|
-pub fn gl_clear_color(gl : WebGL, r : Double, g : Double, b : Double, a : Double) ->
-  Unit {
-  (gl.apply_with_string("clearColor", [v(r), v(g), v(b), v(a)]))
+pub fn WebGL::clear_color(
+  self : WebGL,
+  r : Double,
+  g : Double,
+  b : Double,
+  a : Double,
+) -> Unit {
+  v(self).apply_with_string("clearColor", [v(r), v(g), v(b), v(a)])
 }
 
 ///|
-pub fn gl_clear(gl : WebGL, mask : Int) -> Unit {
-  (gl.apply_with_string("clear", [v(mask)]))
+pub fn WebGL::clear(self : WebGL, mask : Int) -> Unit {
+  v(self).apply_with_string("clear", [v(mask)])
 }
 
 ///|
-pub fn gl_draw_arrays(gl : WebGL, mode : Int, first : Int, count : Int) -> Unit {
-  (gl.apply_with_string("drawArrays", [v(mode), v(first), v(count)]))
+pub fn WebGL::draw_arrays(
+  self : WebGL,
+  mode : Int,
+  first : Int,
+  count : Int,
+) -> Unit {
+  v(self).apply_with_string("drawArrays", [v(mode), v(first), v(count)])
 }
 
 ///|
-pub fn gl_draw_elements(
-  gl : WebGL,
+pub fn WebGL::draw_elements(
+  self : WebGL,
   mode : Int,
   count : Int,
   kind : Int,
   offset : Int,
 ) -> Unit {
-  (
-    gl.apply_with_string("drawElements", [v(mode), v(count), v(kind), v(offset)]),
-  )
+  v(self).apply_with_string("drawElements", [
+    v(mode),
+    v(count),
+    v(kind),
+    v(offset),
+  ])
 }
