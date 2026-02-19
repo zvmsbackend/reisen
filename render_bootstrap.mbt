@@ -88,36 +88,37 @@ pub fn create_program(
   }
   match gl.get_uniform_location(program, "u_tex") {
     None => raise RenderError::MissingUniform(name="u_tex")
-    Some(u_tex) => {
-      { program, a_pos, a_uv, u_tex }
-    }
+    Some(u_tex) => { program, a_pos, a_uv, u_tex }
   }
 }
 
 ///|
 pub fn create_quad_mesh(gl : WebGL) -> QuadMesh raise RenderError {
   let vertices : Array[Double] = [
-    -1.0, -1.0, 0.0, 0.0,
-    1.0, -1.0, 1.0, 0.0,
-    1.0, 1.0, 1.0, 1.0,
-    -1.0, -1.0, 0.0, 0.0,
-    1.0, 1.0, 1.0, 1.0,
-    -1.0, 1.0, 0.0, 1.0,
+    -1.0, -1.0, 0.0, 0.0, 1.0, -1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 0.0,
+    0.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 0.0, 1.0,
   ]
   match gl.create_buffer() {
     None => raise RenderError::NullObject(op="createBuffer")
     Some(vbo) => {
       gl.bind_buffer(gl.constant("ARRAY_BUFFER"), vbo)
       let data = js_float32_array(vertices)
-      gl.buffer_data(gl.constant("ARRAY_BUFFER"), data, gl.constant("STATIC_DRAW"))
+      gl.buffer_data(
+        gl.constant("ARRAY_BUFFER"),
+        data,
+        gl.constant("STATIC_DRAW"),
+      )
       { vbo, vertex_count: 6 }
     }
   }
 }
 
 ///|
-pub fn bind_quad_attributes(gl : WebGL, program : ShaderProgram, mesh : QuadMesh) ->
-  Unit {
+pub fn bind_quad_attributes(
+  gl : WebGL,
+  program : ShaderProgram,
+  mesh : QuadMesh,
+) -> Unit {
   let stride = 4 * 4
   let offset_uv = 2 * 4
   gl.bind_buffer(gl.constant("ARRAY_BUFFER"), mesh.vbo)
@@ -153,10 +154,26 @@ pub fn create_texture_rgba(
     Some(tex) => {
       let target = gl.constant("TEXTURE_2D")
       gl.bind_texture(target, tex)
-      gl.tex_param_i(target, gl.constant("TEXTURE_MIN_FILTER"), gl.constant("LINEAR"))
-      gl.tex_param_i(target, gl.constant("TEXTURE_MAG_FILTER"), gl.constant("LINEAR"))
-      gl.tex_param_i(target, gl.constant("TEXTURE_WRAP_S"), gl.constant("CLAMP_TO_EDGE"))
-      gl.tex_param_i(target, gl.constant("TEXTURE_WRAP_T"), gl.constant("CLAMP_TO_EDGE"))
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_MIN_FILTER"),
+        gl.constant("LINEAR"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_MAG_FILTER"),
+        gl.constant("LINEAR"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_WRAP_S"),
+        gl.constant("CLAMP_TO_EDGE"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_WRAP_T"),
+        gl.constant("CLAMP_TO_EDGE"),
+      )
       let data = js_uint8_array(pixels)
       gl.tex_image_2d(
         target,
@@ -186,10 +203,26 @@ pub fn create_texture_from_image(
     Some(tex) => {
       let target = gl.constant("TEXTURE_2D")
       gl.bind_texture(target, tex)
-      gl.tex_param_i(target, gl.constant("TEXTURE_MIN_FILTER"), gl.constant("LINEAR"))
-      gl.tex_param_i(target, gl.constant("TEXTURE_MAG_FILTER"), gl.constant("LINEAR"))
-      gl.tex_param_i(target, gl.constant("TEXTURE_WRAP_S"), gl.constant("CLAMP_TO_EDGE"))
-      gl.tex_param_i(target, gl.constant("TEXTURE_WRAP_T"), gl.constant("CLAMP_TO_EDGE"))
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_MIN_FILTER"),
+        gl.constant("LINEAR"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_MAG_FILTER"),
+        gl.constant("LINEAR"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_WRAP_S"),
+        gl.constant("CLAMP_TO_EDGE"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_WRAP_T"),
+        gl.constant("CLAMP_TO_EDGE"),
+      )
       gl.tex_image_2d_source(
         target,
         0,
@@ -232,8 +265,11 @@ pub fn create_solid_texture(
 }
 
 ///|
-pub fn draw_textured_quad(gl : WebGL, program : ShaderProgram, mesh : QuadMesh) ->
-  Unit {
+pub fn draw_textured_quad(
+  gl : WebGL,
+  program : ShaderProgram,
+  mesh : QuadMesh,
+) -> Unit {
   gl.use_program(program.program)
   bind_quad_attributes(gl, program, mesh)
   gl.uniform1i(program.u_tex, 0)

@@ -83,15 +83,15 @@ pub struct AssetStore {
 
 ///|
 pub fn AssetStore::new() -> AssetStore {
-  {
-    images: Map::new(),
-    texts: Map::new(),
-    bytes: Map::new(),
-  }
+  { images: Map::new(), texts: Map::new(), bytes: Map::new() }
 }
 
 ///|
-pub fn AssetStore::put_image(self : AssetStore, id : String, img : Image) -> Unit {
+pub fn AssetStore::put_image(
+  self : AssetStore,
+  id : String,
+  img : Image,
+) -> Unit {
   self.images.set(id, img)
 }
 
@@ -101,7 +101,11 @@ pub fn AssetStore::get_image(self : AssetStore, id : String) -> Image? {
 }
 
 ///|
-pub fn AssetStore::put_text(self : AssetStore, id : String, text : String) -> Unit {
+pub fn AssetStore::put_text(
+  self : AssetStore,
+  id : String,
+  text : String,
+) -> Unit {
   self.texts.set(id, text)
 }
 
@@ -111,7 +115,11 @@ pub fn AssetStore::get_text(self : AssetStore, id : String) -> String? {
 }
 
 ///|
-pub fn AssetStore::put_bytes(self : AssetStore, id : String, data : Bytes) -> Unit {
+pub fn AssetStore::put_bytes(
+  self : AssetStore,
+  id : String,
+  data : Bytes,
+) -> Unit {
   self.bytes.set(id, data)
 }
 
