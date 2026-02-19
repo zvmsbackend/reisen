@@ -3,7 +3,7 @@
 /// This is intentionally small: shader compile/link, quad mesh, and texture upload.
 
 ///|
-pub(all) suberror RenderError {
+priv suberror RenderError {
   NullObject(op~ : String)
   ShaderCompile(log~ : String)
   ProgramLink(log~ : String)
@@ -13,7 +13,7 @@ pub(all) suberror RenderError {
 }
 
 ///|
-pub struct ShaderProgram {
+priv struct ShaderProgram {
   program : WebGLProgram
   a_pos : Int
   a_uv : Int
@@ -21,13 +21,13 @@ pub struct ShaderProgram {
 }
 
 ///|
-pub struct QuadMesh {
+priv struct QuadMesh {
   vbo : WebGLBuffer
   vertex_count : Int
 }
 
 ///|
-pub fn compile_shader(
+fn compile_shader(
   gl : WebGL,
   kind : Int,
   source : String,
@@ -48,7 +48,7 @@ pub fn compile_shader(
 }
 
 ///|
-pub fn link_program(
+fn link_program(
   gl : WebGL,
   vert : WebGLShader,
   frag : WebGLShader,
@@ -70,7 +70,7 @@ pub fn link_program(
 }
 
 ///|
-pub fn create_program(
+fn create_program(
   gl : WebGL,
   vert_src : String,
   frag_src : String,
@@ -93,7 +93,7 @@ pub fn create_program(
 }
 
 ///|
-pub fn create_quad_mesh(gl : WebGL) -> QuadMesh raise RenderError {
+fn create_quad_mesh(gl : WebGL) -> QuadMesh raise RenderError {
   let vertices : Array[Double] = [
     -1.0, -1.0, 0.0, 0.0, 1.0, -1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 0.0,
     0.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 0.0, 1.0,
@@ -114,7 +114,7 @@ pub fn create_quad_mesh(gl : WebGL) -> QuadMesh raise RenderError {
 }
 
 ///|
-pub fn bind_quad_attributes(
+fn bind_quad_attributes(
   gl : WebGL,
   program : ShaderProgram,
   mesh : QuadMesh,
@@ -143,7 +143,7 @@ pub fn bind_quad_attributes(
 }
 
 ///|
-pub fn create_texture_rgba(
+fn create_texture_rgba(
   gl : WebGL,
   width : Int,
   height : Int,
@@ -193,7 +193,7 @@ pub fn create_texture_rgba(
 
 ///|
 /// Create a texture directly from a loaded browser image asset.
-pub fn create_texture_from_image(
+fn create_texture_from_image(
   gl : WebGL,
   image : Image,
   mipmap? : Bool = false,
@@ -241,7 +241,7 @@ pub fn create_texture_from_image(
 
 ///|
 /// Resolve an image from `AssetStore` and create a texture from it.
-pub fn create_texture_from_store(
+fn create_texture_from_store(
   gl : WebGL,
   store : AssetStore,
   image_id : String,
@@ -254,7 +254,7 @@ pub fn create_texture_from_store(
 }
 
 ///|
-pub fn create_solid_texture(
+fn create_solid_texture(
   gl : WebGL,
   r : Int,
   g : Int,
@@ -265,7 +265,7 @@ pub fn create_solid_texture(
 }
 
 ///|
-pub fn draw_textured_quad(
+fn draw_textured_quad(
   gl : WebGL,
   program : ShaderProgram,
   mesh : QuadMesh,

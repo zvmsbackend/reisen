@@ -3,7 +3,7 @@
 /// Depends on render_bootstrap + webgl.
 
 ///|
-pub struct Renderable {
+priv struct Renderable {
   texture : WebGLTexture
   x : Double
   y : Double
@@ -14,14 +14,14 @@ pub struct Renderable {
 }
 
 ///|
-pub struct RenderPipeline {
+priv struct RenderPipeline {
   program : ShaderProgram
   u_model : WebGLUniformLocation
   u_opacity : WebGLUniformLocation
 }
 
 ///|
-pub struct Renderer {
+priv struct Renderer {
   gl : WebGL
   mesh : QuadMesh
   pipe : RenderPipeline
@@ -31,7 +31,7 @@ pub struct Renderer {
 }
 
 ///|
-pub fn create_pipeline(
+fn create_pipeline(
   gl : WebGL,
   vert_src : String,
   frag_src : String,
@@ -48,7 +48,7 @@ pub fn create_pipeline(
 }
 
 ///|
-pub fn renderer_new(
+fn renderer_new(
   gl : WebGL,
   mesh : QuadMesh,
   pipe : RenderPipeline,
@@ -59,12 +59,12 @@ pub fn renderer_new(
 }
 
 ///|
-pub fn Renderer::clear(self : Renderer) -> Unit {
+fn Renderer::clear(self : Renderer) -> Unit {
   self.items.clear()
 }
 
 ///|
-pub fn Renderer::add(self : Renderer, item : Renderable) -> Unit {
+fn Renderer::add(self : Renderer, item : Renderable) -> Unit {
   self.items.push(item)
 }
 
@@ -95,7 +95,7 @@ fn model_matrix(
 }
 
 ///|
-pub fn Renderer::draw(self : Renderer) -> Unit {
+fn Renderer::draw(self : Renderer) -> Unit {
   sort_by_layer(self.items)
   self.gl.use_program(self.pipe.program.program)
   bind_quad_attributes(self.gl, self.pipe.program, self.mesh)
