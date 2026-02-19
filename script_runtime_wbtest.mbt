@@ -1,0 +1,47 @@
+///|
+test "runtime step and choose" {
+  let script : Script[Int] = script_from_instructions([
+    Label("start"),
+    Choice([
+      { id: "left", text: "Go left", jump: "left" },
+      { id: "right", text: "Go right", jump: "right" },
+    ]),
+    Label("left"),
+    Say("narrator", "left"),
+    Jump("end"),
+    Label("right"),
+    Say("narrator", "right"),
+    Label("end"),
+  ])
+  let state = GameState::new(0)
+  let runtime = Runtime::new(script, state)
+
+  let e1 = runtime.step()
+  assert_true(e1 is ChoicePrompt(_))
+
+  let e2 = runtime.choose("right")
+  assert_eq(e2, Said("narrator", "right"))
+}
+
+///|
+test "runtime save and restore json" {
+  let script : Script[Int] = script_from_instructions([
+    Label("start"),
+    Wait(100),
+    RunCode("inc", gs => gs.set_int_var("count", gs.int_var("count") + 1)),
+    Say("narrator", "done"),
+  ])
+  let state = GameState::new(0)
+  let runtime = Runtime::new(script, state)
+
+  assert_eq(runtime.step(), WaitStarted(100))
+  let save_json = runtime.save_json()
+
+  let restored_result : Result[Runtime[Int], Error] =
+    try? Runtime::from_json_string(script, save_json)
+  guard restored_result is Ok(restored) else {
+    fail("restore failed")
+  }
+
+  assert_eq(restored.step(elapsed_ms=100), Said("narrator", "done"))
+}

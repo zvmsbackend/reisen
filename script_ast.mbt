@@ -43,7 +43,7 @@ pub struct ChoiceOption {
   id : String
   text : String
   jump : String
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson, FromJson)
 
 ///|
 /// User-defined MoonBit code hook executed by the script runtime.
