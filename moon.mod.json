@@ -5,7 +5,7 @@
     "moonbit-community/js-ffi": "0.4.2"
   },
   "readme": "README.mbt.md",
-  "repository": "",
+  "repository": "https://github.com/zvmsbackend/reisen.git",
   "license": "Apache-2.0",
   "keywords": [
     "game",
