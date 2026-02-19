@@ -35,16 +35,12 @@ pub fn create_pipeline(
   gl : WebGL,
   vert_src : String,
   frag_src : String,
-) -> Result[RenderPipeline, String] {
-  match create_program(gl, vert_src, frag_src) {
-    Err(msg) => Err(msg)
-    Ok(program) => {
-      match (gl.get_uniform_location(program.program, "u_model"),
-             gl.get_uniform_location(program.program, "u_opacity")) {
-        (Some(u_model), Some(u_opacity)) => Ok({ program, u_model, u_opacity })
-        _ => Err("missing uniform u_model or u_opacity")
-      }
-    }
+) -> RenderPipeline raise RenderError {
+  let program = create_program(gl, vert_src, frag_src)
+  match (gl.get_uniform_location(program.program, "u_model"),
+         gl.get_uniform_location(program.program, "u_opacity")) {
+    (Some(u_model), Some(u_opacity)) => { program, u_model, u_opacity }
+    _ => raise RenderError::MissingUniform(name="u_model or u_opacity")
   }
 }
 
@@ -78,20 +74,7 @@ pub fn Renderer::add(self : Renderer, item : Renderable) -> Unit {
 
 ///|
 fn sort_by_layer(items : Array[Renderable]) -> Unit {
-  let len = items.length()
-  for i in 0..<len {
-    let mut min_idx = i
-    for j in (i + 1)..<len {
-      if items[j].layer < items[min_idx].layer {
-        min_idx = j
-      }
-    }
-    if min_idx != i {
-      let tmp = items[i]
-      items[i] = items[min_idx]
-      items[min_idx] = tmp
-    }
-  }
+  items.sort_by_key(item => item.layer)
 }
 
 ///|

@@ -440,6 +440,27 @@ pub fn WebGL::tex_image_2d(
 }
 
 ///|
+/// Upload texture from a JS image/canvas/video source.
+pub fn WebGL::tex_image_2d_source(
+  self : WebGL,
+  target : Int,
+  level : Int,
+  internal_format : Int,
+  format : Int,
+  kind : Int,
+  source : @js.Value,
+) -> Unit {
+  v(self).apply_with_string("texImage2D", [
+    v(target),
+    v(level),
+    v(internal_format),
+    v(format),
+    v(kind),
+    source,
+  ])
+}
+
+///|
 pub fn WebGL::generate_mipmap(self : WebGL, target : Int) -> Unit {
   v(self).apply_with_string("generateMipmap", [v(target)])
 }
