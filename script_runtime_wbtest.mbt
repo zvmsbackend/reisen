@@ -1,18 +1,19 @@
 ///|
 test "runtime step and choose" {
-  let script : Script[Int] = script_from_instructions([
-    Label("start"),
-    Choice([
-      { id: "left", text: "Go left", jump: "left" },
-      { id: "right", text: "Go right", jump: "right" },
-    ]),
-    Label("left"),
-    Say("narrator", "left"),
-    Jump("end"),
-    Label("right"),
-    Say("narrator", "right"),
-    Label("end"),
+  let builder : ScriptBuilder[Int] = ScriptBuilder::new()
+  builder
+  ..label("start")
+  ..choice([
+    { id: "left", text: "Go left", jump: "left" },
+    { id: "right", text: "Go right", jump: "right" },
   ])
+  ..label("left")
+  ..say("narrator", "left")
+  ..jump("end")
+  ..label("right")
+  ..say("narrator", "right")
+  ..label("end")
+  let script : Script[Int] = builder.build()
   let state = GameState::new(0)
   let runtime = Runtime::new(script, state)
 
