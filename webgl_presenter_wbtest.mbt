@@ -15,4 +15,3 @@ test "figure rect custom uses normalized top-left coordinates" {
   let (x, y, w, h) = figure_rect(Custom(0.2, 0.3), 1200.0, 900.0)
   assert_eq((x, y, w, h), (240.0, 270.0, 480.0, 810.0))
 }
-

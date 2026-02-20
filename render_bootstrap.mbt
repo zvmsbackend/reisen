@@ -3,7 +3,7 @@
 /// This is intentionally small: shader compile/link, quad mesh, and texture upload.
 
 ///|
-suberror RenderError {
+priv suberror RenderError {
   NullObject(op~ : String)
   ShaderCompile(log~ : String)
   ProgramLink(log~ : String)

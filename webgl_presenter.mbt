@@ -2,7 +2,7 @@
 /// WebGL presenter that converts `Director` render state into draw calls.
 
 ///|
-struct WebglPresenter {
+priv struct WebglPresenter {
   renderer : Renderer
   store : AssetStore
   textures : Map[String, WebGLTexture]
@@ -33,7 +33,7 @@ let default_frag_shader : String =
   #|}
 
 ///|
-pub fn webgl_presenter_new(
+fn webgl_presenter_new(
   gl : WebGL,
   store : AssetStore,
   viewport_w : Double,
@@ -53,7 +53,11 @@ fn WebglPresenter::texture_for(
   match self.textures.get(image_id) {
     Some(tex) => tex
     None => {
-      let tex = create_texture_from_store(self.renderer.gl, self.store, image_id)
+      let tex = create_texture_from_store(
+        self.renderer.gl,
+        self.store,
+        image_id,
+      )
       self.textures.set(image_id, tex)
       tex
     }
@@ -103,7 +107,11 @@ fn[T] WebglPresenter::sync_impl(
 
   for id, placement in director.figures() {
     let tex = self.texture_for(id)
-    let (x, y, w, h) = figure_rect(placement.pos, self.viewport_w, self.viewport_h)
+    let (x, y, w, h) = figure_rect(
+      placement.pos,
+      self.viewport_w,
+      self.viewport_h,
+    )
     self.renderer.add({
       texture: tex,
       x,
@@ -119,15 +127,7 @@ fn[T] WebglPresenter::sync_impl(
 }
 
 ///|
-pub fn[T] WebglPresenter::sync(
-  self : WebglPresenter,
-  director : Director[T],
-) -> Unit raise RenderError {
-  self.sync_impl(director)
-}
-
-///|
-pub fn[T] WebglPresenter::sync_noraise(
+fn[T] WebglPresenter::sync_noraise(
   self : WebglPresenter,
   director : Director[T],
 ) -> Unit {
@@ -135,6 +135,19 @@ pub fn[T] WebglPresenter::sync_noraise(
 }
 
 ///|
-pub fn[T] WebglPresenter::as_render_sync_hook(self : WebglPresenter) -> RenderSyncHook[T] {
+fn[T] WebglPresenter::as_render_sync_hook(
+  self : WebglPresenter,
+) -> RenderSyncHook[T] {
   director => self.sync_noraise(director)
+}
+
+///|
+pub fn[T] make_webgl_render_sync_hook(
+  gl : WebGL,
+  store : AssetStore,
+  viewport_w : Double,
+  viewport_h : Double,
+) -> RenderSyncHook[T] raise {
+  let presenter = webgl_presenter_new(gl, store, viewport_w, viewport_h)
+  presenter.as_render_sync_hook()
 }

@@ -31,6 +31,8 @@ pub async fn load_image(String) -> Image
 
 pub async fn load_text(String) -> String
 
+pub fn[T] make_webgl_render_sync_hook(WebGL, AssetStore, Double, Double) -> ((Director[T]) -> Unit) raise
+
 pub fn option(String, String, String) -> ChoiceOption
 
 pub fn place_center(layer? : Int, opacity? : Double) -> FigurePlacement
@@ -45,9 +47,24 @@ pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
+pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double) -> GameRunner[T] raise
+
+pub fn[T] start_game_with_render_sync(Script[T], GameState[T], String, (Director[T]) -> Unit) -> GameRunner[T]
+
 pub fn[T] ui_view_from_director(Director[T]) -> UiViewModel
 
+pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
+
+pub fn[T] validate_script_audio_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
+
+pub fn[T] validate_script_image_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
+
 // Errors
+pub suberror AppBootstrapError {
+  MissingImageAsset(id~ : String)
+  MissingAudioAsset(id~ : String)
+}
+
 pub(all) suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
 }
@@ -113,17 +130,14 @@ pub struct DialogLine {
 pub impl Eq for DialogLine
 pub impl Show for DialogLine
 
-pub struct Director[T] {
-  runtime : Runtime[T]
-  ui : UiState
-  render : RenderState
-}
+type Director[T]
 pub fn[T] Director::animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::background(Self[T]) -> String?
 pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
+pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
@@ -146,11 +160,7 @@ pub struct FigurePlacement {
 pub impl Eq for FigurePlacement
 pub impl Show for FigurePlacement
 
-pub struct GameRunner[T] {
-  director : Director[T]
-  ui : UiDom
-  render_sync : (Director[T]) -> Unit
-}
+type GameRunner[T]
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
 pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> Unit) -> Self[T]
@@ -202,8 +212,6 @@ pub enum Position {
 }
 pub impl Eq for Position
 pub impl Show for Position
-
-type RenderState
 
 pub struct Runtime[T] {
   script : Script[T]
@@ -281,8 +289,6 @@ pub struct UiDom {
 pub fn UiDom::new(String) -> Self
 pub fn UiDom::render(Self, UiViewModel) -> Unit
 pub fn UiDom::take_selected_choice(Self) -> String?
-
-type UiState
 
 pub struct UiViewModel {
   speaker : String
