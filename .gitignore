@@ -2,5 +2,5 @@
 _build/
 .mooncakes/
 .moonagent/
-.codex
+.agents
 .repos
