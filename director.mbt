@@ -9,13 +9,13 @@ pub struct DialogLine {
 } derive(Show, Eq)
 
 ///|
-struct UiState {
+priv struct UiState {
   mut dialog : DialogLine?
   mut choices : Array[ChoiceOption]
 }
 
 ///|
-struct RenderState {
+priv struct RenderState {
   mut background : String?
   figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
@@ -24,7 +24,7 @@ struct RenderState {
 }
 
 ///|
-pub struct Director[T] {
+struct Director[T] {
   runtime : Runtime[T]
   ui : UiState
   render : RenderState
@@ -104,6 +104,11 @@ pub fn[T] Director::background(self : Director[T]) -> String? {
 ///|
 pub fn[T] Director::figure(self : Director[T], id : String) -> FigurePlacement? {
   self.render.figures.get(id)
+}
+
+///|
+pub fn[T] Director::figures(self : Director[T]) -> Map[String, FigurePlacement] {
+  self.render.figures
 }
 
 ///|
