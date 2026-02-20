@@ -43,6 +43,8 @@ pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
 
+pub fn[T] run_browser_loop(GameRunner[T]) -> Unit
+
 pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
@@ -167,6 +169,7 @@ pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> 
 pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
+pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
 
 type GameState[T]
 pub fn[T] GameState::flag(Self[T], String) -> Bool

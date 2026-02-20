@@ -57,3 +57,18 @@ test "runner render sync hook is called on ui sync and step" {
   assert_eq(runner.step(), Said("narrator", "hello"))
   assert_eq(calls.length(), 2)
 }
+
+///|
+test "runner tick returns false when script ends" {
+  let compiled : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("narrator", "only line")
+  })
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(compiled, GameState::new(0))),
+    UiDom::new("app"),
+  )
+
+  assert_true(runner.tick())
+  assert_true(!runner.tick())
+}

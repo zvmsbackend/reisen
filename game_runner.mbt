@@ -64,6 +64,19 @@ pub fn[T] GameRunner::submit_choice(
 }
 
 ///|
+/// Advances one frame and reports whether loop should continue.
+pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool {
+  let result : Result[RuntimeEvent, ScriptRuntimeError] = try? self.step(
+    elapsed_ms~,
+  )
+  match result {
+    Ok(ScriptEnded) => false
+    Ok(_) => true
+    Err(_) => false
+  }
+}
+
+///|
 pub fn[T] GameRunner::director(self : GameRunner[T]) -> Director[T] {
   self.director
 }
