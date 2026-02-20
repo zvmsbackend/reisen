@@ -51,7 +51,7 @@ pub fn[T] AppController::phase(self : AppController[T]) -> AppPhase {
 }
 
 ///|
-pub fn[T : FromJson] AppController::handle_menu_action(
+fn[T : FromJson] AppController::handle_menu_action(
   self : AppController[T],
   action : StartMenuAction,
 ) -> Unit {

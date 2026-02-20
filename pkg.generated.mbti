@@ -13,12 +13,6 @@ pub fn anim_position(Int, easing? : Easing) -> AnimationSpec
 
 pub fn anim_scale(Int, easing? : Easing) -> AnimationSpec
 
-pub fn audio_command_from_event(RuntimeEvent) -> AudioCommand
-
-pub fn[T] build_label_index(Array[Instruction[T]]) -> Map[String, Int] raise ScriptBuildError
-
-pub fn choose_continue_slot(Array[SaveSlotEntry]) -> String?
-
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
@@ -105,8 +99,6 @@ pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, D
 
 pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, AudioDom, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
 
-pub fn[T] ui_view_from_director(Director[T]) -> UiViewModel
-
 pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
 
 pub fn[T] validate_script_audio_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
@@ -153,7 +145,6 @@ pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
 
 type AppController[T]
-pub fn[T : @json.FromJson] AppController::handle_menu_action(Self[T], StartMenuAction) -> Unit
 pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T : @json.FromJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
@@ -165,11 +156,7 @@ pub enum AppPhase {
 pub impl Eq for AppPhase
 pub impl Show for AppPhase
 
-pub struct AssetStore {
-  images : Map[String, Image]
-  texts : Map[String, String]
-  bytes : Map[String, Bytes]
-}
+type AssetStore
 pub fn AssetStore::get_bytes(Self, String) -> Bytes?
 pub fn AssetStore::get_image(Self, String) -> Image?
 pub fn AssetStore::get_text(Self, String) -> String?
@@ -178,12 +165,7 @@ pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
 pub fn AssetStore::put_image(Self, String, Image) -> Unit
 pub fn AssetStore::put_text(Self, String, String) -> Unit
 
-pub enum AudioCommand {
-  Noop
-  PlayMusic(String, Bool)
-  StopMusic
-  PlaySfx(String)
-}
+type AudioCommand
 pub impl Eq for AudioCommand
 pub impl Show for AudioCommand
 
@@ -209,10 +191,7 @@ pub impl Show for ChoiceOption
 pub impl ToJson for ChoiceOption
 pub impl @json.FromJson for ChoiceOption
 
-pub struct DialogLine {
-  speaker : String
-  text : String
-}
+type DialogLine
 pub impl Eq for DialogLine
 pub impl Show for DialogLine
 
@@ -230,7 +209,7 @@ pub fn[T] Director::new(Runtime[T]) -> Self[T]
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 
-pub enum Easing {
+pub(all) enum Easing {
   Linear
   EaseIn
   EaseOut
@@ -355,9 +334,7 @@ pub struct Script[T] {
   labels : Map[String, Int]
 }
 
-pub struct ScriptBuilder[T] {
-  instructions : Array[Instruction[T]]
-}
+type ScriptBuilder[T]
 pub fn[T] ScriptBuilder::animate(Self[T], String, AnimationSpec) -> Unit
 pub fn[T] ScriptBuilder::animate_opacity(Self[T], String, Int, easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::animate_position(Self[T], String, Int, easing? : Easing) -> Unit
@@ -382,35 +359,13 @@ pub fn[T] ScriptBuilder::show_figure_at(Self[T], String, Position, layer? : Int,
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 
-type StartMenu
-pub fn StartMenu::clear(Self) -> Unit
-pub fn StartMenu::new(String, save_namespace? : String) -> Self
-pub fn StartMenu::render(Self) -> Unit
-pub fn StartMenu::take_action(Self) -> StartMenuAction
-
-type StartMenuAction
-pub impl Eq for StartMenuAction
-pub impl Show for StartMenuAction
-
-pub struct UiChoiceView {
-  id : String
-  text : String
-}
+type UiChoiceView
 pub impl Eq for UiChoiceView
 pub impl Show for UiChoiceView
 
-pub struct UiDom {
-  root_id : String
-}
-pub fn UiDom::new(String) -> Self
-pub fn UiDom::render(Self, UiViewModel) -> Unit
-pub fn UiDom::take_selected_choice(Self) -> String?
+type UiDom
 
-pub struct UiViewModel {
-  speaker : String
-  text : String
-  choices : Array[UiChoiceView]
-}
+type UiViewModel
 pub impl Eq for UiViewModel
 pub impl Show for UiViewModel
 

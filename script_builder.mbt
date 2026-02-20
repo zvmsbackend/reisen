@@ -2,7 +2,7 @@
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
 
 ///|
-pub struct ScriptBuilder[T] {
+struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
 }
 

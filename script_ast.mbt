@@ -10,7 +10,7 @@ pub enum Position {
 } derive(Show, Eq)
 
 ///|
-pub enum Easing {
+pub(all) enum Easing {
   Linear
   EaseIn
   EaseOut
@@ -83,7 +83,7 @@ pub(all) suberror ScriptBuildError {
 }
 
 ///|
-pub fn[T] build_label_index(
+fn[T] build_label_index(
   instructions : Array[Instruction[T]],
 ) -> Map[String, Int] raise ScriptBuildError {
   let labels : Map[String, Int] = Map::new()

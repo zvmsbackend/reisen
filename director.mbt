@@ -3,7 +3,7 @@
 /// WebGL renderers can read render state while HTML UI can read dialog/choices.
 
 ///|
-pub struct DialogLine {
+struct DialogLine {
   speaker : String
   text : String
 } derive(Show, Eq)

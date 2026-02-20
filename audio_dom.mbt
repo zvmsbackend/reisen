@@ -2,7 +2,7 @@
 /// HTML audio adapter driven by `RuntimeEvent`.
 
 ///|
-pub enum AudioCommand {
+enum AudioCommand {
   Noop
   PlayMusic(String, Bool)
   StopMusic
@@ -10,7 +10,7 @@ pub enum AudioCommand {
 } derive(Show, Eq)
 
 ///|
-pub fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
+fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
   match event {
     MusicPlayed(id, should_loop) => AudioCommand::PlayMusic(id, should_loop)
     MusicStopped => AudioCommand::StopMusic

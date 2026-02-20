@@ -45,7 +45,7 @@ priv struct RuntimeSave[T] {
   pending_choices : Array[ChoiceOption]
   wait_ms : Int
   ended : Bool
-} derive(Show, Eq, ToJson, FromJson)
+} derive(ToJson, FromJson)
 
 ///|
 pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {

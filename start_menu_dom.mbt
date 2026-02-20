@@ -2,21 +2,21 @@
 /// Start menu DOM integration (New Game / Continue / Load Slot).
 
 ///|
-enum StartMenuAction {
+priv enum StartMenuAction {
   NoAction
   NewGame
   Continue(String)
   LoadSlot(String)
-} derive(Show, Eq)
+}
 
 ///|
-struct StartMenu {
+priv struct StartMenu {
   root_id : String
   save_ns : String
 }
 
 ///|
-pub fn StartMenu::new(
+fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
 ) -> StartMenu {
@@ -24,7 +24,7 @@ pub fn StartMenu::new(
 }
 
 ///|
-pub fn choose_continue_slot(entries : Array[SaveSlotEntry]) -> String? {
+fn choose_continue_slot(entries : Array[SaveSlotEntry]) -> String? {
   let mut best_slot : String? = None
   let mut best_ts = -1.0
   for entry in entries {
@@ -130,7 +130,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn StartMenu::render(self : StartMenu) -> Unit {
+fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_entries_in(self.save_ns)
   let slots = entries.map(entry => entry.slot)
   let titles = entries.map(entry => {
@@ -168,12 +168,12 @@ extern "js" fn start_menu_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn StartMenu::clear(self : StartMenu) -> Unit {
+fn StartMenu::clear(self : StartMenu) -> Unit {
   start_menu_dom_clear(self.root_id)
 }
 
 ///|
-pub fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
+fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
   match start_menu_action_kind(self.root_id).to_option() {
     Some("new") => {
       start_menu_action_clear(self.root_id)

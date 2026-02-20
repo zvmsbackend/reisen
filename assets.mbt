@@ -75,7 +75,7 @@ pub async fn load_bytes(url : String) -> Bytes {
 }
 
 ///|
-pub struct AssetStore {
+struct AssetStore {
   images : Map[String, Image]
   texts : Map[String, String]
   bytes : Map[String, Bytes]
