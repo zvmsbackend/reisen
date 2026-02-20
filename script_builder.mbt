@@ -7,6 +7,77 @@ pub struct ScriptBuilder[T] {
 }
 
 ///|
+/// Convenience entrypoint for the DSL style:
+/// `let s = script(builder => { ... })`.
+pub fn[T] script(
+  f : (ScriptBuilder[T]) -> Unit,
+) -> Script[T] raise ScriptBuildError {
+  let builder : ScriptBuilder[T] = ScriptBuilder::new()
+  f(builder)
+  builder.build()
+}
+
+///|
+pub fn option(id : String, text : String, jump : String) -> ChoiceOption {
+  { id, text, jump }
+}
+
+///|
+pub fn place_left(layer? : Int = 0, opacity? : Double = 1.0) -> FigurePlacement {
+  { pos: Left, layer, opacity }
+}
+
+///|
+pub fn place_center(
+  layer? : Int = 0,
+  opacity? : Double = 1.0,
+) -> FigurePlacement {
+  { pos: Center, layer, opacity }
+}
+
+///|
+pub fn place_right(
+  layer? : Int = 0,
+  opacity? : Double = 1.0,
+) -> FigurePlacement {
+  { pos: Right, layer, opacity }
+}
+
+///|
+pub fn place_custom(
+  x : Double,
+  y : Double,
+  layer? : Int = 0,
+  opacity? : Double = 1.0,
+) -> FigurePlacement {
+  { pos: Custom(x, y), layer, opacity }
+}
+
+///|
+pub fn anim_opacity(
+  duration_ms : Int,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  { prop: Opacity, duration_ms, easing }
+}
+
+///|
+pub fn anim_position(
+  duration_ms : Int,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  { prop: Position, duration_ms, easing }
+}
+
+///|
+pub fn anim_scale(
+  duration_ms : Int,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  { prop: Scale, duration_ms, easing }
+}
+
+///|
 pub fn[T] ScriptBuilder::new() -> ScriptBuilder[T] {
   { instructions: [] }
 }
@@ -115,6 +186,8 @@ pub fn[T] ScriptBuilder::animate(
 }
 
 ///|
-pub fn[T] ScriptBuilder::build(self : ScriptBuilder[T]) -> Script[T] raise ScriptBuildError {
+pub fn[T] ScriptBuilder::build(
+  self : ScriptBuilder[T],
+) -> Script[T] raise ScriptBuildError {
   script_from_instructions(self.instructions)
 }

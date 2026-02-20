@@ -49,16 +49,10 @@ priv struct RuntimeSave[T] {
 
 ///|
 pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
-  {
-    script,
-    state,
-    ip: 0,
-    pending_choices: [],
-    wait_ms: 0,
-    ended: false,
-  }
+  { script, state, ip: 0, pending_choices: [], wait_ms: 0, ended: false }
 }
 
+///|
 fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
   {
     state: self.state,
@@ -82,7 +76,11 @@ fn[T] Runtime::from_save(
     state: save.state,
     ip: save.ip,
     pending_choices: save.pending_choices,
-    wait_ms: if save.wait_ms < 0 { 0 } else { save.wait_ms },
+    wait_ms: if save.wait_ms < 0 {
+      0
+    } else {
+      save.wait_ms
+    },
     ended: save.ended,
   }
 }
@@ -108,7 +106,7 @@ fn[T] Runtime::jump_to_label(
 ) -> Unit raise ScriptRuntimeError {
   match self.script.labels.get(label) {
     Some(idx) => self.ip = idx
-    None => raise ScriptRuntimeError::LabelNotFound(label=label)
+    None => raise ScriptRuntimeError::LabelNotFound(label~)
   }
 }
 
@@ -185,7 +183,10 @@ fn[T] Runtime::run_inst(
 }
 
 ///|
-pub fn[T] Runtime::step(self : Runtime[T], elapsed_ms? : Int = 0) -> RuntimeEvent raise ScriptRuntimeError {
+pub fn[T] Runtime::step(
+  self : Runtime[T],
+  elapsed_ms? : Int = 0,
+) -> RuntimeEvent raise ScriptRuntimeError {
   if self.ended {
     return ScriptEnded
   }
@@ -215,7 +216,10 @@ pub fn[T] Runtime::step(self : Runtime[T], elapsed_ms? : Int = 0) -> RuntimeEven
 }
 
 ///|
-pub fn[T] Runtime::choose(self : Runtime[T], id : String) -> RuntimeEvent raise ScriptRuntimeError {
+pub fn[T] Runtime::choose(
+  self : Runtime[T],
+  id : String,
+) -> RuntimeEvent raise ScriptRuntimeError {
   if self.pending_choices.length() == 0 {
     raise ScriptRuntimeError::ChoiceNotActive
   }
@@ -226,5 +230,5 @@ pub fn[T] Runtime::choose(self : Runtime[T], id : String) -> RuntimeEvent raise 
       return self.step()
     }
   }
-  raise ScriptRuntimeError::ChoiceNotFound(id=id)
+  raise ScriptRuntimeError::ChoiceNotFound(id~)
 }
