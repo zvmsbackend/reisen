@@ -146,6 +146,18 @@ pub struct FigurePlacement {
 pub impl Eq for FigurePlacement
 pub impl Show for FigurePlacement
 
+pub struct GameRunner[T] {
+  director : Director[T]
+  ui : UiDom
+  render_sync : (Director[T]) -> Unit
+}
+pub fn[T] GameRunner::director(Self[T]) -> Director[T]
+pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
+pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> Unit) -> Self[T]
+pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
+
 type GameState[T]
 pub fn[T] GameState::flag(Self[T], String) -> Bool
 pub fn[T] GameState::get_user_data(Self[T]) -> T
@@ -335,6 +347,8 @@ type WebGLUniformLocation
 pub impl @js.Cast for WebGLUniformLocation
 
 // Type aliases
+pub type RenderSyncHook[T] = (Director[T]) -> Unit
+
 pub type ScriptHook[T] = (GameState[T]) -> Unit
 
 pub type ScriptPredicate[T] = (GameState[T]) -> Bool
