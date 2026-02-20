@@ -83,10 +83,11 @@ pub fn[T] start_game_webgl(
   store : AssetStore,
   viewport_w : Double,
   viewport_h : Double,
+  presenter_config? : WebglPresenterConfig = webgl_presenter_default_config(),
 ) -> GameRunner[T] raise {
   validate_script_assets(script, store)
-  let render_sync = make_webgl_render_sync_hook(
-    gl, store, viewport_w, viewport_h,
+  let render_sync = make_webgl_render_sync_hook_with_config(
+    gl, store, viewport_w, viewport_h, presenter_config,
   )
   start_game_with_render_sync(script, state, ui_root_id, render_sync)
 }

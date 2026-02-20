@@ -8,6 +8,24 @@ priv struct WebglPresenter {
   textures : Map[String, WebGLTexture]
   viewport_w : Double
   viewport_h : Double
+  config : WebglPresenterConfig
+  mut animation_cursor : Int
+  mut timeline_ms : Int
+  mut last_sync_ms : Int
+  opacity_anims : Map[String, OpacityAnim]
+  position_anims : Map[String, PositionAnim]
+  scale_anims : Map[String, ScaleAnim]
+}
+
+///|
+pub struct WebglPresenterConfig {
+  position_entry_offset_ratio : Double
+  scale_entry_from : Double
+} derive(Show, Eq)
+
+///|
+pub fn webgl_presenter_default_config() -> WebglPresenterConfig {
+  { position_entry_offset_ratio: 0.04, scale_entry_from: 0.0 }
 }
 
 ///|
@@ -33,16 +51,55 @@ let default_frag_shader : String =
   #|}
 
 ///|
+priv struct OpacityAnim {
+  start_ms : Int
+  duration_ms : Int
+  easing : Easing
+}
+
+///|
+priv struct PositionAnim {
+  start_ms : Int
+  duration_ms : Int
+  easing : Easing
+}
+
+///|
+priv struct ScaleAnim {
+  start_ms : Int
+  duration_ms : Int
+  easing : Easing
+}
+
+///|
+extern "js" fn now_ms() -> Int =
+  #| () => Math.floor((globalThis.performance?.now?.() ?? Date.now()))
+
+///|
 fn webgl_presenter_new(
   gl : WebGL,
   store : AssetStore,
   viewport_w : Double,
   viewport_h : Double,
+  config : WebglPresenterConfig,
 ) -> WebglPresenter raise RenderError {
   let mesh = create_quad_mesh(gl)
   let pipe = create_pipeline(gl, default_vert_shader, default_frag_shader)
   let renderer = renderer_new(gl, mesh, pipe, viewport_w, viewport_h)
-  { renderer, store, textures: {}, viewport_w, viewport_h }
+  {
+    renderer,
+    store,
+    textures: {},
+    viewport_w,
+    viewport_h,
+    config,
+    animation_cursor: 0,
+    timeline_ms: 0,
+    last_sync_ms: 0,
+    opacity_anims: {},
+    position_anims: {},
+    scale_anims: {},
+  }
 }
 
 ///|
@@ -81,10 +138,172 @@ fn figure_rect(
 }
 
 ///|
+fn apply_opacity_animation(
+  base_opacity : Double,
+  now_ms : Int,
+  anim : OpacityAnim,
+) -> (Double, Bool) {
+  let (p, done) = animation_progress(
+    now_ms,
+    anim.start_ms,
+    anim.duration_ms,
+    anim.easing,
+  )
+  if done {
+    (base_opacity, true)
+  } else {
+    (base_opacity * p, false)
+  }
+}
+
+///|
+fn easing_apply(easing : Easing, x : Double) -> Double {
+  let t = if x < 0.0 { 0.0 } else if x > 1.0 { 1.0 } else { x }
+  match easing {
+    Linear => t
+    EaseIn => t * t
+    EaseOut => 1.0 - (1.0 - t) * (1.0 - t)
+    EaseInOut =>
+      if t < 0.5 {
+        2.0 * t * t
+      } else {
+        1.0 - (-2.0 * t + 2.0) * (-2.0 * t + 2.0) / 2.0
+      }
+  }
+}
+
+///|
+fn animation_progress(
+  now_ms : Int,
+  start_ms : Int,
+  duration_ms : Int,
+  easing : Easing,
+) -> (Double, Bool) {
+  if duration_ms <= 0 {
+    return (1.0, true)
+  }
+  let t = now_ms - start_ms
+  if t <= 0 {
+    return (0.0, false)
+  }
+  if t >= duration_ms {
+    return (1.0, true)
+  }
+  let p = t.to_double() / duration_ms.to_double()
+  (easing_apply(easing, p), false)
+}
+
+///|
+fn apply_position_animation(
+  x : Double,
+  y : Double,
+  offset_ratio : Double,
+  viewport_h : Double,
+  now_ms : Int,
+  anim : PositionAnim,
+) -> (Double, Double, Bool) {
+  let (p, done) = animation_progress(
+    now_ms,
+    anim.start_ms,
+    anim.duration_ms,
+    anim.easing,
+  )
+  let start_y = y + viewport_h * offset_ratio
+  let animated_y = start_y + (y - start_y) * p
+  if done {
+    (x, y, true)
+  } else {
+    (x, animated_y, false)
+  }
+}
+
+///|
+fn apply_scale_animation(
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  entry_scale : Double,
+  now_ms : Int,
+  anim : ScaleAnim,
+) -> (Double, Double, Double, Double, Bool) {
+  let (p, done) = animation_progress(
+    now_ms,
+    anim.start_ms,
+    anim.duration_ms,
+    anim.easing,
+  )
+  let s = if done { 1.0 } else { entry_scale + (1.0 - entry_scale) * p }
+  let sw = w * s
+  let sh = h * s
+  let cx = x + w / 2.0
+  let cy = y + h / 2.0
+  let sx = cx - sw / 2.0
+  let sy = cy - sh / 2.0
+  if done {
+    (x, y, w, h, true)
+  } else {
+    (sx, sy, sw, sh, false)
+  }
+}
+
+///|
+fn WebglPresenter::update_timeline(self : WebglPresenter) -> Unit {
+  let now = now_ms()
+  if self.last_sync_ms <= 0 {
+    self.last_sync_ms = now
+    return
+  }
+  let dt = now - self.last_sync_ms
+  self.last_sync_ms = now
+  if dt > 0 {
+    self.timeline_ms = self.timeline_ms + dt
+  }
+}
+
+///|
+fn[T] WebglPresenter::pull_new_animations(
+  self : WebglPresenter,
+  director : Director[T],
+) -> Unit {
+  let all = director.animations()
+  for i, entry in all {
+    if i < self.animation_cursor {
+      continue
+    }
+    let (target, spec) = entry
+    match spec.prop {
+      Opacity =>
+        self.opacity_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+        })
+      Position =>
+        self.position_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+        })
+      Scale =>
+        self.scale_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+        })
+    }
+  }
+  self.animation_cursor = all.length()
+}
+
+///|
 fn[T] WebglPresenter::sync_impl(
   self : WebglPresenter,
   director : Director[T],
 ) -> Unit raise RenderError {
+  self.update_timeline()
+  self.pull_new_animations(director)
+
   self.renderer.clear()
   self.renderer.gl.clear_color(0.0, 0.0, 0.0, 1.0)
   self.renderer.gl.clear(self.renderer.gl.constant("COLOR_BUFFER_BIT"))
@@ -105,22 +324,83 @@ fn[T] WebglPresenter::sync_impl(
     None => ()
   }
 
+  let finished_opacity : Array[String] = []
+  let finished_position : Array[String] = []
+  let finished_scale : Array[String] = []
   for id, placement in director.figures() {
     let tex = self.texture_for(id)
-    let (x, y, w, h) = figure_rect(
+    let (base_x, base_y, base_w, base_h) = figure_rect(
       placement.pos,
       self.viewport_w,
       self.viewport_h,
     )
+    let (x1, y1) = match self.position_anims.get(id) {
+      Some(anim) => {
+        let (ax, ay, done) = apply_position_animation(
+          base_x,
+          base_y,
+          self.config.position_entry_offset_ratio,
+          self.viewport_h,
+          self.timeline_ms,
+          anim,
+        )
+        if done {
+          finished_position.push(id)
+        }
+        (ax, ay)
+      }
+      None => (base_x, base_y)
+    }
+    let (x, y, w, h) = match self.scale_anims.get(id) {
+      Some(anim) => {
+        let (sx, sy, sw, sh, done) = apply_scale_animation(
+          x1,
+          y1,
+          base_w,
+          base_h,
+          self.config.scale_entry_from,
+          self.timeline_ms,
+          anim,
+        )
+        if done {
+          finished_scale.push(id)
+        }
+        (sx, sy, sw, sh)
+      }
+      None => (x1, y1, base_w, base_h)
+    }
+    let opacity = match self.opacity_anims.get(id) {
+      Some(anim) => {
+        let (animated, done) = apply_opacity_animation(
+          placement.opacity,
+          self.timeline_ms,
+          anim,
+        )
+        if done {
+          finished_opacity.push(id)
+        }
+        animated
+      }
+      None => placement.opacity
+    }
     self.renderer.add({
       texture: tex,
       x,
       y,
       w,
       h,
-      opacity: placement.opacity,
+      opacity,
       layer: placement.layer,
     })
+  }
+  for id in finished_opacity {
+    self.opacity_anims.remove(id)
+  }
+  for id in finished_position {
+    self.position_anims.remove(id)
+  }
+  for id in finished_scale {
+    self.scale_anims.remove(id)
   }
 
   self.renderer.draw()
@@ -148,6 +428,24 @@ pub fn[T] make_webgl_render_sync_hook(
   viewport_w : Double,
   viewport_h : Double,
 ) -> RenderSyncHook[T] raise {
-  let presenter = webgl_presenter_new(gl, store, viewport_w, viewport_h)
+  let presenter = webgl_presenter_new(
+    gl,
+    store,
+    viewport_w,
+    viewport_h,
+    webgl_presenter_default_config(),
+  )
+  presenter.as_render_sync_hook()
+}
+
+///|
+pub fn[T] make_webgl_render_sync_hook_with_config(
+  gl : WebGL,
+  store : AssetStore,
+  viewport_w : Double,
+  viewport_h : Double,
+  config : WebglPresenterConfig,
+) -> RenderSyncHook[T] raise {
+  let presenter = webgl_presenter_new(gl, store, viewport_w, viewport_h, config)
   presenter.as_render_sync_hook()
 }
