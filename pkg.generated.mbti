@@ -17,6 +17,8 @@ pub fn audio_command_from_event(RuntimeEvent) -> AudioCommand
 
 pub fn[T] build_label_index(Array[Instruction[T]]) -> Map[String, Int] raise ScriptBuildError
 
+pub fn choose_continue_slot(Array[SaveSlotEntry]) -> String?
+
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
@@ -364,6 +366,23 @@ pub fn[T] ScriptBuilder::show_figure(Self[T], String, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], String, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
+
+pub struct StartMenu {
+  root_id : String
+  save_ns : String
+}
+pub fn StartMenu::new(String, save_namespace? : String) -> Self
+pub fn StartMenu::render(Self) -> Unit
+pub fn StartMenu::take_action(Self) -> StartMenuAction
+
+pub enum StartMenuAction {
+  NoAction
+  NewGame
+  Continue(String)
+  LoadSlot(String)
+}
+pub impl Eq for StartMenuAction
+pub impl Show for StartMenuAction
 
 pub struct UiChoiceView {
   id : String
