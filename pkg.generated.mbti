@@ -104,6 +104,29 @@ pub impl Show for ChoiceOption
 pub impl ToJson for ChoiceOption
 pub impl @json.FromJson for ChoiceOption
 
+pub struct DialogLine {
+  speaker : String
+  text : String
+}
+pub impl Eq for DialogLine
+pub impl Show for DialogLine
+
+pub struct Director[T] {
+  runtime : Runtime[T]
+  ui : UiState
+  render : RenderState
+}
+pub fn[T] Director::animations(Self[T]) -> Array[(String, AnimationSpec)]
+pub fn[T] Director::background(Self[T]) -> String?
+pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
+pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Director::dialog(Self[T]) -> DialogLine?
+pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
+pub fn[T] Director::last_sfx(Self[T]) -> String?
+pub fn[T] Director::music(Self[T]) -> (String, Bool)?
+pub fn[T] Director::new(Runtime[T]) -> Self[T]
+pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+
 pub enum Easing {
   Linear
   EaseIn
@@ -165,6 +188,8 @@ pub enum Position {
 }
 pub impl Eq for Position
 pub impl Show for Position
+
+type RenderState
 
 pub struct Runtime[T] {
   script : Script[T]
@@ -228,6 +253,8 @@ pub fn[T] ScriptBuilder::show_figure(Self[T], String, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], String, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
+
+type UiState
 
 type WebGL
 pub fn WebGL::active_texture(Self, Int) -> Unit
