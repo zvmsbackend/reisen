@@ -218,7 +218,7 @@ pub fn save_slot_entries() -> Array[SaveSlotEntry] {
 
 ///|
 /// Game settings persisted to localStorage.
-pub struct GameSettings {
+pub(all) struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
