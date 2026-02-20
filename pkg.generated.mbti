@@ -1,0 +1,285 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen"
+
+import {
+  "moonbit-community/js-ffi/js",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn anim_opacity(Int, easing? : Easing) -> AnimationSpec
+
+pub fn anim_position(Int, easing? : Easing) -> AnimationSpec
+
+pub fn anim_scale(Int, easing? : Easing) -> AnimationSpec
+
+pub fn[T] build_label_index(Array[Instruction[T]]) -> Map[String, Int] raise ScriptBuildError
+
+pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
+
+pub fn get_canvas_by_id(String) -> Canvas?
+
+pub fn js_float32_array(Array[Double]) -> @js.Value
+
+pub fn js_uint16_array(Array[Int]) -> @js.Value
+
+pub fn js_uint8_array(Array[Int]) -> @js.Value
+
+pub async fn load_bytes(String) -> Bytes
+
+pub async fn load_image(String) -> Image
+
+pub async fn load_text(String) -> String
+
+pub fn option(String, String, String) -> ChoiceOption
+
+pub fn place_center(layer? : Int, opacity? : Double) -> FigurePlacement
+
+pub fn place_custom(Double, Double, layer? : Int, opacity? : Double) -> FigurePlacement
+
+pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
+
+pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
+
+pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
+
+pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
+
+// Errors
+pub(all) suberror ScriptBuildError {
+  DuplicateLabel(name~ : String)
+}
+
+pub suberror ScriptRuntimeError {
+  LabelNotFound(label~ : String)
+  ChoiceNotActive
+  ChoiceNotFound(id~ : String)
+  ChoicePending
+  TimerPending(ms~ : Int)
+  InvalidInstructionPointer(ip~ : Int)
+}
+
+// Types and methods
+pub enum AnimProp {
+  Opacity
+  Position
+  Scale
+}
+pub impl Eq for AnimProp
+pub impl Show for AnimProp
+
+pub struct AnimationSpec {
+  prop : AnimProp
+  duration_ms : Int
+  easing : Easing
+}
+pub impl Eq for AnimationSpec
+pub impl Show for AnimationSpec
+
+pub struct AssetStore {
+  images : Map[String, Image]
+  texts : Map[String, String]
+  bytes : Map[String, Bytes]
+}
+pub fn AssetStore::get_bytes(Self, String) -> Bytes?
+pub fn AssetStore::get_image(Self, String) -> Image?
+pub fn AssetStore::get_text(Self, String) -> String?
+pub fn AssetStore::new() -> Self
+pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
+pub fn AssetStore::put_image(Self, String, Image) -> Unit
+pub fn AssetStore::put_text(Self, String, String) -> Unit
+
+type Canvas
+pub fn Canvas::get_webgl2_context(Self) -> WebGL?
+pub fn Canvas::get_webgl_context(Self) -> WebGL?
+pub impl @js.Cast for Canvas
+
+pub struct ChoiceOption {
+  id : String
+  text : String
+  jump : String
+}
+pub impl Eq for ChoiceOption
+pub impl Show for ChoiceOption
+pub impl ToJson for ChoiceOption
+pub impl @json.FromJson for ChoiceOption
+
+pub enum Easing {
+  Linear
+  EaseIn
+  EaseOut
+  EaseInOut
+}
+pub impl Eq for Easing
+pub impl Show for Easing
+
+pub struct FigurePlacement {
+  pos : Position
+  layer : Int
+  opacity : Double
+}
+pub impl Eq for FigurePlacement
+pub impl Show for FigurePlacement
+
+type GameState[T]
+pub fn[T] GameState::flag(Self[T], String) -> Bool
+pub fn[T] GameState::get_user_data(Self[T]) -> T
+pub fn[T] GameState::int_var(Self[T], String, default_value? : Int) -> Int
+pub fn[T] GameState::new(T) -> Self[T]
+pub fn[T] GameState::set_flag(Self[T], String, Bool) -> Unit
+pub fn[T] GameState::set_int_var(Self[T], String, Int) -> Unit
+pub fn[T] GameState::set_text_var(Self[T], String, String) -> Unit
+pub fn[T] GameState::set_user_data(Self[T], T) -> Unit
+pub fn[T] GameState::text_var(Self[T], String, default_value? : String) -> String
+pub fn[T : ToJson] GameState::to_json_string(Self[T]) -> String
+pub impl[T : Eq] Eq for GameState[T]
+pub impl[T : Show] Show for GameState[T]
+pub impl[T : ToJson] ToJson for GameState[T]
+pub impl[T : @json.FromJson] @json.FromJson for GameState[T]
+
+type Image
+pub impl @js.Cast for Image
+
+pub enum Instruction[T] {
+  Label(String)
+  Jump(String)
+  JumpIf(String, (GameState[T]) -> Bool)
+  Wait(Int)
+  Say(String, String)
+  Choice(Array[ChoiceOption])
+  RunCode(String, (GameState[T]) -> Unit)
+  ShowBackground(String)
+  ShowFigure(String, FigurePlacement)
+  HideFigure(String)
+  PlayMusic(String, Bool)
+  StopMusic
+  PlaySfx(String)
+  Animate(String, AnimationSpec)
+}
+
+pub enum Position {
+  Left
+  Center
+  Right
+  Custom(Double, Double)
+}
+pub impl Eq for Position
+pub impl Show for Position
+
+pub struct Runtime[T] {
+  script : Script[T]
+  state : GameState[T]
+  mut ip : Int
+  mut pending_choices : Array[ChoiceOption]
+  mut wait_ms : Int
+  mut ended : Bool
+}
+pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
+pub fn[T] Runtime::new(Script[T], GameState[T]) -> Self[T]
+pub fn[T : ToJson] Runtime::save_json(Self[T]) -> String
+pub fn[T] Runtime::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+
+pub enum RuntimeEvent {
+  Noop
+  Said(String, String)
+  ChoicePrompt(Array[ChoiceOption])
+  BackgroundShown(String)
+  FigureShown(String, FigurePlacement)
+  FigureHidden(String)
+  MusicPlayed(String, Bool)
+  MusicStopped
+  SfxPlayed(String)
+  Animated(String, AnimationSpec)
+  WaitStarted(Int)
+  ScriptEnded
+}
+pub impl Eq for RuntimeEvent
+pub impl Show for RuntimeEvent
+
+pub struct Script[T] {
+  instructions : Array[Instruction[T]]
+  labels : Map[String, Int]
+}
+
+pub struct ScriptBuilder[T] {
+  instructions : Array[Instruction[T]]
+}
+pub fn[T] ScriptBuilder::animate(Self[T], String, AnimationSpec) -> Unit
+pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
+pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
+pub fn[T] ScriptBuilder::hide_figure(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::jump(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::jump_if(Self[T], String, (GameState[T]) -> Bool) -> Unit
+pub fn[T] ScriptBuilder::label(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::new() -> Self[T]
+pub fn[T] ScriptBuilder::play_music(Self[T], String, Bool) -> Unit
+pub fn[T] ScriptBuilder::play_sfx(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::run_code(Self[T], String, (GameState[T]) -> Unit) -> Unit
+pub fn[T] ScriptBuilder::say(Self[T], String, String) -> Unit
+pub fn[T] ScriptBuilder::show_background(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::show_figure(Self[T], String, FigurePlacement) -> Unit
+pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
+pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
+
+type WebGL
+pub fn WebGL::active_texture(Self, Int) -> Unit
+pub fn WebGL::attach_shader(Self, WebGLProgram, WebGLShader) -> Unit
+pub fn WebGL::bind_buffer(Self, Int, WebGLBuffer) -> Unit
+pub fn WebGL::bind_texture(Self, Int, WebGLTexture) -> Unit
+pub fn WebGL::buffer_data(Self, Int, @js.Value, Int) -> Unit
+pub fn WebGL::clear(Self, Int) -> Unit
+pub fn WebGL::clear_color(Self, Double, Double, Double, Double) -> Unit
+pub fn WebGL::compile_shader(Self, WebGLShader) -> Unit
+pub fn WebGL::constant(Self, String) -> Int
+pub fn WebGL::create_buffer(Self) -> WebGLBuffer?
+pub fn WebGL::create_program(Self) -> WebGLProgram?
+pub fn WebGL::create_shader(Self, Int) -> WebGLShader?
+pub fn WebGL::create_texture(Self) -> WebGLTexture?
+pub fn WebGL::draw_arrays(Self, Int, Int, Int) -> Unit
+pub fn WebGL::draw_elements(Self, Int, Int, Int, Int) -> Unit
+pub fn WebGL::enable_vertex_attrib_array(Self, Int) -> Unit
+pub fn WebGL::generate_mipmap(Self, Int) -> Unit
+pub fn WebGL::get_attrib_location(Self, WebGLProgram, String) -> Int
+pub fn WebGL::get_program_info_log(Self, WebGLProgram) -> String
+pub fn WebGL::get_program_parameter(Self, WebGLProgram, Int) -> Bool
+pub fn WebGL::get_shader_info_log(Self, WebGLShader) -> String
+pub fn WebGL::get_shader_parameter(Self, WebGLShader, Int) -> Bool
+pub fn WebGL::get_uniform_location(Self, WebGLProgram, String) -> WebGLUniformLocation?
+pub fn WebGL::link_program(Self, WebGLProgram) -> Unit
+pub fn WebGL::shader_source(Self, WebGLShader, String) -> Unit
+pub fn WebGL::tex_image_2d(Self, Int, Int, Int, Int, Int, Int, Int, Int, @js.Value) -> Unit
+pub fn WebGL::tex_image_2d_source(Self, Int, Int, Int, Int, Int, @js.Value) -> Unit
+pub fn WebGL::tex_param_i(Self, Int, Int, Int) -> Unit
+pub fn WebGL::uniform1f(Self, WebGLUniformLocation, Double) -> Unit
+pub fn WebGL::uniform1i(Self, WebGLUniformLocation, Int) -> Unit
+pub fn WebGL::uniform2f(Self, WebGLUniformLocation, Double, Double) -> Unit
+pub fn WebGL::uniform4f(Self, WebGLUniformLocation, Double, Double, Double, Double) -> Unit
+pub fn WebGL::uniform_matrix4(Self, WebGLUniformLocation, Bool, @js.Value) -> Unit
+pub fn WebGL::use_program(Self, WebGLProgram) -> Unit
+pub fn WebGL::vertex_attrib_pointer(Self, Int, Int, Int, Bool, Int, Int) -> Unit
+pub fn WebGL::viewport(Self, Int, Int, Int, Int) -> Unit
+pub impl @js.Cast for WebGL
+
+type WebGLBuffer
+pub impl @js.Cast for WebGLBuffer
+
+type WebGLProgram
+pub impl @js.Cast for WebGLProgram
+
+type WebGLShader
+pub impl @js.Cast for WebGLShader
+
+type WebGLTexture
+pub impl @js.Cast for WebGLTexture
+
+type WebGLUniformLocation
+pub impl @js.Cast for WebGLUniformLocation
+
+// Type aliases
+pub type ScriptHook[T] = (GameState[T]) -> Unit
+
+pub type ScriptPredicate[T] = (GameState[T]) -> Bool
+
+// Traits
+
