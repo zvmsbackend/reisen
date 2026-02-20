@@ -50,3 +50,25 @@ test "app controller can continue from saved slot" {
   app.handle_menu_action(StartMenuAction::Continue("slot1"))
   assert_eq(app.phase(), AppPhase::InGame)
 }
+
+///|
+test "app controller writes autosave when game ends" {
+  save_slot_delete_in("app_test_ns_autosave", "autosave")
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "line")
+  })
+  let app = AppController::new(
+    script,
+    () => GameState::new(0),
+    "app",
+    save_namespace="app_test_ns_autosave",
+    autosave_slot="autosave",
+  )
+
+  app.handle_menu_action(StartMenuAction::NewGame)
+  ignore(app.tick())
+  ignore(app.tick())
+
+  assert_true(save_slot_read_in("app_test_ns_autosave", "autosave") is Some(_))
+}

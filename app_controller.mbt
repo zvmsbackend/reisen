@@ -13,6 +13,8 @@ struct AppController[T] {
   new_state : () -> GameState[T]
   ui_root_id : String
   save_ns : String
+  autosave_slot : String
+  autosave_title : String
   menu : StartMenu
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
@@ -25,6 +27,8 @@ pub fn[T] AppController::new(
   new_state : () -> GameState[T],
   ui_root_id : String,
   save_namespace? : String = "global",
+  autosave_slot? : String = "autosave",
+  autosave_title? : String = "Autosave",
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
 ) -> AppController[T] {
@@ -33,6 +37,8 @@ pub fn[T] AppController::new(
     new_state,
     ui_root_id,
     save_ns: save_namespace,
+    autosave_slot,
+    autosave_title,
     menu: StartMenu::new(ui_root_id, save_namespace~),
     render_sync,
     event_hook,
@@ -93,7 +99,32 @@ fn[T : FromJson] AppController::handle_menu_action(
 }
 
 ///|
-pub fn[T : FromJson] AppController::tick(
+fn[T : ToJson] AppController::save_autosave_if_enabled(
+  self : AppController[T],
+) -> Unit {
+  if self.autosave_slot == "" {
+    return
+  }
+  match self.runner {
+    Some(runner) => {
+      let preview = match runner.director().dialog() {
+        Some(line) => line.text
+        None => ""
+      }
+      save_runner_to_slot_with_meta(
+        runner,
+        self.autosave_slot,
+        title=self.autosave_title,
+        preview~,
+        save_namespace=self.save_ns,
+      )
+    }
+    None => ()
+  }
+}
+
+///|
+pub fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
 ) -> Bool {
@@ -102,6 +133,7 @@ pub fn[T : FromJson] AppController::tick(
       if runner.tick(elapsed_ms~) {
         true
       } else {
+        self.save_autosave_if_enabled()
         self.runner = None
         self.menu.render()
         true

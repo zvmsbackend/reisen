@@ -22,6 +22,8 @@ pub fn[T] run_browser_loop(runner : GameRunner[T]) -> Unit {
 }
 
 ///|
-pub fn[T : FromJson] run_browser_app_loop(app : AppController[T]) -> Unit {
+pub fn[T : FromJson + ToJson] run_browser_app_loop(
+  app : AppController[T],
+) -> Unit {
   run_browser_loop_impl(dt => app.tick(elapsed_ms=dt))
 }

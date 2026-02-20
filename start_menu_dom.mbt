@@ -16,6 +16,14 @@ priv struct StartMenu {
 }
 
 ///|
+priv struct SlotView {
+  slot : String
+  title : String
+  preview : String
+  updated_at_ms : Double
+}
+
+///|
 fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
@@ -38,6 +46,30 @@ fn choose_continue_slot(entries : Array[SaveSlotEntry]) -> String? {
     }
   }
   best_slot
+}
+
+///|
+fn to_slot_view(entry : SaveSlotEntry) -> SlotView {
+  match entry.meta {
+    Some(meta) => {
+      let title = if meta.title == "" { entry.slot } else { meta.title }
+      {
+        slot: entry.slot,
+        title,
+        preview: meta.preview,
+        updated_at_ms: meta.updated_at_ms,
+      }
+    }
+    None =>
+      { slot: entry.slot, title: entry.slot, preview: "", updated_at_ms: -1.0 }
+  }
+}
+
+///|
+fn sorted_slot_views(entries : Array[SaveSlotEntry]) -> Array[SlotView] {
+  let views = entries.map(to_slot_view)
+  views.sort_by_key(view => -view.updated_at_ms)
+  views
 }
 
 ///|
@@ -132,19 +164,10 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
 ///|
 fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_entries_in(self.save_ns)
-  let slots = entries.map(entry => entry.slot)
-  let titles = entries.map(entry => {
-    match entry.meta {
-      Some(meta) => meta.title
-      None => entry.slot
-    }
-  })
-  let previews = entries.map(entry => {
-    match entry.meta {
-      Some(meta) => meta.preview
-      None => ""
-    }
-  })
+  let views = sorted_slot_views(entries)
+  let slots = views.map(view => view.slot)
+  let titles = views.map(view => view.title)
+  let previews = views.map(view => view.preview)
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>

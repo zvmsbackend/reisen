@@ -45,7 +45,7 @@ pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
 
-pub fn[T : @json.FromJson] run_browser_app_loop(AppController[T]) -> Unit
+pub fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T]) -> Unit
 
 pub fn[T] run_browser_loop(GameRunner[T]) -> Unit
 
@@ -145,9 +145,9 @@ pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
-pub fn[T : @json.FromJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
+pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
 pub enum AppPhase {
   StartMenu
