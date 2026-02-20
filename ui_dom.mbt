@@ -22,6 +22,10 @@ struct UiDom {
   mut typewriter_text : String
   mut typewriter_visible : Int
   mut typewriter_last_update_ms : Int
+  mut auto_mode : Bool
+  auto_mode_delay_ms : Int
+  mut auto_mode_last_advance_ms : Int
+  mut skip_mode : Bool
 }
 
 ///|
@@ -32,6 +36,10 @@ fn UiDom::new(root_id : String) -> UiDom {
     typewriter_text: "",
     typewriter_visible: 0,
     typewriter_last_update_ms: 0,
+    auto_mode: false,
+    auto_mode_delay_ms: 2000,
+    auto_mode_last_advance_ms: 0,
+    skip_mode: false,
   }
 }
 
@@ -92,6 +100,65 @@ pub fn UiDom::advance_typewriter(self : UiDom, elapsed_ms~ : Int) -> Bool {
 ///|
 pub fn UiDom::complete_typewriter(self : UiDom) -> Unit {
   self.typewriter_visible = self.typewriter_text.length()
+}
+
+///|
+pub fn UiDom::set_auto_mode(self : UiDom, enabled : Bool) -> Unit {
+  self.auto_mode = enabled
+  if enabled {
+    self.auto_mode_last_advance_ms = 0
+  }
+}
+
+///|
+pub fn UiDom::toggle_auto_mode(self : UiDom) -> Unit {
+  self.set_auto_mode(not(self.auto_mode))
+}
+
+///|
+pub fn UiDom::should_auto_advance(self : UiDom) -> Bool {
+  if not(self.auto_mode) {
+    return false
+  }
+  if not(self.is_typewriter_done()) {
+    return false
+  }
+  self.auto_mode_last_advance_ms >= self.auto_mode_delay_ms
+}
+
+///|
+pub fn UiDom::mark_auto_advanced(self : UiDom) -> Unit {
+  self.auto_mode_last_advance_ms = 0
+}
+
+///|
+pub fn UiDom::advance_auto_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
+  if not(self.auto_mode) {
+    return
+  }
+  if not(self.is_typewriter_done()) {
+    return
+  }
+  self.auto_mode_last_advance_ms += elapsed_ms
+}
+
+///|
+pub fn UiDom::set_skip_mode(self : UiDom, enabled : Bool) -> Unit {
+  self.skip_mode = enabled
+}
+
+///|
+pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
+  if self.skip_mode {
+    self.skip_mode = false
+  } else {
+    self.skip_mode = true
+  }
+}
+
+///|
+pub fn UiDom::should_skip_advance(self : UiDom) -> Bool {
+  self.skip_mode
 }
 
 ///|

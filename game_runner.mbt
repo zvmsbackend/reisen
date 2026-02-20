@@ -71,8 +71,15 @@ pub fn[T] GameRunner::step(
       }
     }
   }
-  if self.director.dialog().is_none() {
+  if self.director.dialog() is None {
     let event = self.director.step(elapsed_ms~)
+    (self.event_hook)(event)
+    self.render_ui()
+    return event
+  }
+  if self.ui.should_skip_advance() {
+    self.ui.complete_typewriter()
+    let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     self.render_ui()
     return event
@@ -88,7 +95,15 @@ pub fn[T] GameRunner::step(
     self.render_ui()
     return event
   }
-  let event = self.director.step(elapsed_ms~)
+  self.ui.advance_auto_mode_timer(elapsed_ms~)
+  if self.ui.should_auto_advance() {
+    self.ui.mark_auto_advanced()
+    let event = self.director.step(elapsed_ms=0)
+    (self.event_hook)(event)
+    self.render_ui()
+    return event
+  }
+  let event = self.director.step(elapsed_ms=0)
   (self.event_hook)(event)
   self.render_ui()
   event
@@ -134,6 +149,16 @@ pub fn[T] GameRunner::director(self : GameRunner[T]) -> Director[T] {
 ///|
 pub fn[T] GameRunner::complete_typewriter(self : GameRunner[T]) -> Unit {
   self.ui.complete_typewriter()
+}
+
+///|
+pub fn[T] GameRunner::toggle_auto_mode(self : GameRunner[T]) -> Unit {
+  self.ui.toggle_auto_mode()
+}
+
+///|
+pub fn[T] GameRunner::toggle_skip_mode(self : GameRunner[T]) -> Unit {
+  self.ui.toggle_skip_mode()
 }
 
 ///|

@@ -251,6 +251,8 @@ pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise Scr
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
+pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
+pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
 
 pub struct GameSettings {
   text_speed : Int
@@ -391,12 +393,20 @@ pub impl Eq for UiChoiceView
 pub impl Show for UiChoiceView
 
 type UiDom
+pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
 pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
 pub fn UiDom::complete_typewriter(Self) -> Unit
 pub fn UiDom::is_typewriter_done(Self) -> Bool
+pub fn UiDom::mark_auto_advanced(Self) -> Unit
+pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
+pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
 pub fn UiDom::set_text_speed(Self, Int) -> Unit
+pub fn UiDom::should_auto_advance(Self) -> Bool
+pub fn UiDom::should_skip_advance(Self) -> Bool
 pub fn UiDom::start_typewriter(Self, String) -> Unit
 pub fn UiDom::text_speed_ms_per_char(Self) -> Int
+pub fn UiDom::toggle_auto_mode(Self) -> Unit
+pub fn UiDom::toggle_skip_mode(Self) -> Unit
 pub fn UiDom::typewriter_visible_text(Self) -> StringView
 
 type UiViewModel
