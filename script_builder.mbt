@@ -102,8 +102,30 @@ pub fn[T] ScriptBuilder::jump_if(
 }
 
 ///|
+/// Emits a two-way branch:
+/// - `JumpIf(then_label, predicate)`
+/// - `Jump(else_label)`
+pub fn[T] ScriptBuilder::branch(
+  self : ScriptBuilder[T],
+  then_label : String,
+  else_label : String,
+  predicate : ScriptPredicate[T],
+) -> Unit {
+  self.instructions.push(JumpIf(then_label, predicate))
+  self.instructions.push(Jump(else_label))
+}
+
+///|
 pub fn[T] ScriptBuilder::wait(self : ScriptBuilder[T], ms : Int) -> Unit {
   self.instructions.push(Wait(ms))
+}
+
+///|
+pub fn[T] ScriptBuilder::narrate(
+  self : ScriptBuilder[T],
+  text : String,
+) -> Unit {
+  self.instructions.push(Say("", text))
 }
 
 ///|
@@ -113,6 +135,17 @@ pub fn[T] ScriptBuilder::say(
   text : String,
 ) -> Unit {
   self.instructions.push(Say(speaker, text))
+}
+
+///|
+pub fn[T] ScriptBuilder::menu(
+  self : ScriptBuilder[T],
+  speaker : String,
+  prompt : String,
+  options : Array[ChoiceOption],
+) -> Unit {
+  self.instructions.push(Say(speaker, prompt))
+  self.instructions.push(Choice(options))
 }
 
 ///|
@@ -133,11 +166,11 @@ pub fn[T] ScriptBuilder::run_code(
 }
 
 ///|
-pub fn[T] ScriptBuilder::show_background(
+pub fn[T] ScriptBuilder::scene(
   self : ScriptBuilder[T],
-  id : String,
+  background_id : String,
 ) -> Unit {
-  self.instructions.push(ShowBackground(id))
+  self.instructions.push(ShowBackground(background_id))
 }
 
 ///|
@@ -147,6 +180,17 @@ pub fn[T] ScriptBuilder::show_figure(
   placement : FigurePlacement,
 ) -> Unit {
   self.instructions.push(ShowFigure(id, placement))
+}
+
+///|
+pub fn[T] ScriptBuilder::show_figure_at(
+  self : ScriptBuilder[T],
+  id : String,
+  pos : Position,
+  layer? : Int = 0,
+  opacity? : Double = 1.0,
+) -> Unit {
+  self.instructions.push(ShowFigure(id, { pos, layer, opacity }))
 }
 
 ///|
@@ -183,6 +227,36 @@ pub fn[T] ScriptBuilder::animate(
   spec : AnimationSpec,
 ) -> Unit {
   self.instructions.push(Animate(target, spec))
+}
+
+///|
+pub fn[T] ScriptBuilder::animate_opacity(
+  self : ScriptBuilder[T],
+  target : String,
+  duration_ms : Int,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(Animate(target, anim_opacity(duration_ms, easing~)))
+}
+
+///|
+pub fn[T] ScriptBuilder::animate_position(
+  self : ScriptBuilder[T],
+  target : String,
+  duration_ms : Int,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(Animate(target, anim_position(duration_ms, easing~)))
+}
+
+///|
+pub fn[T] ScriptBuilder::animate_scale(
+  self : ScriptBuilder[T],
+  target : String,
+  duration_ms : Int,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(Animate(target, anim_scale(duration_ms, easing~)))
 }
 
 ///|

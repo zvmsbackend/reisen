@@ -49,3 +49,62 @@ test "animation helpers produce expected animation specs" {
     easing: EaseOut,
   })
 }
+
+///|
+test "branch helper emits jump_if and jump instructions" {
+  let built : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.branch("then", "else", _ => true)
+    builder.label("then")
+    builder.label("else")
+  })
+
+  assert_eq(built.instructions.length(), 5)
+  assert_true(built.instructions[1] is JumpIf("then", _))
+  assert_true(built.instructions[2] is Jump("else"))
+}
+
+///|
+test "menu helper emits say then choice" {
+  let built : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.menu("narrator", "Pick one", [
+      option("a", "A", "label_a"),
+      option("b", "B", "label_b"),
+    ])
+  })
+
+  assert_true(built.instructions[1] is Say("narrator", "Pick one"))
+  assert_true(built.instructions[2] is Choice(_))
+}
+
+///|
+test "scene/figure and animation shorthand helpers emit expected instructions" {
+  let built : Script[Int] = script(builder => {
+    builder.scene("bg_school")
+    builder.show_figure_at("alice", Left, layer=2, opacity=0.7)
+    builder.animate_opacity("alice", 120)
+    builder.animate_position("alice", 180, easing=EaseInOut)
+    builder.animate_scale("alice", 240, easing=EaseOut)
+    builder.narrate("done")
+  })
+
+  assert_true(built.instructions[0] is ShowBackground("bg_school"))
+  assert_true(
+    built.instructions[1]
+    is ShowFigure("alice", { pos: Left, layer: 2, opacity: 0.7 }),
+  )
+  assert_true(
+    built.instructions[2]
+    is Animate("alice", { prop: Opacity, duration_ms: 120, easing: Linear }),
+  )
+  assert_true(
+    built.instructions[3]
+    is Animate("alice", { prop: Position, duration_ms: 180, easing: EaseInOut }),
+  )
+  assert_true(
+    built.instructions[4]
+    is Animate("alice", { prop: Scale, duration_ms: 240, easing: EaseOut }),
+  )
+  assert_true(built.instructions[5] is Say("", "done"))
+}

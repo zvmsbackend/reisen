@@ -206,19 +206,26 @@ pub struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
 }
 pub fn[T] ScriptBuilder::animate(Self[T], String, AnimationSpec) -> Unit
+pub fn[T] ScriptBuilder::animate_opacity(Self[T], String, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::animate_position(Self[T], String, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::animate_scale(Self[T], String, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::branch(Self[T], String, String, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], String, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
+pub fn[T] ScriptBuilder::narrate(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
 pub fn[T] ScriptBuilder::play_music(Self[T], String, Bool) -> Unit
 pub fn[T] ScriptBuilder::play_sfx(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::run_code(Self[T], String, (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String) -> Unit
-pub fn[T] ScriptBuilder::show_background(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::scene(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], String, FigurePlacement) -> Unit
+pub fn[T] ScriptBuilder::show_figure_at(Self[T], String, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 
