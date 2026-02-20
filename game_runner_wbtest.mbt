@@ -15,9 +15,11 @@ test "runner drives script and choice flow" {
   })
 
   let runtime = Runtime::new(compiled, GameState::new(0))
-  let runner = GameRunner::new(Director::new(runtime), UiDom::new("app"))
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(Director::new(runtime), ui)
 
   assert_eq(runner.step(), Said("guide", "Pick"))
+  ui.complete_typewriter()
   assert_true(runner.step() is ChoicePrompt(_))
   assert_eq(runner.submit_choice("right"), Said("guide", "R"))
 }
@@ -64,12 +66,14 @@ test "runner tick returns false when script ends" {
     builder.label("start")
     builder.say("narrator", "only line")
   })
+  let ui = UiDom::new("app")
   let runner = GameRunner::new(
     Director::new(Runtime::new(compiled, GameState::new(0))),
-    UiDom::new("app"),
+    ui,
   )
 
   assert_true(runner.tick())
+  ui.complete_typewriter()
   assert_true(!runner.tick())
 }
 

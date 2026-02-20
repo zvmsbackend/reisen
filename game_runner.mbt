@@ -55,17 +55,51 @@ pub fn[T] GameRunner::step(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
-  let event = if !self.director.choices().is_empty() {
+  if !self.director.choices().is_empty() {
     match self.ui.take_selected_choice() {
-      Some(choice_id) => self.director.choose(choice_id)
-      None => ChoicePrompt(self.director.choices())
+      Some(choice_id) => {
+        let event = self.director.choose(choice_id)
+        (self.event_hook)(event)
+        self.render_ui()
+        return event
+      }
+      None => {
+        let event = ChoicePrompt(self.director.choices())
+        (self.event_hook)(event)
+        self.render_ui()
+        return event
+      }
     }
-  } else {
-    self.director.step(elapsed_ms~)
   }
+  if self.director.dialog().is_none() {
+    let event = self.director.step(elapsed_ms~)
+    (self.event_hook)(event)
+    self.render_ui()
+    return event
+  }
+  let is_typewriter_done = self.ui.is_typewriter_done()
+  if not(is_typewriter_done) {
+    if self.ui.check_typewriter_click() {
+      self.ui.complete_typewriter()
+    } else {
+      ignore(self.ui.advance_typewriter(elapsed_ms~))
+    }
+    let event = self.current_dialog_event()
+    self.render_ui()
+    return event
+  }
+  let event = self.director.step(elapsed_ms~)
   (self.event_hook)(event)
   self.render_ui()
   event
+}
+
+///|
+fn[T] GameRunner::current_dialog_event(self : GameRunner[T]) -> RuntimeEvent {
+  match self.director.dialog() {
+    Some(line) => Said(line.speaker, line.text)
+    None => Noop
+  }
 }
 
 ///|
@@ -95,6 +129,11 @@ pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool 
 ///|
 pub fn[T] GameRunner::director(self : GameRunner[T]) -> Director[T] {
   self.director
+}
+
+///|
+pub fn[T] GameRunner::complete_typewriter(self : GameRunner[T]) -> Unit {
+  self.ui.complete_typewriter()
 }
 
 ///|

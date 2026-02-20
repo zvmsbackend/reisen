@@ -19,11 +19,20 @@ struct UiViewModel {
 struct UiDom {
   root_id : String
   mut text_speed : Int
+  mut typewriter_text : String
+  mut typewriter_visible : Int
+  mut typewriter_last_update_ms : Int
 }
 
 ///|
 fn UiDom::new(root_id : String) -> UiDom {
-  { root_id, text_speed: 50 }
+  {
+    root_id,
+    text_speed: 50,
+    typewriter_text: "",
+    typewriter_visible: 0,
+    typewriter_last_update_ms: 0,
+  }
 }
 
 ///|
@@ -40,6 +49,49 @@ pub fn UiDom::text_speed_ms_per_char(self : UiDom) -> Int {
   } else {
     2000 / speed
   }
+}
+
+///|
+pub fn UiDom::start_typewriter(self : UiDom, text : String) -> Unit {
+  self.typewriter_text = text
+  self.typewriter_visible = 0
+  self.typewriter_last_update_ms = 0
+}
+
+///|
+pub fn UiDom::is_typewriter_done(self : UiDom) -> Bool {
+  self.typewriter_visible >= self.typewriter_text.length()
+}
+
+///|
+pub fn UiDom::typewriter_visible_text(self : UiDom) -> StringView {
+  self.typewriter_text[:self.typewriter_visible] catch {
+    _ => self.typewriter_text
+  }
+}
+
+///|
+pub fn UiDom::advance_typewriter(self : UiDom, elapsed_ms~ : Int) -> Bool {
+  if self.is_typewriter_done() {
+    return true
+  }
+  self.typewriter_last_update_ms += elapsed_ms
+  let ms_per_char = self.text_speed_ms_per_char()
+  if self.typewriter_last_update_ms >= ms_per_char {
+    let chars_to_add = self.typewriter_last_update_ms / ms_per_char
+    self.typewriter_last_update_ms = self.typewriter_last_update_ms %
+      ms_per_char
+    self.typewriter_visible += chars_to_add
+    if self.typewriter_visible > self.typewriter_text.length() {
+      self.typewriter_visible = self.typewriter_text.length()
+    }
+  }
+  self.is_typewriter_done()
+}
+
+///|
+pub fn UiDom::complete_typewriter(self : UiDom) -> Unit {
+  self.typewriter_visible = self.typewriter_text.length()
 }
 
 ///|
@@ -106,6 +158,38 @@ extern "js" fn dom_take_selected_choice(
   #| }
 
 ///|
+extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   let dialog = root.querySelector('[data-reisen="dialog"]');
+  #|   if (!dialog) {
+  #|     dialog = doc.createElement('div');
+  #|     dialog.setAttribute('data-reisen', 'dialog');
+  #|     root.appendChild(dialog);
+  #|   }
+  #|   const clickHandler = (e) => {
+  #|     root.dataset.reisenTypewriterClick = '1';
+  #|   };
+  #|   dialog.removeEventListener('click', clickHandler);
+  #|   dialog.addEventListener('click', clickHandler);
+  #| }
+
+///|
+extern "js" fn dom_take_typewriter_click(root_id : String) -> Bool =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return false;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return false;
+  #|   const clicked = root.dataset.reisenTypewriterClick === '1';
+  #|   if (clicked) delete root.dataset.reisenTypewriterClick;
+  #|   return clicked;
+  #| }
+
+///|
 fn[T] ui_view_from_director(director : Director[T]) -> UiViewModel {
   let (speaker, text) = match director.dialog() {
     Some(line) => (line.speaker, line.text)
@@ -119,12 +203,28 @@ fn[T] ui_view_from_director(director : Director[T]) -> UiViewModel {
 
 ///|
 fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
+  if view.text != self.typewriter_text && view.text != "" {
+    self.start_typewriter(view.text)
+  }
+  dom_setup_typewriter_click(self.root_id)
+  let display_text = if view.text == "" {
+    ""
+  } else if self.is_typewriter_done() {
+    self.typewriter_text
+  } else {
+    self.typewriter_visible_text().to_string()
+  }
   let ids = view.choices.map(c => c.id)
   let texts = view.choices.map(c => c.text)
-  dom_render(self.root_id, view.speaker, view.text, ids, texts)
+  dom_render(self.root_id, view.speaker, display_text, ids, texts)
 }
 
 ///|
 fn UiDom::take_selected_choice(self : UiDom) -> String? {
   dom_take_selected_choice(self.root_id).to_option()
+}
+
+///|
+fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
+  dom_take_typewriter_click(self.root_id)
 }

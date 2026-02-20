@@ -242,6 +242,7 @@ pub impl Show for FigurePlacement
 
 type GameRunner[T]
 pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit
+pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
 pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> Self[T]
@@ -390,8 +391,13 @@ pub impl Eq for UiChoiceView
 pub impl Show for UiChoiceView
 
 type UiDom
+pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
+pub fn UiDom::complete_typewriter(Self) -> Unit
+pub fn UiDom::is_typewriter_done(Self) -> Bool
 pub fn UiDom::set_text_speed(Self, Int) -> Unit
+pub fn UiDom::start_typewriter(Self, String) -> Unit
 pub fn UiDom::text_speed_ms_per_char(Self) -> Int
+pub fn UiDom::typewriter_visible_text(Self) -> StringView
 
 type UiViewModel
 pub impl Eq for UiViewModel
