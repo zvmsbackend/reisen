@@ -5,15 +5,19 @@
 pub type RenderSyncHook[T] = (Director[T]) -> Unit
 
 ///|
+pub type EventHook = (RuntimeEvent) -> Unit
+
+///|
 struct GameRunner[T] {
   director : Director[T]
   ui : UiDom
   render_sync : RenderSyncHook[T]
+  event_hook : EventHook
 }
 
 ///|
 pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
-  { director, ui, render_sync: _ => () }
+  { director, ui, render_sync: _ => (), event_hook: _ => () }
 }
 
 ///|
@@ -22,7 +26,17 @@ pub fn[T] GameRunner::new_with_render_sync(
   ui : UiDom,
   render_sync : RenderSyncHook[T],
 ) -> GameRunner[T] {
-  { director, ui, render_sync }
+  { director, ui, render_sync, event_hook: _ => () }
+}
+
+///|
+pub fn[T] GameRunner::new_with_hooks(
+  director : Director[T],
+  ui : UiDom,
+  render_sync : RenderSyncHook[T],
+  event_hook : EventHook,
+) -> GameRunner[T] {
+  { director, ui, render_sync, event_hook }
 }
 
 ///|
@@ -49,6 +63,7 @@ pub fn[T] GameRunner::step(
   } else {
     self.director.step(elapsed_ms~)
   }
+  (self.event_hook)(event)
   self.render_ui()
   event
 }
@@ -59,6 +74,7 @@ pub fn[T] GameRunner::submit_choice(
   choice_id : String,
 ) -> RuntimeEvent raise ScriptRuntimeError {
   let event = self.director.choose(choice_id)
+  (self.event_hook)(event)
   self.render_ui()
   event
 }

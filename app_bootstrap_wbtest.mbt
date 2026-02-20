@@ -20,6 +20,25 @@ test "start_game_with_render_sync wires runner and performs initial sync" {
 }
 
 ///|
+test "start_game_with_hooks wires event hook" {
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("narrator", "hello")
+  })
+  let events : Array[RuntimeEvent] = []
+  let runner = start_game_with_hooks(
+    script,
+    GameState::new(0),
+    "app",
+    _ => (),
+    event => events.push(event),
+  )
+
+  assert_eq(runner.step(), Said("narrator", "hello"))
+  assert_eq(events.length(), 1)
+}
+
+///|
 test "validate_script_image_assets succeeds when all ids exist" {
   let script : Script[Int] = script(builder => {
     builder.label("start")

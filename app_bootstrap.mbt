@@ -63,12 +63,24 @@ pub fn[T] start_game_with_render_sync(
   ui_root_id : String,
   render_sync : RenderSyncHook[T],
 ) -> GameRunner[T] {
+  start_game_with_hooks(script, state, ui_root_id, render_sync, _ => ())
+}
+
+///|
+pub fn[T] start_game_with_hooks(
+  script : Script[T],
+  state : GameState[T],
+  ui_root_id : String,
+  render_sync : RenderSyncHook[T],
+  event_hook : EventHook,
+) -> GameRunner[T] {
   let runtime = Runtime::new(script, state)
   let director = Director::new(runtime)
-  let runner = GameRunner::new_with_render_sync(
+  let runner = GameRunner::new_with_hooks(
     director,
     UiDom::new(ui_root_id),
     render_sync,
+    event_hook,
   )
   runner.sync_ui()
   runner
@@ -90,4 +102,29 @@ pub fn[T] start_game_webgl(
     gl, store, viewport_w, viewport_h, presenter_config,
   )
   start_game_with_render_sync(script, state, ui_root_id, render_sync)
+}
+
+///|
+pub fn[T] start_game_webgl_with_audio(
+  script : Script[T],
+  state : GameState[T],
+  ui_root_id : String,
+  gl : WebGL,
+  store : AssetStore,
+  viewport_w : Double,
+  viewport_h : Double,
+  audio : AudioDom,
+  presenter_config? : WebglPresenterConfig = webgl_presenter_default_config(),
+) -> GameRunner[T] raise {
+  validate_script_assets(script, store)
+  let render_sync = make_webgl_render_sync_hook_with_config(
+    gl, store, viewport_w, viewport_h, presenter_config,
+  )
+  start_game_with_hooks(
+    script,
+    state,
+    ui_root_id,
+    render_sync,
+    audio.as_event_hook(),
+  )
 }

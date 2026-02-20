@@ -72,3 +72,21 @@ test "runner tick returns false when script ends" {
   assert_true(runner.tick())
   assert_true(!runner.tick())
 }
+
+///|
+test "runner event hook receives emitted events" {
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "t")
+  })
+  let seen : Array[RuntimeEvent] = []
+  let runner = GameRunner::new_with_hooks(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    UiDom::new("app"),
+    _ => (),
+    event => seen.push(event),
+  )
+  assert_eq(runner.step(), Said("n", "t"))
+  assert_eq(seen.length(), 1)
+  assert_eq(seen[0], Said("n", "t"))
+}

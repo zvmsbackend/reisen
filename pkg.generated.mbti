@@ -13,6 +13,8 @@ pub fn anim_position(Int, easing? : Easing) -> AnimationSpec
 
 pub fn anim_scale(Int, easing? : Easing) -> AnimationSpec
 
+pub fn audio_command_from_event(RuntimeEvent) -> AudioCommand
+
 pub fn[T] build_label_index(Array[Instruction[T]]) -> Map[String, Int] raise ScriptBuildError
 
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
@@ -52,6 +54,10 @@ pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
 pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
+
+pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, AudioDom, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
+
+pub fn[T] start_game_with_hooks(Script[T], GameState[T], String, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> GameRunner[T]
 
 pub fn[T] start_game_with_render_sync(Script[T], GameState[T], String, (Director[T]) -> Unit) -> GameRunner[T]
 
@@ -114,6 +120,22 @@ pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
 pub fn AssetStore::put_image(Self, String, Image) -> Unit
 pub fn AssetStore::put_text(Self, String, String) -> Unit
 
+pub enum AudioCommand {
+  Noop
+  PlayMusic(String, Bool)
+  StopMusic
+  PlaySfx(String)
+}
+pub impl Eq for AudioCommand
+pub impl Show for AudioCommand
+
+type AudioDom
+pub fn AudioDom::as_event_hook(Self) -> (RuntimeEvent) -> Unit
+pub fn AudioDom::handle_event(Self, RuntimeEvent) -> Unit
+pub fn AudioDom::new() -> Self
+pub fn AudioDom::register(Self, String, String) -> Unit
+pub fn AudioDom::register_many(Self, Array[(String, String)]) -> Unit
+
 type Canvas
 pub fn Canvas::get_webgl2_context(Self) -> WebGL?
 pub fn Canvas::get_webgl_context(Self) -> WebGL?
@@ -169,6 +191,7 @@ pub impl Show for FigurePlacement
 type GameRunner[T]
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
+pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> Unit) -> Self[T]
 pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -367,6 +390,8 @@ pub impl Eq for WebglPresenterConfig
 pub impl Show for WebglPresenterConfig
 
 // Type aliases
+pub type EventHook = (RuntimeEvent) -> Unit
+
 pub type RenderSyncHook[T] = (Director[T]) -> Unit
 
 pub type ScriptHook[T] = (GameState[T]) -> Unit
