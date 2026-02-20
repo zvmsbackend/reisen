@@ -45,6 +45,8 @@ pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
+pub fn[T] ui_view_from_director(Director[T]) -> UiViewModel
+
 // Errors
 pub(all) suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
@@ -254,7 +256,29 @@ pub fn[T] ScriptBuilder::show_figure_at(Self[T], String, Position, layer? : Int,
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 
+pub struct UiChoiceView {
+  id : String
+  text : String
+}
+pub impl Eq for UiChoiceView
+pub impl Show for UiChoiceView
+
+pub struct UiDom {
+  root_id : String
+}
+pub fn UiDom::new(String) -> Self
+pub fn UiDom::render(Self, UiViewModel) -> Unit
+pub fn UiDom::take_selected_choice(Self) -> String?
+
 type UiState
+
+pub struct UiViewModel {
+  speaker : String
+  text : String
+  choices : Array[UiChoiceView]
+}
+pub impl Eq for UiViewModel
+pub impl Show for UiViewModel
 
 type WebGL
 pub fn WebGL::active_texture(Self, Int) -> Unit
