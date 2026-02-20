@@ -37,6 +37,79 @@ test "start_game supports optional hooks" {
 }
 
 ///|
+test "start_game_from_save resumes script" {
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "a")
+    builder.say("n", "b")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), Said("n", "a"))
+  let saved = runtime.save_json()
+
+  let runner = start_game_from_save(script, saved, "app")
+  assert_eq(runner.step(), Said("n", "b"))
+}
+
+///|
+test "save_runner_to_slot and start_game_from_slot roundtrip" {
+  save_slot_delete("wb_slot_roundtrip")
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "a")
+    builder.say("n", "b")
+  })
+
+  let runner = start_game(script, GameState::new(0), "app")
+  assert_eq(runner.step(), Said("n", "a"))
+  save_runner_to_slot(runner, "wb_slot_roundtrip")
+
+  let resumed = start_game_from_slot(script, "wb_slot_roundtrip", "app")
+  assert_eq(resumed.step(), Said("n", "b"))
+}
+
+///|
+test "save_runner_to_slot_with_meta writes slot metadata" {
+  save_slot_delete("wb_slot_meta")
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "line")
+  })
+  let runner = start_game(script, GameState::new(0), "app")
+  save_runner_to_slot_with_meta(
+    runner,
+    "wb_slot_meta",
+    title="Slot 1",
+    preview="line",
+  )
+
+  let meta = save_slot_read_meta("wb_slot_meta")
+  assert_true(meta is Some(_))
+  match meta {
+    Some(m) => {
+      assert_eq(m.title, "Slot 1")
+      assert_eq(m.preview, "line")
+    }
+    None => fail("missing slot metadata")
+  }
+}
+
+///|
+test "start_game_from_slot raises on missing slot" {
+  save_slot_delete("wb_slot_missing")
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "hello")
+  })
+  let result : Result[GameRunner[Int], Error] = try? start_game_from_slot(
+    script, "wb_slot_missing", "app",
+  )
+  assert_true(
+    result is Err(AppBootstrapError::MissingSaveSlot(slot="wb_slot_missing")),
+  )
+}
+
+///|
 test "validate_script_image_assets succeeds when all ids exist" {
   let script : Script[Int] = script(builder => {
     builder.label("start")

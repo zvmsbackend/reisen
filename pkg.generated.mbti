@@ -17,6 +17,8 @@ pub fn audio_command_from_event(RuntimeEvent) -> AudioCommand
 
 pub fn[T] build_label_index(Array[Instruction[T]]) -> Map[String, Int] raise ScriptBuildError
 
+pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
+
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
 
 pub fn get_canvas_by_id(String) -> Canvas?
@@ -49,11 +51,37 @@ pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn[T] run_browser_loop(GameRunner[T]) -> Unit
 
+pub fn[T : ToJson] save_director_to_slot(Director[T], String) -> Unit
+
+pub fn[T : ToJson] save_runner_to_slot(GameRunner[T], String) -> Unit
+
+pub fn[T : ToJson] save_runner_to_slot_with_meta(GameRunner[T], String, title? : String, preview? : String) -> Unit
+
+pub fn save_slot_delete(String) -> Unit
+
+pub fn save_slot_entries() -> Array[SaveSlotEntry]
+
+pub fn save_slot_list() -> Array[String]
+
+pub fn save_slot_meta(String, String, updated_at_ms? : Double) -> SaveSlotMeta
+
+pub fn save_slot_read(String) -> String?
+
+pub fn save_slot_read_meta(String) -> SaveSlotMeta?
+
+pub fn save_slot_write(String, String) -> Unit
+
+pub fn save_slot_write_meta(String, SaveSlotMeta) -> Unit
+
 pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
 pub fn[T] start_game(Script[T], GameState[T], String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T]
+
+pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T] raise
+
+pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T] raise
 
 pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
 
@@ -73,6 +101,7 @@ pub fn webgl_presenter_default_config() -> WebglPresenterConfig
 pub suberror AppBootstrapError {
   MissingImageAsset(id~ : String)
   MissingAudioAsset(id~ : String)
+  MissingSaveSlot(slot~ : String)
 }
 
 pub(all) suberror ScriptBuildError {
@@ -167,6 +196,7 @@ pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
+pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 
 pub enum Easing {
@@ -271,6 +301,23 @@ pub enum RuntimeEvent {
 }
 pub impl Eq for RuntimeEvent
 pub impl Show for RuntimeEvent
+
+pub struct SaveSlotEntry {
+  slot : String
+  meta : SaveSlotMeta?
+}
+pub impl Eq for SaveSlotEntry
+pub impl Show for SaveSlotEntry
+
+pub struct SaveSlotMeta {
+  title : String
+  preview : String
+  updated_at_ms : Double
+}
+pub impl Eq for SaveSlotMeta
+pub impl Show for SaveSlotMeta
+pub impl ToJson for SaveSlotMeta
+pub impl @json.FromJson for SaveSlotMeta
 
 pub struct Script[T] {
   instructions : Array[Instruction[T]]

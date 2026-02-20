@@ -127,3 +127,16 @@ pub fn[T] Director::animations(
 ) -> Array[(String, AnimationSpec)] {
   self.render.animations
 }
+
+///|
+pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
+  self.runtime.save_json()
+}
+
+///|
+pub fn[T : FromJson] director_from_save_json(
+  script : Script[T],
+  save_json : String,
+) -> Director[T] raise {
+  Director::new(Runtime::from_json_string(script, save_json))
+}

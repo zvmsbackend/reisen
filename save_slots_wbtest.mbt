@@ -1,0 +1,44 @@
+///|
+test "save slots write read list delete" {
+  save_slot_delete("wb_a")
+  save_slot_delete("wb_b")
+
+  save_slot_write("wb_a", "A")
+  save_slot_write("wb_b", "B")
+
+  assert_eq(save_slot_read("wb_a"), Some("A"))
+  assert_eq(save_slot_read("wb_b"), Some("B"))
+
+  let slots = save_slot_list()
+  assert_true(slots.contains("wb_a"))
+  assert_true(slots.contains("wb_b"))
+
+  save_slot_delete("wb_a")
+  assert_eq(save_slot_read("wb_a"), None)
+}
+
+///|
+test "save slot metadata roundtrip and entries" {
+  save_slot_delete("wb_meta")
+  save_slot_write("wb_meta", "STATE")
+  let meta = save_slot_meta("Prologue", "Wake up in shrine", updated_at_ms=1.0)
+  save_slot_write_meta("wb_meta", meta)
+
+  assert_eq(save_slot_read_meta("wb_meta"), Some(meta))
+  let entries = save_slot_entries()
+  assert_true(entries.contains({ slot: "wb_meta", meta: Some(meta) }))
+}
+
+///|
+test "save slot delete also removes metadata" {
+  save_slot_delete("wb_meta_delete")
+  save_slot_write("wb_meta_delete", "STATE")
+  save_slot_write_meta(
+    "wb_meta_delete",
+    save_slot_meta("T", "P", updated_at_ms=2.0),
+  )
+
+  save_slot_delete("wb_meta_delete")
+  assert_eq(save_slot_read("wb_meta_delete"), None)
+  assert_eq(save_slot_read_meta("wb_meta_delete"), None)
+}

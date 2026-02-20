@@ -70,3 +70,19 @@ test "director branch false path through choose" {
   assert_eq(director.choose("right"), Said("guide", "R"))
   assert_eq(director.dialog(), Some({ speaker: "guide", text: "R" }))
 }
+
+///|
+test "director save json resumes runtime position" {
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "a")
+    builder.say("n", "b")
+  })
+
+  let director = Director::new(Runtime::new(script, GameState::new(0)))
+  assert_eq(director.step(), Said("n", "a"))
+  let saved = director.save_json()
+
+  let restored : Director[Int] = director_from_save_json(script, saved)
+  assert_eq(restored.step(), Said("n", "b"))
+}

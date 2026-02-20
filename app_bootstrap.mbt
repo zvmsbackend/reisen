@@ -5,6 +5,7 @@
 pub suberror AppBootstrapError {
   MissingImageAsset(id~ : String)
   MissingAudioAsset(id~ : String)
+  MissingSaveSlot(slot~ : String)
 }
 
 ///|
@@ -74,6 +75,73 @@ pub fn[T] start_game(
   )
   runner.sync_ui()
   runner
+}
+
+///|
+pub fn[T : FromJson] start_game_from_save(
+  script : Script[T],
+  save_json : String,
+  ui_root_id : String,
+  render_sync? : RenderSyncHook[T] = _ => (),
+  event_hook? : EventHook = _ => (),
+) -> GameRunner[T] raise {
+  let director = director_from_save_json(script, save_json)
+  let runner = GameRunner::new_with_hooks(
+    director,
+    UiDom::new(ui_root_id),
+    render_sync,
+    event_hook,
+  )
+  runner.sync_ui()
+  runner
+}
+
+///|
+pub fn[T : ToJson] save_director_to_slot(
+  director : Director[T],
+  slot : String,
+) -> Unit {
+  save_slot_write(slot, director.save_json())
+}
+
+///|
+pub fn[T : ToJson] save_runner_to_slot(
+  runner : GameRunner[T],
+  slot : String,
+) -> Unit {
+  save_director_to_slot(runner.director(), slot)
+}
+
+///|
+pub fn[T : ToJson] save_runner_to_slot_with_meta(
+  runner : GameRunner[T],
+  slot : String,
+  title? : String = "",
+  preview? : String = "",
+) -> Unit {
+  save_runner_to_slot(runner, slot)
+  save_slot_write_meta(slot, save_slot_meta(title, preview))
+}
+
+///|
+pub fn[T : FromJson] start_game_from_slot(
+  script : Script[T],
+  slot : String,
+  ui_root_id : String,
+  render_sync? : RenderSyncHook[T] = _ => (),
+  event_hook? : EventHook = _ => (),
+) -> GameRunner[T] raise {
+  match save_slot_read(slot) {
+    Some(save_json) =>
+      start_game_from_save(
+        script,
+        save_json,
+        ui_root_id,
+        render_sync~,
+        event_hook~,
+      )
+    None => raise AppBootstrapError::MissingSaveSlot(slot~)
+  }
 }
 
 ///|
