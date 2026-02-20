@@ -53,13 +53,11 @@ pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
+pub fn[T] start_game(Script[T], GameState[T], String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T]
+
 pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
 
 pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, AudioDom, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
-
-pub fn[T] start_game_with_hooks(Script[T], GameState[T], String, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> GameRunner[T]
-
-pub fn[T] start_game_with_render_sync(Script[T], GameState[T], String, (Director[T]) -> Unit) -> GameRunner[T]
 
 pub fn[T] ui_view_from_director(Director[T]) -> UiViewModel
 

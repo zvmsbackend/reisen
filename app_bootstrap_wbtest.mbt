@@ -1,17 +1,12 @@
 ///|
-test "start_game_with_render_sync wires runner and performs initial sync" {
+test "start_game wires runner and performs initial sync" {
   let script : Script[Int] = script(builder => {
     builder.label("start")
     builder.say("narrator", "hello")
   })
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)
-  let runner = start_game_with_render_sync(
-    script,
-    GameState::new(0),
-    "app",
-    hook,
-  )
+  let runner = start_game(script, GameState::new(0), "app", render_sync=hook)
 
   // Initial sync in bootstrap.
   assert_eq(calls.length(), 1)
@@ -20,21 +15,24 @@ test "start_game_with_render_sync wires runner and performs initial sync" {
 }
 
 ///|
-test "start_game_with_hooks wires event hook" {
+test "start_game supports optional hooks" {
   let script : Script[Int] = script(builder => {
     builder.label("start")
     builder.say("narrator", "hello")
   })
+  let calls : Array[Int] = []
   let events : Array[RuntimeEvent] = []
-  let runner = start_game_with_hooks(
+  let runner = start_game(
     script,
     GameState::new(0),
     "app",
-    _ => (),
-    event => events.push(event),
+    render_sync=_ => calls.push(1),
+    event_hook=event => events.push(event),
   )
 
+  assert_eq(calls.length(), 1)
   assert_eq(runner.step(), Said("narrator", "hello"))
+  assert_eq(calls.length(), 2)
   assert_eq(events.length(), 1)
 }
 

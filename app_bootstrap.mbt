@@ -57,22 +57,12 @@ pub fn[T] validate_script_assets(
 }
 
 ///|
-pub fn[T] start_game_with_render_sync(
+pub fn[T] start_game(
   script : Script[T],
   state : GameState[T],
   ui_root_id : String,
-  render_sync : RenderSyncHook[T],
-) -> GameRunner[T] {
-  start_game_with_hooks(script, state, ui_root_id, render_sync, _ => ())
-}
-
-///|
-pub fn[T] start_game_with_hooks(
-  script : Script[T],
-  state : GameState[T],
-  ui_root_id : String,
-  render_sync : RenderSyncHook[T],
-  event_hook : EventHook,
+  render_sync? : RenderSyncHook[T] = _ => (),
+  event_hook? : EventHook = _ => (),
 ) -> GameRunner[T] {
   let runtime = Runtime::new(script, state)
   let director = Director::new(runtime)
@@ -101,7 +91,7 @@ pub fn[T] start_game_webgl(
   let render_sync = make_webgl_render_sync_hook_with_config(
     gl, store, viewport_w, viewport_h, presenter_config,
   )
-  start_game_with_render_sync(script, state, ui_root_id, render_sync)
+  start_game(script, state, ui_root_id, render_sync~)
 }
 
 ///|
@@ -120,11 +110,11 @@ pub fn[T] start_game_webgl_with_audio(
   let render_sync = make_webgl_render_sync_hook_with_config(
     gl, store, viewport_w, viewport_h, presenter_config,
   )
-  start_game_with_hooks(
+  start_game(
     script,
     state,
     ui_root_id,
-    render_sync,
-    audio.as_event_hook(),
+    render_sync~,
+    event_hook=audio.as_event_hook(),
   )
 }
