@@ -96,3 +96,11 @@ pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool 
 pub fn[T] GameRunner::director(self : GameRunner[T]) -> Director[T] {
   self.director
 }
+
+///|
+pub fn[T] GameRunner::apply_settings(
+  self : GameRunner[T],
+  settings : GameSettings,
+) -> Unit {
+  self.ui.set_text_speed(settings.text_speed)
+}

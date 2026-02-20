@@ -99,15 +99,15 @@ pub fn settings_write(GameSettings) -> Unit
 
 pub fn settings_write_in(String, GameSettings) -> Unit
 
-pub fn[T] start_game(Script[T], GameState[T], String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T]
+pub fn[T] start_game(Script[T], GameState[T], String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, settings? : GameSettings) -> GameRunner[T]
 
-pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T] raise
+pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, settings? : GameSettings) -> GameRunner[T] raise
 
-pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String) -> GameRunner[T] raise
+pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String, settings? : GameSettings) -> GameRunner[T] raise
 
-pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
+pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
 
-pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, AudioDom, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
+pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, AudioDom, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
 
 pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
 
@@ -241,6 +241,7 @@ pub impl Eq for FigurePlacement
 pub impl Show for FigurePlacement
 
 type GameRunner[T]
+pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
 pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> Self[T]

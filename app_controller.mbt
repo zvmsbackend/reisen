@@ -63,6 +63,7 @@ fn[T : FromJson] AppController::handle_menu_action(
   self : AppController[T],
   action : StartMenuAction,
 ) -> Unit {
+  let settings = settings_read_in(self.save_ns)
   match action {
     NoAction => ()
     NewGame => {
@@ -73,6 +74,7 @@ fn[T : FromJson] AppController::handle_menu_action(
           self.ui_root_id,
           render_sync=self.render_sync,
           event_hook=self.event_hook,
+          settings?,
         ),
       )
       self.menu.clear()
