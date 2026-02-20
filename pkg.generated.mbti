@@ -51,6 +51,8 @@ pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
 
+pub fn[T : @json.FromJson] run_browser_app_loop(AppController[T]) -> Unit
+
 pub fn[T] run_browser_loop(GameRunner[T]) -> Unit
 
 pub fn[T : ToJson] save_director_to_slot(Director[T], String, save_namespace? : String) -> Unit
@@ -149,6 +151,19 @@ pub struct AnimationSpec {
 }
 pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
+
+type AppController[T]
+pub fn[T : @json.FromJson] AppController::handle_menu_action(Self[T], StartMenuAction) -> Unit
+pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] AppController::phase(Self[T]) -> AppPhase
+pub fn[T : @json.FromJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
+
+pub enum AppPhase {
+  StartMenu
+  InGame
+}
+pub impl Eq for AppPhase
+pub impl Show for AppPhase
 
 pub struct AssetStore {
   images : Map[String, Image]
@@ -367,20 +382,13 @@ pub fn[T] ScriptBuilder::show_figure_at(Self[T], String, Position, layer? : Int,
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 
-pub struct StartMenu {
-  root_id : String
-  save_ns : String
-}
+type StartMenu
+pub fn StartMenu::clear(Self) -> Unit
 pub fn StartMenu::new(String, save_namespace? : String) -> Self
 pub fn StartMenu::render(Self) -> Unit
 pub fn StartMenu::take_action(Self) -> StartMenuAction
 
-pub enum StartMenuAction {
-  NoAction
-  NewGame
-  Continue(String)
-  LoadSlot(String)
-}
+type StartMenuAction
 pub impl Eq for StartMenuAction
 pub impl Show for StartMenuAction
 

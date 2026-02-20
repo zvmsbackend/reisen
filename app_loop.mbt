@@ -20,3 +20,8 @@ extern "js" fn run_browser_loop_impl(on_tick : (Int) -> Bool) -> Unit =
 pub fn[T] run_browser_loop(runner : GameRunner[T]) -> Unit {
   run_browser_loop_impl(dt => runner.tick(elapsed_ms=dt))
 }
+
+///|
+pub fn[T : FromJson] run_browser_app_loop(app : AppController[T]) -> Unit {
+  run_browser_loop_impl(dt => app.tick(elapsed_ms=dt))
+}

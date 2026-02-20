@@ -2,7 +2,7 @@
 /// Start menu DOM integration (New Game / Continue / Load Slot).
 
 ///|
-pub enum StartMenuAction {
+enum StartMenuAction {
   NoAction
   NewGame
   Continue(String)
@@ -10,7 +10,7 @@ pub enum StartMenuAction {
 } derive(Show, Eq)
 
 ///|
-pub struct StartMenu {
+struct StartMenu {
   root_id : String
   save_ns : String
 }
@@ -152,6 +152,24 @@ pub fn StartMenu::render(self : StartMenu) -> Unit {
     None =>
       start_menu_dom_render(self.root_id, slots, titles, previews, false, "")
   }
+}
+
+///|
+extern "js" fn start_menu_dom_clear(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const menu = root.querySelector('[data-reisen="start-menu"]');
+  #|   if (menu) menu.remove();
+  #|   delete root.dataset.reisenMenuActionKind;
+  #|   delete root.dataset.reisenMenuActionSlot;
+  #| }
+
+///|
+pub fn StartMenu::clear(self : StartMenu) -> Unit {
+  start_menu_dom_clear(self.root_id)
 }
 
 ///|
