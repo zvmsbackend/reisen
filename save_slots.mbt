@@ -9,6 +9,9 @@ let save_slot_prefix = "reisen.save."
 let save_slot_meta_prefix = "reisen.save.meta."
 
 ///|
+let default_save_namespace = "global"
+
+///|
 pub struct SaveSlotMeta {
   title : String
   preview : String
@@ -102,44 +105,58 @@ extern "js" fn storage_list_slots(prefix : String) -> Array[String] =
   #| }
 
 ///|
-fn slot_key(slot : String) -> String {
-  save_slot_prefix + slot
+fn namespaced_prefix(ns : String) -> String {
+  save_slot_prefix + ns + "."
 }
 
 ///|
-fn slot_meta_key(slot : String) -> String {
-  save_slot_meta_prefix + slot
+fn namespaced_meta_prefix(ns : String) -> String {
+  save_slot_meta_prefix + ns + "."
 }
 
 ///|
-pub fn save_slot_write(slot : String, value : String) -> Unit {
-  storage_set_item(slot_key(slot), value)
+fn slot_key(ns : String, slot : String) -> String {
+  namespaced_prefix(ns) + slot
 }
 
 ///|
-pub fn save_slot_read(slot : String) -> String? {
-  storage_get_item(slot_key(slot)).to_option()
+fn slot_meta_key(ns : String, slot : String) -> String {
+  namespaced_meta_prefix(ns) + slot
 }
 
 ///|
-pub fn save_slot_delete(slot : String) -> Unit {
-  storage_remove_item(slot_key(slot))
-  storage_remove_item(slot_meta_key(slot))
+pub fn save_slot_write_in(ns : String, slot : String, value : String) -> Unit {
+  storage_set_item(slot_key(ns, slot), value)
 }
 
 ///|
-pub fn save_slot_list() -> Array[String] {
-  storage_list_slots(save_slot_prefix)
+pub fn save_slot_read_in(ns : String, slot : String) -> String? {
+  storage_get_item(slot_key(ns, slot)).to_option()
 }
 
 ///|
-pub fn save_slot_write_meta(slot : String, meta : SaveSlotMeta) -> Unit {
-  storage_set_item(slot_meta_key(slot), meta.to_json().stringify())
+pub fn save_slot_delete_in(ns : String, slot : String) -> Unit {
+  storage_remove_item(slot_key(ns, slot))
+  storage_remove_item(slot_meta_key(ns, slot))
 }
 
 ///|
-pub fn save_slot_read_meta(slot : String) -> SaveSlotMeta? {
-  match storage_get_item(slot_meta_key(slot)).to_option() {
+pub fn save_slot_list_in(ns : String) -> Array[String] {
+  storage_list_slots(namespaced_prefix(ns))
+}
+
+///|
+pub fn save_slot_write_meta_in(
+  ns : String,
+  slot : String,
+  meta : SaveSlotMeta,
+) -> Unit {
+  storage_set_item(slot_meta_key(ns, slot), meta.to_json().stringify())
+}
+
+///|
+pub fn save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
+  match storage_get_item(slot_meta_key(ns, slot)).to_option() {
     Some(raw) => {
       let parsed : Result[SaveSlotMeta, Error] = try? @json.from_json(
         @json.parse(raw),
@@ -154,6 +171,44 @@ pub fn save_slot_read_meta(slot : String) -> SaveSlotMeta? {
 }
 
 ///|
+pub fn save_slot_entries_in(ns : String) -> Array[SaveSlotEntry] {
+  save_slot_list_in(ns).map(slot => {
+    slot,
+    meta: save_slot_read_meta_in(ns, slot),
+  })
+}
+
+///|
+pub fn save_slot_write(slot : String, value : String) -> Unit {
+  save_slot_write_in(default_save_namespace, slot, value)
+}
+
+///|
+pub fn save_slot_read(slot : String) -> String? {
+  save_slot_read_in(default_save_namespace, slot)
+}
+
+///|
+pub fn save_slot_delete(slot : String) -> Unit {
+  save_slot_delete_in(default_save_namespace, slot)
+}
+
+///|
+pub fn save_slot_list() -> Array[String] {
+  save_slot_list_in(default_save_namespace)
+}
+
+///|
+pub fn save_slot_write_meta(slot : String, meta : SaveSlotMeta) -> Unit {
+  save_slot_write_meta_in(default_save_namespace, slot, meta)
+}
+
+///|
+pub fn save_slot_read_meta(slot : String) -> SaveSlotMeta? {
+  save_slot_read_meta_in(default_save_namespace, slot)
+}
+
+///|
 pub fn save_slot_entries() -> Array[SaveSlotEntry] {
-  save_slot_list().map(slot => { slot, meta: save_slot_read_meta(slot) })
+  save_slot_entries_in(default_save_namespace)
 }

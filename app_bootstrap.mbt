@@ -100,16 +100,18 @@ pub fn[T : FromJson] start_game_from_save(
 pub fn[T : ToJson] save_director_to_slot(
   director : Director[T],
   slot : String,
+  save_namespace? : String = "global",
 ) -> Unit {
-  save_slot_write(slot, director.save_json())
+  save_slot_write_in(save_namespace, slot, director.save_json())
 }
 
 ///|
 pub fn[T : ToJson] save_runner_to_slot(
   runner : GameRunner[T],
   slot : String,
+  save_namespace? : String = "global",
 ) -> Unit {
-  save_director_to_slot(runner.director(), slot)
+  save_director_to_slot(runner.director(), slot, save_namespace~)
 }
 
 ///|
@@ -118,9 +120,10 @@ pub fn[T : ToJson] save_runner_to_slot_with_meta(
   slot : String,
   title? : String = "",
   preview? : String = "",
+  save_namespace? : String = "global",
 ) -> Unit {
-  save_runner_to_slot(runner, slot)
-  save_slot_write_meta(slot, save_slot_meta(title, preview))
+  save_runner_to_slot(runner, slot, save_namespace~)
+  save_slot_write_meta_in(save_namespace, slot, save_slot_meta(title, preview))
 }
 
 ///|
@@ -130,8 +133,9 @@ pub fn[T : FromJson] start_game_from_slot(
   ui_root_id : String,
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
+  save_namespace? : String = "global",
 ) -> GameRunner[T] raise {
-  match save_slot_read(slot) {
+  match save_slot_read_in(save_namespace, slot) {
     Some(save_json) =>
       start_game_from_save(
         script,

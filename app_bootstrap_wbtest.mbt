@@ -110,6 +110,38 @@ test "start_game_from_slot raises on missing slot" {
 }
 
 ///|
+test "start_game_from_slot respects save namespace" {
+  save_slot_delete_in("game_a", "shared_slot")
+  save_slot_delete_in("game_b", "shared_slot")
+  let script : Script[Int] = script(builder => {
+    builder.label("start")
+    builder.say("n", "a")
+    builder.say("n", "b")
+  })
+  let runner = start_game(script, GameState::new(0), "app")
+  assert_eq(runner.step(), Said("n", "a"))
+  save_runner_to_slot(runner, "shared_slot", save_namespace="game_a")
+
+  let ok = start_game_from_slot(
+    script,
+    "shared_slot",
+    "app",
+    save_namespace="game_a",
+  )
+  assert_eq(ok.step(), Said("n", "b"))
+
+  let bad : Result[GameRunner[Int], Error] = try? start_game_from_slot(
+    script,
+    "shared_slot",
+    "app",
+    save_namespace="game_b",
+  )
+  assert_true(
+    bad is Err(AppBootstrapError::MissingSaveSlot(slot="shared_slot")),
+  )
+}
+
+///|
 test "validate_script_image_assets succeeds when all ids exist" {
   let script : Script[Int] = script(builder => {
     builder.label("start")

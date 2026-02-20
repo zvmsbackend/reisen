@@ -42,3 +42,17 @@ test "save slot delete also removes metadata" {
   assert_eq(save_slot_read("wb_meta_delete"), None)
   assert_eq(save_slot_read_meta("wb_meta_delete"), None)
 }
+
+///|
+test "save slots are isolated by namespace" {
+  save_slot_delete_in("game_a", "shared")
+  save_slot_delete_in("game_b", "shared")
+
+  save_slot_write_in("game_a", "shared", "A")
+  save_slot_write_in("game_b", "shared", "B")
+
+  assert_eq(save_slot_read_in("game_a", "shared"), Some("A"))
+  assert_eq(save_slot_read_in("game_b", "shared"), Some("B"))
+  assert_true(save_slot_list_in("game_a").contains("shared"))
+  assert_true(save_slot_list_in("game_b").contains("shared"))
+}

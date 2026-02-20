@@ -51,27 +51,41 @@ pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn[T] run_browser_loop(GameRunner[T]) -> Unit
 
-pub fn[T : ToJson] save_director_to_slot(Director[T], String) -> Unit
+pub fn[T : ToJson] save_director_to_slot(Director[T], String, save_namespace? : String) -> Unit
 
-pub fn[T : ToJson] save_runner_to_slot(GameRunner[T], String) -> Unit
+pub fn[T : ToJson] save_runner_to_slot(GameRunner[T], String, save_namespace? : String) -> Unit
 
-pub fn[T : ToJson] save_runner_to_slot_with_meta(GameRunner[T], String, title? : String, preview? : String) -> Unit
+pub fn[T : ToJson] save_runner_to_slot_with_meta(GameRunner[T], String, title? : String, preview? : String, save_namespace? : String) -> Unit
 
 pub fn save_slot_delete(String) -> Unit
 
+pub fn save_slot_delete_in(String, String) -> Unit
+
 pub fn save_slot_entries() -> Array[SaveSlotEntry]
 
+pub fn save_slot_entries_in(String) -> Array[SaveSlotEntry]
+
 pub fn save_slot_list() -> Array[String]
+
+pub fn save_slot_list_in(String) -> Array[String]
 
 pub fn save_slot_meta(String, String, updated_at_ms? : Double) -> SaveSlotMeta
 
 pub fn save_slot_read(String) -> String?
 
+pub fn save_slot_read_in(String, String) -> String?
+
 pub fn save_slot_read_meta(String) -> SaveSlotMeta?
+
+pub fn save_slot_read_meta_in(String, String) -> SaveSlotMeta?
 
 pub fn save_slot_write(String, String) -> Unit
 
+pub fn save_slot_write_in(String, String, String) -> Unit
+
 pub fn save_slot_write_meta(String, SaveSlotMeta) -> Unit
+
+pub fn save_slot_write_meta_in(String, String, SaveSlotMeta) -> Unit
 
 pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
@@ -81,7 +95,7 @@ pub fn[T] start_game(Script[T], GameState[T], String, render_sync? : (Director[T
 
 pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T] raise
 
-pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T] raise
+pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String) -> GameRunner[T] raise
 
 pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, presenter_config? : WebglPresenterConfig) -> GameRunner[T] raise
 
