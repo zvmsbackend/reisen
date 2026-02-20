@@ -4,6 +4,7 @@
 ///|
 pub enum AppPhase {
   StartMenu
+  Settings
   InGame
 } derive(Show, Eq)
 
@@ -16,6 +17,8 @@ struct AppController[T] {
   autosave_slot : String
   autosave_title : String
   menu : StartMenu
+  settings_menu : SettingsMenu
+  mut phase : AppPhase
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
   mut runner : GameRunner[T]?
@@ -40,6 +43,8 @@ pub fn[T] AppController::new(
     autosave_slot,
     autosave_title,
     menu: StartMenu::new(ui_root_id, save_namespace~),
+    settings_menu: SettingsMenu::new(ui_root_id, save_namespace~),
+    phase: AppPhase::StartMenu,
     render_sync,
     event_hook,
     runner: None,
@@ -50,10 +55,7 @@ pub fn[T] AppController::new(
 
 ///|
 pub fn[T] AppController::phase(self : AppController[T]) -> AppPhase {
-  match self.runner {
-    Some(_) => AppPhase::InGame
-    None => AppPhase::StartMenu
-  }
+  self.phase
 }
 
 ///|
@@ -74,6 +76,7 @@ fn[T : FromJson] AppController::handle_menu_action(
         ),
       )
       self.menu.clear()
+      self.phase = AppPhase::InGame
     }
     Continue(slot) | LoadSlot(slot) => {
       let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
@@ -88,12 +91,18 @@ fn[T : FromJson] AppController::handle_menu_action(
         Ok(runner) => {
           self.runner = Some(runner)
           self.menu.clear()
+          self.phase = AppPhase::InGame
         }
         Err(_) => {
           self.runner = None
           self.menu.render()
         }
       }
+    }
+    Settings => {
+      self.menu.clear()
+      self.settings_menu.render()
+      self.phase = AppPhase::Settings
     }
   }
 }
@@ -128,17 +137,38 @@ pub fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
 ) -> Bool {
-  match self.runner {
-    Some(runner) =>
-      if runner.tick(elapsed_ms~) {
-        true
-      } else {
-        self.save_autosave_if_enabled()
-        self.runner = None
-        self.menu.render()
-        true
+  match self.phase {
+    AppPhase::InGame =>
+      match self.runner {
+        Some(runner) =>
+          if runner.tick(elapsed_ms~) {
+            true
+          } else {
+            self.save_autosave_if_enabled()
+            self.runner = None
+            self.menu.render()
+            self.phase = AppPhase::StartMenu
+            true
+          }
+        None => {
+          self.menu.render()
+          self.phase = AppPhase::StartMenu
+          true
+        }
       }
-    None => {
+    AppPhase::Settings => {
+      match self.settings_menu.take_action() {
+        SettingsAction::Back => {
+          self.settings_menu.clear()
+          self.menu.render()
+          self.phase = AppPhase::StartMenu
+        }
+        SettingsAction::Saved => self.settings_menu.render()
+        SettingsAction::NoAction => ()
+      }
+      true
+    }
+    AppPhase::StartMenu => {
       self.handle_menu_action(self.menu.take_action())
       true
     }

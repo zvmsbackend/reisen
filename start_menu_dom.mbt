@@ -1,5 +1,5 @@
 ///|
-/// Start menu DOM integration (New Game / Continue / Load Slot).
+/// Start menu DOM integration (New Game / Continue / Load Slot / Settings).
 
 ///|
 priv enum StartMenuAction {
@@ -7,6 +7,7 @@ priv enum StartMenuAction {
   NewGame
   Continue(String)
   LoadSlot(String)
+  Settings
 }
 
 ///|
@@ -114,6 +115,7 @@ extern "js" fn start_menu_dom_render(
   #|   const continueBtn = mkButton('Continue', 'continue', continue_slot);
   #|   continueBtn.disabled = !has_continue;
   #|   actions.appendChild(continueBtn);
+  #|   actions.appendChild(mkButton('Settings', 'settings'));
   #|   menu.appendChild(actions);
   #|
   #|   const list = doc.createElement('div');
@@ -225,6 +227,10 @@ fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
       } else {
         StartMenuAction::LoadSlot(slot)
       }
+    }
+    Some("settings") => {
+      start_menu_action_clear(self.root_id)
+      StartMenuAction::Settings
     }
     _ => StartMenuAction::NoAction
   }

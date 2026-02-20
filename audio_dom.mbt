@@ -22,11 +22,13 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
 ///|
 struct AudioDom {
   urls : Map[String, String]
+  mut bgm_gain : Double
+  mut sfx_gain : Double
 }
 
 ///|
 pub fn AudioDom::new() -> AudioDom {
-  { urls: {} }
+  { urls: {}, bgm_gain: 0.7, sfx_gain: 0.8 }
 }
 
 ///|
@@ -43,6 +45,29 @@ pub fn AudioDom::register_many(
     let (id, url) = id_url
     self.urls[id] = url
   }
+}
+
+///|
+pub fn AudioDom::set_bgm_gain(self : AudioDom, gain : Double) -> Unit {
+  let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
+  self.bgm_gain = clamped
+  audio_dom_set_bgm_gain(clamped)
+}
+
+///|
+pub fn AudioDom::set_sfx_gain(self : AudioDom, gain : Double) -> Unit {
+  let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
+  self.sfx_gain = clamped
+  audio_dom_set_sfx_gain(clamped)
+}
+
+///|
+pub fn AudioDom::apply_settings(
+  self : AudioDom,
+  settings : GameSettings,
+) -> Unit {
+  self.set_bgm_gain(settings.bgm_volume)
+  self.set_sfx_gain(settings.sfx_volume)
 }
 
 ///|
@@ -72,7 +97,24 @@ extern "js" fn audio_dom_stop_music() -> Unit =
 extern "js" fn audio_dom_play_sfx(url : String) -> Unit =
   #| (url) => {
   #|   const sfx = new Audio(url);
+  #|   const gain = globalThis.__reisenSfxGain ?? 0.8;
+  #|   if (sfx.volume !== undefined) sfx.volume = gain;
   #|   sfx.play?.().catch?.(() => {});
+  #| }
+
+///|
+extern "js" fn audio_dom_set_bgm_gain(gain : Double) -> Unit =
+  #| (gain) => {
+  #|   const bgm = globalThis.__reisenBgm;
+  #|   if (bgm && bgm.volume !== undefined) {
+  #|     bgm.volume = Math.max(0, Math.min(1, gain));
+  #|   }
+  #| }
+
+///|
+extern "js" fn audio_dom_set_sfx_gain(gain : Double) -> Unit =
+  #| (gain) => {
+  #|   globalThis.__reisenSfxGain = Math.max(0, Math.min(1, gain));
   #| }
 
 ///|

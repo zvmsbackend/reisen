@@ -12,6 +12,9 @@ let save_slot_meta_prefix = "reisen.save.meta."
 let default_save_namespace = "global"
 
 ///|
+let settings_prefix = "reisen.settings."
+
+///|
 pub struct SaveSlotMeta {
   title : String
   preview : String
@@ -211,4 +214,59 @@ pub fn save_slot_read_meta(slot : String) -> SaveSlotMeta? {
 ///|
 pub fn save_slot_entries() -> Array[SaveSlotEntry] {
   save_slot_entries_in(default_save_namespace)
+}
+
+///|
+/// Game settings persisted to localStorage.
+pub struct GameSettings {
+  text_speed : Int
+  bgm_volume : Double
+  sfx_volume : Double
+  skip_mode : Bool
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
+pub fn game_settings_default() -> GameSettings {
+  { text_speed: 50, bgm_volume: 0.7, sfx_volume: 0.8, skip_mode: false }
+}
+
+///|
+fn settings_key(ns : String) -> String {
+  settings_prefix + ns
+}
+
+///|
+fn settings_key_in(ns : String) -> String {
+  settings_prefix + ns + ".json"
+}
+
+///|
+pub fn settings_write_in(ns : String, settings : GameSettings) -> Unit {
+  storage_set_item(settings_key_in(ns), settings.to_json().stringify())
+}
+
+///|
+pub fn settings_read_in(ns : String) -> GameSettings? {
+  match storage_get_item(settings_key_in(ns)).to_option() {
+    Some(raw) => {
+      let parsed : Result[GameSettings, Error] = try? @json.from_json(
+        @json.parse(raw),
+      )
+      match parsed {
+        Ok(s) => Some(s)
+        Err(_) => None
+      }
+    }
+    None => None
+  }
+}
+
+///|
+pub fn settings_write(settings : GameSettings) -> Unit {
+  settings_write_in(default_save_namespace, settings)
+}
+
+///|
+pub fn settings_read() -> GameSettings? {
+  settings_read_in(default_save_namespace)
 }

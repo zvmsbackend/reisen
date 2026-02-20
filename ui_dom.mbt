@@ -18,11 +18,28 @@ struct UiViewModel {
 ///|
 struct UiDom {
   root_id : String
+  mut text_speed : Int
 }
 
 ///|
 fn UiDom::new(root_id : String) -> UiDom {
-  { root_id, }
+  { root_id, text_speed: 50 }
+}
+
+///|
+pub fn UiDom::set_text_speed(self : UiDom, speed : Int) -> Unit {
+  let clamped = if speed < 10 { 10 } else if speed > 100 { 100 } else { speed }
+  self.text_speed = clamped
+}
+
+///|
+pub fn UiDom::text_speed_ms_per_char(self : UiDom) -> Int {
+  let speed = self.text_speed
+  if speed <= 0 {
+    100
+  } else {
+    2000 / speed
+  }
 }
 
 ///|

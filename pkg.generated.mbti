@@ -15,6 +15,8 @@ pub fn anim_scale(Int, easing? : Easing) -> AnimationSpec
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
+pub fn game_settings_default() -> GameSettings
+
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
 
 pub fn get_canvas_by_id(String) -> Canvas?
@@ -89,6 +91,14 @@ pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
+pub fn settings_read() -> GameSettings?
+
+pub fn settings_read_in(String) -> GameSettings?
+
+pub fn settings_write(GameSettings) -> Unit
+
+pub fn settings_write_in(String, GameSettings) -> Unit
+
 pub fn[T] start_game(Script[T], GameState[T], String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T]
 
 pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> GameRunner[T] raise
@@ -151,6 +161,7 @@ pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : I
 
 pub enum AppPhase {
   StartMenu
+  Settings
   InGame
 }
 pub impl Eq for AppPhase
@@ -170,11 +181,14 @@ pub impl Eq for AudioCommand
 pub impl Show for AudioCommand
 
 type AudioDom
+pub fn AudioDom::apply_settings(Self, GameSettings) -> Unit
 pub fn AudioDom::as_event_hook(Self) -> (RuntimeEvent) -> Unit
 pub fn AudioDom::handle_event(Self, RuntimeEvent) -> Unit
 pub fn AudioDom::new() -> Self
 pub fn AudioDom::register(Self, String, String) -> Unit
 pub fn AudioDom::register_many(Self, Array[(String, String)]) -> Unit
+pub fn AudioDom::set_bgm_gain(Self, Double) -> Unit
+pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
 
 type Canvas
 pub fn Canvas::get_webgl2_context(Self) -> WebGL?
@@ -235,6 +249,17 @@ pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise Scr
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
+
+pub struct GameSettings {
+  text_speed : Int
+  bgm_volume : Double
+  sfx_volume : Double
+  skip_mode : Bool
+}
+pub impl Eq for GameSettings
+pub impl Show for GameSettings
+pub impl ToJson for GameSettings
+pub impl @json.FromJson for GameSettings
 
 type GameState[T]
 pub fn[T] GameState::flag(Self[T], String) -> Bool
@@ -364,6 +389,8 @@ pub impl Eq for UiChoiceView
 pub impl Show for UiChoiceView
 
 type UiDom
+pub fn UiDom::set_text_speed(Self, Int) -> Unit
+pub fn UiDom::text_speed_ms_per_char(Self) -> Int
 
 type UiViewModel
 pub impl Eq for UiViewModel
