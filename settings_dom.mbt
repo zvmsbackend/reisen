@@ -2,10 +2,19 @@
 /// Settings menu DOM integration (text speed, BGM volume, SFX volume, skip mode).
 
 ///|
+pub enum SettingsContext {
+  FromStartMenu
+  FromMidgame
+} derive(Show, Eq)
+
+///|
 priv enum SettingsAction {
   NoAction
   Back
   Saved
+  NewGame
+  Load
+  StartMenu
 }
 
 ///|
@@ -13,6 +22,7 @@ priv struct SettingsMenu {
   root_id : String
   save_ns : String
   background : String
+  mut context : SettingsContext
 }
 
 ///|
@@ -27,8 +37,14 @@ fn SettingsMenu::new(
   root_id : String,
   save_namespace? : String = "global",
   background? : String = "",
+  context? : SettingsContext = SettingsContext::FromStartMenu,
 ) -> SettingsMenu {
-  { root_id, save_ns: save_namespace, background }
+  { root_id, save_ns: save_namespace, background, context }
+}
+
+///|
+fn SettingsMenu::set_context(self : SettingsMenu, context : SettingsContext) -> Unit {
+  self.context = context
 }
 
 ///|
@@ -47,8 +63,9 @@ extern "js" fn settings_dom_render(
   bgm_volume : Double,
   sfx_volume : Double,
   background : String,
+  context : String,
 ) -> Unit =
-  #| (root_id, text_speed, bgm_volume, sfx_volume, background) => {
+  #| (root_id, text_speed, bgm_volume, sfx_volume, background, context) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -122,7 +139,14 @@ extern "js" fn settings_dom_render(
   #|     return btn;
   #|   };
   #|
-  #|   actions.appendChild(mkButton('Save', 'save'));
+  #|   if (context === 'midgame') {
+  #|     actions.appendChild(mkButton('Save', 'save'));
+  #|     actions.appendChild(mkButton('Load', 'load'));
+  #|     actions.appendChild(mkButton('Start Menu', 'start_menu'));
+  #|   } else {
+  #|     actions.appendChild(mkButton('New Game', 'new_game'));
+  #|     actions.appendChild(mkButton('Load', 'load'));
+  #|   }
   #|   actions.appendChild(mkButton('Back', 'back'));
   #|   menu.appendChild(actions);
   #| }
@@ -176,12 +200,17 @@ fn SettingsMenu::render(self : SettingsMenu) -> Unit {
     None => game_settings_default()
   }
   let view = to_settings_view(settings)
+  let context_str = match self.context {
+    SettingsContext::FromStartMenu => "start_menu"
+    SettingsContext::FromMidgame => "midgame"
+  }
   settings_dom_render(
     self.root_id,
     view.text_speed,
     view.bgm_volume,
     view.sfx_volume,
     self.background,
+    context_str,
   )
 }
 
@@ -223,6 +252,18 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
         }
         None => SettingsAction::NoAction
       }
+    }
+    Some("new_game") => {
+      settings_action_clear(self.root_id)
+      SettingsAction::NewGame
+    }
+    Some("load") => {
+      settings_action_clear(self.root_id)
+      SettingsAction::Load
+    }
+    Some("start_menu") => {
+      settings_action_clear(self.root_id)
+      SettingsAction::StartMenu
     }
     _ => SettingsAction::NoAction
   }

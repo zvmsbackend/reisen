@@ -115,6 +115,7 @@ fn[T : FromJson] AppController::handle_menu_action(
     }
     Settings => {
       self.menu.clear()
+      self.settings_menu.set_context(SettingsContext::FromStartMenu)
       self.settings_menu.render()
       self.phase = AppPhase::Settings
     }
@@ -160,6 +161,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
               Some("settings") => {
                 self.saved_director_json = Some(runner.director().save_json())
                 runner.clear_ui()
+                self.settings_menu.set_context(SettingsContext::FromMidgame)
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
               }
@@ -219,6 +221,32 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           }
         }
         SettingsAction::Saved => self.settings_menu.render()
+        SettingsAction::NewGame => {
+          self.settings_menu.clear()
+          self.saved_director_json = None
+          self.runner = Some(
+            start_game(
+              self.script,
+              (self.new_state)(),
+              self.ui_root_id,
+              render_sync=self.render_sync,
+              event_hook=self.event_hook,
+            ),
+          )
+          self.phase = AppPhase::InGame
+        }
+        SettingsAction::Load => {
+          self.settings_menu.clear()
+          self.menu.render()
+          self.phase = AppPhase::StartMenu
+        }
+        SettingsAction::StartMenu => {
+          self.settings_menu.clear()
+          self.saved_director_json = None
+          self.runner = None
+          self.menu.render()
+          self.phase = AppPhase::StartMenu
+        }
         SettingsAction::NoAction => ()
       }
       true
