@@ -139,7 +139,9 @@ fn[T] Runtime::run_inst(
     }
     Say(name, text) => {
       self.ip = self.ip + 1
-      Said(name, text)
+      let interpolated = self.state.interpolate(text)
+      let name_interpolated = self.state.interpolate(name)
+      Said(name_interpolated, interpolated)
     }
     Choice(options) => {
       self.ip = self.ip + 1
