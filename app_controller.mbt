@@ -152,6 +152,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             true
           } else {
             self.save_autosave_if_enabled()
+            runner.clear_ui()
             self.runner = None
             self.menu.render()
             self.phase = AppPhase::StartMenu

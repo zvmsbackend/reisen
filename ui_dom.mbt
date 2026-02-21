@@ -290,6 +290,36 @@ extern "js" fn dom_take_submitted_text_input(
   #| }
 
 ///|
+extern "js" fn dom_clear_text_input(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const inputContainer = root.querySelector('[data-reisen="text-input"]');
+  #|   if (inputContainer) {
+  #|     inputContainer.remove();
+  #|   }
+  #| }
+
+///|
+extern "js" fn dom_clear_game_ui(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const dialog = root.querySelector('[data-reisen="dialog"]');
+  #|   if (dialog) dialog.textContent = '';
+  #|   const speaker = root.querySelector('[data-reisen="speaker"]');
+  #|   if (speaker) speaker.textContent = '';
+  #|   const choices = root.querySelector('[data-reisen="choices"]');
+  #|   if (choices) choices.innerHTML = '';
+  #|   const textInput = root.querySelector('[data-reisen="text-input"]');
+  #|   if (textInput) textInput.remove();
+  #| }
+
+///|
 extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
   #| (root_id) => {
   #|   const doc = globalThis.document;
@@ -360,7 +390,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
         input_view.var_name,
         input_view.prompt,
       )
-    None => ()
+    None => dom_clear_text_input(self.root_id)
   }
 }
 
@@ -377,4 +407,9 @@ fn UiDom::take_submitted_text_input(self : UiDom) -> String? {
 ///|
 fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
   dom_take_typewriter_click(self.root_id)
+}
+
+///|
+pub fn UiDom::clear_game_ui(self : UiDom) -> Unit {
+  dom_clear_game_ui(self.root_id)
 }

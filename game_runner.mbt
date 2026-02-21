@@ -135,6 +135,17 @@ pub fn[T] GameRunner::step(
     self.maybe_render_ui()
     return event
   }
+  if self.ui.check_typewriter_click() {
+    let event = self.director.step(elapsed_ms=0)
+    (self.event_hook)(event)
+    match event {
+      Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
+        self.ui_dirty = true
+      _ => ()
+    }
+    self.maybe_render_ui()
+    return event
+  }
   self.ui.advance_auto_mode_timer(elapsed_ms~)
   if self.ui.should_auto_advance() {
     self.ui.mark_auto_advanced()
@@ -144,13 +155,7 @@ pub fn[T] GameRunner::step(
     self.maybe_render_ui()
     return event
   }
-  let event = self.director.step(elapsed_ms=0)
-  (self.event_hook)(event)
-  match event {
-    Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
-      self.ui_dirty = true
-    _ => ()
-  }
+  let event = self.current_dialog_event()
   self.maybe_render_ui()
   event
 }
@@ -191,6 +196,11 @@ pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool 
 ///|
 pub fn[T] GameRunner::director(self : GameRunner[T]) -> Director[T] {
   self.director
+}
+
+///|
+pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
+  self.ui.clear_game_ui()
 }
 
 ///|
