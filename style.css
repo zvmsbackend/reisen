@@ -4,11 +4,41 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg-primary: #000000;
+  --bg-secondary: rgba(0, 0, 0, 0.85);
+  --bg-tertiary: rgba(0, 0, 0, 0.9);
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --border-color: rgba(255, 255, 255, 0.15);
+  --border-hover: rgba(255, 255, 255, 0.3);
+  --button-bg: rgba(255, 255, 255, 0.08);
+  --button-hover: rgba(255, 255, 255, 0.15);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.25);
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: rgba(255, 255, 255, 0.95);
+    --bg-tertiary: rgba(255, 255, 255, 0.98);
+    --text-primary: #1a1a1a;
+    --text-secondary: rgba(0, 0, 0, 0.7);
+    --border-color: rgba(0, 0, 0, 0.15);
+    --border-hover: rgba(0, 0, 0, 0.3);
+    --button-bg: rgba(0, 0, 0, 0.06);
+    --button-hover: rgba(0, 0, 0, 0.1);
+    --input-bg: rgba(0, 0, 0, 0.03);
+    --input-border: rgba(0, 0, 0, 0.2);
+  }
+}
+
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background: #000;
+  background: var(--bg-primary);
   font-family: system-ui, -apple-system, sans-serif;
 }
 
@@ -45,8 +75,8 @@ html, body {
   bottom: 180px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0, 0, 0, 0.8);
-  color: #fff;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   padding: 8px 24px;
   border-radius: 4px;
   font-size: 18px;
@@ -61,13 +91,13 @@ html, body {
   width: 80%;
   max-width: 800px;
   min-height: 120px;
-  background: rgba(0, 0, 0, 0.85);
-  color: #fff;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
   padding: 20px 24px;
   border-radius: 8px;
   font-size: 16px;
   line-height: 1.6;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
 }
 
 [data-reisen="game-actions"] {
@@ -81,9 +111,9 @@ html, body {
 
 [data-reisen="game-actions"] button {
   padding: 4px 10px;
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--button-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 12px;
   cursor: pointer;
@@ -91,14 +121,14 @@ html, body {
 }
 
 [data-reisen="game-actions"] button:hover {
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
+  background: var(--button-hover);
+  color: var(--text-primary);
 }
 
 [data-reisen="game-actions"] button.active {
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
-  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--button-hover);
+  color: var(--text-primary);
+  border-color: var(--border-hover);
 }
 
 [data-reisen="choices"] {
@@ -109,7 +139,7 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: rgba(0, 0, 0, 0.9);
+  background: var(--bg-tertiary);
   padding: 24px;
   border-radius: 8px;
 }
@@ -120,8 +150,8 @@ html, body {
   min-width: 200px;
   padding: 12px 24px;
   background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hover);
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
@@ -129,8 +159,8 @@ html, body {
 }
 
 [data-reisen="choices"] button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: var(--button-hover);
+  border-color: var(--border-hover);
 }
 
 [data-reisen="start-menu"],
@@ -145,18 +175,25 @@ html, body {
   justify-content: center;
   align-items: center;
   gap: 16px;
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--bg-secondary);
   background-clip: padding-box;
 }
 
 [data-reisen="start-menu"]:not([style*="background-image"]),
 [data-reisen="settings-menu"]:not([style*="background-image"]) {
-  background: rgba(0, 0, 0, 0.85);
+  background: var(--bg-secondary);
 }
 
 [data-reisen="start-menu"][style*="background-image"],
 [data-reisen="settings-menu"][style*="background-image"] {
   background: rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: light) {
+  [data-reisen="start-menu"][style*="background-image"],
+  [data-reisen="settings-menu"][style*="background-image"] {
+    background: rgba(255, 255, 255, 0.6);
+  }
 }
 
 [data-reisen="start-actions"],
@@ -171,8 +208,8 @@ html, body {
   min-width: 180px;
   padding: 14px 32px;
   background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hover);
   border-radius: 4px;
   font-size: 18px;
   cursor: pointer;
@@ -181,8 +218,8 @@ html, body {
 
 [data-reisen="start-actions"] button:hover,
 [data-reisen="settings-actions"] button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: var(--button-hover);
+  border-color: var(--border-hover);
 }
 
 [data-reisen="start-actions"] button:disabled,
@@ -202,15 +239,15 @@ html, body {
   min-width: 240px;
   padding: 10px 20px;
   background: transparent;
-  color: rgba(255, 255, 255, 0.7);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
   border-radius: 4px;
   font-size: 14px;
   cursor: pointer;
 }
 
 [data-reisen="save-list"] button:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--button-hover);
 }
 
 [data-reisen-setting] {
@@ -220,13 +257,14 @@ html, body {
 [data-reisen-setting] label {
   display: inline-block;
   width: 120px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 14px;
 }
 
 [data-reisen-setting="text_speed"] + label {
   width: auto;
   margin-left: 12px;
+  color: var(--text-primary);
 }
 
 [data-reisen-setting="skip_mode"] {
@@ -249,14 +287,14 @@ html, body {
   flex-direction: column;
   align-items: center;
   gap: 16px;
-  background: rgba(0, 0, 0, 0.9);
+  background: var(--bg-tertiary);
   padding: 32px 40px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-color);
 }
 
 [data-reisen="text-input"] label {
-  color: #fff;
+  color: var(--text-primary);
   font-size: 18px;
   text-align: center;
 }
@@ -264,29 +302,29 @@ html, body {
 [data-reisen="text-input"] input[type="text"] {
   width: 280px;
   padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
   border-radius: 4px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 16px;
   outline: none;
   transition: border-color 0.2s, background 0.2s;
 }
 
 [data-reisen="text-input"] input[type="text"]:focus {
-  border-color: rgba(255, 255, 255, 0.5);
-  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--border-hover);
+  background: var(--button-hover);
 }
 
 [data-reisen="text-input"] input[type="text"]::placeholder {
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--text-secondary);
 }
 
 [data-reisen="text-input"] button {
   padding: 10px 32px;
   background: transparent;
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: var(--text-primary);
+  border: 1px solid var(--border-hover);
   border-radius: 4px;
   font-size: 16px;
   cursor: pointer;
@@ -294,6 +332,6 @@ html, body {
 }
 
 [data-reisen="text-input"] button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.6);
+  background: var(--button-hover);
+  border-color: var(--border-hover);
 }
