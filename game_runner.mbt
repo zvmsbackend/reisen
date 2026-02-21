@@ -127,8 +127,10 @@ pub fn[T] GameRunner::step(
     self.maybe_render_ui()
     return event
   }
+  self.ui.advance_skip_mode_timer(elapsed_ms~)
   if self.ui.should_skip_advance() {
     self.ui.complete_typewriter()
+    self.ui.mark_skip_advanced()
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     match event {

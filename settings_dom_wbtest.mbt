@@ -4,7 +4,6 @@ test "settings default values" {
   assert_eq(defaults.text_speed, 50)
   assert_eq(defaults.bgm_volume, 0.7)
   assert_eq(defaults.sfx_volume, 0.8)
-  assert_eq(defaults.skip_mode, false)
 }
 
 ///|
@@ -22,7 +21,6 @@ test "settings write read with custom values" {
     text_speed: 80,
     bgm_volume: 0.5,
     sfx_volume: 0.9,
-    skip_mode: true,
   }
   settings_write(custom)
   let read = settings_read()
@@ -36,13 +34,11 @@ test "settings are isolated by namespace" {
     text_speed: 30,
     bgm_volume: 0.3,
     sfx_volume: 0.3,
-    skip_mode: false,
   }
   let settings_b : GameSettings = {
     text_speed: 90,
     bgm_volume: 0.9,
     sfx_volume: 0.9,
-    skip_mode: true,
   }
   settings_write_in("game_a", settings_a)
   settings_write_in("game_b", settings_b)
@@ -58,13 +54,11 @@ test "settings overwrite previous values" {
     text_speed: 25,
     bgm_volume: 0.4,
     sfx_volume: 0.5,
-    skip_mode: false,
   }
   let second : GameSettings = {
     text_speed: 75,
     bgm_volume: 0.6,
     sfx_volume: 0.7,
-    skip_mode: true,
   }
 
   settings_write(first)
@@ -80,7 +74,6 @@ test "game_settings JSON roundtrip" {
     text_speed: 60,
     bgm_volume: 0.55,
     sfx_volume: 0.85,
-    skip_mode: true,
   }
   let json_str = settings.to_json().stringify()
   let parsed = @json.parse(json_str)
@@ -88,5 +81,4 @@ test "game_settings JSON roundtrip" {
   assert_eq(read.text_speed, settings.text_speed)
   assert_eq(read.bgm_volume, settings.bgm_volume)
   assert_eq(read.sfx_volume, settings.sfx_volume)
-  assert_eq(read.skip_mode, settings.skip_mode)
 }

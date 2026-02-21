@@ -222,12 +222,11 @@ pub(all) struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
-  skip_mode : Bool
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
 pub fn game_settings_default() -> GameSettings {
-  { text_speed: 50, bgm_volume: 0.7, sfx_volume: 0.8, skip_mode: false }
+  { text_speed: 50, bgm_volume: 0.7, sfx_volume: 0.8 }
 }
 
 ///|

@@ -19,7 +19,6 @@ priv struct SettingsView {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
-  skip_mode : Bool
 }
 
 ///|
@@ -36,7 +35,6 @@ fn to_settings_view(settings : GameSettings) -> SettingsView {
     text_speed: settings.text_speed,
     bgm_volume: settings.bgm_volume,
     sfx_volume: settings.sfx_volume,
-    skip_mode: settings.skip_mode,
   }
 }
 
@@ -46,9 +44,8 @@ extern "js" fn settings_dom_render(
   text_speed : Int,
   bgm_volume : Double,
   sfx_volume : Double,
-  skip_mode : Bool,
 ) -> Unit =
-  #| (root_id, text_speed, bgm_volume, sfx_volume, skip_mode) => {
+  #| (root_id, text_speed, bgm_volume, sfx_volume) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -101,7 +98,6 @@ extern "js" fn settings_dom_render(
   #|   menu.appendChild(mkRow('Text Speed', mkSlider('text_speed', 10, 100, text_speed, 10)));
   #|   menu.appendChild(mkRow('BGM Volume', mkSlider('bgm_volume', 0, 100, Math.round(bgm_volume * 100), 1)));
   #|   menu.appendChild(mkRow('SFX Volume', mkSlider('sfx_volume', 0, 100, Math.round(sfx_volume * 100), 1)));
-  #|   menu.appendChild(mkRow('Skip Mode', mkCheckbox('skip_mode', skip_mode)));
   #|
   #|   const actions = doc.createElement('div');
   #|   actions.setAttribute('data-reisen', 'settings-actions');
@@ -156,13 +152,10 @@ extern "js" fn settings_dom_read(root_id : String) -> @js.Nullable[String] =
   #|   const textSpeed = menu.querySelector('[data-reisen-setting="text_speed"]');
   #|   const bgmVolume = menu.querySelector('[data-reisen-setting="bgm_volume"]');
   #|   const sfxVolume = menu.querySelector('[data-reisen-setting="sfx_volume"]');
-  #|   const skipMode = menu.querySelector('[data-reisen-setting="skip_mode"]');
-  #|
   #|   const settings = {
   #|     text_speed: textSpeed ? parseInt(textSpeed.value, 10) : 50,
   #|     bgm_volume: bgmVolume ? parseInt(bgmVolume.value, 10) / 100 : 0.7,
   #|     sfx_volume: sfxVolume ? parseInt(sfxVolume.value, 10) / 100 : 0.8,
-  #|     skip_mode: skipMode ? skipMode.checked : false,
   #|   };
   #|   return JSON.stringify(settings);
   #| }
@@ -179,7 +172,6 @@ fn SettingsMenu::render(self : SettingsMenu) -> Unit {
     view.text_speed,
     view.bgm_volume,
     view.sfx_volume,
-    view.skip_mode,
   )
 }
 

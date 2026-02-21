@@ -35,6 +35,8 @@ struct UiDom {
   auto_mode_delay_ms : Int
   mut auto_mode_last_advance_ms : Int
   mut skip_mode : Bool
+  skip_mode_delay_ms : Int
+  mut skip_mode_last_advance_ms : Int
   mut simulated_click : Bool
 }
 
@@ -50,6 +52,8 @@ fn UiDom::new(root_id : String) -> UiDom {
     auto_mode_delay_ms: 2000,
     auto_mode_last_advance_ms: 0,
     skip_mode: false,
+    skip_mode_delay_ms: 50,
+    skip_mode_last_advance_ms: 0,
     simulated_click: false,
   }
 }
@@ -156,20 +160,41 @@ pub fn UiDom::advance_auto_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
 ///|
 pub fn UiDom::set_skip_mode(self : UiDom, enabled : Bool) -> Unit {
   self.skip_mode = enabled
-}
-
-///|
-pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
-  if self.skip_mode {
-    self.skip_mode = false
-  } else {
-    self.skip_mode = true
+  if enabled {
+    self.skip_mode_last_advance_ms = 0
   }
 }
 
 ///|
+pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
+  self.set_skip_mode(not(self.skip_mode))
+}
+
+///|
 pub fn UiDom::should_skip_advance(self : UiDom) -> Bool {
-  self.skip_mode
+  if not(self.skip_mode) {
+    return false
+  }
+  if not(self.is_typewriter_done()) {
+    return false
+  }
+  self.skip_mode_last_advance_ms >= self.skip_mode_delay_ms
+}
+
+///|
+pub fn UiDom::advance_skip_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
+  if not(self.skip_mode) {
+    return
+  }
+  if not(self.is_typewriter_done()) {
+    return
+  }
+  self.skip_mode_last_advance_ms += elapsed_ms
+}
+
+///|
+pub fn UiDom::mark_skip_advanced(self : UiDom) -> Unit {
+  self.skip_mode_last_advance_ms = 0
 }
 
 ///|
