@@ -33,6 +33,7 @@ pub fn[T] AppController::new(
   autosave_slot? : String = "autosave",
   autosave_title? : String = "Autosave",
   menu_background? : String = "",
+  settings_background? : String = "",
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
 ) -> AppController[T] {
@@ -48,7 +49,7 @@ pub fn[T] AppController::new(
       save_namespace~,
       background=menu_background,
     ),
-    settings_menu: SettingsMenu::new(ui_root_id, save_namespace~),
+    settings_menu: SettingsMenu::new(ui_root_id, save_namespace~, background=settings_background),
     phase: AppPhase::StartMenu,
     render_sync,
     event_hook,
@@ -149,6 +150,21 @@ pub fn[T : FromJson + ToJson] AppController::tick(
       match self.runner {
         Some(runner) =>
           if runner.tick(elapsed_ms~) {
+            match runner.take_pending_action() {
+              Some("settings") => {
+                runner.clear_ui()
+                self.settings_menu.render()
+                self.phase = AppPhase::Settings
+              }
+              Some("qsave") => {
+                save_runner_to_slot(
+                  runner,
+                  "quicksave",
+                  save_namespace=self.save_ns,
+                )
+              }
+              _ => ()
+            }
             true
           } else {
             self.save_autosave_if_enabled()

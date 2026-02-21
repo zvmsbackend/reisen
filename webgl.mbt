@@ -111,6 +111,18 @@ fn global_get(name : String) -> @js.Value {
 }
 
 ///|
+pub fn window_inner_width() -> Double {
+  let win = global_get("window")
+  win.get_with_string("innerWidth")
+}
+
+///|
+pub fn window_inner_height() -> Double {
+  let win = global_get("window")
+  win.get_with_string("innerHeight")
+}
+
+///|
 fn[T] v(x : T) -> @js.Value {
   @js.Value::cast_from(x)
 }

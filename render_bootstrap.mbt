@@ -95,8 +95,8 @@ fn create_program(
 ///|
 fn create_quad_mesh(gl : WebGL) -> QuadMesh raise RenderError {
   let vertices : Array[Double] = [
-    -1.0, -1.0, 0.0, 0.0, 1.0, -1.0, 1.0, 0.0, 1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 0.0,
-    0.0, 1.0, 1.0, 1.0, 1.0, -1.0, 1.0, 0.0, 1.0,
+    -1.0, -1.0, 0.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0,
+    -1.0, -1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, -1.0, 1.0, 1.0,
   ]
   match gl.create_buffer() {
     None => raise RenderError::NullObject(op="createBuffer")
@@ -246,12 +246,25 @@ fn create_texture_from_store(
   store : AssetStore,
   image_id : String,
   mipmap? : Bool = false,
-) -> WebGLTexture raise RenderError {
+) -> (WebGLTexture, (Int, Int)) raise RenderError {
   match store.get_image(image_id) {
     None => raise RenderError::MissingImage(id=image_id)
-    Some(image) => create_texture_from_image(gl, image, mipmap~)
+    Some(image) => {
+      let w = image_get_width(image)
+      let h = image_get_height(image)
+      let tex = create_texture_from_image(gl, image, mipmap~)
+      (tex, (w, h))
+    }
   }
 }
+
+///|
+extern "js" fn image_get_width(img : Image) -> Int =
+  #| (img) => img.width || 0
+
+///|
+extern "js" fn image_get_height(img : Image) -> Int =
+  #| (img) => img.height || 0
 
 ///|
 fn create_solid_texture(

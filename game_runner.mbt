@@ -14,11 +14,12 @@ struct GameRunner[T] {
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
   mut ui_dirty : Bool
+  mut pending_action : String?
 }
 
 ///|
 pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
-  { director, ui, render_sync: _ => (), event_hook: _ => (), ui_dirty: true }
+  { director, ui, render_sync: _ => (), event_hook: _ => (), ui_dirty: true, pending_action: None }
 }
 
 ///|
@@ -27,7 +28,7 @@ pub fn[T] GameRunner::new_with_render_sync(
   ui : UiDom,
   render_sync : RenderSyncHook[T],
 ) -> GameRunner[T] {
-  { director, ui, render_sync, event_hook: _ => (), ui_dirty: true }
+  { director, ui, render_sync, event_hook: _ => (), ui_dirty: true, pending_action: None }
 }
 
 ///|
@@ -37,7 +38,7 @@ pub fn[T] GameRunner::new_with_hooks(
   render_sync : RenderSyncHook[T],
   event_hook : EventHook,
 ) -> GameRunner[T] {
-  { director, ui, render_sync, event_hook, ui_dirty: true }
+  { director, ui, render_sync, event_hook, ui_dirty: true, pending_action: None }
 }
 
 ///|
@@ -70,6 +71,7 @@ pub fn[T] GameRunner::step(
       match action {
         "auto" => self.ui.toggle_auto_mode()
         "skip" => self.ui.toggle_skip_mode()
+        "settings" | "qsave" => self.pending_action = Some(action)
         _ => ()
       }
       self.ui_dirty = true
@@ -120,7 +122,8 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)
     match event {
-      Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
+      Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded |
+      BackgroundShown(_) =>
         self.ui_dirty = true
       _ => ()
     }
@@ -153,7 +156,8 @@ pub fn[T] GameRunner::step(
       let event = self.director.step(elapsed_ms=0)
       (self.event_hook)(event)
       match event {
-        Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
+        Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded |
+        BackgroundShown(_) =>
           self.ui_dirty = true
         _ => ()
       }
@@ -171,7 +175,8 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     match event {
-      Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
+      Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded |
+      BackgroundShown(_) =>
         self.ui_dirty = true
       _ => ()
     }
@@ -258,6 +263,13 @@ pub fn[T] GameRunner::toggle_skip_mode(self : GameRunner[T]) -> Unit {
 ///|
 pub fn[T] GameRunner::take_game_action(self : GameRunner[T]) -> String? {
   self.ui.take_action()
+}
+
+///|
+pub fn[T] GameRunner::take_pending_action(self : GameRunner[T]) -> String? {
+  let action = self.pending_action
+  self.pending_action = None
+  action
 }
 
 ///|

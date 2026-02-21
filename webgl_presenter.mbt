@@ -6,6 +6,7 @@ priv struct WebglPresenter {
   renderer : Renderer
   store : AssetStore
   textures : Map[String, WebGLTexture]
+  texture_sizes : Map[String, (Int, Int)]
   viewport_w : Double
   viewport_h : Double
   config : WebglPresenterConfig
@@ -90,6 +91,7 @@ fn webgl_presenter_new(
     renderer,
     store,
     textures: {},
+    texture_sizes: {},
     viewport_w,
     viewport_h,
     config,
@@ -110,12 +112,13 @@ fn WebglPresenter::texture_for(
   match self.textures.get(image_id) {
     Some(tex) => tex
     None => {
-      let tex = create_texture_from_store(
+      let (tex, size) = create_texture_from_store(
         self.renderer.gl,
         self.store,
         image_id,
       )
       self.textures.set(image_id, tex)
+      self.texture_sizes.set(image_id, size)
       tex
     }
   }
@@ -297,26 +300,66 @@ fn[T] WebglPresenter::pull_new_animations(
 }
 
 ///|
+fn fit_background(
+  image_id : String,
+  canvas_w : Double,
+  canvas_h : Double,
+  sizes : Map[String, (Int, Int)],
+) -> (Double, Double, Double, Double) {
+  match sizes.get(image_id) {
+    Some((img_w, img_h)) => {
+      let img_w = img_w.to_double()
+      let img_h = img_h.to_double()
+      let canvas_ratio = canvas_w / canvas_h
+      let img_ratio = img_w / img_h
+      let (scale_w, scale_h) = if img_ratio > canvas_ratio {
+        // Image is wider - fit to width
+        let scale = canvas_w / img_w
+        (canvas_w, img_h * scale)
+      } else {
+        // Image is taller - fit to height
+        let scale = canvas_h / img_h
+        (img_w * scale, canvas_h)
+      }
+      let x = (canvas_w - scale_w) / 2.0
+      let y = (canvas_h - scale_h) / 2.0
+      (x, y, scale_w, scale_h)
+    }
+    None => (0.0, 0.0, canvas_w, canvas_h)
+  }
+}
+
+///|
 fn[T] WebglPresenter::sync_impl(
   self : WebglPresenter,
   director : Director[T],
 ) -> Unit raise RenderError {
+  let w = window_inner_width()
+  let h = window_inner_height()
+
   self.update_timeline()
   self.pull_new_animations(director)
 
   self.renderer.clear()
+  self.renderer.gl.viewport(0, 0, w.to_int(), h.to_int())
   self.renderer.gl.clear_color(0.0, 0.0, 0.0, 1.0)
   self.renderer.gl.clear(self.renderer.gl.constant("COLOR_BUFFER_BIT"))
 
   match director.background() {
     Some(bg_id) => {
       let tex = self.texture_for(bg_id)
+      let (x, y, bg_w, bg_h) = fit_background(
+        bg_id,
+        w,
+        h,
+        self.texture_sizes,
+      )
       self.renderer.add({
         texture: tex,
-        x: 0.0,
-        y: 0.0,
-        w: self.viewport_w,
-        h: self.viewport_h,
+        x,
+        y,
+        w: bg_w,
+        h: bg_h,
         opacity: 1.0,
         layer: -1000,
       })
@@ -331,8 +374,8 @@ fn[T] WebglPresenter::sync_impl(
     let tex = self.texture_for(id)
     let (base_x, base_y, base_w, base_h) = figure_rect(
       placement.pos,
-      self.viewport_w,
-      self.viewport_h,
+      w,
+      h,
     )
     let (x1, y1) = match self.position_anims.get(id) {
       Some(anim) => {
@@ -340,7 +383,7 @@ fn[T] WebglPresenter::sync_impl(
           base_x,
           base_y,
           self.config.position_entry_offset_ratio,
-          self.viewport_h,
+          h,
           self.timeline_ms,
           anim,
         )
@@ -403,7 +446,7 @@ fn[T] WebglPresenter::sync_impl(
     self.scale_anims.remove(id)
   }
 
-  self.renderer.draw()
+  self.renderer.draw_with_viewport(w, h)
 }
 
 ///|
@@ -449,3 +492,63 @@ pub fn[T] make_webgl_render_sync_hook_with_config(
   let presenter = webgl_presenter_new(gl, store, viewport_w, viewport_h, config)
   presenter.as_render_sync_hook()
 }
+
+///|
+pub fn[T] make_webgl_render_sync_hook_from_canvas(
+  canvas_id : String,
+  store : AssetStore,
+) -> RenderSyncHook[T]? raise {
+  let canvas = get_canvas_by_id(canvas_id)
+  let gl = match canvas {
+    Some(c) => c.get_webgl_context()
+    None => None
+  }
+  match gl {
+    Some(g) => {
+      let w = window_inner_width()
+      let h = window_inner_height()
+      set_canvas_size(canvas_id, w.to_int(), h.to_int())
+      Some(make_webgl_render_sync_hook(g, store, w, h))
+    }
+    None => None
+  }
+}
+
+///|
+pub fn[T] make_webgl_render_sync_hook_from_canvas_with_config(
+  canvas_id : String,
+  store : AssetStore,
+  config : WebglPresenterConfig,
+) -> RenderSyncHook[T]? raise {
+  let canvas = get_canvas_by_id(canvas_id)
+  let gl = match canvas {
+    Some(c) => c.get_webgl_context()
+    None => None
+  }
+  match gl {
+    Some(g) => {
+      let w = window_inner_width()
+      let h = window_inner_height()
+      set_canvas_size(canvas_id, w.to_int(), h.to_int())
+      Some(make_webgl_render_sync_hook_with_config(g, store, w, h, config))
+    }
+    None => None
+  }
+}
+
+///|
+extern "js" fn set_canvas_size(
+  canvas_id : String,
+  width : Int,
+  height : Int,
+) -> Unit =
+  #| (canvas_id, width, height) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const canvas = doc.getElementById(canvas_id);
+  #|   if (!canvas) return;
+  #|   canvas.width = width;
+  #|   canvas.height = height;
+  #|   canvas.style.width = width + 'px';
+  #|   canvas.style.height = height + 'px';
+  #| }

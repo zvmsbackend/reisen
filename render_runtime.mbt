@@ -96,6 +96,11 @@ fn model_matrix(
 
 ///|
 fn Renderer::draw(self : Renderer) -> Unit {
+  self.draw_with_viewport(self.viewport_w, self.viewport_h)
+}
+
+///|
+fn Renderer::draw_with_viewport(self : Renderer, vw : Double, vh : Double) -> Unit {
   sort_by_layer(self.items)
   self.gl.use_program(self.pipe.program.program)
   bind_quad_attributes(self.gl, self.pipe.program, self.mesh)
@@ -104,14 +109,15 @@ fn Renderer::draw(self : Renderer) -> Unit {
   for item in self.items {
     self.gl.active_texture(self.gl.constant("TEXTURE0"))
     self.gl.bind_texture(self.gl.constant("TEXTURE_2D"), item.texture)
+    println("\{item.x}, \{item.y}, \{item.w}, \{item.h}, opacity: \{item.opacity}, layer: \{item.layer}")
 
     let mat = model_matrix(
       item.x,
       item.y,
       item.w,
       item.h,
-      self.viewport_w,
-      self.viewport_h,
+      vw,
+      vh,
     )
     let mat_f32 = js_float32_array(mat)
     self.gl.uniform_matrix4(self.pipe.u_model, false, mat_f32)

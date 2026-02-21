@@ -12,6 +12,7 @@ priv enum SettingsAction {
 priv struct SettingsMenu {
   root_id : String
   save_ns : String
+  background : String
 }
 
 ///|
@@ -25,8 +26,9 @@ priv struct SettingsView {
 fn SettingsMenu::new(
   root_id : String,
   save_namespace? : String = "global",
+  background? : String = "",
 ) -> SettingsMenu {
-  { root_id, save_ns: save_namespace }
+  { root_id, save_ns: save_namespace, background }
 }
 
 ///|
@@ -44,8 +46,9 @@ extern "js" fn settings_dom_render(
   text_speed : Int,
   bgm_volume : Double,
   sfx_volume : Double,
+  background : String,
 ) -> Unit =
-  #| (root_id, text_speed, bgm_volume, sfx_volume) => {
+  #| (root_id, text_speed, bgm_volume, sfx_volume, background) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -56,6 +59,12 @@ extern "js" fn settings_dom_render(
   #|     menu = doc.createElement('div');
   #|     menu.setAttribute('data-reisen', 'settings-menu');
   #|     root.appendChild(menu);
+  #|   }
+  #|
+  #|   if (background && background !== '') {
+  #|     menu.style.backgroundImage = `url(${background})`;
+  #|     menu.style.backgroundSize = 'cover';
+  #|     menu.style.backgroundPosition = 'center';
   #|   }
   #|
   #|   menu.innerHTML = '';
@@ -172,6 +181,7 @@ fn SettingsMenu::render(self : SettingsMenu) -> Unit {
     view.text_speed,
     view.bgm_volume,
     view.sfx_volume,
+    self.background,
   )
 }
 
