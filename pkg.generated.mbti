@@ -47,6 +47,8 @@ pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
 
+pub fn[T] reisen_parse_text_script(String) -> Script[T]
+
 pub fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T]) -> Unit
 
 pub fn[T] run_browser_loop(GameRunner[T]) -> Unit
@@ -123,6 +125,18 @@ pub suberror AppBootstrapError {
   MissingAudioAsset(id~ : String)
   MissingSaveSlot(slot~ : String)
 }
+
+pub suberror ReisenTextError {
+  ParseError(Int, String)
+  UnknownCommand(String)
+  InvalidArgument(String, String)
+  MissingChoiceJump
+  InvalidPosition(String)
+  InvalidEasing(String)
+  InvalidAnimationProp(String)
+}
+pub impl Eq for ReisenTextError
+pub impl Show for ReisenTextError
 
 pub(all) suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
@@ -254,7 +268,7 @@ pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
 pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
 
-pub struct GameSettings {
+pub(all) struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
@@ -375,6 +389,7 @@ pub fn[T] ScriptBuilder::hide_figure(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], String, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit raise ReisenTextError
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::narrate(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]

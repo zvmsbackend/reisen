@@ -61,7 +61,7 @@ reisen/
 
 ### 1. Define Your Game State
 
-```mbt check
+```moonbit nocheck
 ///|
 pub struct MyGameData {
   player_name : String
@@ -76,26 +76,22 @@ fn initial_state() -> GameState[MyGameData] {
 
 ### 2. Author Your Script
 
-```mbt check
-let my_script : Script[MyGameData] = try! script(builder => {
+```moonbit nocheck
+///|
+let my_script : Script[MyGameData] = try! script(fn(builder) {
   builder.label("start")
   builder.scene("bg_temple")
   builder.say("???", "Welcome to the temple.")
   builder.say("Miko", "Ah, a visitor! What brings you here?")
-  builder.menu(
-    "Miko",
-    "Choose your response:",
-    [
-      option("1", "I'm here to pray.", "pray"),
-      option("2", "Just passing through.", "pass"),
-    ],
-  )
+  builder.menu("Miko", "Choose your response:", [
+    option("1", "I'm here to pray.", "pray"),
+    option("2", "Just passing through.", "pass"),
+  ])
 
   builder.label("pray")
   builder.show_figure("miko", place_center(layer=1))
   builder.say("Miko", "How reverent of you!")
-  // Track affection
-  builder.run_code("affection_plus", state => {
+  builder.run_code("affection_plus", fn(state : GameState[MyGameData]) -> Unit {
     let data = state.get_user_data()
     state.set_user_data({ ..data, affection: data.affection + 1 })
   })
@@ -116,24 +112,16 @@ let my_script : Script[MyGameData] = try! script(builder => {
 
 ### 3. Initialize Assets
 
-```mbt check
+```moonbit nocheck
+///|
 let store : AssetStore = AssetStore::new()
-
-// In browser: load assets asynchronously at startup
-async fn load_assets() -> AssetStore {
-  let store = AssetStore::new()
-  store.put_image("bg_temple", load_image("/assets/bg_temple.png"))
-  store.put_image("miko", load_image("/assets/miko.png"))
-  store.put_bytes("door_close", load_bytes("/assets/sfx/door_close.ogg"))
-  store
-}
 ```
 
 ### 4. Start the Game
 
 #### Simple Version (No WebGL)
 
-```mbt check
+```moonbit nocheck
 ///|
 fn init {
   let runner = start_game(my_script, initial_state(), "ui-root")
@@ -143,10 +131,8 @@ fn init {
 
 #### With WebGL Rendering
 
-```mbt check
-///|
-async fn initialize() -> Unit raise {
-  let store = load_assets() // your async asset loader
+```moonbit nocheck
+fn init {
   let canvas = get_canvas_by_id("gl-canvas").unwrap()
   let gl = canvas.get_webgl_context().unwrap()
   let runner = start_game_webgl(
@@ -160,21 +146,19 @@ async fn initialize() -> Unit raise {
   )
   run_browser_loop(runner)
 }
+}
 ```
 
 #### Full App with Menu (Recommended)
 
-```mbt check
+```moonbit nocheck
+///|
 fn init {
-  let controller = AppController::new(
-    my_script,
-    initial_state,
-    "ui-root",
-    render_sync= director => {
-      // sync WebGL to director state
-      ()
-    },
-  )
+  let controller = AppController::new(my_script, initial_state, "ui-root", render_sync=fn(
+    director,
+  ) {
+    // sync WebGL to director state
+  })
   run_browser_app_loop(controller)
 }
 ```
@@ -336,17 +320,14 @@ enum RuntimeEvent {
 Use `event_hook` to react to events (e.g., play audio):
 
 ```mbt nocheck
-let runner = start_game(
-  script,
-  state,
-  "ui-root",
-  event_hook=event =>
-    match event {
-      MusicPlayed(id, loop_) => audio.play_music(id, loop_~)
-      SfxPlayed(id) => audio.play_sfx(id)
-      _ => ()
-    },
-)
+///|
+let runner = start_game(script, state, "ui-root", event_hook=event => {
+  match event {
+    MusicPlayed(id, loop_) => audio.play_music(id, loop_~)
+    SfxPlayed(id) => audio.play_sfx(id)
+    _ => ()
+  }
+})
 ```
 
 ## HTML/CSS Integration
@@ -387,3 +368,136 @@ Common errors:
 - `MissingSaveSlot(slot~)` - Save slot not found
 - `LabelNotFound(label~)` - Jump to undefined label
 - `DuplicateLabel(name~)` - Duplicate label definition
+
+## Textual Script Format
+
+A line-based script format that can be parsed from strings and loaded into a `ScriptBuilder`. Supports all basic script instructions except conditional jumps and code hooks (those require MoonBit closures).
+
+### Syntax
+
+- Each line is a command: `command: arguments`
+- Arguments separated by commas
+- Blank lines are ignored
+- Lines starting with `#` are comments
+- Text after `:` is taken literally (no escaping for simplicity)
+
+### Commands
+
+| Command | Arguments | Description |
+|---------|-----------|-------------|
+| `label` | `name` | Define a jump target |
+| `jump` | `label` | Unconditional jump |
+| `wait` | `ms` | Pause for milliseconds |
+| `narrate` | `text` | Display narration |
+| `say` | `speaker, text` | Display dialogue |
+| `scene` | `bg_id` | Show background |
+| `show` | `id, position, layer, opacity` | Show figure |
+| `hide` | `id` | Hide figure |
+| `music` | `track_id, loop?` | Play BGM (loop default: true) |
+| `music` | `stop` | Stop BGM |
+| `sfx` | `track_id` | Play sound effect |
+| `animate` | `target, property, ms, easing?` | Animate figure |
+
+### Position Values
+
+`left`, `center`, `right`, or `x,y` for custom coordinates (0-1 range).
+
+### Animation Properties
+
+`opacity`, `position`, `scale`
+
+### Easing Values
+
+`linear`, `ease_in`, `ease_out`, `ease_in_out` (default: linear)
+
+### Choice Syntax
+
+Choices use indented lines after a `choice:` header:
+
+```
+choice:
+  - id: option1
+    text: "First option"
+    jump: label_one
+  - id: option2
+    text: "Second option"  
+    jump: label_two
+```
+
+### Example
+
+```
+# Scene 1: The Temple
+label: start
+scene: bg_temple
+music: bgm_temple, true
+
+narrate: The morning sun filters through the ancient trees.
+say: Miko, Welcome! We've been expecting you.
+
+# Present choices
+choice:
+  - id: pray
+    text: "I'm here to pray."
+    jump: pray_scene
+  - id: pass
+    text: "Just passing through."
+    jump: pass_scene
+
+label: pray_scene
+show: miko, center, 1, 1.0
+say: Miko, How reverent of you. The spirits are pleased.
+jump: continue
+
+label: pass_scene
+show: miko, right, 1, 1.0
+say: Miko, I see. Well, feel free to look around.
+jump: continue
+
+label: continue
+hide: miko
+sfx: door_close
+wait: 1000
+jump: start
+```
+
+### Loading Textual Scripts
+
+Parse and load into a script builder:
+
+```moonbit nocheck
+///|
+let text_script = "label: start"
+
+///|
+let script : Script[MyGameData] = try! script(fn(builder) {
+  // Mix with MoonBit DSL
+  builder.label("moonbit_label")
+  builder.say("System", "MoonBit-defined scene.")
+
+  // Load from text
+  let _ = try? reisen_text_script_to_builder(text_script, builder)
+
+  // Continue with MoonBit
+  builder.jump("moonbit_label")
+})
+```
+
+### Parser API
+
+```mbt nocheck
+
+// Parse text into a Script directly
+let parsed : Script[MyGameData] = reisen_parse_text_script("label: start")
+
+// Append parsed instructions to existing builder
+let _ = try? builder.load_text("scene: bg")
+```
+
+### Limitations
+
+- No conditional jumps (`jump_if`) - use MoonBit DSL for predicates
+- No code hooks (`run_code`) - use MoonBit DSL for custom logic
+- No variable manipulation - use MoonBit DSL
+- Text must be literal (no escape sequences)
+- Single-line only (no multiline text blocks)
