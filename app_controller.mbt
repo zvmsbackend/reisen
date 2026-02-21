@@ -32,6 +32,7 @@ pub fn[T] AppController::new(
   save_namespace? : String = "global",
   autosave_slot? : String = "autosave",
   autosave_title? : String = "Autosave",
+  menu_background? : String = "",
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
 ) -> AppController[T] {
@@ -42,7 +43,11 @@ pub fn[T] AppController::new(
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
-    menu: StartMenu::new(ui_root_id, save_namespace~),
+    menu: StartMenu::new(
+      ui_root_id,
+      save_namespace~,
+      background=menu_background,
+    ),
     settings_menu: SettingsMenu::new(ui_root_id, save_namespace~),
     phase: AppPhase::StartMenu,
     render_sync,

@@ -14,6 +14,7 @@ priv enum StartMenuAction {
 priv struct StartMenu {
   root_id : String
   save_ns : String
+  background : String
 }
 
 ///|
@@ -28,8 +29,9 @@ priv struct SlotView {
 fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
+  background? : String = "",
 ) -> StartMenu {
-  { root_id, save_ns: save_namespace }
+  { root_id, save_ns: save_namespace, background }
 }
 
 ///|
@@ -81,8 +83,9 @@ extern "js" fn start_menu_dom_render(
   previews : Array[String],
   has_continue : Bool,
   continue_slot : String,
+  background : String,
 ) -> Unit =
-  #| (root_id, slots, titles, previews, has_continue, continue_slot) => {
+  #| (root_id, slots, titles, previews, has_continue, continue_slot, background) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -93,6 +96,13 @@ extern "js" fn start_menu_dom_render(
   #|     menu = doc.createElement('div');
   #|     menu.setAttribute('data-reisen', 'start-menu');
   #|     root.appendChild(menu);
+  #|   }
+  #|
+  #|   // Apply background if provided
+  #|   if (background && background !== '') {
+  #|     menu.style.backgroundImage = `url(${background})`;
+  #|     menu.style.backgroundSize = 'cover';
+  #|     menu.style.backgroundPosition = 'center';
   #|   }
   #|
   #|   menu.innerHTML = '';
@@ -173,9 +183,25 @@ fn StartMenu::render(self : StartMenu) -> Unit {
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>
-      start_menu_dom_render(self.root_id, slots, titles, previews, true, slot)
+      start_menu_dom_render(
+        self.root_id,
+        slots,
+        titles,
+        previews,
+        true,
+        slot,
+        self.background,
+      )
     None =>
-      start_menu_dom_render(self.root_id, slots, titles, previews, false, "")
+      start_menu_dom_render(
+        self.root_id,
+        slots,
+        titles,
+        previews,
+        false,
+        "",
+        self.background,
+      )
   }
 }
 

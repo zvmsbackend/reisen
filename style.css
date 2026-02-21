@@ -115,6 +115,17 @@ html, body {
   align-items: center;
   gap: 16px;
   background: rgba(0, 0, 0, 0.85);
+  background-clip: padding-box;
+}
+
+[data-reisen="start-menu"]:not([style*="background-image"]),
+[data-reisen="settings-menu"]:not([style*="background-image"]) {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+[data-reisen="start-menu"][style*="background-image"],
+[data-reisen="settings-menu"][style*="background-image"] {
+  background: rgba(0, 0, 0, 0.6);
 }
 
 [data-reisen="start-actions"],

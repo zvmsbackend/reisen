@@ -169,7 +169,7 @@ pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
