@@ -238,15 +238,20 @@ extern "js" fn dom_render(
   #|     root.appendChild(choices);
   #|   }
   #|   choices.innerHTML = '';
-  #|   for (let i = 0; i < choice_ids.length; i++) {
-  #|     const btn = doc.createElement('button');
-  #|     btn.type = 'button';
-  #|     btn.textContent = choice_texts[i] ?? choice_ids[i];
-  #|     btn.setAttribute('data-choice-id', choice_ids[i]);
-  #|     btn.addEventListener('click', () => {
-  #|       root.dataset.reisenSelectedChoice = choice_ids[i];
-  #|     });
-  #|     choices.appendChild(btn);
+  #|   if (choice_ids.length === 0) {
+  #|     choices.style.display = 'none';
+  #|   } else {
+  #|     choices.style.display = 'flex';
+  #|     for (let i = 0; i < choice_ids.length; i++) {
+  #|       const btn = doc.createElement('button');
+  #|       btn.type = 'button';
+  #|       btn.textContent = choice_texts[i] ?? choice_ids[i];
+  #|       btn.setAttribute('data-choice-id', choice_ids[i]);
+  #|       btn.addEventListener('click', () => {
+  #|         root.dataset.reisenSelectedChoice = choice_ids[i];
+  #|       });
+  #|       choices.appendChild(btn);
+  #|     }
   #|   }
   #| }
 
