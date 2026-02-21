@@ -101,6 +101,12 @@ fn Renderer::draw(self : Renderer) -> Unit {
 
 ///|
 fn Renderer::draw_with_viewport(self : Renderer, vw : Double, vh : Double) -> Unit {
+  self.gl.enable(self.gl.constant("BLEND"))
+  self.gl.blend_func(
+    self.gl.constant("SRC_ALPHA"),
+    self.gl.constant("ONE_MINUS_SRC_ALPHA"),
+  )
+
   sort_by_layer(self.items)
   self.gl.use_program(self.pipe.program.program)
   bind_quad_attributes(self.gl, self.pipe.program, self.mesh)
@@ -109,7 +115,6 @@ fn Renderer::draw_with_viewport(self : Renderer, vw : Double, vh : Double) -> Un
   for item in self.items {
     self.gl.active_texture(self.gl.constant("TEXTURE0"))
     self.gl.bind_texture(self.gl.constant("TEXTURE_2D"), item.texture)
-    println("\{item.x}, \{item.y}, \{item.w}, \{item.h}, opacity: \{item.opacity}, layer: \{item.layer}")
 
     let mat = model_matrix(
       item.x,

@@ -501,6 +501,16 @@ pub fn WebGL::clear_color(
 }
 
 ///|
+pub fn WebGL::enable(self : WebGL, cap : Int) -> Unit {
+  v(self).apply_with_string("enable", [v(cap)])
+}
+
+///|
+pub fn WebGL::blend_func(self : WebGL, sfactor : Int, dfactor : Int) -> Unit {
+  v(self).apply_with_string("blendFunc", [v(sfactor), v(dfactor)])
+}
+
+///|
 pub fn WebGL::clear(self : WebGL, mask : Int) -> Unit {
   v(self).apply_with_string("clear", [v(mask)])
 }

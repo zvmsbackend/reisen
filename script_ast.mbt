@@ -2,7 +2,7 @@
 /// Script AST and compiled metadata for the visual novel runtime.
 
 ///|
-pub enum Position {
+pub(all) enum Position {
   Left
   Center
   Right
