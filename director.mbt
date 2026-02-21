@@ -16,13 +16,19 @@ priv struct UiState {
 }
 
 ///|
-priv struct RenderState {
+pub struct RenderState {
   mut background : String?
   figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
   mut last_sfx : String?
   animations : Array[(String, AnimationSpec)]
-}
+} derive(ToJson, FromJson)
+
+///|
+pub struct DirectorSave[T] {
+  runtime : RuntimeSave[T]
+  render : RenderState
+} derive(ToJson, FromJson)
 
 ///|
 struct Director[T] {
@@ -154,7 +160,30 @@ pub fn[T] Director::animations(
 
 ///|
 pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
-  self.runtime.save_json()
+  let save : DirectorSave[T] = {
+    runtime: self.runtime.save(),
+    render: {
+      background: self.render.background,
+      figures: self.render.figures,
+      music: self.render.music,
+      last_sfx: self.render.last_sfx,
+      animations: self.render.animations,
+    },
+  }
+  save.to_json().stringify()
+}
+
+///|
+pub fn[T] Director::from_save(
+  script : Script[T],
+  save : DirectorSave[T],
+) -> Director[T] raise ScriptRuntimeError {
+  let runtime = Runtime::from_save(script, save.runtime)
+  {
+    runtime,
+    ui: { dialog: None, choices: [], text_input: None },
+    render: save.render,
+  }
 }
 
 ///|
@@ -162,5 +191,13 @@ pub fn[T : FromJson] director_from_save_json(
   script : Script[T],
   save_json : String,
 ) -> Director[T] raise {
-  Director::new(Runtime::from_json_string(script, save_json))
+  let parsed = @json.parse(save_json)
+  let save_result : Result[DirectorSave[T], Error] = try? @json.from_json(parsed)
+  match save_result {
+    Ok(save) => Director::from_save(script, save)
+    Err(_) => {
+      let runtime = Runtime::from_json_string(script, save_json)
+      Director::new(runtime)
+    }
+  }
 }

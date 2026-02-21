@@ -7,7 +7,7 @@ pub(all) enum Position {
   Center
   Right
   Custom(Double, Double)
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum Easing {
@@ -15,28 +15,28 @@ pub(all) enum Easing {
   EaseIn
   EaseOut
   EaseInOut
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson, FromJson)
 
 ///|
 pub enum AnimProp {
   Opacity
   Position
   Scale
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson, FromJson)
 
 ///|
 pub struct AnimationSpec {
   prop : AnimProp
   duration_ms : Int
   easing : Easing
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson, FromJson)
 
 ///|
 pub struct FigurePlacement {
   pos : Position
   layer : Int
   opacity : Double
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson, FromJson)
 
 ///|
 pub struct ChoiceOption {

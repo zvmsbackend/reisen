@@ -22,6 +22,7 @@ struct AppController[T] {
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
   mut runner : GameRunner[T]?
+  mut saved_director_json : String?
 }
 
 ///|
@@ -58,6 +59,7 @@ pub fn[T] AppController::new(
     render_sync,
     event_hook,
     runner: None,
+    saved_director_json: None,
   }
   app.menu.render()
   app
@@ -156,6 +158,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           if runner.tick(elapsed_ms~) {
             match runner.take_pending_action() {
               Some("settings") => {
+                self.saved_director_json = Some(runner.director().save_json())
                 runner.clear_ui()
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
@@ -187,8 +190,33 @@ pub fn[T : FromJson + ToJson] AppController::tick(
       match self.settings_menu.take_action() {
         SettingsAction::Back => {
           self.settings_menu.clear()
-          self.menu.render()
-          self.phase = AppPhase::StartMenu
+          match self.saved_director_json {
+            Some(json) => {
+              self.saved_director_json = None
+              try {
+                let director = director_from_save_json(self.script, json)
+                let ui = UiDom::new(self.ui_root_id)
+                let runner = GameRunner::new_with_hooks(
+                  director,
+                  ui,
+                  self.render_sync,
+                  self.event_hook,
+                )
+                runner.sync_ui()
+                self.runner = Some(runner)
+                self.phase = AppPhase::InGame
+              } catch {
+                _ => {
+                  self.menu.render()
+                  self.phase = AppPhase::StartMenu
+                }
+              }
+            }
+            None => {
+              self.menu.render()
+              self.phase = AppPhase::StartMenu
+            }
+          }
         }
         SettingsAction::Saved => self.settings_menu.render()
         SettingsAction::NoAction => ()

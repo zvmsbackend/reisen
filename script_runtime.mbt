@@ -39,7 +39,7 @@ pub struct Runtime[T] {
 }
 
 ///|
-priv struct RuntimeSave[T] {
+pub struct RuntimeSave[T] {
   state : GameState[T]
   ip : Int
   pending_choices : Array[ChoiceOption]
@@ -62,7 +62,8 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
 }
 
 ///|
-fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
+///|
+pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
   {
     state: self.state,
     ip: self.ip,
