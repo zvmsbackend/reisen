@@ -259,14 +259,17 @@ pub impl Show for FigurePlacement
 
 type GameRunner[T]
 pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit
+pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
 pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> Unit) -> Self[T]
+pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
 pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
+pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
 pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
 pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
@@ -419,6 +422,7 @@ pub impl Show for UiChoiceView
 type UiDom
 pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
 pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
+pub fn UiDom::clear_game_ui(Self) -> Unit
 pub fn UiDom::complete_typewriter(Self) -> Unit
 pub fn UiDom::is_typewriter_done(Self) -> Bool
 pub fn UiDom::mark_auto_advanced(Self) -> Unit
@@ -427,6 +431,7 @@ pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
 pub fn UiDom::set_text_speed(Self, Int) -> Unit
 pub fn UiDom::should_auto_advance(Self) -> Bool
 pub fn UiDom::should_skip_advance(Self) -> Bool
+pub fn UiDom::simulate_click(Self) -> Unit
 pub fn UiDom::start_typewriter(Self, String) -> Unit
 pub fn UiDom::text_speed_ms_per_char(Self) -> Int
 pub fn UiDom::toggle_auto_mode(Self) -> Unit

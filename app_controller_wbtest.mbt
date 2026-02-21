@@ -69,7 +69,10 @@ test "app controller writes autosave when game ends" {
   app.handle_menu_action(StartMenuAction::NewGame)
   ignore(app.tick())
   match app.runner {
-    Some(runner) => runner.complete_typewriter()
+    Some(runner) => {
+      runner.complete_typewriter()
+      runner.simulate_click()
+    }
     None => ()
   }
   ignore(app.tick())

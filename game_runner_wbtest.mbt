@@ -20,6 +20,7 @@ test "runner drives script and choice flow" {
 
   assert_eq(runner.step(), Said("guide", "Pick"))
   ui.complete_typewriter()
+  ui.simulate_click()
   assert_true(runner.step() is ChoicePrompt(_))
   assert_eq(runner.submit_choice("right"), Said("guide", "R"))
 }
@@ -74,6 +75,7 @@ test "runner tick returns false when script ends" {
 
   assert_true(runner.tick())
   ui.complete_typewriter()
+  ui.simulate_click()
   assert_true(!runner.tick())
 }
 

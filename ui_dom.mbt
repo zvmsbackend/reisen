@@ -35,6 +35,7 @@ struct UiDom {
   auto_mode_delay_ms : Int
   mut auto_mode_last_advance_ms : Int
   mut skip_mode : Bool
+  mut simulated_click : Bool
 }
 
 ///|
@@ -49,6 +50,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     auto_mode_delay_ms: 2000,
     auto_mode_last_advance_ms: 0,
     skip_mode: false,
+    simulated_click: false,
   }
 }
 
@@ -168,6 +170,11 @@ pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
 ///|
 pub fn UiDom::should_skip_advance(self : UiDom) -> Bool {
   self.skip_mode
+}
+
+///|
+pub fn UiDom::simulate_click(self : UiDom) -> Unit {
+  self.simulated_click = true
 }
 
 ///|
@@ -414,7 +421,14 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     Some((var_name, prompt)) => Some(UiTextInputView::{ var_name, prompt })
     None => None
   }
-  { speaker, text, choices, text_input, auto_mode: ui.auto_mode, skip_mode: ui.skip_mode }
+  {
+    speaker,
+    text,
+    choices,
+    text_input,
+    auto_mode: ui.auto_mode,
+    skip_mode: ui.skip_mode,
+  }
 }
 
 ///|
@@ -475,6 +489,10 @@ fn UiDom::take_action(self : UiDom) -> String? {
 
 ///|
 fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
+  if self.simulated_click {
+    self.simulated_click = false
+    return true
+  }
   dom_take_typewriter_click(self.root_id)
 }
 

@@ -131,7 +131,15 @@ pub fn[T] GameRunner::step(
     self.ui.complete_typewriter()
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
-    self.ui_dirty = true
+    match event {
+      ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
+        self.ui_dirty = true
+      _ => {
+        self.ui_dirty = true
+        self.maybe_render_ui()
+        return self.step(elapsed_ms=0)
+      }
+    }
     self.maybe_render_ui()
     return event
   }
@@ -228,6 +236,11 @@ pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
 ///|
 pub fn[T] GameRunner::complete_typewriter(self : GameRunner[T]) -> Unit {
   self.ui.complete_typewriter()
+}
+
+///|
+pub fn[T] GameRunner::simulate_click(self : GameRunner[T]) -> Unit {
+  self.ui.simulate_click()
 }
 
 ///|
