@@ -55,7 +55,7 @@ html, body {
 
 [data-reisen="dialog"] {
   position: absolute;
-  bottom: 40px;
+  bottom: 70px;
   left: 50%;
   transform: translateX(-50%);
   width: 80%;
@@ -68,6 +68,37 @@ html, body {
   font-size: 16px;
   line-height: 1.6;
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+[data-reisen="game-actions"] {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+}
+
+[data-reisen="game-actions"] button {
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+[data-reisen="game-actions"] button:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+[data-reisen="game-actions"] button.active {
+  background: rgba(255, 255, 255, 0.25);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.4);
 }
 
 [data-reisen="choices"] {

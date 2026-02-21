@@ -20,6 +20,8 @@ struct UiViewModel {
   text : String
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
+  auto_mode : Bool
+  skip_mode : Bool
 } derive(Show, Eq)
 
 ///|
@@ -290,6 +292,54 @@ extern "js" fn dom_take_submitted_text_input(
   #| }
 
 ///|
+extern "js" fn dom_render_action_buttons(
+  root_id : String,
+  auto_mode : Bool,
+  skip_mode : Bool,
+) -> Unit =
+  #| (root_id, auto_mode, skip_mode) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|
+  #|   let actions = root.querySelector('[data-reisen="game-actions"]');
+  #|   if (!actions) {
+  #|     actions = doc.createElement('div');
+  #|     actions.setAttribute('data-reisen', 'game-actions');
+  #|     root.appendChild(actions);
+  #|   }
+  #|   actions.innerHTML = '';
+  #|
+  #|   const buttons = [
+  #|     { id: 'settings', label: '⚙' },
+  #|     { id: 'qsave', label: 'Q.Save' },
+  #|     { id: 'save', label: 'Save' },
+  #|     { id: 'auto', label: auto_mode ? '☑ Auto' : '☐ Auto', data: 'auto' },
+  #|     { id: 'skip', label: skip_mode ? '☑ Skip' : '☐ Skip', data: 'skip' },
+  #|   ];
+  #|
+  #|   for (const btnInfo of buttons) {
+  #|     const btn = doc.createElement('button');
+  #|     btn.type = 'button';
+  #|     btn.textContent = btnInfo.label;
+  #|     if (btnInfo.data === 'auto') {
+  #|       btn.setAttribute('data-reisen-action', 'auto');
+  #|       btn.classList.toggle('active', auto_mode);
+  #|     } else if (btnInfo.data === 'skip') {
+  #|       btn.setAttribute('data-reisen-action', 'skip');
+  #|       btn.classList.toggle('active', skip_mode);
+  #|     } else {
+  #|       btn.setAttribute('data-reisen-action', btnInfo.id);
+  #|     }
+  #|     btn.addEventListener('click', () => {
+  #|       root.dataset.reisenAction = btnInfo.id;
+  #|     });
+  #|     actions.appendChild(btn);
+  #|   }
+  #| }
+
+///|
 extern "js" fn dom_clear_text_input(root_id : String) -> Unit =
   #| (root_id) => {
   #|   const doc = globalThis.document;
@@ -352,7 +402,7 @@ extern "js" fn dom_take_typewriter_click(root_id : String) -> Bool =
   #| }
 
 ///|
-fn[T] ui_view_from_director(director : Director[T]) -> UiViewModel {
+fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
   let (speaker, text) = match director.dialog() {
     Some(line) => (line.speaker, line.text)
     None => ("", "")
@@ -364,7 +414,7 @@ fn[T] ui_view_from_director(director : Director[T]) -> UiViewModel {
     Some((var_name, prompt)) => Some(UiTextInputView::{ var_name, prompt })
     None => None
   }
-  { speaker, text, choices, text_input }
+  { speaker, text, choices, text_input, auto_mode: ui.auto_mode, skip_mode: ui.skip_mode }
 }
 
 ///|
@@ -383,6 +433,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   let ids = view.choices.map(c => c.id)
   let texts = view.choices.map(c => c.text)
   dom_render(self.root_id, view.speaker, display_text, ids, texts)
+  dom_render_action_buttons(self.root_id, view.auto_mode, view.skip_mode)
   match view.text_input {
     Some(input_view) =>
       dom_render_text_input(
@@ -402,6 +453,24 @@ fn UiDom::take_selected_choice(self : UiDom) -> String? {
 ///|
 fn UiDom::take_submitted_text_input(self : UiDom) -> String? {
   dom_take_submitted_text_input(self.root_id).to_option()
+}
+
+///|
+extern "js" fn dom_take_action(root_id : String) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const action = root.dataset.reisenAction;
+  #|   if (!action) return null;
+  #|   delete root.dataset.reisenAction;
+  #|   return action;
+  #| }
+
+///|
+fn UiDom::take_action(self : UiDom) -> String? {
+  dom_take_action(self.root_id).to_option()
 }
 
 ///|

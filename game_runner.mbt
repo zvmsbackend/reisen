@@ -42,7 +42,7 @@ pub fn[T] GameRunner::new_with_hooks(
 
 ///|
 fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
-  self.ui.render(ui_view_from_director(self.director))
+  self.ui.render(ui_view_from_director(self.director, self.ui))
   (self.render_sync)(self.director)
   self.ui_dirty = false
 }
@@ -65,6 +65,19 @@ pub fn[T] GameRunner::step(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
+  match self.ui.take_action() {
+    Some(action) => {
+      match action {
+        "auto" => self.ui.toggle_auto_mode()
+        "skip" => self.ui.toggle_skip_mode()
+        _ => ()
+      }
+      self.ui_dirty = true
+      self.maybe_render_ui()
+      return Noop
+    }
+    None => ()
+  }
   if !self.director.choices().is_empty() {
     match self.ui.take_selected_choice() {
       Some(choice_id) => {
@@ -127,6 +140,15 @@ pub fn[T] GameRunner::step(
     if self.ui.check_typewriter_click() {
       self.ui.complete_typewriter()
       self.ui_dirty = true
+      let event = self.director.step(elapsed_ms=0)
+      (self.event_hook)(event)
+      match event {
+        Said(_, _) | ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
+          self.ui_dirty = true
+        _ => ()
+      }
+      self.maybe_render_ui()
+      return event
     } else {
       ignore(self.ui.advance_typewriter(elapsed_ms~))
       self.ui_dirty = true
@@ -216,6 +238,11 @@ pub fn[T] GameRunner::toggle_auto_mode(self : GameRunner[T]) -> Unit {
 ///|
 pub fn[T] GameRunner::toggle_skip_mode(self : GameRunner[T]) -> Unit {
   self.ui.toggle_skip_mode()
+}
+
+///|
+pub fn[T] GameRunner::take_game_action(self : GameRunner[T]) -> String? {
+  self.ui.take_action()
 }
 
 ///|
