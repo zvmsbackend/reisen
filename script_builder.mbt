@@ -272,7 +272,7 @@ pub fn[T] ScriptBuilder::animate_scale(
 pub fn[T] ScriptBuilder::load_text(
   self : ScriptBuilder[T],
   text : String,
-) -> Unit raise ReisenTextError {
+) -> Unit {
   reisen_text_script_to_builder(text, self)
 }
 

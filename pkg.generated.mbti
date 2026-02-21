@@ -33,9 +33,13 @@ pub async fn load_image(String) -> Image
 
 pub async fn load_text(String) -> String
 
-pub fn[T] make_webgl_render_sync_hook(WebGL, AssetStore, Double, Double) -> ((Director[T]) -> Unit) raise
+pub fn[T] make_webgl_render_sync_hook(WebGL, AssetStore) -> ((Director[T]) -> Unit) raise
 
-pub fn[T] make_webgl_render_sync_hook_with_config(WebGL, AssetStore, Double, Double, WebglPresenterConfig) -> ((Director[T]) -> Unit) raise
+pub fn[T] make_webgl_render_sync_hook_from_canvas(String, AssetStore) -> ((Director[T]) -> Unit)? raise
+
+pub fn[T] make_webgl_render_sync_hook_from_canvas_with_config(String, AssetStore, WebglPresenterConfig) -> ((Director[T]) -> Unit)? raise
+
+pub fn[T] make_webgl_render_sync_hook_with_config(WebGL, AssetStore, WebglPresenterConfig) -> ((Director[T]) -> Unit) raise
 
 pub fn option(String, String, String) -> ChoiceOption
 
@@ -107,9 +111,9 @@ pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, rende
 
 pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String, settings? : GameSettings) -> GameRunner[T] raise
 
-pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
+pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
 
-pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, Double, Double, AudioDom, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
+pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, AudioDom, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
 
 pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
 
@@ -119,6 +123,10 @@ pub fn[T] validate_script_image_assets(Script[T], AssetStore) -> Unit raise AppB
 
 pub fn webgl_presenter_default_config() -> WebglPresenterConfig
 
+pub fn window_inner_height() -> Double
+
+pub fn window_inner_width() -> Double
+
 // Errors
 pub suberror AppBootstrapError {
   MissingImageAsset(id~ : String)
@@ -127,13 +135,6 @@ pub suberror AppBootstrapError {
 }
 
 pub suberror ReisenTextError {
-  ParseError(Int, String)
-  UnknownCommand(String)
-  InvalidArgument(String, String)
-  MissingChoiceJump
-  InvalidPosition(String)
-  InvalidEasing(String)
-  InvalidAnimationProp(String)
 }
 pub impl Eq for ReisenTextError
 pub impl Show for ReisenTextError
@@ -146,9 +147,6 @@ pub suberror ScriptRuntimeError {
   LabelNotFound(label~ : String)
   ChoiceNotActive
   ChoiceNotFound(id~ : String)
-  ChoicePending
-  TextInputPending
-  TimerPending(ms~ : Int)
   InvalidInstructionPointer(ip~ : Int)
 }
 
@@ -170,7 +168,7 @@ pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
@@ -270,6 +268,7 @@ pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise Scr
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
+pub fn[T] GameRunner::take_pending_action(Self[T]) -> String?
 pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
 pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
@@ -278,7 +277,6 @@ pub(all) struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
-  skip_mode : Bool
 }
 pub impl Eq for GameSettings
 pub impl Show for GameSettings
@@ -323,7 +321,7 @@ pub enum Instruction[T] {
   Animate(String, AnimationSpec)
 }
 
-pub enum Position {
+pub(all) enum Position {
   Left
   Center
   Right
@@ -401,7 +399,7 @@ pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
 pub fn[T] ScriptBuilder::jump(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], String, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit raise ReisenTextError
+pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::narrate(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
@@ -421,11 +419,13 @@ pub impl Show for UiChoiceView
 
 type UiDom
 pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
+pub fn UiDom::advance_skip_mode_timer(Self, elapsed_ms~ : Int) -> Unit
 pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
 pub fn UiDom::clear_game_ui(Self) -> Unit
 pub fn UiDom::complete_typewriter(Self) -> Unit
 pub fn UiDom::is_typewriter_done(Self) -> Bool
 pub fn UiDom::mark_auto_advanced(Self) -> Unit
+pub fn UiDom::mark_skip_advanced(Self) -> Unit
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
 pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
 pub fn UiDom::set_text_speed(Self, Int) -> Unit
@@ -451,6 +451,7 @@ pub fn WebGL::active_texture(Self, Int) -> Unit
 pub fn WebGL::attach_shader(Self, WebGLProgram, WebGLShader) -> Unit
 pub fn WebGL::bind_buffer(Self, Int, WebGLBuffer) -> Unit
 pub fn WebGL::bind_texture(Self, Int, WebGLTexture) -> Unit
+pub fn WebGL::blend_func(Self, Int, Int) -> Unit
 pub fn WebGL::buffer_data(Self, Int, @js.Value, Int) -> Unit
 pub fn WebGL::clear(Self, Int) -> Unit
 pub fn WebGL::clear_color(Self, Double, Double, Double, Double) -> Unit
@@ -462,6 +463,7 @@ pub fn WebGL::create_shader(Self, Int) -> WebGLShader?
 pub fn WebGL::create_texture(Self) -> WebGLTexture?
 pub fn WebGL::draw_arrays(Self, Int, Int, Int) -> Unit
 pub fn WebGL::draw_elements(Self, Int, Int, Int, Int) -> Unit
+pub fn WebGL::enable(Self, Int) -> Unit
 pub fn WebGL::enable_vertex_attrib_array(Self, Int) -> Unit
 pub fn WebGL::generate_mipmap(Self, Int) -> Unit
 pub fn WebGL::get_attrib_location(Self, WebGLProgram, String) -> Int

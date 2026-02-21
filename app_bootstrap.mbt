@@ -159,14 +159,12 @@ pub fn[T] start_game_webgl(
   ui_root_id : String,
   gl : WebGL,
   store : AssetStore,
-  viewport_w : Double,
-  viewport_h : Double,
   presenter_config? : WebglPresenterConfig = webgl_presenter_default_config(),
   settings? : GameSettings,
 ) -> GameRunner[T] raise {
   validate_script_assets(script, store)
   let render_sync = make_webgl_render_sync_hook_with_config(
-    gl, store, viewport_w, viewport_h, presenter_config,
+    gl, store, presenter_config,
   )
   start_game(script, state, ui_root_id, render_sync~, settings?)
 }
@@ -178,8 +176,6 @@ pub fn[T] start_game_webgl_with_audio(
   ui_root_id : String,
   gl : WebGL,
   store : AssetStore,
-  viewport_w : Double,
-  viewport_h : Double,
   audio : AudioDom,
   presenter_config? : WebglPresenterConfig = webgl_presenter_default_config(),
   settings? : GameSettings,
@@ -190,7 +186,7 @@ pub fn[T] start_game_webgl_with_audio(
     None => ()
   }
   let render_sync = make_webgl_render_sync_hook_with_config(
-    gl, store, viewport_w, viewport_h, presenter_config,
+    gl, store, presenter_config,
   )
   start_game(
     script,

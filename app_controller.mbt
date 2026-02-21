@@ -49,7 +49,11 @@ pub fn[T] AppController::new(
       save_namespace~,
       background=menu_background,
     ),
-    settings_menu: SettingsMenu::new(ui_root_id, save_namespace~, background=settings_background),
+    settings_menu: SettingsMenu::new(
+      ui_root_id,
+      save_namespace~,
+      background=settings_background,
+    ),
     phase: AppPhase::StartMenu,
     render_sync,
     event_hook,
@@ -156,13 +160,12 @@ pub fn[T : FromJson + ToJson] AppController::tick(
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
               }
-              Some("qsave") => {
+              Some("qsave") =>
                 save_runner_to_slot(
                   runner,
                   "quicksave",
                   save_namespace=self.save_ns,
                 )
-              }
               _ => ()
             }
             true

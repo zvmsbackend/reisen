@@ -7,8 +7,6 @@ priv struct WebglPresenter {
   store : AssetStore
   textures : Map[String, WebGLTexture]
   texture_sizes : Map[String, (Int, Int)]
-  viewport_w : Double
-  viewport_h : Double
   config : WebglPresenterConfig
   mut animation_cursor : Int
   mut timeline_ms : Int
@@ -77,23 +75,19 @@ extern "js" fn now_ms() -> Int =
   #| () => Math.floor((globalThis.performance?.now?.() ?? Date.now()))
 
 ///|
-fn webgl_presenter_new(
+fn WebglPresenter::new(
   gl : WebGL,
   store : AssetStore,
-  viewport_w : Double,
-  viewport_h : Double,
   config : WebglPresenterConfig,
 ) -> WebglPresenter raise RenderError {
   let mesh = create_quad_mesh(gl)
   let pipe = create_pipeline(gl, default_vert_shader, default_frag_shader)
-  let renderer = renderer_new(gl, mesh, pipe, viewport_w, viewport_h)
+  let renderer = renderer_new(gl, mesh, pipe)
   {
     renderer,
     store,
     textures: {},
     texture_sizes: {},
-    viewport_w,
-    viewport_h,
     config,
     animation_cursor: 0,
     timeline_ms: 0,
@@ -375,12 +369,7 @@ fn[T] WebglPresenter::sync_impl(
   match director.background() {
     Some(bg_id) => {
       let tex = self.texture_for(bg_id)
-      let (x, y, bg_w, bg_h) = fit_background(
-        bg_id,
-        w,
-        h,
-        self.texture_sizes,
-      )
+      let (x, y, bg_w, bg_h) = fit_background(bg_id, w, h, self.texture_sizes)
       self.renderer.add({
         texture: tex,
         x,
@@ -399,11 +388,7 @@ fn[T] WebglPresenter::sync_impl(
   let finished_scale : Array[String] = []
   for id, placement in director.figures() {
     let tex = self.texture_for(id)
-    let (base_x, base_y, max_w, max_h) = figure_rect(
-      placement.pos,
-      w,
-      h,
-    )
+    let (base_x, base_y, max_w, max_h) = figure_rect(placement.pos, w, h)
     let (actual_w, actual_h) = fit_figure(id, max_w, max_h, self.texture_sizes)
     let final_x = match placement.pos {
       Center => (w - actual_w) / 2.0
@@ -502,14 +487,10 @@ fn[T] WebglPresenter::as_render_sync_hook(
 pub fn[T] make_webgl_render_sync_hook(
   gl : WebGL,
   store : AssetStore,
-  viewport_w : Double,
-  viewport_h : Double,
 ) -> RenderSyncHook[T] raise {
-  let presenter = webgl_presenter_new(
+  let presenter = WebglPresenter::new(
     gl,
     store,
-    viewport_w,
-    viewport_h,
     webgl_presenter_default_config(),
   )
   presenter.as_render_sync_hook()
@@ -519,11 +500,9 @@ pub fn[T] make_webgl_render_sync_hook(
 pub fn[T] make_webgl_render_sync_hook_with_config(
   gl : WebGL,
   store : AssetStore,
-  viewport_w : Double,
-  viewport_h : Double,
   config : WebglPresenterConfig,
 ) -> RenderSyncHook[T] raise {
-  let presenter = webgl_presenter_new(gl, store, viewport_w, viewport_h, config)
+  let presenter = WebglPresenter::new(gl, store, config)
   presenter.as_render_sync_hook()
 }
 
@@ -542,7 +521,7 @@ pub fn[T] make_webgl_render_sync_hook_from_canvas(
       let w = window_inner_width()
       let h = window_inner_height()
       set_canvas_size(canvas_id, w.to_int(), h.to_int())
-      Some(make_webgl_render_sync_hook(g, store, w, h))
+      Some(make_webgl_render_sync_hook(g, store))
     }
     None => None
   }
@@ -564,7 +543,7 @@ pub fn[T] make_webgl_render_sync_hook_from_canvas_with_config(
       let w = window_inner_width()
       let h = window_inner_height()
       set_canvas_size(canvas_id, w.to_int(), h.to_int())
-      Some(make_webgl_render_sync_hook_with_config(g, store, w, h, config))
+      Some(make_webgl_render_sync_hook_with_config(g, store, config))
     }
     None => None
   }

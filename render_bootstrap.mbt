@@ -95,8 +95,8 @@ fn create_program(
 ///|
 fn create_quad_mesh(gl : WebGL) -> QuadMesh raise RenderError {
   let vertices : Array[Double] = [
-    -1.0, -1.0, 0.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0,
-    -1.0, -1.0, 0.0, 1.0, 1.0, 1.0, 1.0, 0.0, 1.0, -1.0, 1.0, 1.0,
+    -1.0, -1.0, 0.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, -1.0, -1.0, 0.0,
+    1.0, 1.0, 1.0, 1.0, 0.0, 1.0, -1.0, 1.0, 1.0,
   ]
   match gl.create_buffer() {
     None => raise RenderError::NullObject(op="createBuffer")
@@ -140,55 +140,6 @@ fn bind_quad_attributes(
     stride,
     offset_uv,
   )
-}
-
-///|
-fn create_texture_rgba(
-  gl : WebGL,
-  width : Int,
-  height : Int,
-  pixels : Array[Int],
-) -> WebGLTexture raise RenderError {
-  match gl.create_texture() {
-    None => raise RenderError::NullObject(op="createTexture")
-    Some(tex) => {
-      let target = gl.constant("TEXTURE_2D")
-      gl.bind_texture(target, tex)
-      gl.tex_param_i(
-        target,
-        gl.constant("TEXTURE_MIN_FILTER"),
-        gl.constant("LINEAR"),
-      )
-      gl.tex_param_i(
-        target,
-        gl.constant("TEXTURE_MAG_FILTER"),
-        gl.constant("LINEAR"),
-      )
-      gl.tex_param_i(
-        target,
-        gl.constant("TEXTURE_WRAP_S"),
-        gl.constant("CLAMP_TO_EDGE"),
-      )
-      gl.tex_param_i(
-        target,
-        gl.constant("TEXTURE_WRAP_T"),
-        gl.constant("CLAMP_TO_EDGE"),
-      )
-      let data = js_uint8_array(pixels)
-      gl.tex_image_2d(
-        target,
-        0,
-        gl.constant("RGBA"),
-        width,
-        height,
-        0,
-        gl.constant("RGBA"),
-        gl.constant("UNSIGNED_BYTE"),
-        data,
-      )
-      tex
-    }
-  }
 }
 
 ///|
@@ -265,26 +216,3 @@ extern "js" fn image_get_width(img : Image) -> Int =
 ///|
 extern "js" fn image_get_height(img : Image) -> Int =
   #| (img) => img.height || 0
-
-///|
-fn create_solid_texture(
-  gl : WebGL,
-  r : Int,
-  g : Int,
-  b : Int,
-  a : Int,
-) -> WebGLTexture raise RenderError {
-  create_texture_rgba(gl, 1, 1, [r, g, b, a])
-}
-
-///|
-fn draw_textured_quad(
-  gl : WebGL,
-  program : ShaderProgram,
-  mesh : QuadMesh,
-) -> Unit {
-  gl.use_program(program.program)
-  bind_quad_attributes(gl, program, mesh)
-  gl.uniform1i(program.u_tex, 0)
-  gl.draw_arrays(gl.constant("TRIANGLES"), 0, mesh.vertex_count)
-}

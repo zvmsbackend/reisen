@@ -230,11 +230,6 @@ pub fn game_settings_default() -> GameSettings {
 }
 
 ///|
-fn settings_key(ns : String) -> String {
-  settings_prefix + ns
-}
-
-///|
 fn settings_key_in(ns : String) -> String {
   settings_prefix + ns + ".json"
 }

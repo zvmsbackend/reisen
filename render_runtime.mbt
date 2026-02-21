@@ -25,8 +25,6 @@ priv struct Renderer {
   gl : WebGL
   mesh : QuadMesh
   pipe : RenderPipeline
-  viewport_w : Double
-  viewport_h : Double
   items : Array[Renderable]
 }
 
@@ -48,14 +46,8 @@ fn create_pipeline(
 }
 
 ///|
-fn renderer_new(
-  gl : WebGL,
-  mesh : QuadMesh,
-  pipe : RenderPipeline,
-  viewport_w : Double,
-  viewport_h : Double,
-) -> Renderer {
-  { gl, mesh, pipe, viewport_w, viewport_h, items: [] }
+fn renderer_new(gl : WebGL, mesh : QuadMesh, pipe : RenderPipeline) -> Renderer {
+  { gl, mesh, pipe, items: [] }
 }
 
 ///|
@@ -95,12 +87,11 @@ fn model_matrix(
 }
 
 ///|
-fn Renderer::draw(self : Renderer) -> Unit {
-  self.draw_with_viewport(self.viewport_w, self.viewport_h)
-}
-
-///|
-fn Renderer::draw_with_viewport(self : Renderer, vw : Double, vh : Double) -> Unit {
+fn Renderer::draw_with_viewport(
+  self : Renderer,
+  vw : Double,
+  vh : Double,
+) -> Unit {
   self.gl.enable(self.gl.constant("BLEND"))
   self.gl.blend_func(
     self.gl.constant("SRC_ALPHA"),
@@ -116,14 +107,7 @@ fn Renderer::draw_with_viewport(self : Renderer, vw : Double, vh : Double) -> Un
     self.gl.active_texture(self.gl.constant("TEXTURE0"))
     self.gl.bind_texture(self.gl.constant("TEXTURE_2D"), item.texture)
 
-    let mat = model_matrix(
-      item.x,
-      item.y,
-      item.w,
-      item.h,
-      vw,
-      vh,
-    )
+    let mat = model_matrix(item.x, item.y, item.w, item.h, vw, vh)
     let mat_f32 = js_float32_array(mat)
     self.gl.uniform_matrix4(self.pipe.u_model, false, mat_f32)
     self.gl.uniform1f(self.pipe.u_opacity, item.opacity)

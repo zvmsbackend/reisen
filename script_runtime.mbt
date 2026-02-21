@@ -24,9 +24,6 @@ pub suberror ScriptRuntimeError {
   LabelNotFound(label~ : String)
   ChoiceNotActive
   ChoiceNotFound(id~ : String)
-  ChoicePending
-  TextInputPending
-  TimerPending(ms~ : Int)
   InvalidInstructionPointer(ip~ : Int)
 }
 
@@ -215,7 +212,7 @@ pub fn[T] Runtime::step(
   if self.pending_choices.length() > 0 {
     return ChoicePrompt(self.pending_choices)
   }
-  if self.pending_text_input.is_some() {
+  if self.pending_text_input is Some(_) {
     match self.pending_text_input {
       Some((var_name, prompt)) => return TextInputPrompt(var_name, prompt)
       None => ()

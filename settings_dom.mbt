@@ -231,11 +231,3 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
     _ => SettingsAction::NoAction
   }
 }
-
-///|
-fn SettingsMenu::current_settings(self : SettingsMenu) -> GameSettings {
-  match settings_read_in(self.save_ns) {
-    Some(s) => s
-    None => game_settings_default()
-  }
-}

@@ -4,15 +4,7 @@
 /// Supports: label, jump, wait, narrate, say, scene, show, hide, music, sfx, animate, choice
 
 ///|
-pub suberror ReisenTextError {
-  ParseError(Int, String)
-  UnknownCommand(String)
-  InvalidArgument(String, String)
-  MissingChoiceJump
-  InvalidPosition(String)
-  InvalidEasing(String)
-  InvalidAnimationProp(String)
-} derive(Show, Eq)
+pub suberror ReisenTextError {} derive(Show, Eq)
 
 ///|
 fn get_first_part(s : String, sep : String) -> (String, String) {
@@ -41,7 +33,7 @@ fn get_first_part(s : String, sep : String) -> (String, String) {
 fn[T] reisen_text_script_to_builder(
   text : String,
   builder : ScriptBuilder[T],
-) -> Unit raise ReisenTextError {
+) -> Unit {
   let lines : Array[String] = []
   for line in text.split("\n") {
     let s = line.trim().to_string()
@@ -54,9 +46,10 @@ fn[T] reisen_text_script_to_builder(
   let mut choice_speaker = ""
   let mut choice_prompt = ""
   let mut in_choice = false
+  let mut last_speaker = None
 
-  for i, line in lines {
-    if line.starts_with("#") {
+  for line in lines {
+    if line.has_prefix("#") {
       continue
     }
 
@@ -64,7 +57,7 @@ fn[T] reisen_text_script_to_builder(
 
     if in_choice {
       let trimmed = line.trim()
-      if trimmed.starts_with("- ") || trimmed == "-" {
+      if trimmed.has_prefix("- ") || trimmed == "-" {
         if not(choice_options.is_empty()) {
           builder.menu(choice_speaker, choice_prompt, choice_options)
           choice_options = []
@@ -93,10 +86,13 @@ fn[T] reisen_text_script_to_builder(
       "narrate" | "narration" => builder.narrate(args_str)
       "say" => {
         let (speaker, text) = get_first_part(args_str, ",")
-        if speaker != "" {
-          builder.say(speaker, text)
-        } else {
-          builder.say("", text)
+        match (speaker, last_speaker) {
+          ("", Some(s)) => builder.say(s, text)
+          ("", None) => builder.say("", text)
+          (s, _) => {
+            last_speaker = Some(s)
+            builder.say(s, text)
+          }
         }
       }
       "scene" | "bg" | "background" =>
@@ -130,18 +126,14 @@ fn[T] reisen_text_script_to_builder(
       "sfx" | "sound" => if args_str != "" { builder.play_sfx(args_str) }
       "animate" | "anim" => {
         let (target, rest) = get_first_part(args_str, ",")
-        let (prop, ms_str) = get_first_part(rest, ",")
+        let (prop, arg_str) = get_first_part(rest, ",")
         if target != "" && prop != "" {
           let prop_lower = prop.to_lower()
+          let arg = (try? @strconv.parse_int(arg_str)).unwrap_or(500)
           match prop_lower {
-            "opacity" => builder.animate_opacity(target, 500)
-            "alpha" => builder.animate_opacity(target, 500)
-            "fade" => builder.animate_opacity(target, 500)
-            "position" => builder.animate_position(target, 500)
-            "pos" => builder.animate_position(target, 500)
-            "move" => builder.animate_position(target, 500)
-            "scale" => builder.animate_scale(target, 500)
-            "size" => builder.animate_scale(target, 500)
+            "opacity" | "alpha" | "fade" => builder.animate_opacity(target, arg)
+            "position" | "pos" | "move" => builder.animate_position(target, arg)
+            "scale" | "size" => builder.animate_scale(target, arg)
             _ => ()
           }
         }
@@ -172,7 +164,7 @@ fn[T] reisen_text_script_to_builder(
 ///|
 pub fn[T] reisen_parse_text_script(text : String) -> Script[T] {
   let builder : ScriptBuilder[T] = ScriptBuilder::new()
-  let _ = try? reisen_text_script_to_builder(text, builder)
+  reisen_text_script_to_builder(text, builder)
   let result = try? builder.build()
   result.unwrap()
 }
