@@ -133,9 +133,9 @@ fn figure_rect(
   let w = viewport_w * 0.40
   let h = viewport_h * 0.90
   match pos {
-    Left => (viewport_w * 0.05, viewport_h - h, w, h)
-    Center => ((viewport_w - w) / 2.0, viewport_h - h, w, h)
-    Right => (viewport_w * 0.55, viewport_h - h, w, h)
+    Left => (viewport_w * 0.05, 0.0, w, h)
+    Center => ((viewport_w - w) / 2.0, 0.0, w, h)
+    Right => (viewport_w * 0.55, 0.0, w, h)
     Custom(x, y) => (x * viewport_w, y * viewport_h, w, h)
   }
 }
@@ -330,6 +330,33 @@ fn fit_background(
 }
 
 ///|
+fn fit_figure(
+  image_id : String,
+  max_w : Double,
+  max_h : Double,
+  sizes : Map[String, (Int, Int)],
+) -> (Double, Double) {
+  match sizes.get(image_id) {
+    Some((img_w, img_h)) => {
+      let img_w = img_w.to_double()
+      let img_h = img_h.to_double()
+      let img_ratio = img_w / img_h
+      let max_ratio = max_w / max_h
+      if img_ratio > max_ratio {
+        // Image is wider relative to max box - fit to width
+        let scale = max_w / img_w
+        (max_w, img_h * scale)
+      } else {
+        // Image is taller relative to max box - fit to height
+        let scale = max_h / img_h
+        (img_w * scale, max_h)
+      }
+    }
+    None => (max_w, max_h)
+  }
+}
+
+///|
 fn[T] WebglPresenter::sync_impl(
   self : WebglPresenter,
   director : Director[T],
@@ -372,11 +399,18 @@ fn[T] WebglPresenter::sync_impl(
   let finished_scale : Array[String] = []
   for id, placement in director.figures() {
     let tex = self.texture_for(id)
-    let (base_x, base_y, base_w, base_h) = figure_rect(
+    let (base_x, base_y, max_w, max_h) = figure_rect(
       placement.pos,
       w,
       h,
     )
+    let (actual_w, actual_h) = fit_figure(id, max_w, max_h, self.texture_sizes)
+    let final_x = match placement.pos {
+      Center => (w - actual_w) / 2.0
+      Left => base_x + (max_w - actual_w) / 2.0
+      Right => base_x + (max_w - actual_w) / 2.0
+      _ => base_x
+    }
     let (x1, y1) = match self.position_anims.get(id) {
       Some(anim) => {
         let (ax, ay, done) = apply_position_animation(
@@ -392,15 +426,15 @@ fn[T] WebglPresenter::sync_impl(
         }
         (ax, ay)
       }
-      None => (base_x, base_y)
+      None => (final_x, base_y)
     }
     let (x, y, w, h) = match self.scale_anims.get(id) {
       Some(anim) => {
         let (sx, sy, sw, sh, done) = apply_scale_animation(
           x1,
           y1,
-          base_w,
-          base_h,
+          actual_w,
+          actual_h,
           self.config.scale_entry_from,
           self.timeline_ms,
           anim,
@@ -410,7 +444,7 @@ fn[T] WebglPresenter::sync_impl(
         }
         (sx, sy, sw, sh)
       }
-      None => (x1, y1, base_w, base_h)
+      None => (x1, y1, actual_w, actual_h)
     }
     let opacity = match self.opacity_anims.get(id) {
       Some(anim) => {

@@ -1,13 +1,13 @@
 ///|
 test "figure rect presets map to expected screen anchors" {
   let (lx, ly, lw, lh) = figure_rect(Left, 1000.0, 800.0)
-  assert_eq((lx, ly, lw, lh), (50.0, 80.0, 400.0, 720.0))
+  assert_eq((lx, ly, lw, lh), (50.0, 0.0, 400.0, 720.0))
 
   let (cx, cy, cw, ch) = figure_rect(Center, 1000.0, 800.0)
-  assert_eq((cx, cy, cw, ch), (300.0, 80.0, 400.0, 720.0))
+  assert_eq((cx, cy, cw, ch), (300.0, 0.0, 400.0, 720.0))
 
   let (rx, ry, rw, rh) = figure_rect(Right, 1000.0, 800.0)
-  assert_eq((rx, ry, rw, rh), (550.0, 80.0, 400.0, 720.0))
+  assert_eq((rx, ry, rw, rh), (550.0, 0.0, 400.0, 720.0))
 }
 
 ///|
