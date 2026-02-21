@@ -71,6 +71,25 @@ pub fn[T] GameRunner::step(
       }
     }
   }
+  if self.director.text_input() is Some(_) {
+    match self.ui.take_submitted_text_input() {
+      Some(value) => {
+        let event = self.director.submit_text_input(value)
+        (self.event_hook)(event)
+        self.render_ui()
+        return event
+      }
+      None => {
+        let event = match self.director.text_input() {
+          Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
+          None => Noop
+        }
+        (self.event_hook)(event)
+        self.render_ui()
+        return event
+      }
+    }
+  }
   if self.director.dialog() is None {
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)

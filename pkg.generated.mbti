@@ -147,6 +147,7 @@ pub suberror ScriptRuntimeError {
   ChoiceNotActive
   ChoiceNotFound(id~ : String)
   ChoicePending
+  TextInputPending
   TimerPending(ms~ : Int)
   InvalidInstructionPointer(ip~ : Int)
 }
@@ -236,6 +237,8 @@ pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Director::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Director::text_input(Self[T]) -> (String, String)?
 
 pub(all) enum Easing {
   Linear
@@ -283,6 +286,7 @@ type GameState[T]
 pub fn[T] GameState::flag(Self[T], String) -> Bool
 pub fn[T] GameState::get_user_data(Self[T]) -> T
 pub fn[T] GameState::int_var(Self[T], String, default_value? : Int) -> Int
+pub fn[T] GameState::interpolate(Self[T], String) -> String
 pub fn[T] GameState::new(T) -> Self[T]
 pub fn[T] GameState::set_flag(Self[T], String, Bool) -> Unit
 pub fn[T] GameState::set_int_var(Self[T], String, Int) -> Unit
@@ -305,6 +309,7 @@ pub enum Instruction[T] {
   Wait(Int)
   Say(String, String)
   Choice(Array[ChoiceOption])
+  InputText(String, String)
   RunCode(String, (GameState[T]) -> Unit)
   ShowBackground(String)
   ShowFigure(String, FigurePlacement)
@@ -329,6 +334,7 @@ pub struct Runtime[T] {
   state : GameState[T]
   mut ip : Int
   mut pending_choices : Array[ChoiceOption]
+  mut pending_text_input : (String, String)?
   mut wait_ms : Int
   mut ended : Bool
 }
@@ -337,11 +343,13 @@ pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[
 pub fn[T] Runtime::new(Script[T], GameState[T]) -> Self[T]
 pub fn[T : ToJson] Runtime::save_json(Self[T]) -> String
 pub fn[T] Runtime::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 
 pub enum RuntimeEvent {
   Noop
   Said(String, String)
   ChoicePrompt(Array[ChoiceOption])
+  TextInputPrompt(String, String)
   BackgroundShown(String)
   FigureShown(String, FigurePlacement)
   FigureHidden(String)
@@ -386,6 +394,7 @@ pub fn[T] ScriptBuilder::branch(Self[T], String, String, (GameState[T]) -> Bool)
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
 pub fn[T] ScriptBuilder::jump(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], String, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], String) -> Unit
@@ -423,6 +432,10 @@ pub fn UiDom::text_speed_ms_per_char(Self) -> Int
 pub fn UiDom::toggle_auto_mode(Self) -> Unit
 pub fn UiDom::toggle_skip_mode(Self) -> Unit
 pub fn UiDom::typewriter_visible_text(Self) -> StringView
+
+type UiTextInputView
+pub impl Eq for UiTextInputView
+pub impl Show for UiTextInputView
 
 type UiViewModel
 pub impl Eq for UiViewModel

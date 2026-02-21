@@ -9,10 +9,17 @@ struct UiChoiceView {
 } derive(Show, Eq)
 
 ///|
+struct UiTextInputView {
+  var_name : String
+  prompt : String
+} derive(Show, Eq)
+
+///|
 struct UiViewModel {
   speaker : String
   text : String
   choices : Array[UiChoiceView]
+  text_input : UiTextInputView?
 } derive(Show, Eq)
 
 ///|
@@ -225,6 +232,64 @@ extern "js" fn dom_take_selected_choice(
   #| }
 
 ///|
+extern "js" fn dom_render_text_input(
+  root_id : String,
+  var_name : String,
+  prompt : String,
+) -> Unit =
+  #| (root_id, var_name, prompt) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|
+  #|   let inputContainer = root.querySelector('[data-reisen="text-input"]');
+  #|   if (!inputContainer) {
+  #|     inputContainer = doc.createElement('div');
+  #|     inputContainer.setAttribute('data-reisen', 'text-input');
+  #|     root.appendChild(inputContainer);
+  #|   }
+  #|   inputContainer.innerHTML = '';
+  #|
+  #|   const label = doc.createElement('label');
+  #|   label.textContent = prompt;
+  #|   inputContainer.appendChild(label);
+  #|
+  #|   const input = doc.createElement('input');
+  #|   input.type = 'text';
+  #|   input.setAttribute('data-reisen-input-var', var_name);
+  #|   input.addEventListener('keydown', (e) => {
+  #|     if (e.key === 'Enter') {
+  #|       root.dataset.reisenSubmittedInput = input.value;
+  #|     }
+  #|   });
+  #|   inputContainer.appendChild(input);
+  #|
+  #|   const submitBtn = doc.createElement('button');
+  #|   submitBtn.type = 'button';
+  #|   submitBtn.textContent = 'Submit';
+  #|   submitBtn.addEventListener('click', () => {
+  #|     root.dataset.reisenSubmittedInput = input.value;
+  #|   });
+  #|   inputContainer.appendChild(submitBtn);
+  #| }
+
+///|
+extern "js" fn dom_take_submitted_text_input(
+  root_id : String,
+) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const value = root.dataset.reisenSubmittedInput;
+  #|   if (!value) return null;
+  #|   delete root.dataset.reisenSubmittedInput;
+  #|   return value;
+  #| }
+
+///|
 extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
   #| (root_id) => {
   #|   const doc = globalThis.document;
@@ -265,7 +330,11 @@ fn[T] ui_view_from_director(director : Director[T]) -> UiViewModel {
   let choices = director
     .choices()
     .map(opt => UiChoiceView::{ id: opt.id, text: opt.text })
-  { speaker, text, choices }
+  let text_input = match director.text_input() {
+    Some((var_name, prompt)) => Some(UiTextInputView::{ var_name, prompt })
+    None => None
+  }
+  { speaker, text, choices, text_input }
 }
 
 ///|
@@ -284,11 +353,25 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   let ids = view.choices.map(c => c.id)
   let texts = view.choices.map(c => c.text)
   dom_render(self.root_id, view.speaker, display_text, ids, texts)
+  match view.text_input {
+    Some(input_view) =>
+      dom_render_text_input(
+        self.root_id,
+        input_view.var_name,
+        input_view.prompt,
+      )
+    None => ()
+  }
 }
 
 ///|
 fn UiDom::take_selected_choice(self : UiDom) -> String? {
   dom_take_selected_choice(self.root_id).to_option()
+}
+
+///|
+fn UiDom::take_submitted_text_input(self : UiDom) -> String? {
+  dom_take_submitted_text_input(self.root_id).to_option()
 }
 
 ///|

@@ -61,6 +61,7 @@ pub enum Instruction[T] {
   Wait(Int)
   Say(String, String)
   Choice(Array[ChoiceOption])
+  InputText(String, String)
   RunCode(String, ScriptHook[T])
   ShowBackground(String)
   ShowFigure(String, FigurePlacement)

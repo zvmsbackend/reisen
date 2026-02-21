@@ -12,6 +12,7 @@ struct DialogLine {
 priv struct UiState {
   mut dialog : DialogLine?
   mut choices : Array[ChoiceOption]
+  mut text_input : (String, String)?
 }
 
 ///|
@@ -34,7 +35,7 @@ struct Director[T] {
 pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
   {
     runtime,
-    ui: { dialog: None, choices: [] },
+    ui: { dialog: None, choices: [], text_input: None },
     render: {
       background: None,
       figures: {},
@@ -52,8 +53,16 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     Said(speaker, text) => {
       self.ui.dialog = Some({ speaker, text })
       self.ui.choices = []
+      self.ui.text_input = None
     }
-    ChoicePrompt(options) => self.ui.choices = options
+    ChoicePrompt(options) => {
+      self.ui.choices = options
+      self.ui.text_input = None
+    }
+    TextInputPrompt(var_name, prompt) => {
+      self.ui.text_input = Some((var_name, prompt))
+      self.ui.choices = []
+    }
     BackgroundShown(id) => self.render.background = Some(id)
     FigureShown(id, placement) => self.render.figures.set(id, placement)
     FigureHidden(id) => self.render.figures.remove(id)
@@ -94,6 +103,21 @@ pub fn[T] Director::dialog(self : Director[T]) -> DialogLine? {
 ///|
 pub fn[T] Director::choices(self : Director[T]) -> Array[ChoiceOption] {
   self.ui.choices
+}
+
+///|
+pub fn[T] Director::text_input(self : Director[T]) -> (String, String)? {
+  self.ui.text_input
+}
+
+///|
+pub fn[T] Director::submit_text_input(
+  self : Director[T],
+  value : String,
+) -> RuntimeEvent raise ScriptRuntimeError {
+  let event = self.runtime.submit_text_input(value)
+  self.apply_event(event)
+  event
 }
 
 ///|

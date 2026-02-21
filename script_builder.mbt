@@ -157,6 +157,15 @@ pub fn[T] ScriptBuilder::choice(
 }
 
 ///|
+pub fn[T] ScriptBuilder::input_text(
+  self : ScriptBuilder[T],
+  variable_name : String,
+  prompt : String,
+) -> Unit {
+  self.instructions.push(InputText(variable_name, prompt))
+}
+
+///|
 pub fn[T] ScriptBuilder::run_code(
   self : ScriptBuilder[T],
   id : String,

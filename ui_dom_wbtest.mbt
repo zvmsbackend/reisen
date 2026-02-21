@@ -14,7 +14,12 @@ test "ui view model reflects dialog and choices from director" {
 
   ignore(director.step())
   let view1 = ui_view_from_director(director)
-  assert_eq(view1, { speaker: "guide", text: "Pick one", choices: [] })
+  assert_eq(view1, {
+    speaker: "guide",
+    text: "Pick one",
+    choices: [],
+    text_input: None,
+  })
 
   ignore(director.step())
   let view2 = ui_view_from_director(director)
@@ -33,5 +38,5 @@ test "ui view model is empty before first dialog" {
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
 
   let view0 = ui_view_from_director(director)
-  assert_eq(view0, { speaker: "", text: "", choices: [] })
+  assert_eq(view0, { speaker: "", text: "", choices: [], text_input: None })
 }

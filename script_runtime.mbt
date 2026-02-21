@@ -7,6 +7,7 @@ pub enum RuntimeEvent {
   Noop
   Said(String, String)
   ChoicePrompt(Array[ChoiceOption])
+  TextInputPrompt(String, String)
   BackgroundShown(String)
   FigureShown(String, FigurePlacement)
   FigureHidden(String)
@@ -24,6 +25,7 @@ pub suberror ScriptRuntimeError {
   ChoiceNotActive
   ChoiceNotFound(id~ : String)
   ChoicePending
+  TextInputPending
   TimerPending(ms~ : Int)
   InvalidInstructionPointer(ip~ : Int)
 }
@@ -34,6 +36,7 @@ pub struct Runtime[T] {
   state : GameState[T]
   mut ip : Int
   mut pending_choices : Array[ChoiceOption]
+  mut pending_text_input : (String, String)?
   mut wait_ms : Int
   mut ended : Bool
 }
@@ -43,13 +46,22 @@ priv struct RuntimeSave[T] {
   state : GameState[T]
   ip : Int
   pending_choices : Array[ChoiceOption]
+  pending_text_input : (String, String)?
   wait_ms : Int
   ended : Bool
 } derive(ToJson, FromJson)
 
 ///|
 pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
-  { script, state, ip: 0, pending_choices: [], wait_ms: 0, ended: false }
+  {
+    script,
+    state,
+    ip: 0,
+    pending_choices: [],
+    pending_text_input: None,
+    wait_ms: 0,
+    ended: false,
+  }
 }
 
 ///|
@@ -58,6 +70,7 @@ fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     state: self.state,
     ip: self.ip,
     pending_choices: self.pending_choices,
+    pending_text_input: self.pending_text_input,
     wait_ms: self.wait_ms,
     ended: self.ended,
   }
@@ -76,6 +89,7 @@ fn[T] Runtime::from_save(
     state: save.state,
     ip: save.ip,
     pending_choices: save.pending_choices,
+    pending_text_input: None,
     wait_ms: if save.wait_ms < 0 {
       0
     } else {
@@ -148,6 +162,12 @@ fn[T] Runtime::run_inst(
       self.pending_choices = options
       ChoicePrompt(options)
     }
+    InputText(var_name, prompt) => {
+      self.ip = self.ip + 1
+      let prompt_interpolated = self.state.interpolate(prompt)
+      self.pending_text_input = Some((var_name, prompt_interpolated))
+      TextInputPrompt(var_name, prompt_interpolated)
+    }
     RunCode(_, hook) => {
       hook(self.state)
       self.ip = self.ip + 1
@@ -195,6 +215,12 @@ pub fn[T] Runtime::step(
   if self.pending_choices.length() > 0 {
     return ChoicePrompt(self.pending_choices)
   }
+  if self.pending_text_input.is_some() {
+    match self.pending_text_input {
+      Some((var_name, prompt)) => return TextInputPrompt(var_name, prompt)
+      None => ()
+    }
+  }
   if self.wait_ms > 0 {
     let dt = if elapsed_ms < 0 { 0 } else { elapsed_ms }
     self.wait_ms = self.wait_ms - dt
@@ -233,4 +259,19 @@ pub fn[T] Runtime::choose(
     }
   }
   raise ScriptRuntimeError::ChoiceNotFound(id~)
+}
+
+///|
+pub fn[T] Runtime::submit_text_input(
+  self : Runtime[T],
+  value : String,
+) -> RuntimeEvent raise ScriptRuntimeError {
+  match self.pending_text_input {
+    Some((var_name, _)) => {
+      self.state.set_text_var(var_name, value)
+      self.pending_text_input = None
+      self.step()
+    }
+    None => raise ScriptRuntimeError::ChoiceNotActive
+  }
 }

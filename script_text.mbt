@@ -153,6 +153,12 @@ fn[T] reisen_text_script_to_builder(
         choice_speaker = speaker
         choice_prompt = prompt
       }
+      "input" | "input_text" | "ask" => {
+        let (var_name, prompt) = get_first_part(args_str, ",")
+        if var_name != "" {
+          builder.input_text(var_name, prompt)
+        }
+      }
       "stop_music" => builder.stop_music()
       _ => ()
     }
