@@ -214,15 +214,11 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
       settings_action_clear(self.root_id)
       match raw {
         Some(json_str) => {
-          let parsed : Result[GameSettings, Error] = try? @json.from_json(
-            @json.parse(json_str),
-          )
-          match parsed {
-            Ok(settings) => {
-              settings_write_in(self.save_ns, settings)
-              SettingsAction::Saved
-            }
-            Err(_) => SettingsAction::NoAction
+          try {
+            settings_write_in(self.save_ns, @json.from_json(@json.parse(json_str)))
+            SettingsAction::Saved
+          } catch {
+            _ => SettingsAction::NoAction 
           }
         }
         None => SettingsAction::NoAction

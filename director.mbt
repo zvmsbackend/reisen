@@ -192,10 +192,8 @@ pub fn[T : FromJson] director_from_save_json(
   save_json : String,
 ) -> Director[T] raise {
   let parsed = @json.parse(save_json)
-  let save_result : Result[DirectorSave[T], Error] = try? @json.from_json(parsed)
-  match save_result {
-    Ok(save) => Director::from_save(script, save)
-    Err(_) => {
+  Director::from_save(script, @json.from_json(parsed)) catch {
+    _ => {
       let runtime = Runtime::from_json_string(script, save_json)
       Director::new(runtime)
     }

@@ -162,9 +162,8 @@ fn[T] reisen_text_script_to_builder(
 }
 
 ///|
-pub fn[T] reisen_parse_text_script(text : String) -> Script[T] {
+pub fn[T] reisen_parse_text_script(text : String) -> Script[T] raise ScriptBuildError {
   let builder : ScriptBuilder[T] = ScriptBuilder::new()
   reisen_text_script_to_builder(text, builder)
-  let result = try? builder.build()
-  result.unwrap()
+  builder.build()
 }
