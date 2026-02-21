@@ -102,6 +102,9 @@ pub fn[T] GameRunner::step(
     None => ()
   }
   if !self.director.choices().is_empty() {
+    if self.ui_dirty {
+      return ChoicePrompt(self.director.choices())
+    }
     match self.ui.take_selected_choice() {
       Some(choice_id) => {
         let event = self.director.choose(choice_id)
@@ -113,13 +116,19 @@ pub fn[T] GameRunner::step(
       None => {
         let event = ChoicePrompt(self.director.choices())
         (self.event_hook)(event)
-        self.ui_dirty = true
         self.maybe_render_ui()
         return event
       }
     }
   }
   if self.director.text_input() is Some(_) {
+    if self.ui_dirty {
+      let event = match self.director.text_input() {
+        Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
+        None => Noop
+      }
+      return event
+    }
     match self.ui.take_submitted_text_input() {
       Some(value) => {
         let event = self.director.submit_text_input(value)
@@ -134,6 +143,7 @@ pub fn[T] GameRunner::step(
           None => Noop
         }
         (self.event_hook)(event)
+        self.ui_dirty = true
         self.maybe_render_ui()
         return event
       }
@@ -196,7 +206,7 @@ pub fn[T] GameRunner::step(
     self.maybe_render_ui()
     return event
   }
-  if self.ui.check_typewriter_click() {
+  if !self.director.last_event_said || self.ui.check_typewriter_click() {
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     match event {

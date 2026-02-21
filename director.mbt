@@ -35,6 +35,7 @@ struct Director[T] {
   runtime : Runtime[T]
   ui : UiState
   render : RenderState
+  mut last_event_said : Bool
 }
 
 ///|
@@ -49,11 +50,17 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       last_sfx: None,
       animations: [],
     },
+    last_event_said: false,
   }
 }
 
 ///|
 fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
+  if event is Said(_) {
+    self.last_event_said = true
+  } else if !(event is Noop) {
+    self.last_event_said = false
+  }
   match event {
     Noop => ()
     Said(speaker, text) => {
@@ -97,6 +104,7 @@ pub fn[T] Director::choose(
   id : String,
 ) -> RuntimeEvent raise ScriptRuntimeError {
   let event = self.runtime.choose(id)
+  self.ui.choices = []
   self.apply_event(event)
   event
 }
@@ -183,6 +191,7 @@ pub fn[T] Director::from_save(
     runtime,
     ui: { dialog: None, choices: [], text_input: None },
     render: save.render,
+    last_event_said: true,
   }
 }
 

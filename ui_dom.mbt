@@ -244,11 +244,12 @@ extern "js" fn dom_render(
   #|     choices.style.display = 'flex';
   #|     for (let i = 0; i < choice_ids.length; i++) {
   #|       const btn = doc.createElement('button');
+  #|       const choice_id = choice_ids[i];
   #|       btn.type = 'button';
-  #|       btn.textContent = choice_texts[i] ?? choice_ids[i];
-  #|       btn.setAttribute('data-choice-id', choice_ids[i]);
+  #|       btn.textContent = choice_texts[i] ?? choice_id;
+  #|       btn.setAttribute('data-choice-id', choice_id);
   #|       btn.addEventListener('click', () => {
-  #|         root.dataset.reisenSelectedChoice = choice_ids[i];
+  #|         root.dataset.reisenSelectedChoice = choice_id;
   #|       });
   #|       choices.appendChild(btn);
   #|     }
