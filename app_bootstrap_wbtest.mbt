@@ -11,7 +11,7 @@ test "start_game wires runner and performs initial sync" {
   // Initial sync in bootstrap.
   assert_eq(calls.length(), 1)
   assert_eq(runner.step(), Said("narrator", "hello"))
-  assert_eq(calls.length(), 2)
+  assert_eq(calls.length(), 1)
 }
 
 ///|
@@ -32,7 +32,7 @@ test "start_game supports optional hooks" {
 
   assert_eq(calls.length(), 1)
   assert_eq(runner.step(), Said("narrator", "hello"))
-  assert_eq(calls.length(), 2)
+  assert_eq(calls.length(), 1)
   assert_eq(events.length(), 1)
 }
 

@@ -14,6 +14,7 @@ struct GameRunner[T] {
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
   mut ui_dirty : Bool
+  mut render_sync_dirty : Bool
   mut pending_action : String?
 }
 
@@ -25,6 +26,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     render_sync: _ => (),
     event_hook: _ => (),
     ui_dirty: true,
+    render_sync_dirty: true,
     pending_action: None,
   }
 }
@@ -41,6 +43,7 @@ pub fn[T] GameRunner::new_with_render_sync(
     render_sync,
     event_hook: _ => (),
     ui_dirty: true,
+    render_sync_dirty: true,
     pending_action: None,
   }
 }
@@ -58,6 +61,7 @@ pub fn[T] GameRunner::new_with_hooks(
     render_sync,
     event_hook,
     ui_dirty: true,
+    render_sync_dirty: true,
     pending_action: None,
   }
 }
@@ -65,8 +69,13 @@ pub fn[T] GameRunner::new_with_hooks(
 ///|
 fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
   self.ui.render(ui_view_from_director(self.director, self.ui))
-  (self.render_sync)(self.director)
   self.ui_dirty = false
+}
+
+///|
+fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit {
+  (self.render_sync)(self.director)
+  self.render_sync_dirty = false
 }
 
 ///|
@@ -74,12 +83,16 @@ fn[T] GameRunner::maybe_render_ui(self : GameRunner[T]) -> Unit {
   if self.ui_dirty {
     self.render_ui()
   }
+  if self.render_sync_dirty {
+    self.sync_canvas()
+  }
 }
 
 ///|
 pub fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit {
-  self.ui_dirty = true
+  self.ui.mark_all_dirty()
   self.render_ui()
+  self.sync_canvas()
 }
 
 ///|
@@ -95,30 +108,22 @@ pub fn[T] GameRunner::step(
         "settings" | "qsave" => self.pending_action = Some(action)
         _ => ()
       }
-      self.ui_dirty = true
-      self.maybe_render_ui()
+      self.ui.mark_dirty_action_buttons()
+      self.render_ui()
       return Noop
     }
     None => ()
   }
   if !self.director.choices().is_empty() {
-    if self.ui_dirty {
-      return ChoicePrompt(self.director.choices())
-    }
     match self.ui.take_selected_choice() {
       Some(choice_id) => {
         let event = self.director.choose(choice_id)
         (self.event_hook)(event)
-        self.ui_dirty = true
-        self.maybe_render_ui()
+        self.ui.mark_all_dirty()
+        self.render_ui()
         return event
       }
-      None => {
-        let event = ChoicePrompt(self.director.choices())
-        (self.event_hook)(event)
-        self.maybe_render_ui()
-        return event
-      }
+      None => return Noop
     }
   }
   if self.director.text_input() is Some(_) {
@@ -133,8 +138,8 @@ pub fn[T] GameRunner::step(
       Some(value) => {
         let event = self.director.submit_text_input(value)
         (self.event_hook)(event)
-        self.ui_dirty = true
-        self.maybe_render_ui()
+        self.ui.mark_all_dirty()
+        self.render_ui()
         return event
       }
       None => {
@@ -143,8 +148,8 @@ pub fn[T] GameRunner::step(
           None => Noop
         }
         (self.event_hook)(event)
-        self.ui_dirty = true
-        self.maybe_render_ui()
+        self.ui.mark_dirty_text_input()
+        self.render_ui()
         return event
       }
     }
@@ -153,11 +158,26 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)
     match event {
-      Said(_, _)
-      | ChoicePrompt(_)
-      | TextInputPrompt(_, _)
-      | ScriptEnded
-      | BackgroundShown(_) => self.ui_dirty = true
+      Said(_, _) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_text()
+      }
+      ChoicePrompt(_) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_choices()
+      }
+      TextInputPrompt(_, _) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_text_input()
+      }
+      ScriptEnded => {
+        self.ui_dirty = true
+        self.ui.mark_all_dirty()
+      }
+      BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
+        self.ui_dirty = true
+        self.render_sync_dirty = true
+      }
       _ => ()
     }
     self.maybe_render_ui()
@@ -170,51 +190,72 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     match event {
-      ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded =>
-        self.ui_dirty = true
+      ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded => {
+        self.ui.mark_dirty_choices()
+        return event
+      }
+      Said(_, _) => {
+        self.ui.mark_dirty_text()
+        self.render_ui()
+        return self.step(elapsed_ms=0)
+      }
       _ => {
-        self.ui_dirty = true
-        self.maybe_render_ui()
+        self.render_ui()
         return self.step(elapsed_ms=0)
       }
     }
-    self.maybe_render_ui()
-    return event
   }
   let is_typewriter_done = self.ui.is_typewriter_done()
   if not(is_typewriter_done) {
     if self.ui.check_typewriter_click() {
       self.ui.complete_typewriter()
-      self.ui_dirty = true
       let event = self.director.step(elapsed_ms=0)
       (self.event_hook)(event)
       match event {
-        Said(_, _)
-        | ChoicePrompt(_)
-        | TextInputPrompt(_, _)
-        | ScriptEnded
-        | BackgroundShown(_) => self.ui_dirty = true
+        Said(_, _) => self.ui.mark_dirty_text()
+        ChoicePrompt(_) => self.ui.mark_dirty_choices()
+        TextInputPrompt(_, _) => self.ui.mark_dirty_text_input()
+        ScriptEnded => self.ui.mark_all_dirty()
+        BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
+          self.ui_dirty = true
+          self.render_sync_dirty = true
+        }
         _ => ()
       }
-      self.maybe_render_ui()
+      self.render_ui()
       return event
     } else {
       ignore(self.ui.advance_typewriter(elapsed_ms~))
-      self.ui_dirty = true
+      self.ui.dirty_text = true
+      let event = self.current_dialog_event()
+      self.render_ui()
+      return event
     }
-    let event = self.current_dialog_event()
-    self.maybe_render_ui()
-    return event
   }
   if !self.director.last_event_said || self.ui.check_typewriter_click() {
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     match event {
-      Said(_, _)
-      | ChoicePrompt(_)
-      | TextInputPrompt(_, _)
-      | ScriptEnded
-      | BackgroundShown(_) => self.ui_dirty = true
+      Said(_, _) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_text()
+      }
+      ChoicePrompt(_) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_choices()
+      }
+      TextInputPrompt(_, _) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_text_input()
+      }
+      ScriptEnded => {
+        self.ui_dirty = true
+        self.ui.mark_all_dirty()
+      }
+      BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
+        self.ui_dirty = true
+        self.render_sync_dirty = true
+      }
       _ => ()
     }
     self.maybe_render_ui()
@@ -226,6 +267,7 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     self.ui_dirty = true
+    self.ui.mark_dirty_text()
     self.maybe_render_ui()
     return event
   }
@@ -249,8 +291,7 @@ pub fn[T] GameRunner::submit_choice(
 ) -> RuntimeEvent raise ScriptRuntimeError {
   let event = self.director.choose(choice_id)
   (self.event_hook)(event)
-  self.ui_dirty = true
-  self.maybe_render_ui()
+  self.render_ui()
   event
 }
 

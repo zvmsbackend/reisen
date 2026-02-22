@@ -58,7 +58,7 @@ test "runner render sync hook is called on ui sync and step" {
   runner.sync_ui()
   assert_eq(calls.length(), 1)
   assert_eq(runner.step(), Said("narrator", "hello"))
-  assert_eq(calls.length(), 2)
+  assert_eq(calls.length(), 1)
 }
 
 ///|

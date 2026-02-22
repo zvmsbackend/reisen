@@ -38,6 +38,11 @@ struct UiDom {
   skip_mode_delay_ms : Int
   mut skip_mode_last_advance_ms : Int
   mut simulated_click : Bool
+  mut dirty_speaker : Bool
+  mut dirty_text : Bool
+  mut dirty_choices : Bool
+  mut dirty_text_input : Bool
+  mut dirty_action_buttons : Bool
 }
 
 ///|
@@ -55,6 +60,11 @@ fn UiDom::new(root_id : String) -> UiDom {
     skip_mode_delay_ms: 50,
     skip_mode_last_advance_ms: 0,
     simulated_click: false,
+    dirty_speaker: true,
+    dirty_text: true,
+    dirty_choices: true,
+    dirty_text_input: true,
+    dirty_action_buttons: true,
   }
 }
 
@@ -230,6 +240,72 @@ extern "js" fn dom_render(
   #|   }
   #|   nameEl.textContent = speaker;
   #|   dialog.textContent = text;
+  #|
+  #|   let choices = root.querySelector('[data-reisen="choices"]');
+  #|   if (!choices) {
+  #|     choices = doc.createElement('div');
+  #|     choices.setAttribute('data-reisen', 'choices');
+  #|     root.appendChild(choices);
+  #|   }
+  #|   choices.innerHTML = '';
+  #|   if (choice_ids.length === 0) {
+  #|     choices.style.display = 'none';
+  #|   } else {
+  #|     choices.style.display = 'flex';
+  #|     for (let i = 0; i < choice_ids.length; i++) {
+  #|       const btn = doc.createElement('button');
+  #|       const choice_id = choice_ids[i];
+  #|       btn.type = 'button';
+  #|       btn.textContent = choice_texts[i] ?? choice_id;
+  #|       btn.setAttribute('data-choice-id', choice_id);
+  #|       btn.addEventListener('click', () => {
+  #|         root.dataset.reisenSelectedChoice = choice_id;
+  #|       });
+  #|       choices.appendChild(btn);
+  #|     }
+  #|   }
+  #| }
+
+///|
+extern "js" fn dom_render_speaker_text(
+  root_id : String,
+  speaker : String,
+  text : String,
+) -> Unit =
+  #| (root_id, speaker, text) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|
+  #|   let nameEl = root.querySelector('[data-reisen="speaker"]');
+  #|   if (!nameEl) {
+  #|     nameEl = doc.createElement('div');
+  #|     nameEl.setAttribute('data-reisen', 'speaker');
+  #|     root.appendChild(nameEl);
+  #|   }
+  #|   nameEl.textContent = speaker;
+  #|
+  #|   let dialog = root.querySelector('[data-reisen="dialog"]');
+  #|   if (!dialog) {
+  #|     dialog = doc.createElement('div');
+  #|     dialog.setAttribute('data-reisen', 'dialog');
+  #|     root.appendChild(dialog);
+  #|   }
+  #|   dialog.textContent = text;
+  #| }
+
+///|
+extern "js" fn dom_render_choices(
+  root_id : String,
+  choice_ids : Array[String],
+  choice_texts : Array[String],
+) -> Unit =
+  #| (root_id, choice_ids, choice_texts) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
   #|
   #|   let choices = root.querySelector('[data-reisen="choices"]');
   #|   if (!choices) {
@@ -475,18 +551,32 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   } else {
     self.typewriter_visible_text().to_string()
   }
-  let ids = view.choices.map(c => c.id)
-  let texts = view.choices.map(c => c.text)
-  dom_render(self.root_id, view.speaker, display_text, ids, texts)
-  dom_render_action_buttons(self.root_id, view.auto_mode, view.skip_mode)
-  match view.text_input {
-    Some(input_view) =>
-      dom_render_text_input(
-        self.root_id,
-        input_view.var_name,
-        input_view.prompt,
-      )
-    None => dom_clear_text_input(self.root_id)
+  if self.dirty_speaker || self.dirty_text {
+    dom_render_speaker_text(self.root_id, view.speaker, display_text)
+    self.dirty_speaker = false
+    self.dirty_text = false
+  }
+  if self.dirty_choices {
+    let ids = view.choices.map(c => c.id)
+    let texts = view.choices.map(c => c.text)
+    dom_render_choices(self.root_id, ids, texts)
+    self.dirty_choices = false
+  }
+  if self.dirty_action_buttons {
+    dom_render_action_buttons(self.root_id, view.auto_mode, view.skip_mode)
+    self.dirty_action_buttons = false
+  }
+  if self.dirty_text_input {
+    match view.text_input {
+      Some(input_view) =>
+        dom_render_text_input(
+          self.root_id,
+          input_view.var_name,
+          input_view.prompt,
+        )
+      None => dom_clear_text_input(self.root_id)
+    }
+    self.dirty_text_input = false
   }
 }
 
@@ -525,6 +615,36 @@ fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
     return true
   }
   dom_take_typewriter_click(self.root_id)
+}
+
+///|
+pub fn UiDom::mark_all_dirty(self : UiDom) -> Unit {
+  self.dirty_speaker = true
+  self.dirty_text = true
+  self.dirty_choices = true
+  self.dirty_text_input = true
+  self.dirty_action_buttons = true
+}
+
+///|
+pub fn UiDom::mark_dirty_text(self : UiDom) -> Unit {
+  self.dirty_speaker = true
+  self.dirty_text = true
+}
+
+///|
+pub fn UiDom::mark_dirty_choices(self : UiDom) -> Unit {
+  self.dirty_choices = true
+}
+
+///|
+pub fn UiDom::mark_dirty_text_input(self : UiDom) -> Unit {
+  self.dirty_text_input = true
+}
+
+///|
+pub fn UiDom::mark_dirty_action_buttons(self : UiDom) -> Unit {
+  self.dirty_action_buttons = true
 }
 
 ///|
