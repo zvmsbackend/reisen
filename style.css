@@ -201,6 +201,10 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  background: var(--bg-secondary);
+  padding: 24px 32px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
 [data-reisen="start-actions"] button,
@@ -233,6 +237,12 @@ html, body {
   flex-direction: column;
   gap: 8px;
   margin-top: 16px;
+  background: var(--bg-secondary);
+  padding: 16px;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
 }
 
 [data-reisen="save-list"] button {
@@ -244,17 +254,26 @@ html, body {
   border-radius: 4px;
   font-size: 14px;
   cursor: pointer;
+  text-align: left;
 }
 
 [data-reisen="save-list"] button:hover {
   background: var(--button-hover);
 }
 
+[data-reisen="settings-menu"] h2 {
+  color: var(--text-primary);
+  margin-bottom: 16px;
+  font-size: 24px;
+  text-align: center;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
 [data-reisen-setting] {
   margin: 8px 0;
 }
 
-[data-reisen-setting] label {
+label {
   display: inline-block;
   width: 120px;
   color: var(--text-primary);
@@ -265,6 +284,14 @@ html, body {
   width: auto;
   margin-left: 12px;
   color: var(--text-primary);
+}
+
+[data-reisen-setting] input[type="range"] {
+  accent-color: var(--text-primary);
+}
+
+[data-reisen-setting] input[type="checkbox"] {
+  accent-color: var(--text-primary);
 }
 
 [data-reisen-setting="skip_mode"] {
