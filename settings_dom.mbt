@@ -223,6 +223,17 @@ extern "js" fn settings_action_slot(root_id : String) -> @js.Nullable[String] =
   #| }
 
 ///|
+extern "js" fn settings_action_slot_type(root_id : String) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const slot_type = root.dataset.reisenSettingsSlotType;
+  #|   return slot_type || null;
+  #| }
+
+///|
 extern "js" fn settings_action_clear(root_id : String) -> Unit =
   #| (root_id) => {
   #|   const doc = globalThis.document;
@@ -476,10 +487,10 @@ fn filter_entries_by_type(
   entries.filter(fn(entry) {
     let slot = entry.slot
     match slot_type {
-      SaveSlotType::Autosave => slot.starts_with("autosave")
-      SaveSlotType::Quicksave => slot.starts_with("quicksave")
+      SaveSlotType::Autosave => slot.has_prefix("autosave")
+      SaveSlotType::Quicksave => slot.has_prefix("quicksave")
       SaveSlotType::Normal =>
-        not(slot.starts_with("autosave") || slot.starts_with("quicksave"))
+        not(slot.has_prefix("autosave") || slot.has_prefix("quicksave"))
     }
   })
 }
@@ -664,6 +675,28 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
       match self.view_mode {
         SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
           self.page += 1
+          SettingsAction::ViewChanged
+        }
+        _ => SettingsAction::NoAction
+      }
+    }
+    Some("slot_type") => {
+      let slot_type_str = settings_action_slot_type(self.root_id).to_option()
+      settings_action_clear(self.root_id)
+      match slot_type_str {
+        Some("autosave") => {
+          self.save_slot_type = SaveSlotType::Autosave
+          self.page = 0
+          SettingsAction::ViewChanged
+        }
+        Some("quicksave") => {
+          self.save_slot_type = SaveSlotType::Quicksave
+          self.page = 0
+          SettingsAction::ViewChanged
+        }
+        Some("normal") => {
+          self.save_slot_type = SaveSlotType::Normal
+          self.page = 0
           SettingsAction::ViewChanged
         }
         _ => SettingsAction::NoAction
