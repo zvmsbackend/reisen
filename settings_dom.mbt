@@ -333,12 +333,13 @@ extern "js" fn settings_dom_render_slots(
   #|     btn.style.justifyContent = 'space-between';
   #|     btn.style.height = '100%';
   #|     btn.style.boxSizing = 'border-box';
-  #|
+  #|     btn.style.position = 'relative';
+
   #|     const titleSpan = doc.createElement('span');
   #|     titleSpan.textContent = title_;
   #|     titleSpan.style.fontWeight = 'bold';
   #|     btn.appendChild(titleSpan);
-  #|
+
   #|     if (preview) {
   #|       const previewSpan = doc.createElement('span');
   #|       previewSpan.textContent = preview.substring(0, 50) + (preview.length > 50 ? '...' : '');
@@ -346,7 +347,30 @@ extern "js" fn settings_dom_render_slots(
   #|       previewSpan.style.color = 'var(--text-secondary, rgba(255,255,255,0.7))';
   #|       btn.appendChild(previewSpan);
   #|     }
-  #|
+
+  #|     const deleteBtn = doc.createElement('button');
+  #|     deleteBtn.type = 'button';
+  #|     deleteBtn.textContent = '×';
+  #|     deleteBtn.style.position = 'absolute';
+  #|     deleteBtn.style.top = '4px';
+  #|     deleteBtn.style.right = '4px';
+  #|     deleteBtn.style.padding = '2px 6px';
+  #|     deleteBtn.style.background = 'rgba(255,0,0,0.3)';
+  #|     deleteBtn.style.color = '#fff';
+  #|     deleteBtn.style.border = 'none';
+  #|     deleteBtn.style.borderRadius = '50%';
+  #|     deleteBtn.style.cursor = 'pointer';
+  #|     deleteBtn.style.fontSize = '14px';
+  #|     deleteBtn.style.lineHeight = '1';
+  #|     deleteBtn.addEventListener('click', (e) => {
+  #|       e.stopPropagation();
+  #|       if (confirm('Delete this save slot?')) {
+  #|         root.dataset.reisenSettingsAction = 'delete_slot';
+  #|         root.dataset.reisenSettingsActionSlot = slot;
+  #|       }
+  #|     });
+  #|     btn.appendChild(deleteBtn);
+
   #|     btn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = mode;
   #|       root.dataset.reisenSettingsActionSlot = slot;
@@ -607,6 +631,17 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
           SettingsAction::ViewChanged
         }
       }
+    Some("delete_slot") => {
+      let slot = settings_action_slot(self.root_id).to_option()
+      settings_action_clear(self.root_id)
+      match slot {
+        Some(s) => {
+          save_slot_delete_in(self.save_ns, s)
+          SettingsAction::ViewChanged
+        }
+        None => SettingsAction::NoAction
+      }
+    }
     _ => SettingsAction::NoAction
   }
 }

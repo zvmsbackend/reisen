@@ -274,8 +274,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
               self.phase = AppPhase::InGame
             }
             Err(_) => {
-              self.menu.render()
-              self.phase = AppPhase::StartMenu
+              self.settings_menu.render()
             }
           }
         }
