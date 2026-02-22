@@ -144,7 +144,8 @@ pub fn[T] GameRunner::step(
       Some(value) => {
         let event = self.director.submit_text_input(value)
         (self.event_hook)(event)
-        self.ui.mark_all_dirty()
+        self.director.ui.text_input = None
+        self.ui.mark_dirty_text_input()
         self.render_ui()
         return event
       }
@@ -154,8 +155,6 @@ pub fn[T] GameRunner::step(
           None => Noop
         }
         (self.event_hook)(event)
-        self.ui.mark_dirty_text_input()
-        self.render_ui()
         return event
       }
     }
