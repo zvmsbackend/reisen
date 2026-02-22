@@ -6,7 +6,7 @@
 struct DialogLine {
   speaker : String
   text : String
-} derive(Show, Eq)
+} derive(Show, Eq, ToJson, FromJson)
 
 ///|
 priv struct UiState {
@@ -28,6 +28,7 @@ pub struct RenderState {
 pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
+  dialog : DialogLine?
 } derive(ToJson, FromJson)
 
 ///|
@@ -115,6 +116,11 @@ pub fn[T] Director::dialog(self : Director[T]) -> DialogLine? {
 }
 
 ///|
+pub fn[T] Director::clear_dialog(self : Director[T]) -> Unit {
+  self.ui.dialog = None
+}
+
+///|
 pub fn[T] Director::choices(self : Director[T]) -> Array[ChoiceOption] {
   self.ui.choices
 }
@@ -177,6 +183,7 @@ pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
       last_sfx: self.render.last_sfx,
       animations: self.render.animations,
     },
+    dialog: self.ui.dialog,
   }
   save.to_json().stringify()
 }
@@ -189,7 +196,7 @@ pub fn[T] Director::from_save(
   let runtime = Runtime::from_save(script, save.runtime)
   {
     runtime,
-    ui: { dialog: None, choices: [], text_input: None },
+    ui: { dialog: save.dialog, choices: [], text_input: None },
     render: save.render,
     last_event_said: true,
   }

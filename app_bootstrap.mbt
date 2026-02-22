@@ -88,6 +88,7 @@ pub fn[T : FromJson] start_game_from_save(
   settings? : GameSettings,
 ) -> GameRunner[T] raise {
   let director = director_from_save_json(script, save_json)
+  director.clear_dialog() // Clear dialog so step() can advance
   let ui = UiDom::new(ui_root_id)
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
   match settings {
