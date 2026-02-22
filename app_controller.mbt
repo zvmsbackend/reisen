@@ -138,10 +138,7 @@ fn[T : ToJson] AppController::save_autosave_if_enabled(
   }
   match self.runner {
     Some(runner) => {
-      let preview = match runner.director().dialog() {
-        Some(line) => line.text
-        None => ""
-      }
+      let preview = dialog_preview(runner)
       save_runner_to_slot_with_meta(
         runner,
         self.autosave_slot,
@@ -151,6 +148,14 @@ fn[T : ToJson] AppController::save_autosave_if_enabled(
       )
     }
     None => ()
+  }
+}
+
+///|
+fn[T] dialog_preview(runner : GameRunner[T]) -> String {
+  match runner.director().dialog() {
+    Some(line) => line.text
+    None => ""
   }
 }
 
@@ -173,9 +178,10 @@ pub fn[T : FromJson + ToJson] AppController::tick(
                 self.phase = AppPhase::Settings
               }
               Some("qsave") =>
-                save_runner_to_slot(
+                save_runner_to_slot_with_meta(
                   runner,
                   "quicksave",
+                  preview=dialog_preview(runner),
                   save_namespace=self.save_ns,
                 )
               Some("save") => {
@@ -261,7 +267,12 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         SettingsAction::SaveSlot(slot) => {
           match self.runner {
             Some(runner) =>
-              save_runner_to_slot(runner, slot, save_namespace=self.save_ns)
+              save_runner_to_slot_with_meta(
+                runner,
+                slot,
+                preview=dialog_preview(runner),
+                save_namespace=self.save_ns,
+              )
             None => ()
           }
           self.settings_menu.render()
