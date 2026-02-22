@@ -32,12 +32,24 @@ extern "js" fn save_slot_now_ms() -> Double =
   #| () => Date.now()
 
 ///|
+extern "js" fn save_slot_time_label(ms : Double) -> String =
+  #| (ms) => {
+  #|   const d = new Date(ms);
+  #|   return d.toISOString().replace('T', ' ').replace('Z', '');
+  #| }
+
+///|
 pub fn save_slot_meta(
   title : String,
   preview : String,
   updated_at_ms? : Double = save_slot_now_ms(),
 ) -> SaveSlotMeta {
-  { title, preview, updated_at_ms }
+  let resolved_title = if title == "" {
+    save_slot_time_label(updated_at_ms)
+  } else {
+    title
+  }
+  { title: resolved_title, preview, updated_at_ms }
 }
 
 ///|
