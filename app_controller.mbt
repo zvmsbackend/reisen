@@ -32,7 +32,7 @@ pub fn[T] AppController::new(
   ui_root_id : String,
   save_namespace? : String = "global",
   autosave_slot? : String = "autosave",
-  autosave_title? : String = "Autosave",
+  autosave_title? : String = "",
   menu_background? : String = "",
   settings_background? : String = "",
   render_sync? : RenderSyncHook[T] = _ => (),
@@ -138,10 +138,11 @@ fn[T : ToJson] AppController::save_autosave_if_enabled(
   }
   match self.runner {
     Some(runner) => {
+      let slot = next_save_slot(self.save_ns, self.autosave_slot, 6)
       let preview = dialog_preview(runner)
       save_runner_to_slot_with_meta(
         runner,
-        self.autosave_slot,
+        slot,
         title=self.autosave_title,
         preview~,
         save_namespace=self.save_ns,
@@ -157,6 +158,28 @@ fn[T] dialog_preview(runner : GameRunner[T]) -> String {
     Some(line) => line.text
     None => ""
   }
+}
+
+///|
+fn next_save_slot(ns : String, prefix : String, total : Int) -> String {
+  let existing = save_slot_list_in(ns)
+  for i in 1..<=total {
+    let slot = "\{prefix}\{i}"
+    if !slot_exists(existing, slot) {
+      return slot
+    }
+  }
+  "\{prefix}\{total}"
+}
+
+///|
+fn slot_exists(existing : Array[String], slot : String) -> Bool {
+  for s in existing {
+    if s == slot {
+      return true
+    }
+  }
+  false
 }
 
 ///|
@@ -180,7 +203,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
               Some("qsave") =>
                 save_runner_to_slot_with_meta(
                   runner,
-                  "quicksave",
+                  next_save_slot(self.save_ns, "quicksave", 6),
                   preview=dialog_preview(runner),
                   save_namespace=self.save_ns,
                 )
@@ -196,7 +219,6 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             }
             true
           } else {
-            self.save_autosave_if_enabled()
             runner.clear_ui()
             self.runner = None
             self.menu.render()
@@ -258,6 +280,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         }
         SettingsAction::Load => self.settings_menu.render()
         SettingsAction::StartMenu => {
+          self.save_autosave_if_enabled()
           self.settings_menu.clear()
           self.saved_director_json = None
           self.runner = None
