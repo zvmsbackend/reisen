@@ -42,7 +42,7 @@ priv struct SettingsMenu {
   mut context : SettingsContext
   mut view_mode : SettingsViewMode
   mut save_slot_type : SaveSlotType
-  mut save_page : Int
+  mut page : Int
 }
 
 ///|
@@ -66,7 +66,7 @@ fn SettingsMenu::new(
     context,
     view_mode: SettingsViewMode::Settings,
     save_slot_type: SaveSlotType::Normal,
-    save_page: 0,
+    page: 0,
   }
 }
 
@@ -85,7 +85,7 @@ fn SettingsMenu::set_view_mode(
 ) -> Unit {
   self.view_mode = mode
   self.save_slot_type = SaveSlotType::Normal
-  self.save_page = 0
+  self.page = 0
 }
 
 ///|
@@ -399,7 +399,8 @@ extern "js" fn settings_dom_render_slots(
   #|     prevBtn.style.color = 'var(--text-primary, #fff)';
   #|     prevBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
   #|     prevBtn.style.borderRadius = '4px';
-  #|     prevBtn.style.cursor = 'pointer';
+  #|     prevBtn.style.cursor = current_page <= 0 ? 'not-allowed' : 'pointer';
+  #|     prevBtn.style.opacity = current_page <= 0 ? '0.5' : '1';
   #|     prevBtn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = 'prev_page';
   #|     });
@@ -418,7 +419,8 @@ extern "js" fn settings_dom_render_slots(
   #|     nextBtn.style.color = 'var(--text-primary, #fff)';
   #|     nextBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
   #|     nextBtn.style.borderRadius = '4px';
-  #|     nextBtn.style.cursor = 'pointer';
+  #|     nextBtn.style.cursor = current_page >= max_pages - 1 ? 'not-allowed' : 'pointer';
+  #|     nextBtn.style.opacity = current_page >= max_pages - 1 ? '0.5' : '1';
   #|     nextBtn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = 'next_page';
   #|     });
@@ -499,7 +501,8 @@ fn SettingsMenu::render(self : SettingsMenu) -> Unit {
       let entries = save_slot_entries_in(self.save_ns)
       let filtered = filter_entries_by_type(entries, self.save_slot_type)
       let total_slots = 6
-      let start_idx = self.save_page * total_slots
+      let current_page = self.page
+      let start_idx = current_page * total_slots
       let slots : Array[String] = []
       let titles : Array[String] = []
       let previews : Array[String] = []
@@ -542,7 +545,7 @@ fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         previews,
         mode_str,
         slot_type_str,
-        self.save_page,
+        current_page,
         total_pages,
         max_pages,
         self.background,
@@ -640,6 +643,30 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
           SettingsAction::ViewChanged
         }
         None => SettingsAction::NoAction
+      }
+    }
+    Some("prev_page") => {
+      settings_action_clear(self.root_id)
+      match self.view_mode {
+        SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+          if self.page > 0 {
+            self.page -= 1
+            SettingsAction::ViewChanged
+          } else {
+            SettingsAction::NoAction
+          }
+        }
+        _ => SettingsAction::NoAction
+      }
+    }
+    Some("next_page") => {
+      settings_action_clear(self.root_id)
+      match self.view_mode {
+        SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+          self.page += 1
+          SettingsAction::ViewChanged
+        }
+        _ => SettingsAction::NoAction
       }
     }
     _ => SettingsAction::NoAction
