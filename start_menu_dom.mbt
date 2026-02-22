@@ -18,7 +18,7 @@ priv struct StartMenu {
 }
 
 ///|
-priv struct SlotView {
+pub struct SlotView {
   slot : String
   title : String
   preview : String

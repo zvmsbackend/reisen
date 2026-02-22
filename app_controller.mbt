@@ -236,9 +236,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           self.phase = AppPhase::InGame
         }
         SettingsAction::Load => {
-          self.settings_menu.clear()
-          self.menu.render()
-          self.phase = AppPhase::StartMenu
+          self.settings_menu.render()
         }
         SettingsAction::StartMenu => {
           self.settings_menu.clear()
@@ -247,6 +245,37 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           self.menu.render()
           self.phase = AppPhase::StartMenu
         }
+        SettingsAction::SaveSlot(slot) => {
+          match self.runner {
+            Some(runner) => {
+              save_runner_to_slot(runner, slot, save_namespace=self.save_ns)
+            }
+            None => ()
+          }
+          self.settings_menu.render()
+        }
+        SettingsAction::LoadSlot(slot) => {
+          self.settings_menu.clear()
+          let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
+            self.script,
+            slot,
+            self.ui_root_id,
+            render_sync=self.render_sync,
+            event_hook=self.event_hook,
+            save_namespace=self.save_ns,
+          )
+          match restored {
+            Ok(runner) => {
+              self.runner = Some(runner)
+              self.phase = AppPhase::InGame
+            }
+            Err(_) => {
+              self.menu.render()
+              self.phase = AppPhase::StartMenu
+            }
+          }
+        }
+        SettingsAction::ViewChanged => self.settings_menu.render()
         SettingsAction::NoAction => ()
       }
       true

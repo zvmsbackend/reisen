@@ -8,13 +8,23 @@ pub enum SettingsContext {
 } derive(Show, Eq)
 
 ///|
+priv enum SettingsViewMode {
+  Settings
+  SaveList
+  LoadList
+}
+
+///|
 priv enum SettingsAction {
+  ViewChanged
   NoAction
   Back
   Saved
   NewGame
   Load
   StartMenu
+  SaveSlot(String)
+  LoadSlot(String)
 }
 
 ///|
@@ -23,6 +33,7 @@ priv struct SettingsMenu {
   save_ns : String
   background : String
   mut context : SettingsContext
+  mut view_mode : SettingsViewMode
 }
 
 ///|
@@ -39,12 +50,17 @@ fn SettingsMenu::new(
   background? : String = "",
   context? : SettingsContext = SettingsContext::FromStartMenu,
 ) -> SettingsMenu {
-  { root_id, save_ns: save_namespace, background, context }
+  { root_id, save_ns: save_namespace, background, context, view_mode: SettingsViewMode::Settings }
 }
 
 ///|
 fn SettingsMenu::set_context(self : SettingsMenu, context : SettingsContext) -> Unit {
   self.context = context
+}
+
+///|
+fn SettingsMenu::set_view_mode(self : SettingsMenu, mode : SettingsViewMode) -> Unit {
+  self.view_mode = mode
 }
 
 ///|
@@ -86,6 +102,12 @@ extern "js" fn settings_dom_render(
   #|
   #|   menu.innerHTML = '';
   #|
+  #|   const settingsPanel = doc.createElement('div');
+  #|   settingsPanel.style.background = 'var(--bg-secondary, rgba(0, 0, 0, 0.85))';
+  #|   settingsPanel.style.padding = '20px 24px';
+  #|   settingsPanel.style.borderRadius = '12px';
+  #|   settingsPanel.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.3)';
+  #|
   #|   const mkLabel = (text) => {
   #|     const label = doc.createElement('label');
   #|     label.textContent = text;
@@ -121,9 +143,11 @@ extern "js" fn settings_dom_render(
   #|     return row;
   #|   };
   #|
-  #|   menu.appendChild(mkRow('Text Speed', mkSlider('text_speed', 10, 100, text_speed, 10)));
-  #|   menu.appendChild(mkRow('BGM Volume', mkSlider('bgm_volume', 0, 100, Math.round(bgm_volume * 100), 1)));
-  #|   menu.appendChild(mkRow('SFX Volume', mkSlider('sfx_volume', 0, 100, Math.round(sfx_volume * 100), 1)));
+  #|   settingsPanel.appendChild(mkRow('Text Speed', mkSlider('text_speed', 10, 100, text_speed, 10)));
+  #|   settingsPanel.appendChild(mkRow('BGM Volume', mkSlider('bgm_volume', 0, 100, Math.round(bgm_volume * 100), 1)));
+  #|   settingsPanel.appendChild(mkRow('SFX Volume', mkSlider('sfx_volume', 0, 100, Math.round(sfx_volume * 100), 1)));
+  #|
+  #|   menu.appendChild(settingsPanel);
   #|
   #|   const actions = doc.createElement('div');
   #|   actions.setAttribute('data-reisen', 'settings-actions');
@@ -163,6 +187,17 @@ extern "js" fn settings_action_kind(root_id : String) -> @js.Nullable[String] =
   #| }
 
 ///|
+extern "js" fn settings_action_slot(root_id : String) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const slot = root.dataset.reisenSettingsActionSlot;
+  #|   return slot || null;
+  #| }
+
+///|
 extern "js" fn settings_action_clear(root_id : String) -> Unit =
   #| (root_id) => {
   #|   const doc = globalThis.document;
@@ -170,6 +205,76 @@ extern "js" fn settings_action_clear(root_id : String) -> Unit =
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
   #|   delete root.dataset.reisenSettingsAction;
+  #|   delete root.dataset.reisenSettingsActionSlot;
+  #| }
+
+///|
+extern "js" fn settings_dom_render_slots(
+  root_id : String,
+  slots : Array[String],
+  titles : Array[String],
+  previews : Array[String],
+  mode : String,
+  background : String,
+) -> Unit =
+  #| (root_id, slots, titles, previews, mode, background) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|
+  #|   let menu = root.querySelector('[data-reisen="settings-menu"]');
+  #|   if (!menu) {
+  #|     menu = doc.createElement('div');
+  #|     menu.setAttribute('data-reisen', 'settings-menu');
+  #|     root.appendChild(menu);
+  #|   }
+  #|
+  #|   if (background && background !== '') {
+  #|     menu.style.backgroundImage = `url(${background})`;
+  #|     menu.style.backgroundSize = 'cover';
+  #|     menu.style.backgroundPosition = 'center';
+  #|   }
+  #|
+  #|   menu.innerHTML = '';
+  #|
+  #|   const title = doc.createElement('h2');
+  #|   title.textContent = mode === 'save' ? 'Save Game' : 'Load Game';
+  #|   title.style.color = 'var(--text-primary, #fff)';
+  #|   title.style.marginBottom = '16px';
+  #|   menu.appendChild(title);
+  #|
+  #|   const list = doc.createElement('div');
+  #|   list.setAttribute('data-reisen', 'save-list');
+  #|
+  #|   const mkButton = (text, kind, slot = '') => {
+  #|     const btn = doc.createElement('button');
+  #|     btn.type = 'button';
+  #|     btn.textContent = text;
+  #|     btn.addEventListener('click', () => {
+  #|       root.dataset.reisenSettingsAction = kind;
+  #|       root.dataset.reisenSettingsActionSlot = slot;
+  #|     });
+  #|     return btn;
+  #|   };
+  #|
+  #|   for (let i = 0; i < slots.length; i++) {
+  #|     const slot = slots[i];
+  #|     const title_ = titles[i] || slot;
+  #|     const preview = previews[i] || '';
+  #|     const text = preview ? `${title_} - ${preview}` : title_;
+  #|     list.appendChild(mkButton(text, mode, slot));
+  #|   }
+  #|   menu.appendChild(list);
+  #|
+  #|   const backBtn = doc.createElement('button');
+  #|   backBtn.type = 'button';
+  #|   backBtn.textContent = 'Back';
+  #|   backBtn.addEventListener('click', () => {
+  #|     root.dataset.reisenSettingsAction = 'back';
+  #|   });
+  #|   backBtn.style.marginTop = '16px';
+  #|   menu.appendChild(backBtn);
   #| }
 
 ///|
@@ -195,23 +300,59 @@ extern "js" fn settings_dom_read(root_id : String) -> @js.Nullable[String] =
 
 ///|
 fn SettingsMenu::render(self : SettingsMenu) -> Unit {
-  let settings = match settings_read_in(self.save_ns) {
-    Some(s) => s
-    None => game_settings_default()
+  match self.view_mode {
+    SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+      let entries = save_slot_entries_in(self.save_ns)
+      let mode_str = match self.view_mode {
+        SettingsViewMode::SaveList => "save"
+        SettingsViewMode::LoadList => "load"
+        _ => "load"
+      }
+      let slots : Array[String] = []
+      let titles : Array[String] = []
+      let previews : Array[String] = []
+      for entry in entries {
+        let title = match entry.meta {
+          Some(meta) => if meta.title == "" { entry.slot } else { meta.title }
+          None => entry.slot
+        }
+        let preview = match entry.meta {
+          Some(meta) => meta.preview
+          None => ""
+        }
+        slots.push(entry.slot)
+        titles.push(title)
+        previews.push(preview)
+      }
+      settings_dom_render_slots(
+        self.root_id,
+        slots,
+        titles,
+        previews,
+        mode_str,
+        self.background,
+      )
+    }
+    SettingsViewMode::Settings => {
+      let settings = match settings_read_in(self.save_ns) {
+        Some(s) => s
+        None => game_settings_default()
+      }
+      let view = to_settings_view(settings)
+      let context_str = match self.context {
+        SettingsContext::FromStartMenu => "start_menu"
+        SettingsContext::FromMidgame => "midgame"
+      }
+      settings_dom_render(
+        self.root_id,
+        view.text_speed,
+        view.bgm_volume,
+        view.sfx_volume,
+        self.background,
+        context_str,
+      )
+    }
   }
-  let view = to_settings_view(settings)
-  let context_str = match self.context {
-    SettingsContext::FromStartMenu => "start_menu"
-    SettingsContext::FromMidgame => "midgame"
-  }
-  settings_dom_render(
-    self.root_id,
-    view.text_speed,
-    view.bgm_volume,
-    view.sfx_volume,
-    self.background,
-    context_str,
-  )
 }
 
 ///|
@@ -234,36 +375,49 @@ fn SettingsMenu::clear(self : SettingsMenu) -> Unit {
 ///|
 fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
   match settings_action_kind(self.root_id).to_option() {
+    Some("start_menu") => SettingsAction::StartMenu
+    Some("new_game") => SettingsAction::NewGame
     Some("back") => {
       settings_action_clear(self.root_id)
+      match self.view_mode {
+        SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+          self.view_mode = SettingsViewMode::Settings
+        }
+        _ => ()
+      }
       SettingsAction::Back
     }
     Some("save") => {
-      let raw = settings_dom_read(self.root_id).to_option()
-      settings_action_clear(self.root_id)
-      match raw {
-        Some(json_str) => {
-          try {
-            settings_write_in(self.save_ns, @json.from_json(@json.parse(json_str)))
-            SettingsAction::Saved
-          } catch {
-            _ => SettingsAction::NoAction 
+      match self.view_mode {
+        SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+          let slot = settings_action_slot(self.root_id).to_option()
+          settings_action_clear(self.root_id)
+          match slot {
+            Some(s) => SettingsAction::SaveSlot(s)
+            None => SettingsAction::NoAction
           }
         }
-        None => SettingsAction::NoAction
+        SettingsViewMode::Settings => {
+          self.view_mode = SettingsViewMode::SaveList
+          SettingsAction::ViewChanged
+        }
       }
     }
-    Some("new_game") => {
-      settings_action_clear(self.root_id)
-      SettingsAction::NewGame
-    }
     Some("load") => {
-      settings_action_clear(self.root_id)
-      SettingsAction::Load
-    }
-    Some("start_menu") => {
-      settings_action_clear(self.root_id)
-      SettingsAction::StartMenu
+      match self.view_mode {
+        SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+          let slot = settings_action_slot(self.root_id).to_option()
+          settings_action_clear(self.root_id)
+          match slot {
+            Some(s) => SettingsAction::LoadSlot(s)
+            None => SettingsAction::NoAction
+          }
+        }
+        SettingsViewMode::Settings => {
+          self.view_mode = SettingsViewMode::LoadList
+          SettingsAction::ViewChanged
+        }
+      }
     }
     _ => SettingsAction::NoAction
   }
