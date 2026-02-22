@@ -105,7 +105,7 @@ pub fn[T] GameRunner::step(
       match action {
         "auto" => self.ui.toggle_auto_mode()
         "skip" => self.ui.toggle_skip_mode()
-        "settings" | "qsave" => self.pending_action = Some(action)
+        "settings" | "qsave" | "save" => self.pending_action = Some(action)
         _ => ()
       }
       self.ui.mark_dirty_action_buttons()

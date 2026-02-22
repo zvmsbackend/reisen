@@ -178,6 +178,14 @@ pub fn[T : FromJson + ToJson] AppController::tick(
                   "quicksave",
                   save_namespace=self.save_ns,
                 )
+              Some("save") => {
+                self.saved_director_json = Some(runner.director().save_json())
+                runner.clear_ui()
+                self.settings_menu.set_context(SettingsContext::FromMidgame)
+                self.settings_menu.set_view_mode(SettingsViewMode::SaveList)
+                self.settings_menu.render()
+                self.phase = AppPhase::Settings
+              }
               _ => ()
             }
             true
