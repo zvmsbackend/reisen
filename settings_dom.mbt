@@ -383,6 +383,9 @@ extern "js" fn settings_dom_render_slots(
   #|     btn.appendChild(deleteBtn);
 
   #|     btn.addEventListener('click', () => {
+  #|       if (mode === 'save' && title_ !== 'Empty') {
+  #|         if (!confirm('Overwrite this save slot?')) return;
+  #|       }
   #|       root.dataset.reisenSettingsAction = mode;
   #|       root.dataset.reisenSettingsActionSlot = slot;
   #|     });
