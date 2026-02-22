@@ -183,6 +183,9 @@ extern "js" fn settings_dom_render(
   #|     btn.type = 'button';
   #|     btn.textContent = text;
   #|     btn.addEventListener('click', () => {
+  #|       if (kind === 'start_menu' && context === 'midgame') {
+  #|         if (!confirm('Return to the start menu? Unsaved progress will be lost.')) return;
+  #|       }
   #|       root.dataset.reisenSettingsAction = kind;
   #|     });
   #|     return btn;
