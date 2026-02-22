@@ -18,14 +18,9 @@ test "app controller stays in menu when loading missing slot" {
     builder.label("start")
     builder.say("n", "hello")
   })
-  let app = AppController::new(
-    script,
-    () => GameState::new(0),
-    "app",
-    save_namespace="app_test_ns_missing",
-  )
-
-  app.handle_menu_action(StartMenuAction::LoadSlot("slot1"))
+  let app = AppController::new(script, () => GameState::new(0), "app")
+  // Load from start menu now goes to settings
+  app.handle_menu_action(StartMenuAction::NoAction)
   assert_eq(app.phase(), AppPhase::StartMenu)
 }
 

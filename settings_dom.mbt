@@ -28,12 +28,21 @@ priv enum SettingsAction {
 }
 
 ///|
+priv enum SaveSlotType {
+  Autosave
+  Quicksave
+  Normal
+}
+
+///|
 priv struct SettingsMenu {
   root_id : String
   save_ns : String
   background : String
   mut context : SettingsContext
   mut view_mode : SettingsViewMode
+  mut save_slot_type : SaveSlotType
+  mut save_page : Int
 }
 
 ///|
@@ -50,17 +59,33 @@ fn SettingsMenu::new(
   background? : String = "",
   context? : SettingsContext = SettingsContext::FromStartMenu,
 ) -> SettingsMenu {
-  { root_id, save_ns: save_namespace, background, context, view_mode: SettingsViewMode::Settings }
+  {
+    root_id,
+    save_ns: save_namespace,
+    background,
+    context,
+    view_mode: SettingsViewMode::Settings,
+    save_slot_type: SaveSlotType::Normal,
+    save_page: 0,
+  }
 }
 
 ///|
-fn SettingsMenu::set_context(self : SettingsMenu, context : SettingsContext) -> Unit {
+fn SettingsMenu::set_context(
+  self : SettingsMenu,
+  context : SettingsContext,
+) -> Unit {
   self.context = context
 }
 
 ///|
-fn SettingsMenu::set_view_mode(self : SettingsMenu, mode : SettingsViewMode) -> Unit {
+fn SettingsMenu::set_view_mode(
+  self : SettingsMenu,
+  mode : SettingsViewMode,
+) -> Unit {
   self.view_mode = mode
+  self.save_slot_type = SaveSlotType::Normal
+  self.save_page = 0
 }
 
 ///|
@@ -215,9 +240,13 @@ extern "js" fn settings_dom_render_slots(
   titles : Array[String],
   previews : Array[String],
   mode : String,
+  slot_type : String,
+  current_page : Int,
+  total_pages : Int,
+  max_pages : Int,
   background : String,
 ) -> Unit =
-  #| (root_id, slots, titles, previews, mode, background) => {
+  #| (root_id, slots, titles, previews, mode, slot_type, current_page, total_pages, max_pages, background) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -244,36 +273,151 @@ extern "js" fn settings_dom_render_slots(
   #|   title.style.marginBottom = '16px';
   #|   menu.appendChild(title);
   #|
-  #|   const list = doc.createElement('div');
-  #|   list.setAttribute('data-reisen', 'save-list');
+  #|   // Tab buttons for slot types
+  #|   const tabs = doc.createElement('div');
+  #|   tabs.style.display = 'flex';
+  #|   tabs.style.gap = '8px';
+  #|   tabs.style.marginBottom = '16px';
   #|
-  #|   const mkButton = (text, kind, slot = '') => {
+  #|   const mkTab = (text, type) => {
   #|     const btn = doc.createElement('button');
   #|     btn.type = 'button';
   #|     btn.textContent = text;
+  #|     btn.style.padding = '8px 16px';
+  #|     btn.style.background = slot_type === type ? 'var(--button-hover, rgba(255,255,255,0.2))' : 'transparent';
+  #|     btn.style.color = 'var(--text-primary, #fff)';
+  #|     btn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
+  #|     btn.style.borderRadius = '4px';
+  #|     btn.style.cursor = 'pointer';
   #|     btn.addEventListener('click', () => {
-  #|       root.dataset.reisenSettingsAction = kind;
+  #|       root.dataset.reisenSettingsAction = 'slot_type';
+  #|       root.dataset.reisenSettingsSlotType = type;
+  #|     });
+  #|     return btn;
+  #|   };
+  #|
+  #|   tabs.appendChild(mkTab('Auto', 'autosave'));
+  #|   tabs.appendChild(mkTab('Quick', 'quicksave'));
+  #|   tabs.appendChild(mkTab('Save', 'normal'));
+  #|   menu.appendChild(tabs);
+  #|
+  #|   // Grid container
+  #|   const grid = doc.createElement('div');
+  #|   grid.style.display = 'grid';
+  #|   grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+  #|   grid.style.gap = '16px';
+  #|   grid.style.background = 'var(--bg-secondary, rgba(0,0,0,0.85))';
+  #|   grid.style.padding = '16px';
+  #|   grid.style.borderRadius = '8px';
+  #|   grid.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.3)';
+  #|   grid.style.maxHeight = '500px';
+  #|   grid.style.overflowY = 'auto';
+  #|   grid.style.width = 'min(90vw, 800px)';
+  #|   grid.style.boxSizing = 'border-box';
+  #|   grid.style.gridTemplateRows = 'repeat(3, min(120px, 20vh))';
+
+  #|
+  #|   const mkSlotButton = (slot, title_, preview) => {
+  #|     const btn = doc.createElement('button');
+  #|     btn.type = 'button';
+  #|     btn.style.padding = '16px';
+  #|     btn.style.textAlign = 'left';
+  #|     btn.style.background = 'transparent';
+  #|     btn.style.color = 'var(--text-primary, #fff)';
+  #|     btn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.2))';
+  #|     btn.style.borderRadius = '4px';
+  #|     btn.style.cursor = 'pointer';
+  #|     btn.style.display = 'flex';
+  #|     btn.style.flexDirection = 'column';
+  #|     btn.style.gap = '8px';
+  #|     btn.style.justifyContent = 'space-between';
+  #|     btn.style.height = '100%';
+  #|     btn.style.boxSizing = 'border-box';
+  #|
+  #|     const titleSpan = doc.createElement('span');
+  #|     titleSpan.textContent = title_;
+  #|     titleSpan.style.fontWeight = 'bold';
+  #|     btn.appendChild(titleSpan);
+  #|
+  #|     if (preview) {
+  #|       const previewSpan = doc.createElement('span');
+  #|       previewSpan.textContent = preview.substring(0, 50) + (preview.length > 50 ? '...' : '');
+  #|       previewSpan.style.fontSize = '12px';
+  #|       previewSpan.style.color = 'var(--text-secondary, rgba(255,255,255,0.7))';
+  #|       btn.appendChild(previewSpan);
+  #|     }
+  #|
+  #|     btn.addEventListener('click', () => {
+  #|       root.dataset.reisenSettingsAction = mode;
   #|       root.dataset.reisenSettingsActionSlot = slot;
   #|     });
   #|     return btn;
   #|   };
   #|
   #|   for (let i = 0; i < slots.length; i++) {
-  #|     const slot = slots[i];
-  #|     const title_ = titles[i] || slot;
-  #|     const preview = previews[i] || '';
-  #|     const text = preview ? `${title_} - ${preview}` : title_;
-  #|     list.appendChild(mkButton(text, mode, slot));
+  #|     grid.appendChild(mkSlotButton(slots[i], titles[i], previews[i]));
   #|   }
-  #|   menu.appendChild(list);
+  #|   menu.appendChild(grid);
+  #|
+  #|   // Navigation buttons
+  #|   if (max_pages > 1) {
+  #|     const nav = doc.createElement('div');
+  #|     nav.style.display = 'flex';
+  #|     nav.style.justifyContent = 'space-between';
+  #|     nav.style.marginTop = '16px';
+  #|
+  #|     const prevBtn = doc.createElement('button');
+  #|     prevBtn.type = 'button';
+  #|     prevBtn.textContent = 'Prev';
+  #|     prevBtn.disabled = current_page <= 0;
+  #|     prevBtn.style.padding = '8px 16px';
+  #|     prevBtn.style.background = 'var(--bg-secondary, rgba(255,255,255,0.1))';
+  #|     prevBtn.style.color = 'var(--text-primary, #fff)';
+  #|     prevBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
+  #|     prevBtn.style.borderRadius = '4px';
+  #|     prevBtn.style.cursor = 'pointer';
+  #|     prevBtn.addEventListener('click', () => {
+  #|       root.dataset.reisenSettingsAction = 'prev_page';
+  #|     });
+
+  #|     const pageInfo = doc.createElement('span');
+  #|     pageInfo.textContent = `Page ${current_page + 1}`;
+  #|     pageInfo.style.color = 'var(--text-primary, #fff)';
+  #|     pageInfo.style.alignSelf = 'center';
+
+  #|     const nextBtn = doc.createElement('button');
+  #|     nextBtn.type = 'button';
+  #|     nextBtn.textContent = 'Next';
+  #|     nextBtn.disabled = current_page >= max_pages - 1;
+  #|     nextBtn.style.padding = '8px 16px';
+  #|     nextBtn.style.background = 'var(--bg-secondary, rgba(255,255,255,0.1))';
+  #|     nextBtn.style.color = 'var(--text-primary, #fff)';
+  #|     nextBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
+  #|     nextBtn.style.borderRadius = '4px';
+  #|     nextBtn.style.cursor = 'pointer';
+  #|     nextBtn.addEventListener('click', () => {
+  #|       root.dataset.reisenSettingsAction = 'next_page';
+  #|     });
+  #|
+  #|     nav.appendChild(prevBtn);
+  #|     nav.appendChild(pageInfo);
+  #|     nav.appendChild(nextBtn);
+  #|     menu.appendChild(nav);
+  #|   }
   #|
   #|   const backBtn = doc.createElement('button');
   #|   backBtn.type = 'button';
   #|   backBtn.textContent = 'Back';
+  #|   backBtn.style.marginTop = '16px';
+  #|   backBtn.style.padding = '10px 24px';
+  #|   backBtn.style.background = 'transparent';
+  #|   backBtn.style.color = 'var(--text-primary, #fff)';
+  #|   backBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
+  #|   backBtn.style.borderRadius = '4px';
+  #|   backBtn.style.cursor = 'pointer';
   #|   backBtn.addEventListener('click', () => {
   #|     root.dataset.reisenSettingsAction = 'back';
   #|   });
-  #|   backBtn.style.marginTop = '16px';
   #|   menu.appendChild(backBtn);
   #| }
 
@@ -299,30 +443,73 @@ extern "js" fn settings_dom_read(root_id : String) -> @js.Nullable[String] =
   #| }
 
 ///|
+fn filter_entries_by_type(
+  entries : Array[SaveSlotEntry],
+  slot_type : SaveSlotType,
+) -> Array[SaveSlotEntry] {
+  entries.filter(fn(entry) {
+    let slot = entry.slot
+    match slot_type {
+      SaveSlotType::Autosave => slot.starts_with("autosave")
+      SaveSlotType::Quicksave => slot.starts_with("quicksave")
+      SaveSlotType::Normal =>
+        not(slot.starts_with("autosave") || slot.starts_with("quicksave"))
+    }
+  })
+}
+
+///|
 fn SettingsMenu::render(self : SettingsMenu) -> Unit {
   match self.view_mode {
     SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
-      let entries = save_slot_entries_in(self.save_ns)
       let mode_str = match self.view_mode {
         SettingsViewMode::SaveList => "save"
         SettingsViewMode::LoadList => "load"
         _ => "load"
       }
+      let slot_type_str = match self.save_slot_type {
+        SaveSlotType::Autosave => "autosave"
+        SaveSlotType::Quicksave => "quicksave"
+        SaveSlotType::Normal => "normal"
+      }
+      let entries = save_slot_entries_in(self.save_ns)
+      let filtered = filter_entries_by_type(entries, self.save_slot_type)
+      let total_slots = 6
+      let start_idx = self.save_page * total_slots
       let slots : Array[String] = []
       let titles : Array[String] = []
       let previews : Array[String] = []
-      for entry in entries {
-        let title = match entry.meta {
-          Some(meta) => if meta.title == "" { entry.slot } else { meta.title }
-          None => entry.slot
+      for i in 0..<total_slots {
+        let idx = start_idx + i
+        if idx < filtered.length() {
+          let entry = filtered[idx]
+          let title = match entry.meta {
+            Some(meta) => if meta.title == "" { entry.slot } else { meta.title }
+            None => entry.slot
+          }
+          let preview = match entry.meta {
+            Some(meta) => meta.preview
+            None => ""
+          }
+          slots.push(entry.slot)
+          titles.push(title)
+          previews.push(preview)
+        } else {
+          let slot_num = start_idx + i + 1
+          let slot_name = match self.save_slot_type {
+            SaveSlotType::Autosave => "autosave\{slot_num}"
+            SaveSlotType::Quicksave => "quicksave\{slot_num}"
+            SaveSlotType::Normal => slot_num.to_string()
+          }
+          slots.push(slot_name)
+          titles.push("Empty")
+          previews.push("")
         }
-        let preview = match entry.meta {
-          Some(meta) => meta.preview
-          None => ""
-        }
-        slots.push(entry.slot)
-        titles.push(title)
-        previews.push(preview)
+      }
+      let total_pages = (filtered.length() + total_slots - 1) / total_slots
+      let max_pages = match self.save_slot_type {
+        SaveSlotType::Normal => 100 // Arbitrary large number
+        _ => 1
       }
       settings_dom_render_slots(
         self.root_id,
@@ -330,6 +517,10 @@ fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         titles,
         previews,
         mode_str,
+        slot_type_str,
+        self.save_page,
+        total_pages,
+        max_pages,
         self.background,
       )
     }
@@ -380,14 +571,13 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
     Some("back") => {
       settings_action_clear(self.root_id)
       match self.view_mode {
-        SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+        SettingsViewMode::SaveList | SettingsViewMode::LoadList =>
           self.view_mode = SettingsViewMode::Settings
-        }
         _ => ()
       }
       SettingsAction::Back
     }
-    Some("save") => {
+    Some("save") =>
       match self.view_mode {
         SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
           let slot = settings_action_slot(self.root_id).to_option()
@@ -402,8 +592,7 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
           SettingsAction::ViewChanged
         }
       }
-    }
-    Some("load") => {
+    Some("load") =>
       match self.view_mode {
         SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
           let slot = settings_action_slot(self.root_id).to_option()
@@ -418,7 +607,6 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
           SettingsAction::ViewChanged
         }
       }
-    }
     _ => SettingsAction::NoAction
   }
 }

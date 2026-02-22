@@ -92,7 +92,7 @@ fn[T : FromJson] AppController::handle_menu_action(
       self.menu.clear()
       self.phase = AppPhase::InGame
     }
-    Continue(slot) | LoadSlot(slot) => {
+    Continue(slot) => {
       let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
         self.script,
         slot,
@@ -112,6 +112,13 @@ fn[T : FromJson] AppController::handle_menu_action(
           self.menu.render()
         }
       }
+    }
+    Load => {
+      self.menu.clear()
+      self.settings_menu.set_context(SettingsContext::FromStartMenu)
+      self.settings_menu.set_view_mode(SettingsViewMode::LoadList)
+      self.settings_menu.render()
+      self.phase = AppPhase::Settings
     }
     Settings => {
       self.menu.clear()
@@ -235,9 +242,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           )
           self.phase = AppPhase::InGame
         }
-        SettingsAction::Load => {
-          self.settings_menu.render()
-        }
+        SettingsAction::Load => self.settings_menu.render()
         SettingsAction::StartMenu => {
           self.settings_menu.clear()
           self.saved_director_json = None
@@ -247,9 +252,8 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         }
         SettingsAction::SaveSlot(slot) => {
           match self.runner {
-            Some(runner) => {
+            Some(runner) =>
               save_runner_to_slot(runner, slot, save_namespace=self.save_ns)
-            }
             None => ()
           }
           self.settings_menu.render()

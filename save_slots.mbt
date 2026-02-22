@@ -160,11 +160,7 @@ pub fn save_slot_write_meta_in(
 ///|
 pub fn save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
   match storage_get_item(slot_meta_key(ns, slot)).to_option() {
-    Some(raw) => {
-      Some(@json.from_json(@json.parse(raw))) catch {
-        _ => None
-      }
-    }
+    Some(raw) => Some(@json.from_json(@json.parse(raw))) catch { _ => None }
     None => None
   }
 }
@@ -238,11 +234,7 @@ pub fn settings_write_in(ns : String, settings : GameSettings) -> Unit {
 ///|
 pub fn settings_read_in(ns : String) -> GameSettings? {
   match storage_get_item(settings_key_in(ns)).to_option() {
-    Some(raw) => {
-      Some(@json.from_json(@json.parse(raw))) catch {
-        _ => None
-      }
-    }
+    Some(raw) => Some(@json.from_json(@json.parse(raw))) catch { _ => None }
     None => None
   }
 }

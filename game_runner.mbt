@@ -123,7 +123,13 @@ pub fn[T] GameRunner::step(
         self.render_ui()
         return event
       }
-      None => return Noop
+      None => {
+        if self.ui_dirty {
+          self.ui.mark_dirty_choices()
+          self.render_ui()
+        }
+        return ChoicePrompt(self.director.choices())
+      }
     }
   }
   if self.director.text_input() is Some(_) {
@@ -298,7 +304,7 @@ pub fn[T] GameRunner::submit_choice(
 ///|
 /// Advances one frame and reports whether loop should continue.
 pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool {
-  !(self.step(elapsed_ms~) is ScriptEnded) catch {
+  (!(self.step(elapsed_ms~) is ScriptEnded)) catch {
     _ => false
   }
 }

@@ -6,7 +6,7 @@ priv enum StartMenuAction {
   NoAction
   NewGame
   Continue(String)
-  LoadSlot(String)
+  Load
   Settings
 }
 
@@ -78,14 +78,11 @@ fn sorted_slot_views(entries : Array[SaveSlotEntry]) -> Array[SlotView] {
 ///|
 extern "js" fn start_menu_dom_render(
   root_id : String,
-  slots : Array[String],
-  titles : Array[String],
-  previews : Array[String],
   has_continue : Bool,
   continue_slot : String,
   background : String,
 ) -> Unit =
-  #| (root_id, slots, titles, previews, has_continue, continue_slot, background) => {
+  #| (root_id, has_continue, continue_slot, background) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -125,19 +122,9 @@ extern "js" fn start_menu_dom_render(
   #|   const continueBtn = mkButton('Continue', 'continue', continue_slot);
   #|   continueBtn.disabled = !has_continue;
   #|   actions.appendChild(continueBtn);
+  #|   actions.appendChild(mkButton('Load', 'load'));
   #|   actions.appendChild(mkButton('Settings', 'settings'));
   #|   menu.appendChild(actions);
-  #|
-  #|   const list = doc.createElement('div');
-  #|   list.setAttribute('data-reisen', 'save-list');
-  #|   for (let i = 0; i < slots.length; i++) {
-  #|     const slot = slots[i];
-  #|     const title = titles[i] || slot;
-  #|     const preview = previews[i] || '';
-  #|     const text = preview ? `${title} - ${preview}` : title;
-  #|     list.appendChild(mkButton(text, 'load', slot));
-  #|   }
-  #|   menu.appendChild(list);
   #| }
 
 ///|
@@ -176,32 +163,11 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
 ///|
 fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_entries_in(self.save_ns)
-  let views = sorted_slot_views(entries)
-  let slots = views.map(view => view.slot)
-  let titles = views.map(view => view.title)
-  let previews = views.map(view => view.preview)
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>
-      start_menu_dom_render(
-        self.root_id,
-        slots,
-        titles,
-        previews,
-        true,
-        slot,
-        self.background,
-      )
-    None =>
-      start_menu_dom_render(
-        self.root_id,
-        slots,
-        titles,
-        previews,
-        false,
-        "",
-        self.background,
-      )
+      start_menu_dom_render(self.root_id, true, slot, self.background)
+    None => start_menu_dom_render(self.root_id, false, "", self.background)
   }
 }
 
@@ -243,16 +209,8 @@ fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
       }
     }
     Some("load") => {
-      let slot = match start_menu_action_slot(self.root_id).to_option() {
-        Some(slot) => slot
-        None => ""
-      }
       start_menu_action_clear(self.root_id)
-      if slot == "" {
-        StartMenuAction::NoAction
-      } else {
-        StartMenuAction::LoadSlot(slot)
-      }
+      StartMenuAction::Load
     }
     Some("settings") => {
       start_menu_action_clear(self.root_id)
