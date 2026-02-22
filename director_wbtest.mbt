@@ -1,22 +1,24 @@
 ///|
 test "director maps runtime events into ui and render state" {
+  let a = label()
+  let b = label()
+  let end = label()
   let compiled : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.scene("bg_school")
-    builder.show_figure_at("alice", Left, layer=1, opacity=0.9)
-    builder.play_music("bgm_theme", true)
-    builder.animate_opacity("alice", 120)
+    builder.scene(dummy_bg("bg_school"))
+    builder.show_figure_at(dummy_figure("alice"), Left, layer=1, opacity=0.9)
+    builder.play_music(dummy_music("bgm_theme"), true)
+    builder.animate_opacity(dummy_figure("alice"), 120)
     builder.menu("alice", "Where to?", [
-      option("a", "A route", "route_a"),
-      option("b", "B route", "route_b"),
+      option("A route", a, id="a"),
+      option("B route", b, id="b"),
     ])
-    builder.label("route_a")
-    builder.play_sfx("confirm")
+    builder.label(a)
+    builder.play_sfx(dummy_sfx("confirm"))
     builder.say("alice", "A")
-    builder.jump("end")
-    builder.label("route_b")
+    builder.jump(end)
+    builder.label(b)
     builder.say("alice", "B")
-    builder.label("end")
+    builder.label(end)
   })
 
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
@@ -50,18 +52,20 @@ test "director maps runtime events into ui and render state" {
 
 ///|
 test "director branch false path through choose" {
+  let left = label()
+  let right = label()
+  let end = label()
   let compiled : Script[Int] = script(builder => {
-    builder.label("start")
     builder.menu("guide", "Pick", [
-      option("left", "Left", "left"),
-      option("right", "Right", "right"),
+      option("Left", left, id="left"),
+      option("Right", right, id="right"),
     ])
-    builder.label("left")
+    builder.label(left)
     builder.say("guide", "L")
-    builder.jump("end")
-    builder.label("right")
+    builder.jump(end)
+    builder.label(right)
     builder.say("guide", "R")
-    builder.label("end")
+    builder.label(end)
   })
 
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
@@ -74,7 +78,6 @@ test "director branch false path through choose" {
 ///|
 test "director save json resumes runtime position" {
   let script : Script[Int] = script(builder => {
-    builder.label("start")
     builder.say("n", "a")
     builder.say("n", "b")
   })

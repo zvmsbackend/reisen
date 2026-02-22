@@ -1,8 +1,29 @@
 ///|
+fn dummy_bg(id : String) -> Background {
+  { id, }
+}
+
+///|
+fn dummy_figure(id : String) -> Figure {
+  { id, }
+}
+
+///|
+fn dummy_sfx(id : String) -> Sfx {
+  { id, }
+}
+
+///|
+fn dummy_music(id : String) -> Music {
+  { id, }
+}
+
+///|
 test "builder duplicate label raises" {
   let builder : ScriptBuilder[Int] = ScriptBuilder::new()
-  builder.label("start")
-  builder.label("start")
+  let start = label(name="start")
+  builder.label(start)
+  builder.label(start)
 
   let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
   assert_true(built is Err(ScriptBuildError::DuplicateLabel(name="start")))
@@ -10,13 +31,9 @@ test "builder duplicate label raises" {
 
 ///|
 test "option helper builds expected choice option" {
-  let got = option("left", "Go left", "left_path")
-  let expected : ChoiceOption = {
-    id: "left",
-    text: "Go left",
-    jump: "left_path",
-  }
-  assert_eq(got, expected)
+  let got = option("Go left", label(name="left_path"))
+  assert_eq(got.text, "Go left")
+  assert_eq(got.jump, "left_path")
 }
 
 ///|
@@ -52,25 +69,26 @@ test "animation helpers produce expected animation specs" {
 
 ///|
 test "branch helper emits jump_if and jump instructions" {
+  let then = label(name="then")
+  let else_ = label(name="else")
   let built : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.branch("then", "else", _ => true)
-    builder.label("then")
-    builder.label("else")
+    builder.branch(then, else_, _ => true)
+    builder.label(then)
+    builder.label(else_)
   })
 
-  assert_eq(built.instructions.length(), 5)
-  assert_true(built.instructions[1] is JumpIf("then", _))
-  assert_true(built.instructions[2] is Jump("else"))
+  assert_eq(built.instructions.length(), 4)
+  assert_true(built.instructions[0] is JumpIf("then", _))
+  assert_true(built.instructions[1] is Jump("else"))
 }
 
 ///|
 test "menu helper emits say then choice" {
   let built : Script[Int] = script(builder => {
-    builder.label("start")
+    builder.label(label(name="start"))
     builder.menu("narrator", "Pick one", [
-      option("a", "A", "label_a"),
-      option("b", "B", "label_b"),
+      option("A", label(name="label_a")),
+      option("B", label(name="label_b")),
     ])
   })
 
@@ -81,11 +99,11 @@ test "menu helper emits say then choice" {
 ///|
 test "scene/figure and animation shorthand helpers emit expected instructions" {
   let built : Script[Int] = script(builder => {
-    builder.scene("bg_school")
-    builder.show_figure_at("alice", Left, layer=2, opacity=0.7)
-    builder.animate_opacity("alice", 120)
-    builder.animate_position("alice", 180, easing=EaseInOut)
-    builder.animate_scale("alice", 240, easing=EaseOut)
+    builder.scene(dummy_bg("bg_school"))
+    builder.show_figure_at(dummy_figure("alice"), Left, layer=2, opacity=0.7)
+    builder.animate_opacity(dummy_figure("alice"), 120)
+    builder.animate_position(dummy_figure("alice"), 180, easing=EaseInOut)
+    builder.animate_scale(dummy_figure("alice"), 240, easing=EaseOut)
     builder.narrate("done")
   })
 

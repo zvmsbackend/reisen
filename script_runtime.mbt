@@ -167,7 +167,7 @@ fn[T] Runtime::run_inst(
       self.pending_text_input = Some((var_name, prompt_interpolated))
       TextInputPrompt(var_name, prompt_interpolated)
     }
-    RunCode(_, hook) => {
+    RunCode(hook) => {
       hook(self.state)
       self.ip = self.ip + 1
       Noop

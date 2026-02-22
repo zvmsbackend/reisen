@@ -1,5 +1,28 @@
 ///|
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
+struct Figure {
+  id : String
+}
+
+///|
+struct Background {
+  id : String
+}
+
+///|
+struct Music {
+  id : String
+}
+
+///|
+struct Sfx {
+  id : String
+}
+
+///|
+struct Label {
+  name : String
+}
 
 ///|
 struct ScriptBuilder[T] {
@@ -18,8 +41,17 @@ pub fn[T] script(
 }
 
 ///|
-pub fn option(id : String, text : String, jump : String) -> ChoiceOption {
-  { id, text, jump }
+pub fn option(
+  text : String,
+  jump : Label,
+  id? : String = gensym(prefix="choice"),
+) -> ChoiceOption {
+  { id, text, jump: jump.name }
+}
+
+///|
+pub fn label(name? : String = gensym(prefix="label")) -> Label {
+  { name, }
 }
 
 ///|
@@ -83,22 +115,22 @@ pub fn[T] ScriptBuilder::new() -> ScriptBuilder[T] {
 }
 
 ///|
-pub fn[T] ScriptBuilder::label(self : ScriptBuilder[T], name : String) -> Unit {
-  self.instructions.push(Label(name))
+pub fn[T] ScriptBuilder::label(self : ScriptBuilder[T], label : Label) -> Unit {
+  self.instructions.push(Label(label.name))
 }
 
 ///|
-pub fn[T] ScriptBuilder::jump(self : ScriptBuilder[T], label : String) -> Unit {
-  self.instructions.push(Jump(label))
+pub fn[T] ScriptBuilder::jump(self : ScriptBuilder[T], label : Label) -> Unit {
+  self.instructions.push(Jump(label.name))
 }
 
 ///|
 pub fn[T] ScriptBuilder::jump_if(
   self : ScriptBuilder[T],
-  label : String,
+  label : Label,
   predicate : ScriptPredicate[T],
 ) -> Unit {
-  self.instructions.push(JumpIf(label, predicate))
+  self.instructions.push(JumpIf(label.name, predicate))
 }
 
 ///|
@@ -107,12 +139,12 @@ pub fn[T] ScriptBuilder::jump_if(
 /// - `Jump(else_label)`
 pub fn[T] ScriptBuilder::branch(
   self : ScriptBuilder[T],
-  then_label : String,
-  else_label : String,
+  then_label : Label,
+  else_label : Label,
   predicate : ScriptPredicate[T],
 ) -> Unit {
-  self.instructions.push(JumpIf(then_label, predicate))
-  self.instructions.push(Jump(else_label))
+  self.instructions.push(JumpIf(then_label.name, predicate))
+  self.instructions.push(Jump(else_label.name))
 }
 
 ///|
@@ -168,55 +200,54 @@ pub fn[T] ScriptBuilder::input_text(
 ///|
 pub fn[T] ScriptBuilder::run_code(
   self : ScriptBuilder[T],
-  id : String,
   hook : ScriptHook[T],
 ) -> Unit {
-  self.instructions.push(RunCode(id, hook))
+  self.instructions.push(RunCode(hook))
 }
 
 ///|
 pub fn[T] ScriptBuilder::scene(
   self : ScriptBuilder[T],
-  background_id : String,
+  bg : Background,
 ) -> Unit {
-  self.instructions.push(ShowBackground(background_id))
+  self.instructions.push(ShowBackground(bg.id))
 }
 
 ///|
 pub fn[T] ScriptBuilder::show_figure(
   self : ScriptBuilder[T],
-  id : String,
+  figure : Figure,
   placement : FigurePlacement,
 ) -> Unit {
-  self.instructions.push(ShowFigure(id, placement))
+  self.instructions.push(ShowFigure(figure.id, placement))
 }
 
 ///|
 pub fn[T] ScriptBuilder::show_figure_at(
   self : ScriptBuilder[T],
-  id : String,
+  figure : Figure,
   pos : Position,
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> Unit {
-  self.instructions.push(ShowFigure(id, { pos, layer, opacity }))
+  self.instructions.push(ShowFigure(figure.id, { pos, layer, opacity }))
 }
 
 ///|
 pub fn[T] ScriptBuilder::hide_figure(
   self : ScriptBuilder[T],
-  id : String,
+  figure : Figure,
 ) -> Unit {
-  self.instructions.push(HideFigure(id))
+  self.instructions.push(HideFigure(figure.id))
 }
 
 ///|
 pub fn[T] ScriptBuilder::play_music(
   self : ScriptBuilder[T],
-  id : String,
+  music : Music,
   should_loop : Bool,
 ) -> Unit {
-  self.instructions.push(PlayMusic(id, should_loop))
+  self.instructions.push(PlayMusic(music.id, should_loop))
 }
 
 ///|
@@ -225,47 +256,49 @@ pub fn[T] ScriptBuilder::stop_music(self : ScriptBuilder[T]) -> Unit {
 }
 
 ///|
-pub fn[T] ScriptBuilder::play_sfx(self : ScriptBuilder[T], id : String) -> Unit {
-  self.instructions.push(PlaySfx(id))
+pub fn[T] ScriptBuilder::play_sfx(self : ScriptBuilder[T], sfx : Sfx) -> Unit {
+  self.instructions.push(PlaySfx(sfx.id))
 }
 
 ///|
 pub fn[T] ScriptBuilder::animate(
   self : ScriptBuilder[T],
-  target : String,
+  target : Figure,
   spec : AnimationSpec,
 ) -> Unit {
-  self.instructions.push(Animate(target, spec))
+  self.instructions.push(Animate(target.id, spec))
 }
 
 ///|
 pub fn[T] ScriptBuilder::animate_opacity(
   self : ScriptBuilder[T],
-  target : String,
+  target : Figure,
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> Unit {
-  self.instructions.push(Animate(target, anim_opacity(duration_ms, easing~)))
+  self.instructions.push(Animate(target.id, anim_opacity(duration_ms, easing~)))
 }
 
 ///|
 pub fn[T] ScriptBuilder::animate_position(
   self : ScriptBuilder[T],
-  target : String,
+  target : Figure,
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> Unit {
-  self.instructions.push(Animate(target, anim_position(duration_ms, easing~)))
+  self.instructions.push(
+    Animate(target.id, anim_position(duration_ms, easing~)),
+  )
 }
 
 ///|
 pub fn[T] ScriptBuilder::animate_scale(
   self : ScriptBuilder[T],
-  target : String,
+  target : Figure,
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> Unit {
-  self.instructions.push(Animate(target, anim_scale(duration_ms, easing~)))
+  self.instructions.push(Animate(target.id, anim_scale(duration_ms, easing~)))
 }
 
 ///|

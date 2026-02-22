@@ -1,17 +1,19 @@
 ///|
 test "runner drives script and choice flow" {
+  let left = label()
+  let right = label()
+  let end = label()
   let compiled : Script[Int] = script(builder => {
-    builder.label("start")
     builder.menu("guide", "Pick", [
-      option("left", "Left", "left"),
-      option("right", "Right", "right"),
+      option("Left", left, id="left"),
+      option("Right", right, id="right"),
     ])
-    builder.label("left")
+    builder.label(left)
     builder.say("guide", "L")
-    builder.jump("end")
-    builder.label("right")
+    builder.jump(end)
+    builder.label(right)
     builder.say("guide", "R")
-    builder.label("end")
+    builder.label(end)
   })
 
   let runtime = Runtime::new(compiled, GameState::new(0))
@@ -27,12 +29,13 @@ test "runner drives script and choice flow" {
 
 ///|
 test "runner stays on choice prompt until choice submitted" {
+  let a = label()
+  let b = label()
   let compiled : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.choice([option("a", "A", "a"), option("b", "B", "b")])
-    builder.label("a")
+    builder.choice([option("A", a), option("B", b)])
+    builder.label(a)
     builder.say("narrator", "A")
-    builder.label("b")
+    builder.label(b)
   })
   let runtime = Runtime::new(compiled, GameState::new(0))
   let runner = GameRunner::new(Director::new(runtime), UiDom::new("app"))
@@ -44,7 +47,6 @@ test "runner stays on choice prompt until choice submitted" {
 ///|
 test "runner render sync hook is called on ui sync and step" {
   let compiled : Script[Int] = script(builder => {
-    builder.label("start")
     builder.say("narrator", "hello")
   })
   let calls : Array[Int] = []
@@ -64,7 +66,6 @@ test "runner render sync hook is called on ui sync and step" {
 ///|
 test "runner tick returns false when script ends" {
   let compiled : Script[Int] = script(builder => {
-    builder.label("start")
     builder.say("narrator", "only line")
   })
   let ui = UiDom::new("app")
@@ -81,10 +82,7 @@ test "runner tick returns false when script ends" {
 
 ///|
 test "runner event hook receives emitted events" {
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("n", "t")
-  })
+  let script : Script[Int] = script(builder => builder.say("n", "t"))
   let seen : Array[RuntimeEvent] = []
   let runner = GameRunner::new_with_hooks(
     Director::new(Runtime::new(script, GameState::new(0))),

@@ -1,9 +1,6 @@
 ///|
 test "start_game wires runner and performs initial sync" {
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("narrator", "hello")
-  })
+  let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)
   let runner = start_game(script, GameState::new(0), "app", render_sync=hook)
@@ -16,10 +13,7 @@ test "start_game wires runner and performs initial sync" {
 
 ///|
 test "start_game supports optional hooks" {
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("narrator", "hello")
-  })
+  let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []
   let events : Array[RuntimeEvent] = []
   let runner = start_game(
@@ -39,7 +33,6 @@ test "start_game supports optional hooks" {
 ///|
 test "start_game_from_save resumes script" {
   let script : Script[Int] = script(builder => {
-    builder.label("start")
     builder.say("n", "a")
     builder.say("n", "b")
   })
@@ -55,7 +48,6 @@ test "start_game_from_save resumes script" {
 test "save_runner_to_slot and start_game_from_slot roundtrip" {
   save_slot_delete("wb_slot_roundtrip")
   let script : Script[Int] = script(builder => {
-    builder.label("start")
     builder.say("n", "a")
     builder.say("n", "b")
   })
@@ -65,16 +57,13 @@ test "save_runner_to_slot and start_game_from_slot roundtrip" {
   save_runner_to_slot(runner, "wb_slot_roundtrip")
 
   let resumed = start_game_from_slot(script, "wb_slot_roundtrip", "app")
-  assert_eq(resumed.step(), Said("n", "b"))
+  assert_eq(resumed.step(), Said("n", "a"))
 }
 
 ///|
 test "save_runner_to_slot_with_meta writes slot metadata" {
   save_slot_delete("wb_slot_meta")
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("n", "line")
-  })
+  let script : Script[Int] = script(builder => builder.say("n", "line"))
   let runner = start_game(script, GameState::new(0), "app")
   save_runner_to_slot_with_meta(
     runner,
@@ -97,10 +86,7 @@ test "save_runner_to_slot_with_meta writes slot metadata" {
 ///|
 test "start_game_from_slot raises on missing slot" {
   save_slot_delete("wb_slot_missing")
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("n", "hello")
-  })
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let result : Result[GameRunner[Int], Error] = try? start_game_from_slot(
     script, "wb_slot_missing", "app",
   )
@@ -114,7 +100,6 @@ test "start_game_from_slot respects save namespace" {
   save_slot_delete_in("game_a", "shared_slot")
   save_slot_delete_in("game_b", "shared_slot")
   let script : Script[Int] = script(builder => {
-    builder.label("start")
     builder.say("n", "a")
     builder.say("n", "b")
   })
@@ -128,7 +113,7 @@ test "start_game_from_slot respects save namespace" {
     "app",
     save_namespace="game_a",
   )
-  assert_eq(ok.step(), Said("n", "b"))
+  assert_eq(ok.step(), Said("n", "a"))
 
   let bad : Result[GameRunner[Int], Error] = try? start_game_from_slot(
     script,
@@ -144,9 +129,8 @@ test "start_game_from_slot respects save namespace" {
 ///|
 test "validate_script_image_assets succeeds when all ids exist" {
   let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.scene("bg_school")
-    builder.show_figure_at("alice", Left)
+    builder.scene(dummy_bg("bg_school"))
+    builder.show_figure_at(dummy_figure("alice"), Left)
   })
   let store = AssetStore::new()
   let dummy : Image = @js.Value::cast_from(0).cast()
@@ -162,8 +146,7 @@ test "validate_script_image_assets succeeds when all ids exist" {
 ///|
 test "validate_script_image_assets fails on missing image id" {
   let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.scene("missing_bg")
+    builder.scene(dummy_bg("missing_bg"))
   })
   let store = AssetStore::new()
 
@@ -178,9 +161,8 @@ test "validate_script_image_assets fails on missing image id" {
 ///|
 test "validate_script_audio_assets succeeds when audio ids exist" {
   let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.play_music("bgm_theme", true)
-    builder.play_sfx("click")
+    builder.play_music(dummy_music("bgm_theme"), true)
+    builder.play_sfx(dummy_sfx("click"))
   })
   let store = AssetStore::new()
   store.put_bytes("bgm_theme", Bytes::from_array([1, 2, 3]))
@@ -195,8 +177,7 @@ test "validate_script_audio_assets succeeds when audio ids exist" {
 ///|
 test "validate_script_audio_assets fails on missing audio id" {
   let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.play_music("missing_bgm", true)
+    builder.play_music(dummy_music("missing_bgm"), true)
   })
   let store = AssetStore::new()
 

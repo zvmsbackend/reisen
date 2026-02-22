@@ -1,14 +1,15 @@
 ///|
 test "ui view model reflects dialog and choices from director" {
+  let a = label()
+  let b = label()
   let compiled : Script[Int] = script(builder => {
-    builder.label("start")
     builder.menu("guide", "Pick one", [
-      option("a", "Route A", "a"),
-      option("b", "Route B", "b"),
+      option("Route A", a),
+      option("Route B", b),
     ])
-    builder.label("a")
+    builder.label(a)
     builder.say("guide", "A")
-    builder.label("b")
+    builder.label(b)
   })
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
   let ui = UiDom::new("ui-root")
@@ -29,15 +30,12 @@ test "ui view model reflects dialog and choices from director" {
   assert_eq(view2.speaker, "guide")
   assert_eq(view2.text, "Pick one")
   assert_eq(view2.choices.length(), 2)
-  assert_eq(view2.choices[0], { id: "a", text: "Route A" })
+  assert_eq(view2.choices[0].text, "Route A")
 }
 
 ///|
 test "ui view model is empty before first dialog" {
-  let compiled : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.scene("bg")
-  })
+  let compiled : Script[Int] = script(builder => builder.scene(dummy_bg("bg")))
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
   let ui = UiDom::new("ui-root")
 

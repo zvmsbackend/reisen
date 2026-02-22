@@ -77,8 +77,11 @@ fn[T] reisen_text_script_to_builder(
     }
 
     match cmd {
-      "label" => if args_str != "" { builder.label(args_str) }
-      "jump" => if args_str != "" { builder.jump(args_str) }
+      "label" =>
+        if args_str != "" {
+          builder.instructions.push(Label(args_str))
+        }
+      "jump" => if args_str != "" { builder.instructions.push(Jump(args_str)) }
       "wait" => {
         // Skip wait parsing for now - would need number parsing
         let _ = args_str
@@ -97,7 +100,7 @@ fn[T] reisen_text_script_to_builder(
       }
       "scene" | "bg" | "background" =>
         if args_str != "" {
-          builder.scene(args_str)
+          builder.instructions.push(ShowBackground(args_str))
         }
       "show" | "figure" => {
         let (id, pos) = get_first_part(args_str, ",")
@@ -108,10 +111,15 @@ fn[T] reisen_text_script_to_builder(
             "right" | "r" => Right
             _ => Center
           }
-          builder.show_figure_at(id, position)
+          builder.instructions.push(
+            ShowFigure(id, { pos: position, layer: 0, opacity: 1.0 }),
+          )
         }
       }
-      "hide" => if args_str != "" { builder.hide_figure(args_str) }
+      "hide" =>
+        if args_str != "" {
+          builder.instructions.push(HideFigure(args_str))
+        }
       "music" | "bgm" =>
         if args_str.trim().to_string() == "stop" {
           builder.stop_music()
@@ -120,10 +128,13 @@ fn[T] reisen_text_script_to_builder(
           if track_id != "" {
             let should_loop = loop_str.trim().to_string() == "true" ||
               loop_str.trim().to_string() == "1"
-            builder.play_music(track_id, should_loop)
+            builder.instructions.push(PlayMusic(track_id, should_loop))
           }
         }
-      "sfx" | "sound" => if args_str != "" { builder.play_sfx(args_str) }
+      "sfx" | "sound" =>
+        if args_str != "" {
+          builder.instructions.push(PlaySfx(args_str))
+        }
       "animate" | "anim" => {
         let (target, rest) = get_first_part(args_str, ",")
         let (prop, arg_str) = get_first_part(rest, ",")
@@ -131,9 +142,30 @@ fn[T] reisen_text_script_to_builder(
           let prop_lower = prop.to_lower()
           let arg = (try? @strconv.parse_int(arg_str)).unwrap_or(500)
           match prop_lower {
-            "opacity" | "alpha" | "fade" => builder.animate_opacity(target, arg)
-            "position" | "pos" | "move" => builder.animate_position(target, arg)
-            "scale" | "size" => builder.animate_scale(target, arg)
+            "opacity" | "alpha" | "fade" =>
+              builder.instructions.push(
+                Animate(target, {
+                  prop: Opacity,
+                  duration_ms: arg,
+                  easing: Linear,
+                }),
+              )
+            "position" | "pos" | "move" =>
+              builder.instructions.push(
+                Animate(target, {
+                  prop: Position,
+                  duration_ms: arg,
+                  easing: Linear,
+                }),
+              )
+            "scale" | "size" =>
+              builder.instructions.push(
+                Animate(target, {
+                  prop: Scale,
+                  duration_ms: arg,
+                  easing: Linear,
+                }),
+              )
             _ => ()
           }
         }

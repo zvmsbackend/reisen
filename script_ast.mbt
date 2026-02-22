@@ -39,7 +39,7 @@ pub struct FigurePlacement {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub struct ChoiceOption {
+struct ChoiceOption {
   id : String
   text : String
   jump : String
@@ -62,7 +62,7 @@ pub enum Instruction[T] {
   Say(String, String)
   Choice(Array[ChoiceOption])
   InputText(String, String)
-  RunCode(String, ScriptHook[T])
+  RunCode(ScriptHook[T])
   ShowBackground(String)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)

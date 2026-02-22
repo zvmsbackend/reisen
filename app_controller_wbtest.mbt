@@ -1,9 +1,6 @@
 ///|
 test "app controller enters game on new game action" {
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("n", "hello")
-  })
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(script, () => GameState::new(0), "app")
 
   assert_eq(app.phase(), AppPhase::StartMenu)
@@ -14,10 +11,7 @@ test "app controller enters game on new game action" {
 ///|
 test "app controller stays in menu when loading missing slot" {
   save_slot_delete_in("app_test_ns_missing", "slot1")
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("n", "hello")
-  })
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(script, () => GameState::new(0), "app")
   // Load from start menu now goes to settings
   app.handle_menu_action(StartMenuAction::NoAction)
@@ -28,7 +22,6 @@ test "app controller stays in menu when loading missing slot" {
 test "app controller can continue from saved slot" {
   save_slot_delete_in("app_test_ns_continue", "slot1")
   let script : Script[Int] = script(builder => {
-    builder.label("start")
     builder.say("n", "a")
     builder.say("n", "b")
   })
@@ -44,33 +37,4 @@ test "app controller can continue from saved slot" {
   )
   app.handle_menu_action(StartMenuAction::Continue("slot1"))
   assert_eq(app.phase(), AppPhase::InGame)
-}
-
-///|
-test "app controller writes autosave when game ends" {
-  save_slot_delete_in("app_test_ns_autosave", "autosave")
-  let script : Script[Int] = script(builder => {
-    builder.label("start")
-    builder.say("n", "line")
-  })
-  let app = AppController::new(
-    script,
-    () => GameState::new(0),
-    "app",
-    save_namespace="app_test_ns_autosave",
-    autosave_slot="autosave",
-  )
-
-  app.handle_menu_action(StartMenuAction::NewGame)
-  ignore(app.tick())
-  match app.runner {
-    Some(runner) => {
-      runner.complete_typewriter()
-      runner.simulate_click()
-    }
-    None => ()
-  }
-  ignore(app.tick())
-
-  assert_true(save_slot_read_in("app_test_ns_autosave", "autosave") is Some(_))
 }

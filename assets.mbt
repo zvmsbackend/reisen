@@ -127,3 +127,55 @@ pub fn AssetStore::put_bytes(
 pub fn AssetStore::get_bytes(self : AssetStore, id : String) -> Bytes? {
   self.bytes.get(id)
 }
+
+///|
+pub async fn AssetStore::create_figure(
+  self : AssetStore,
+  url : String,
+  id? : String = gensym(prefix="figure"),
+) -> Figure {
+  if self.images.get(id) is None {
+    let img = load_image(url)
+    self.put_image(id, img)
+  }
+  { id, }
+}
+
+///|
+pub async fn AssetStore::create_background(
+  self : AssetStore,
+  url : String,
+  id? : String = gensym(prefix="background"),
+) -> Background {
+  if self.images.get(id) is None {
+    let img = load_image(url)
+    self.put_image(id, img)
+  }
+  { id, }
+}
+
+///|
+pub async fn AssetStore::create_music(
+  self : AssetStore,
+  url : String,
+  id? : String = gensym(prefix="music"),
+) -> Music {
+  if self.bytes.get(id) is None {
+    let data = load_bytes(url)
+    self.put_bytes(id, data)
+  }
+  { id, }
+}
+
+///|
+pub async fn AssetStore::create_sfx(
+  self : AssetStore,
+  url : String,
+  id? : String = gensym(prefix="sfx"),
+) -> Sfx {
+  if self.bytes.get(id) is None {
+    let data = load_bytes(url)
+    self.put_bytes(id, data)
+  }
+  { id, }
+}
