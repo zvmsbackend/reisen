@@ -223,7 +223,9 @@ extern "js" fn settings_action_slot(root_id : String) -> @js.Nullable[String] =
   #| }
 
 ///|
-extern "js" fn settings_action_slot_type(root_id : String) -> @js.Nullable[String] =
+extern "js" fn settings_action_slot_type(
+  root_id : String,
+) -> @js.Nullable[String] =
   #| (root_id) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return null;
@@ -326,7 +328,6 @@ extern "js" fn settings_dom_render_slots(
   #|   grid.style.width = 'min(90vw, 800px)';
   #|   grid.style.boxSizing = 'border-box';
   #|   grid.style.gridTemplateRows = 'repeat(3, min(120px, 20vh))';
-
   #|
   #|   const mkSlotButton = (slot, title_, preview) => {
   #|     const btn = doc.createElement('button');
@@ -345,12 +346,10 @@ extern "js" fn settings_dom_render_slots(
   #|     btn.style.height = '100%';
   #|     btn.style.boxSizing = 'border-box';
   #|     btn.style.position = 'relative';
-
   #|     const titleSpan = doc.createElement('span');
   #|     titleSpan.textContent = title_;
   #|     titleSpan.style.fontWeight = 'bold';
   #|     btn.appendChild(titleSpan);
-
   #|     if (preview) {
   #|       const previewSpan = doc.createElement('span');
   #|       previewSpan.textContent = preview.substring(0, 50) + (preview.length > 50 ? '...' : '');
@@ -358,7 +357,6 @@ extern "js" fn settings_dom_render_slots(
   #|       previewSpan.style.color = 'var(--text-secondary, rgba(255,255,255,0.7))';
   #|       btn.appendChild(previewSpan);
   #|     }
-
   #|     const deleteBtn = doc.createElement('button');
   #|     deleteBtn.type = 'button';
   #|     deleteBtn.textContent = '×';
@@ -381,7 +379,6 @@ extern "js" fn settings_dom_render_slots(
   #|       }
   #|     });
   #|     btn.appendChild(deleteBtn);
-
   #|     btn.addEventListener('click', () => {
   #|       if (mode === 'save' && title_ !== 'Empty') {
   #|         if (!confirm('Overwrite this save slot?')) return;
@@ -418,12 +415,10 @@ extern "js" fn settings_dom_render_slots(
   #|     prevBtn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = 'prev_page';
   #|     });
-
   #|     const pageInfo = doc.createElement('span');
   #|     pageInfo.textContent = `Page ${current_page + 1}`;
   #|     pageInfo.style.color = 'var(--text-primary, #fff)';
   #|     pageInfo.style.alignSelf = 'center';
-
   #|     const nextBtn = doc.createElement('button');
   #|     nextBtn.type = 'button';
   #|     nextBtn.textContent = 'Next';
@@ -662,14 +657,13 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
     Some("prev_page") => {
       settings_action_clear(self.root_id)
       match self.view_mode {
-        SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
+        SettingsViewMode::SaveList | SettingsViewMode::LoadList =>
           if self.page > 0 {
             self.page -= 1
             SettingsAction::ViewChanged
           } else {
             SettingsAction::NoAction
           }
-        }
         _ => SettingsAction::NoAction
       }
     }

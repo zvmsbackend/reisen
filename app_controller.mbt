@@ -292,9 +292,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
               self.runner = Some(runner)
               self.phase = AppPhase::InGame
             }
-            Err(_) => {
-              self.settings_menu.render()
-            }
+            Err(_) => self.settings_menu.render()
           }
         }
         SettingsAction::ViewChanged => self.settings_menu.render()

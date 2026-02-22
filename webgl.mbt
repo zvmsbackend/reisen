@@ -53,7 +53,10 @@ pub fn get_canvas_by_id(id : String) -> Canvas? {
 }
 
 ///|
-extern "js" fn Canvas::get_context_ffi(self : Canvas, context_id : String) -> @js.Optional[WebGL] =
+extern "js" fn Canvas::get_context_ffi(
+  self : Canvas,
+  context_id : String,
+) -> @js.Optional[WebGL] =
   #| (canvas, context_id) => canvas.getContext(context_id)
 
 ///|
@@ -115,7 +118,9 @@ pub extern "js" fn WebGL::get_shader_info_log(
   #| (gl, shader) => gl.getShaderInfoLog(shader)
 
 ///|
-extern "js" fn WebGL::create_program_ffi(self : WebGL) -> @js.Nullable[WebGLProgram] =
+extern "js" fn WebGL::create_program_ffi(
+  self : WebGL,
+) -> @js.Nullable[WebGLProgram] =
   #| (gl) => gl.createProgram()
 
 ///|
@@ -162,7 +167,9 @@ pub extern "js" fn WebGL::use_program(
 
 ///|
 /// Buffers and attributes.
-extern "js" fn WebGL::create_buffer_ffi(self : WebGL) -> @js.Nullable[WebGLBuffer] =
+extern "js" fn WebGL::create_buffer_ffi(
+  self : WebGL,
+) -> @js.Nullable[WebGLBuffer] =
   #| (gl) => gl.createBuffer()
 
 ///|
@@ -292,7 +299,9 @@ pub extern "js" fn WebGL::uniform_matrix4(
 
 ///|
 /// Textures.
-extern "js" fn WebGL::create_texture_ffi(self : WebGL) -> @js.Nullable[WebGLTexture] =
+extern "js" fn WebGL::create_texture_ffi(
+  self : WebGL,
+) -> @js.Nullable[WebGLTexture] =
   #| (gl) => gl.createTexture()
 
 ///|
@@ -301,10 +310,7 @@ pub fn WebGL::create_texture(self : WebGL) -> WebGLTexture? {
 }
 
 ///|
-pub extern "js" fn WebGL::active_texture(
-  self : WebGL,
-  unit : Int,
-) -> Unit =
+pub extern "js" fn WebGL::active_texture(self : WebGL, unit : Int) -> Unit =
   #| (gl, unit) => gl.activeTexture(unit)
 
 ///|
@@ -355,10 +361,7 @@ pub extern "js" fn WebGL::tex_image_2d_source(
   #|   gl.texImage2D(target, level, internal_format, format, kind, source)
 
 ///|
-pub extern "js" fn WebGL::generate_mipmap(
-  self : WebGL,
-  target : Int,
-) -> Unit =
+pub extern "js" fn WebGL::generate_mipmap(self : WebGL, target : Int) -> Unit =
   #| (gl, target) => gl.generateMipmap(target)
 
 ///|
@@ -383,10 +386,7 @@ pub extern "js" fn WebGL::clear_color(
   #| (gl, r, g, b, a) => gl.clearColor(r, g, b, a)
 
 ///|
-pub extern "js" fn WebGL::enable(
-  self : WebGL,
-  cap : Int,
-) -> Unit =
+pub extern "js" fn WebGL::enable(self : WebGL, cap : Int) -> Unit =
   #| (gl, cap) => gl.enable(cap)
 
 ///|
@@ -398,10 +398,7 @@ pub extern "js" fn WebGL::blend_func(
   #| (gl, sfactor, dfactor) => gl.blendFunc(sfactor, dfactor)
 
 ///|
-pub extern "js" fn WebGL::clear(
-  self : WebGL,
-  mask : Int,
-) -> Unit =
+pub extern "js" fn WebGL::clear(self : WebGL, mask : Int) -> Unit =
   #| (gl, mask) => gl.clear(mask)
 
 ///|
