@@ -22,7 +22,16 @@ test "runtime step and choose" {
   assert_true(e1 is ChoicePrompt(_))
 
   let e2 = runtime.choose("right")
-  assert_eq(e2, Said("narrator", "right", true, false, None))
+  assert_eq(
+    e2,
+    Said(
+      speaker="narrator",
+      text="right",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
 }
 
 ///|
@@ -31,7 +40,16 @@ test "script helper builds runnable script" {
     builder.say("narrator", "hello")
   })
   let runtime = Runtime::new(compiled, GameState::new(0))
-  assert_eq(runtime.step(), Said("narrator", "hello", true, false, None))
+  assert_eq(
+    runtime.step(),
+    Said(
+      speaker="narrator",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
 }
 
 ///|
@@ -52,7 +70,16 @@ test "branch helper routes to then label when predicate is true" {
   let state = GameState::new(0)
   state.set_flag("go_then", true)
   let runtime = Runtime::new(compiled, state)
-  assert_eq(runtime.step(), Said("narrator", "then", true, false, None))
+  assert_eq(
+    runtime.step(),
+    Said(
+      speaker="narrator",
+      text="then",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
 }
 
 ///|
@@ -72,7 +99,16 @@ test "branch helper routes to else label when predicate is false" {
 
   let state = GameState::new(0)
   let runtime = Runtime::new(compiled, state)
-  assert_eq(runtime.step(), Said("narrator", "else", true, false, None))
+  assert_eq(
+    runtime.step(),
+    Said(
+      speaker="narrator",
+      text="else",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
 }
 
 ///|
@@ -94,9 +130,21 @@ test "menu helper yields prompt then choice" {
   })
 
   let runtime = Runtime::new(compiled, GameState::new(0))
-  assert_eq(runtime.step(), Said("guide", "Which path?", true, false, None))
+  assert_eq(
+    runtime.step(),
+    Said(
+      speaker="guide",
+      text="Which path?",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
   assert_true(runtime.step() is ChoicePrompt(_))
-  assert_eq(runtime.choose("b"), Said("guide", "B", true, false, None))
+  assert_eq(
+    runtime.choose("b"),
+    Said(speaker="guide", text="B", typewriter=true, append=false, voice=None),
+  )
 }
 
 ///|
@@ -105,7 +153,13 @@ test "runtime save and restore json" {
     Label("start"),
     Wait(100),
     RunCode(gs => gs.set_int_var("count", gs.int_var("count") + 1)),
-    Say("narrator", "done", true, false, None),
+    Say(
+      speaker="narrator",
+      text="done",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   ])
   let state = GameState::new(0)
   let runtime = Runtime::new(script, state)
@@ -120,7 +174,13 @@ test "runtime save and restore json" {
 
   assert_eq(
     restored.step(elapsed_ms=100),
-    Said("narrator", "done", true, false, None),
+    Said(
+      speaker="narrator",
+      text="done",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -130,7 +190,16 @@ test "runtime say supports disabling typewriter" {
     builder.say("n", "instant", typewriter=false)
   })
   let runtime = Runtime::new(script, GameState::new(0))
-  assert_eq(runtime.step(), Said("n", "instant", false, false, None))
+  assert_eq(
+    runtime.step(),
+    Said(
+      speaker="n",
+      text="instant",
+      typewriter=false,
+      append=false,
+      voice=None,
+    ),
+  )
 }
 
 ///|
@@ -168,5 +237,14 @@ test "runtime say emits voice id" {
     builder.say("n", "hello", voice="voice_1")
   })
   let runtime = Runtime::new(script, GameState::new(0))
-  assert_eq(runtime.step(), Said("n", "hello", true, false, Some("voice_1")))
+  assert_eq(
+    runtime.step(),
+    Said(
+      speaker="n",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=Some("voice_1"),
+    ),
+  )
 }

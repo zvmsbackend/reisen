@@ -62,7 +62,13 @@ pub enum Instruction[T] {
   Jump(String)
   JumpIf(String, ScriptPredicate[T])
   Wait(Int)
-  Say(String, String, Bool, Bool, String?)
+  Say(
+    speaker~ : String,
+    text~ : String,
+    typewriter~ : Bool,
+    append~ : Bool,
+    voice~ : String?
+  )
   Intro(String)
   ShowTextBox
   HideTextBox

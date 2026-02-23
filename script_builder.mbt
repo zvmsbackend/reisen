@@ -227,7 +227,9 @@ pub fn[T] ScriptBuilder::narrate(
   voice? : String = "",
 ) -> Unit {
   let voice_id = if voice == "" { None } else { Some(voice) }
-  self.instructions.push(Say("", text, typewriter, append, voice_id))
+  self.instructions.push(
+    Say(speaker="", text~, typewriter~, append~, voice=voice_id),
+  )
 }
 
 ///|
@@ -240,7 +242,9 @@ pub fn[T] ScriptBuilder::say(
   voice? : String = "",
 ) -> Unit {
   let voice_id = if voice == "" { None } else { Some(voice) }
-  self.instructions.push(Say(speaker, text, typewriter, append, voice_id))
+  self.instructions.push(
+    Say(speaker~, text~, typewriter~, append~, voice=voice_id),
+  )
 }
 
 ///|
@@ -254,7 +258,9 @@ pub fn[T] ScriptBuilder::say_many(
 ) -> Unit {
   let voice_id = if voice == "" { None } else { Some(voice) }
   for text in texts {
-    self.instructions.push(Say(speaker, text, typewriter, append, voice_id))
+    self.instructions.push(
+      Say(speaker~, text~, typewriter~, append~, voice=voice_id),
+    )
   }
 }
 
@@ -273,7 +279,9 @@ pub fn[T] ScriptBuilder::menu(
   prompt : String,
   options : Array[ChoiceOption],
 ) -> Unit {
-  self.instructions.push(Say(speaker, prompt, true, false, None))
+  self.instructions.push(
+    Say(speaker~, text=prompt, typewriter=true, append=false, voice=None),
+  )
   self.instructions.push(Choice(options))
 }
 

@@ -33,7 +33,14 @@ test "parse say without typewriter" {
   )
   assert_eq(script.instructions.length(), 1)
   assert_true(
-    script.instructions[0] is Say("Speaker", "Hello world", false, false, None),
+    script.instructions[0]
+    is Say(
+      speaker="Speaker",
+      text="Hello world",
+      typewriter=false,
+      append=false,
+      voice=None
+    ),
   )
 }
 
@@ -44,7 +51,14 @@ test "parse say append" {
   )
   assert_eq(script.instructions.length(), 1)
   assert_true(
-    script.instructions[0] is Say("Speaker", "continues", true, true, None),
+    script.instructions[0]
+    is Say(
+      speaker="Speaker",
+      text="continues",
+      typewriter=true,
+      append=true,
+      voice=None
+    ),
   )
 }
 
@@ -56,7 +70,13 @@ test "parse say with voice" {
   assert_eq(script.instructions.length(), 1)
   assert_true(
     script.instructions[0]
-    is Say("Speaker", "Hello", true, false, Some("voice_line_1")),
+    is Say(
+      speaker="Speaker",
+      text="Hello",
+      typewriter=true,
+      append=false,
+      voice=Some("voice_line_1")
+    ),
   )
 }
 
@@ -68,7 +88,13 @@ test "parse multiline say" {
   assert_eq(script.instructions.length(), 1)
   assert_true(
     script.instructions[0]
-    is Say("Speaker", "Line one\nLine two\nLine three", true, false, None),
+    is Say(
+      speaker="Speaker",
+      text="Line one\nLine two\nLine three",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 

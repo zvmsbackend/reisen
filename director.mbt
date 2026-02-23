@@ -72,14 +72,14 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
 
 ///|
 fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
-  if event is Said(_, _, _, _, _) {
+  if event is Said(_) {
     self.last_event_said = true
   } else if !(event is Noop) {
     self.last_event_said = false
   }
   match event {
     Noop => ()
-    Said(speaker, text, typewriter, append, _) => {
+    Said(speaker~, text~, typewriter~, append~, ..) => {
       let (resolved_speaker, resolved_text) = match self.ui.dialog {
         Some(prev) if append => (prev.speaker, prev.text + text)
         _ => (speaker, text)

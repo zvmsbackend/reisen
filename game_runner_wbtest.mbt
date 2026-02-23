@@ -34,13 +34,22 @@ test "runner drives script and choice flow" {
   let ui = UiDom::new("app")
   let runner = GameRunner::new(Director::new(runtime), ui)
 
-  assert_eq(runner.step(), Said("guide", "Pick", true, false, None))
+  assert_eq(
+    runner.step(),
+    Said(
+      speaker="guide",
+      text="Pick",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
   ui.complete_typewriter()
   ui.simulate_click()
   assert_true(runner.step() is ChoicePrompt(_))
   assert_eq(
     runner.submit_choice("right"),
-    Said("guide", "R", true, false, None),
+    Said(speaker="guide", text="R", typewriter=true, append=false, voice=None),
   )
 }
 
@@ -96,7 +105,16 @@ test "runner render sync hook is called on ui sync and step" {
 
   runner.sync_ui()
   assert_eq(calls.length(), 1)
-  assert_eq(runner.step(), Said("narrator", "hello", true, false, None))
+  assert_eq(
+    runner.step(),
+    Said(
+      speaker="narrator",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
   assert_eq(calls.length(), 1)
 }
 
@@ -127,9 +145,15 @@ test "runner event hook receives emitted events" {
     _ => (),
     event => seen.push(event),
   )
-  assert_eq(runner.step(), Said("n", "t", true, false, None))
+  assert_eq(
+    runner.step(),
+    Said(speaker="n", text="t", typewriter=true, append=false, voice=None),
+  )
   assert_eq(seen.length(), 1)
-  assert_eq(seen[0], Said("n", "t", true, false, None))
+  assert_eq(
+    seen[0],
+    Said(speaker="n", text="t", typewriter=true, append=false, voice=None),
+  )
 }
 
 ///|
@@ -146,7 +170,10 @@ test "runner click skips wait" {
 
   assert_true(runner.step() is WaitStarted(200))
   ui.simulate_click()
-  assert_true(runner.step() is Said("n", "done", true, false, None))
+  assert_true(
+    runner.step()
+    is Said(speaker="n", text="done", typewriter=true, append=false, voice=None),
+  )
 }
 
 ///|
@@ -162,11 +189,27 @@ test "wait advances with elapsed even when dialog remains" {
     ui,
   )
 
-  assert_true(runner.step() is Said("n", "first", true, false, None))
+  assert_true(
+    runner.step()
+    is Said(
+      speaker="n",
+      text="first",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
   ui.simulate_click()
   assert_true(runner.step() is WaitStarted(100))
   assert_true(
-    runner.step(elapsed_ms=120) is Said("n", "after", true, false, None),
+    runner.step(elapsed_ms=120)
+    is Said(
+      speaker="n",
+      text="after",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 
@@ -183,12 +226,28 @@ test "skip mode ignores waits" {
     ui,
   )
 
-  assert_true(runner.step() is Said("n", "first", true, false, None))
+  assert_true(
+    runner.step()
+    is Said(
+      speaker="n",
+      text="first",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
   ui.simulate_click()
   assert_true(runner.step() is WaitStarted(200))
   ui.set_skip_mode(true)
   assert_true(
-    runner.step(elapsed_ms=0) is Said("n", "after", true, false, None),
+    runner.step(elapsed_ms=0)
+    is Said(
+      speaker="n",
+      text="after",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 
@@ -209,7 +268,14 @@ test "intro advances when display completes" {
   assert_true(runner.step(elapsed_ms=0) is IntroShown("Prelude"))
   ui.simulate_intro_done()
   assert_true(
-    runner.step(elapsed_ms=0) is Said("n", "after", true, false, None),
+    runner.step(elapsed_ms=0)
+    is Said(
+      speaker="n",
+      text="after",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 

@@ -382,7 +382,7 @@ pub enum Instruction[T] {
   Jump(String)
   JumpIf(String, (GameState[T]) -> Bool)
   Wait(Int)
-  Say(String, String, Bool, Bool, String?)
+  Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
   Intro(String)
   ShowTextBox
   HideTextBox
@@ -446,7 +446,7 @@ pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise Scri
 
 pub enum RuntimeEvent {
   Noop
-  Said(String, String, Bool, Bool, String?)
+  Said(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
   IntroShown(String)
   TextBoxShown
   TextBoxHidden
