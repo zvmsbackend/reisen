@@ -58,14 +58,14 @@ fn parse_typewriter_flag(raw : String) -> Bool? {
 ///|
 fn[T] flush_pending_dialog(
   builder : ScriptBuilder[T],
-  pending : Ref[(Bool, String, String, Bool)?],
+  pending : Ref[(Bool, String, String, Bool, Bool)?],
 ) -> Unit {
   match pending.val {
-    Some((is_intro, speaker, text, typewriter)) =>
+    Some((is_intro, speaker, text, typewriter, append)) =>
       if is_intro {
         builder.intro(text)
       } else {
-        builder.say(speaker, text, typewriter~)
+        builder.say(speaker, text, typewriter~, append~)
       }
     None => ()
   }
@@ -87,7 +87,7 @@ fn[T] reisen_text_script_to_builder(
   let mut choice_prompt = ""
   let mut in_choice = false
   let mut last_speaker = None
-  let pending_dialog : Ref[(Bool, String, String, Bool)?] = Ref::new(None)
+  let pending_dialog : Ref[(Bool, String, String, Bool, Bool)?] = Ref::new(None)
 
   for raw in lines {
     let trimmed = raw.trim().to_string()
@@ -96,13 +96,13 @@ fn[T] reisen_text_script_to_builder(
     }
     if trimmed.has_prefix("|") {
       match pending_dialog.val {
-        Some((is_intro, speaker, text, typewriter)) => {
+        Some((is_intro, speaker, text, typewriter, append)) => {
           let mut extra = (try! trimmed[1:]).to_string()
           if extra.has_prefix(" ") {
             extra = (try! extra[1:]).to_string()
           }
           pending_dialog.val = Some(
-            (is_intro, speaker, text + "\n" + extra, typewriter),
+            (is_intro, speaker, text + "\n" + extra, typewriter, append),
           )
         }
         None => ()
@@ -162,12 +162,12 @@ fn[T] reisen_text_script_to_builder(
               (join_parts(parts, 0, parts.length() - 1), flag)
             _ => (join_parts(parts, 0, parts.length()), true)
           }
-          pending_dialog.val = Some((false, "", text, typewriter))
+          pending_dialog.val = Some((false, "", text, typewriter, false))
         }
       }
       "intro" =>
         if args_str != "" {
-          pending_dialog.val = Some((true, "", args_str, false))
+          pending_dialog.val = Some((true, "", args_str, false, false))
         }
       "say" => {
         let parts : Array[String] = []
@@ -176,20 +176,35 @@ fn[T] reisen_text_script_to_builder(
         }
         if parts.length() >= 2 {
           let speaker = parts[0]
-          let maybe_flag = parse_typewriter_flag(parts[parts.length() - 1])
-          let (text, typewriter) = match maybe_flag {
-            Some(flag) if parts.length() > 2 =>
-              (join_parts(parts, 1, parts.length() - 1), flag)
-            _ => (join_parts(parts, 1, parts.length()), true)
+          let mut typewriter = true
+          let mut append = false
+          let mut end_idx = parts.length() - 1
+          while end_idx >= 1 {
+            let flag = parts[end_idx].trim().to_string().to_lower()
+            match parse_typewriter_flag(flag) {
+              Some(value) => {
+                typewriter = value
+                end_idx = end_idx - 1
+                continue
+              }
+              None => ()
+            }
+            if flag is ("append" | "concat" | "continue" | "+") {
+              append = true
+              end_idx = end_idx - 1
+              continue
+            }
+            break
           }
+          let text = join_parts(parts, 1, end_idx + 1)
           match (speaker, last_speaker) {
             ("", Some(s)) =>
-              pending_dialog.val = Some((false, s, text, typewriter))
+              pending_dialog.val = Some((false, s, text, typewriter, append))
             ("", None) =>
-              pending_dialog.val = Some((false, "", text, typewriter))
+              pending_dialog.val = Some((false, "", text, typewriter, append))
             (s, _) => {
               last_speaker = Some(s)
-              pending_dialog.val = Some((false, s, text, typewriter))
+              pending_dialog.val = Some((false, s, text, typewriter, append))
             }
           }
         }

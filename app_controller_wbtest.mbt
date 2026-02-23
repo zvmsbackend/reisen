@@ -26,7 +26,7 @@ test "app controller can continue from saved slot" {
     builder.say("n", "b")
   })
   let runner = start_game(script, GameState::new(0), "app")
-  assert_eq(runner.step(), Said("n", "a", true))
+  assert_eq(runner.step(), Said("n", "a", true, false))
   save_runner_to_slot(runner, "slot1", save_namespace="app_test_ns_continue")
 
   let app = AppController::new(

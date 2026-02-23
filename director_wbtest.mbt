@@ -38,10 +38,15 @@ test "director maps runtime events into ui and render state" {
   assert_true(director.step() is Animated("alice", _))
   assert_eq(director.animations().length(), 1)
 
-  assert_eq(director.step(), Said("alice", "Where to?", true))
+  assert_eq(director.step(), Said("alice", "Where to?", true, false))
   assert_eq(
     director.dialog(),
-    Some({ speaker: "alice", text: "Where to?", typewriter: true }),
+    Some({
+      speaker: "alice",
+      text: "Where to?",
+      typewriter: true,
+      append: false,
+    }),
   )
 
   assert_true(director.step() is ChoicePrompt(_))
@@ -50,7 +55,7 @@ test "director maps runtime events into ui and render state" {
   assert_eq(director.choose("a"), SfxPlayed("confirm"))
   assert_eq(director.last_sfx(), Some("confirm"))
 
-  assert_eq(director.step(), Said("alice", "A", true))
+  assert_eq(director.step(), Said("alice", "A", true, false))
 }
 
 ///|
@@ -74,10 +79,10 @@ test "director branch false path through choose" {
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
   ignore(director.step())
   ignore(director.step())
-  assert_eq(director.choose("right"), Said("guide", "R", true))
+  assert_eq(director.choose("right"), Said("guide", "R", true, false))
   assert_eq(
     director.dialog(),
-    Some({ speaker: "guide", text: "R", typewriter: true }),
+    Some({ speaker: "guide", text: "R", typewriter: true, append: false }),
   )
 }
 
@@ -89,9 +94,24 @@ test "director save json resumes runtime position" {
   })
 
   let director = Director::new(Runtime::new(script, GameState::new(0)))
-  assert_eq(director.step(), Said("n", "a", true))
+  assert_eq(director.step(), Said("n", "a", true, false))
   let saved = director.save_json()
 
   let restored : Director[Int] = director_from_save_json(script, saved)
-  assert_eq(restored.step(), Said("n", "b", true))
+  assert_eq(restored.step(), Said("n", "b", true, false))
+}
+
+///|
+test "director appends dialog text" {
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "Hello")
+    builder.say("n", " world", append=true)
+  })
+  let director = Director::new(Runtime::new(script, GameState::new(0)))
+  assert_eq(director.step(), Said("n", "Hello", true, false))
+  assert_eq(director.step(), Said("n", " world", true, true))
+  assert_eq(
+    director.dialog(),
+    Some({ speaker: "n", text: "Hello world", typewriter: true, append: true }),
+  )
 }

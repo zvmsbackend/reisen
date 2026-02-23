@@ -7,6 +7,7 @@ struct DialogLine {
   speaker : String
   text : String
   typewriter : Bool
+  append : Bool
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -60,15 +61,24 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
 
 ///|
 fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
-  if event is Said(_, _, _) {
+  if event is Said(_, _, _, _) {
     self.last_event_said = true
   } else if !(event is Noop) {
     self.last_event_said = false
   }
   match event {
     Noop => ()
-    Said(speaker, text, typewriter) => {
-      self.ui.dialog = Some({ speaker, text, typewriter })
+    Said(speaker, text, typewriter, append) => {
+      let (resolved_speaker, resolved_text) = match self.ui.dialog {
+        Some(prev) if append => (prev.speaker, prev.text + text)
+        _ => (speaker, text)
+      }
+      self.ui.dialog = Some({
+        speaker: resolved_speaker,
+        text: resolved_text,
+        typewriter,
+        append,
+      })
       self.ui.intro_text = None
       self.ui.choices = []
       self.ui.text_input = None

@@ -346,7 +346,7 @@ pub enum Instruction[T] {
   Jump(String)
   JumpIf(String, (GameState[T]) -> Bool)
   Wait(Int)
-  Say(String, String, Bool)
+  Say(String, String, Bool, Bool)
   Intro(String)
   Choice(Array[ChoiceOption])
   InputText(String, String)
@@ -406,7 +406,7 @@ pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise Scri
 
 pub enum RuntimeEvent {
   Noop
-  Said(String, String, Bool)
+  Said(String, String, Bool, Bool)
   IntroShown(String)
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
@@ -476,13 +476,13 @@ pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
 pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
-pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool) -> Unit
+pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
 pub fn[T] ScriptBuilder::play_music(Self[T], Music, Bool) -> Unit
 pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx) -> Unit
 pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
-pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool) -> Unit
-pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool) -> Unit
+pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool) -> Unit
+pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool) -> Unit
 pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit

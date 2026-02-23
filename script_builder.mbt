@@ -200,8 +200,9 @@ pub fn[T] ScriptBuilder::narrate(
   self : ScriptBuilder[T],
   text : String,
   typewriter? : Bool = true,
+  append? : Bool = false,
 ) -> Unit {
-  self.instructions.push(Say("", text, typewriter))
+  self.instructions.push(Say("", text, typewriter, append))
 }
 
 ///|
@@ -210,8 +211,9 @@ pub fn[T] ScriptBuilder::say(
   speaker : String,
   text : String,
   typewriter? : Bool = true,
+  append? : Bool = false,
 ) -> Unit {
-  self.instructions.push(Say(speaker, text, typewriter))
+  self.instructions.push(Say(speaker, text, typewriter, append))
 }
 
 ///|
@@ -220,9 +222,10 @@ pub fn[T] ScriptBuilder::say_many(
   speaker : String,
   texts : Array[String],
   typewriter? : Bool = true,
+  append? : Bool = false,
 ) -> Unit {
   for text in texts {
-    self.instructions.push(Say(speaker, text, typewriter))
+    self.instructions.push(Say(speaker, text, typewriter, append))
   }
 }
 
@@ -241,7 +244,7 @@ pub fn[T] ScriptBuilder::menu(
   prompt : String,
   options : Array[ChoiceOption],
 ) -> Unit {
-  self.instructions.push(Say(speaker, prompt, true))
+  self.instructions.push(Say(speaker, prompt, true, false))
   self.instructions.push(Choice(options))
 }
 

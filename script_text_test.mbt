@@ -32,7 +32,18 @@ test "parse say without typewriter" {
     "say: Speaker, Hello world, false",
   )
   assert_eq(script.instructions.length(), 1)
-  assert_true(script.instructions[0] is Say("Speaker", "Hello world", false))
+  assert_true(
+    script.instructions[0] is Say("Speaker", "Hello world", false, false),
+  )
+}
+
+///|
+test "parse say append" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "say: Speaker, continues, append",
+  )
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is Say("Speaker", "continues", true, true))
 }
 
 ///|
@@ -43,7 +54,7 @@ test "parse multiline say" {
   assert_eq(script.instructions.length(), 1)
   assert_true(
     script.instructions[0]
-    is Say("Speaker", "Line one\nLine two\nLine three", true),
+    is Say("Speaker", "Line one\nLine two\nLine three", true, false),
   )
 }
 

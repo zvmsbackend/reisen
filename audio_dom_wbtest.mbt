@@ -6,7 +6,7 @@ test "audio command mapping from runtime event" {
   )
   assert_eq(audio_command_from_event(MusicStopped), StopMusic)
   assert_eq(audio_command_from_event(SfxPlayed("click")), PlaySfx("click"))
-  assert_eq(audio_command_from_event(Said("n", "t", true)), Noop)
+  assert_eq(audio_command_from_event(Said("n", "t", true, false)), Noop)
 }
 
 ///|

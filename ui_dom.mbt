@@ -20,6 +20,7 @@ struct UiViewModel {
   text : String
   typewriter : Bool
   intro_text : String?
+  append : Bool
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
   auto_mode : Bool
@@ -617,6 +618,10 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     Some(line) => line.typewriter
     None => true
   }
+  let append = match director.dialog() {
+    Some(line) => line.append
+    None => false
+  }
   let intro_text = director.intro_text()
   let choices = director
     .choices()
@@ -630,6 +635,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     text,
     typewriter,
     intro_text,
+    append,
     choices,
     text_input,
     auto_mode: ui.auto_mode,
@@ -647,7 +653,16 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     dom_clear_intro(self.root_id)
   }
   if view.text != self.typewriter_text && view.text != "" {
-    if view.typewriter {
+    if view.append &&
+      view.typewriter &&
+      view.text.has_prefix(self.typewriter_text) {
+      let prev_len = self.typewriter_text.length()
+      self.typewriter_text = view.text
+      if self.typewriter_visible < prev_len {
+        self.typewriter_visible = prev_len
+      }
+      self.typewriter_last_update_ms = 0
+    } else if view.typewriter {
       self.start_typewriter(view.text)
     } else {
       self.typewriter_text = view.text
