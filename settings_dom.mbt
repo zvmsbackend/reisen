@@ -186,6 +186,16 @@ extern "js" fn settings_dom_render(
   #|     btn.type = 'button';
   #|     btn.textContent = text;
   #|     btn.addEventListener('click', () => {
+  #|       if (kind === 'defaults') {
+  #|         const textSpeed = menu.querySelector('[data-reisen-setting="text_speed"]');
+  #|         const bgmVolume = menu.querySelector('[data-reisen-setting="bgm_volume"]');
+  #|         const sfxVolume = menu.querySelector('[data-reisen-setting="sfx_volume"]');
+  #|         if (textSpeed) textSpeed.value = 50;
+  #|         if (bgmVolume) bgmVolume.value = 70;
+  #|         if (sfxVolume) sfxVolume.value = 80;
+  #|         root.dataset.reisenSettingsAction = 'defaults';
+  #|         return;
+  #|       }
   #|       if (kind === 'start_menu' && context === 'midgame') {
   #|         if (!confirm('Return to the start menu? Unsaved progress will be lost.')) return;
   #|       }
@@ -202,6 +212,7 @@ extern "js" fn settings_dom_render(
   #|     actions.appendChild(mkButton('New Game', 'new_game'));
   #|     actions.appendChild(mkButton('Load', 'load'));
   #|   }
+  #|   actions.appendChild(mkButton('Defaults', 'defaults'));
   #|   actions.appendChild(mkButton('Back', 'back'));
   #|   menu.appendChild(actions);
   #| }
@@ -735,6 +746,11 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
       }
     }
     Some("settings_changed") => {
+      settings_action_clear(self.root_id)
+      self.persist_settings()
+      SettingsAction::NoAction
+    }
+    Some("defaults") => {
       settings_action_clear(self.root_id)
       self.persist_settings()
       SettingsAction::NoAction
