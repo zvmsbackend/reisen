@@ -6,6 +6,7 @@
 pub enum RuntimeEvent {
   Noop
   Said(String, String, Bool)
+  IntroShown(String)
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -155,6 +156,11 @@ fn[T] Runtime::run_inst(
       let interpolated = self.state.interpolate(text)
       let name_interpolated = self.state.interpolate(name)
       Said(name_interpolated, interpolated, typewriter)
+    }
+    Intro(text) => {
+      self.ip = self.ip + 1
+      let interpolated = self.state.interpolate(text)
+      IntroShown(interpolated)
     }
     Choice(options) => {
       self.ip = self.ip + 1

@@ -249,6 +249,7 @@ pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::from_save(Script[T], DirectorSave[T]) -> Self[T] raise ScriptRuntimeError
+pub fn[T] Director::intro_text(Self[T]) -> String?
 pub fn[T] Director::is_waiting(Self[T]) -> Bool
 pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
@@ -263,6 +264,7 @@ pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
   dialog : DialogLine?
+  intro_text : String?
 }
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
@@ -345,6 +347,7 @@ pub enum Instruction[T] {
   JumpIf(String, (GameState[T]) -> Bool)
   Wait(Int)
   Say(String, String, Bool)
+  Intro(String)
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode((GameState[T]) -> Unit)
@@ -404,6 +407,7 @@ pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise Scri
 pub enum RuntimeEvent {
   Noop
   Said(String, String, Bool)
+  IntroShown(String)
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -466,6 +470,7 @@ pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
+pub fn[T] ScriptBuilder::intro(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump(Self[T], Label) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
@@ -517,6 +522,7 @@ pub fn UiDom::set_text_speed(Self, Int) -> Unit
 pub fn UiDom::should_auto_advance(Self) -> Bool
 pub fn UiDom::should_skip_advance(Self) -> Bool
 pub fn UiDom::simulate_click(Self) -> Unit
+pub fn UiDom::simulate_intro_done(Self) -> Unit
 pub fn UiDom::start_typewriter(Self, String) -> Unit
 pub fn UiDom::text_speed_ms_per_char(Self) -> Int
 pub fn UiDom::toggle_auto_mode(Self) -> Unit

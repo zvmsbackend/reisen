@@ -129,3 +129,10 @@ test "runtime say supports disabling typewriter" {
   let runtime = Runtime::new(script, GameState::new(0))
   assert_eq(runtime.step(), Said("n", "instant", false))
 }
+
+///|
+test "runtime intro yields intro event" {
+  let script : Script[Int] = script(builder => builder.intro("Prelude"))
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), IntroShown("Prelude"))
+}

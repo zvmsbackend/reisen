@@ -186,6 +186,25 @@ test "skip mode ignores waits" {
 }
 
 ///|
+test "intro advances when display completes" {
+  let script : Script[Int] = script(builder => {
+    builder.intro("Prelude")
+    builder.say("n", "after")
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+  )
+
+  assert_true(runner.step() is IntroShown("Prelude"))
+  ui.simulate_click()
+  assert_true(runner.step(elapsed_ms=0) is IntroShown("Prelude"))
+  ui.simulate_intro_done()
+  assert_true(runner.step(elapsed_ms=0) is Said("n", "after", true))
+}
+
+///|
 test "runner keeps rendering during animations" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)

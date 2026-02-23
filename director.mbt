@@ -14,6 +14,7 @@ priv struct UiState {
   mut dialog : DialogLine?
   mut choices : Array[ChoiceOption]
   mut text_input : (String, String)?
+  mut intro_text : String?
 }
 
 ///|
@@ -30,6 +31,7 @@ pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
   dialog : DialogLine?
+  intro_text : String?
 } derive(ToJson, FromJson)
 
 ///|
@@ -44,7 +46,7 @@ struct Director[T] {
 pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
   {
     runtime,
-    ui: { dialog: None, choices: [], text_input: None },
+    ui: { dialog: None, choices: [], text_input: None, intro_text: None },
     render: {
       background: None,
       figures: {},
@@ -67,16 +69,25 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     Noop => ()
     Said(speaker, text, typewriter) => {
       self.ui.dialog = Some({ speaker, text, typewriter })
+      self.ui.intro_text = None
       self.ui.choices = []
       self.ui.text_input = None
     }
     ChoicePrompt(options) => {
+      self.ui.intro_text = None
       self.ui.choices = options
       self.ui.text_input = None
     }
     TextInputPrompt(var_name, prompt) => {
+      self.ui.intro_text = None
       self.ui.text_input = Some((var_name, prompt))
       self.ui.choices = []
+    }
+    IntroShown(text) => {
+      self.ui.intro_text = Some(text)
+      self.ui.dialog = None
+      self.ui.choices = []
+      self.ui.text_input = None
     }
     BackgroundShown(id) => self.render.background = Some(id)
     FigureShown(id, placement) => self.render.figures.set(id, placement)
@@ -114,6 +125,11 @@ pub fn[T] Director::choose(
 ///|
 pub fn[T] Director::dialog(self : Director[T]) -> DialogLine? {
   self.ui.dialog
+}
+
+///|
+pub fn[T] Director::intro_text(self : Director[T]) -> String? {
+  self.ui.intro_text
 }
 
 ///|
@@ -195,6 +211,7 @@ pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
       animations: self.render.animations,
     },
     dialog: self.ui.dialog,
+    intro_text: self.ui.intro_text,
   }
   save.to_json().stringify()
 }
@@ -207,7 +224,12 @@ pub fn[T] Director::from_save(
   let runtime = Runtime::from_save(script, save.runtime)
   {
     runtime,
-    ui: { dialog: save.dialog, choices: [], text_input: None },
+    ui: {
+      dialog: save.dialog,
+      choices: [],
+      text_input: None,
+      intro_text: save.intro_text,
+    },
     render: save.render,
     last_event_said: true,
   }

@@ -48,6 +48,15 @@ test "parse multiline say" {
 }
 
 ///|
+test "parse intro multiline" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "intro: Welcome\n| to the void",
+  )
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is Intro("Welcome\nto the void"))
+}
+
+///|
 test "parse narrate" {
   let script : Script[Unit] = reisen_parse_text_script(
     "narrate: This is narration",

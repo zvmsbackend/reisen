@@ -63,6 +63,7 @@ pub enum Instruction[T] {
   JumpIf(String, ScriptPredicate[T])
   Wait(Int)
   Say(String, String, Bool)
+  Intro(String)
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode(ScriptHook[T])

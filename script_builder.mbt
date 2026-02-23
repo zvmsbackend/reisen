@@ -191,6 +191,11 @@ pub fn[T] ScriptBuilder::wait(self : ScriptBuilder[T], ms : Int) -> Unit {
 }
 
 ///|
+pub fn[T] ScriptBuilder::intro(self : ScriptBuilder[T], text : String) -> Unit {
+  self.instructions.push(Intro(text))
+}
+
+///|
 pub fn[T] ScriptBuilder::narrate(
   self : ScriptBuilder[T],
   text : String,

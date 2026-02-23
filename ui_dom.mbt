@@ -19,6 +19,7 @@ struct UiViewModel {
   speaker : String
   text : String
   typewriter : Bool
+  intro_text : String?
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
   auto_mode : Bool
@@ -39,6 +40,7 @@ struct UiDom {
   skip_mode_delay_ms : Int
   mut skip_mode_last_advance_ms : Int
   mut simulated_click : Bool
+  mut simulated_intro_done : Bool
   mut dirty_speaker : Bool
   mut dirty_text : Bool
   mut dirty_choices : Bool
@@ -61,6 +63,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     skip_mode_delay_ms: 50,
     skip_mode_last_advance_ms: 0,
     simulated_click: false,
+    simulated_intro_done: false,
     dirty_speaker: true,
     dirty_text: true,
     dirty_choices: true,
@@ -241,6 +244,131 @@ extern "js" fn dom_render_speaker_text(
   #|   }
   #|   dialog.style.whiteSpace = 'pre-wrap';
   #|   dialog.textContent = text;
+  #| }
+
+///|
+extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
+  #| (root_id, text) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   root.dataset.reisenIntroDone = '';
+  #|   let intro = root.querySelector('[data-reisen="intro"]');
+  #|   if (!intro) {
+  #|     intro = doc.createElement('div');
+  #|     intro.setAttribute('data-reisen', 'intro');
+  #|     root.appendChild(intro);
+  #|   }
+  #|   intro.style.position = 'absolute';
+  #|   intro.style.inset = '0';
+  #|   intro.style.alignItems = 'flex-start';
+  #|   intro.style.justifyContent = 'flex-start';
+  #|   intro.style.textAlign = 'left';
+  #|   intro.style.padding = '24px';
+  #|   intro.style.background = 'black';
+  #|   intro.style.color = 'white';
+  #|   intro.style.fontFamily = "'Cormorant Garamond', 'Times New Roman', serif";
+  #|   intro.style.fontSize = '32px';
+  #|   intro.style.lineHeight = '1.4';
+  #|   intro.style.whiteSpace = 'pre-wrap';
+  #|   intro.textContent = '';
+  #|   const lines = text.split('\n');
+  #|   if (lines.length === 0) {
+  #|     root.dataset.reisenIntroDone = '1';
+  #|   }
+  #|   lines.forEach((line, idx) => {
+  #|     const row = doc.createElement('div');
+  #|     row.style.opacity = '0';
+  #|     row.style.transition = 'opacity 400ms ease';
+  #|     row.style.marginBottom = '12px';
+  #|     row.textContent = line;
+  #|     row.dataset.reisenIntroLine = String(idx);
+  #|     row.dataset.reisenIntroVisible = '0';
+  #|     intro.appendChild(row);
+  #|     const delay = idx * 2000;
+  #|     setTimeout(() => {
+  #|       row.style.opacity = '1';
+  #|       row.dataset.reisenIntroVisible = '1';
+  #|     }, delay);
+  #|   });
+  #|   setTimeout(() => root.dataset.reisenIntroDone = '1', lines.length * 2000);
+  #|   const hide = (sel) => {
+  #|     const el = root.querySelector(sel);
+  #|     if (el) el.style.display = 'none';
+  #|   };
+  #|   hide('[data-reisen="speaker"]');
+  #|   hide('[data-reisen="dialog"]');
+  #|   hide('[data-reisen="choices"]');
+  #|   hide('[data-reisen="text-input"]');
+  #|   const container = root.parentElement || doc;
+  #|   const canvases = container.querySelectorAll('canvas');
+  #|   canvases.forEach(c => { c.style.display = 'none'; });
+  #| }
+
+///|
+extern "js" fn dom_clear_intro(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   root.dataset.reisenIntroDone = '';
+  #|   const intro = root.querySelector('[data-reisen="intro"]');
+  #|   if (intro) intro.remove();
+  #|   const show = (sel) => {
+  #|     const el = root.querySelector(sel);
+  #|     if (el) el.style.display = '';
+  #|   };
+  #|   show('[data-reisen="speaker"]');
+  #|   show('[data-reisen="dialog"]');
+  #|   show('[data-reisen="text-input"]');
+  #|   const container = root.parentElement || doc;
+  #|   const canvases = container.querySelectorAll('canvas');
+  #|   canvases.forEach(c => { c.style.display = ''; });
+  #| }
+
+///|
+extern "js" fn dom_take_intro_done(root_id : String) -> Bool =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return false;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return false;
+  #|   if (root.dataset.reisenIntroDone === '1') {
+  #|     root.dataset.reisenIntroDone = '';
+  #|     return true;
+  #|   }
+  #|   return false;
+  #| }
+
+///|
+extern "js" fn dom_reveal_intro_line(root_id : String) -> Bool =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return false;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return false;
+  #|   const intro = root.querySelector('[data-reisen="intro"]');
+  #|   if (!intro) return false;
+  #|   const next = intro.querySelector('[data-reisen-intro-line][data-reisen-intro-visible="0"]');
+  #|   if (!next) {
+  #|     root.dataset.reisenIntroDone = '1';
+  #|     return true;
+  #|   }
+  #|   next.style.opacity = '1';
+  #|   next.dataset.reisenIntroVisible = '1';
+  #|   return false;
+  #| }
+
+///|
+extern "js" fn dom_mark_intro_done(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   root.dataset.reisenIntroDone = '1';
   #| }
 
 ///|
@@ -485,6 +613,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     Some(line) => line.typewriter
     None => true
   }
+  let intro_text = director.intro_text()
   let choices = director
     .choices()
     .map(opt => UiChoiceView::{ id: opt.id, text: opt.text })
@@ -496,6 +625,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     speaker,
     text,
     typewriter,
+    intro_text,
     choices,
     text_input,
     auto_mode: ui.auto_mode,
@@ -505,6 +635,13 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
 
 ///|
 fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
+  if view.intro_text is Some(text) {
+    dom_render_intro(self.root_id, text)
+    dom_setup_typewriter_click(self.root_id)
+    return
+  } else {
+    dom_clear_intro(self.root_id)
+  }
   if view.text != self.typewriter_text && view.text != "" {
     if view.typewriter {
       self.start_typewriter(view.text)
@@ -586,6 +723,26 @@ fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
     return true
   }
   dom_take_typewriter_click(self.root_id)
+}
+
+///|
+fn UiDom::check_intro_done(self : UiDom) -> Bool {
+  if self.simulated_intro_done {
+    self.simulated_intro_done = false
+    return true
+  }
+  dom_take_intro_done(self.root_id)
+}
+
+///|
+fn UiDom::reveal_intro_line(self : UiDom) -> Bool {
+  dom_reveal_intro_line(self.root_id)
+}
+
+///|
+pub fn UiDom::simulate_intro_done(self : UiDom) -> Unit {
+  self.simulated_intro_done = true
+  dom_mark_intro_done(self.root_id)
 }
 
 ///|

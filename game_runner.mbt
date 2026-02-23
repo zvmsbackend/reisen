@@ -170,6 +170,10 @@ pub fn[T] GameRunner::step(
         self.ui_dirty = true
         self.ui.mark_dirty_text_input()
       }
+      IntroShown(_) => {
+        self.ui_dirty = true
+        self.ui.mark_all_dirty()
+      }
       ScriptEnded => {
         self.ui_dirty = true
         self.ui.mark_all_dirty()
@@ -233,6 +237,56 @@ pub fn[T] GameRunner::step(
       }
     }
   }
+  match self.director.intro_text() {
+    Some(text) => {
+      let mut intro_done = self.ui.check_intro_done()
+      if self.ui.check_typewriter_click() && !intro_done {
+        intro_done = self.ui.reveal_intro_line() || intro_done
+      }
+      if intro_done {
+        self.director.ui.intro_text = None
+        let event = self.director.step(elapsed_ms=0)
+        (self.event_hook)(event)
+        match event {
+          Said(_, _, _) => {
+            self.ui_dirty = true
+            self.ui.mark_dirty_text()
+          }
+          ChoicePrompt(_) => {
+            self.ui_dirty = true
+            self.ui.mark_dirty_choices()
+          }
+          TextInputPrompt(_, _) => {
+            self.ui_dirty = true
+            self.ui.mark_dirty_text_input()
+          }
+          IntroShown(_) => {
+            self.ui_dirty = true
+            self.ui.mark_all_dirty()
+          }
+          ScriptEnded => {
+            self.ui_dirty = true
+            self.ui.mark_all_dirty()
+          }
+          BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
+            self.ui_dirty = true
+            self.render_sync_dirty = true
+          }
+          Animated(_, spec) => {
+            self.ui_dirty = true
+            self.render_sync_dirty = true
+            self.bump_animation_timer(spec.duration_ms)
+          }
+          _ => ()
+        }
+        self.maybe_render_ui()
+        return event
+      }
+      self.maybe_render_ui()
+      return IntroShown(text)
+    }
+    None => ()
+  }
   if self.director.dialog() is None {
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)
@@ -248,6 +302,10 @@ pub fn[T] GameRunner::step(
       TextInputPrompt(_, _) => {
         self.ui_dirty = true
         self.ui.mark_dirty_text_input()
+      }
+      IntroShown(_) => {
+        self.ui_dirty = true
+        self.ui.mark_all_dirty()
       }
       ScriptEnded => {
         self.ui_dirty = true
@@ -306,6 +364,7 @@ pub fn[T] GameRunner::step(
         Said(_, _, _) => self.ui.mark_dirty_text()
         ChoicePrompt(_) => self.ui.mark_dirty_choices()
         TextInputPrompt(_, _) => self.ui.mark_dirty_text_input()
+        IntroShown(_) => self.ui.mark_all_dirty()
         ScriptEnded => self.ui.mark_all_dirty()
         BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
           self.ui_dirty = true
@@ -343,6 +402,10 @@ pub fn[T] GameRunner::step(
       TextInputPrompt(_, _) => {
         self.ui_dirty = true
         self.ui.mark_dirty_text_input()
+      }
+      IntroShown(_) => {
+        self.ui_dirty = true
+        self.ui.mark_all_dirty()
       }
       ScriptEnded => {
         self.ui_dirty = true
