@@ -16,6 +16,9 @@ struct AppController[T] {
   save_ns : String
   autosave_slot : String
   autosave_title : String
+  menu_music_id : String?
+  menu_music_loop : Bool
+  mut menu_music_playing : Bool
   menu : StartMenu
   settings_menu : SettingsMenu
   mut phase : AppPhase
@@ -35,6 +38,8 @@ pub fn[T] AppController::new(
   autosave_title? : String = "",
   menu_background? : String = "",
   settings_background? : String = "",
+  menu_music? : Music,
+  menu_music_loop? : Bool = true,
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
 ) -> AppController[T] {
@@ -45,6 +50,9 @@ pub fn[T] AppController::new(
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
+    menu_music_id: menu_music.map(music => music.id),
+    menu_music_loop,
+    menu_music_playing: false,
     menu: StartMenu::new(
       ui_root_id,
       save_namespace~,
@@ -62,7 +70,34 @@ pub fn[T] AppController::new(
     saved_director_json: None,
   }
   app.menu.render()
+  app.start_menu_music_start()
   app
+}
+
+///|
+fn[T] AppController::start_menu_music_start(self : AppController[T]) -> Unit {
+  if self.menu_music_id is None || self.menu_music_playing {
+    return
+  }
+  guard self.menu_music_id is Some(menu_music_id) && !self.menu_music_playing else { return }
+  (self.event_hook)(MusicPlayed(menu_music_id, self.menu_music_loop))
+  self.menu_music_playing = true
+}
+
+///|
+fn[T] AppController::start_menu_music_stop(self : AppController[T]) -> Unit {
+  if !self.menu_music_playing {
+    return
+  }
+  (self.event_hook)(MusicStopped)
+  self.menu_music_playing = false
+}
+
+///|
+fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
+  self.menu.render()
+  self.phase = AppPhase::StartMenu
+  self.start_menu_music_start()
 }
 
 ///|
@@ -79,6 +114,7 @@ fn[T : FromJson] AppController::handle_menu_action(
   match action {
     NoAction => ()
     NewGame => {
+      self.start_menu_music_stop()
       self.runner = Some(
         start_game(
           self.script,
@@ -103,13 +139,14 @@ fn[T : FromJson] AppController::handle_menu_action(
       )
       match restored {
         Ok(runner) => {
+          self.start_menu_music_stop()
           self.runner = Some(runner)
           self.menu.clear()
           self.phase = AppPhase::InGame
         }
         Err(_) => {
           self.runner = None
-          self.menu.render()
+          self.enter_start_menu()
         }
       }
     }
@@ -222,13 +259,11 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             (self.event_hook)(MusicStopped)
             runner.clear_ui()
             self.runner = None
-            self.menu.render()
-            self.phase = AppPhase::StartMenu
+            self.enter_start_menu()
             true
           }
         None => {
-          self.menu.render()
-          self.phase = AppPhase::StartMenu
+          self.enter_start_menu()
           true
         }
       }
@@ -256,22 +291,17 @@ pub fn[T : FromJson + ToJson] AppController::tick(
                 self.runner = Some(runner)
                 self.phase = AppPhase::InGame
               } catch {
-                _ => {
-                  self.menu.render()
-                  self.phase = AppPhase::StartMenu
-                }
+                _ => self.enter_start_menu()
               }
             }
-            None => {
-              self.menu.render()
-              self.phase = AppPhase::StartMenu
-            }
+            None => self.enter_start_menu()
           }
         }
         SettingsAction::NewGame => {
           self.settings_menu.clear()
           self.saved_director_json = None
           let settings = settings_read_in(self.save_ns)
+          self.start_menu_music_stop()
           self.runner = Some(
             start_game(
               self.script,
@@ -290,8 +320,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           self.settings_menu.clear()
           self.saved_director_json = None
           self.runner = None
-          self.menu.render()
-          self.phase = AppPhase::StartMenu
+          self.enter_start_menu()
         }
         SettingsAction::SaveSlot(slot) => {
           match self.runner {
@@ -318,6 +347,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           )
           match restored {
             Ok(runner) => {
+              self.start_menu_music_stop()
               self.runner = Some(runner)
               self.phase = AppPhase::InGame
             }
@@ -330,6 +360,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
       true
     }
     AppPhase::StartMenu => {
+      self.start_menu_music_start()
       self.handle_menu_action(self.menu.take_action())
       true
     }
