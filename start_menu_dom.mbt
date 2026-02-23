@@ -136,13 +136,16 @@ extern "js" fn start_gate_dom_render(root_id : String) -> Unit =
   #|     root.appendChild(gate);
   #|   }
   #|   gate.innerHTML = '';
-  #|   const btn = doc.createElement('button');
-  #|   btn.type = 'button';
-  #|   btn.textContent = 'Click to Start';
-  #|   btn.addEventListener('click', () => {
-  #|     root.dataset.reisenGateActionKind = 'start';
-  #|   });
-  #|   gate.appendChild(btn);
+  #|   const text = doc.createElement('div');
+  #|   text.setAttribute('data-reisen', 'start-gate-text');
+  #|   text.textContent = 'Click to Start';
+  #|   gate.appendChild(text);
+  #|   if (!gate.__reisenGateBound) {
+  #|     gate.__reisenGateBound = true;
+  #|     gate.addEventListener('click', () => {
+  #|       root.dataset.reisenGateActionKind = 'start';
+  #|     });
+  #|   }
   #| }
 
 ///|
