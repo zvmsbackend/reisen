@@ -396,6 +396,7 @@ extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
   #|   root.dataset.reisenIntroDone = '';
+  #|   root.dataset.reisenIntroLastPage = '1';
   #|   let intro = root.querySelector('[data-reisen="intro"]');
   #|   if (!intro) {
   #|     intro = doc.createElement('div');
@@ -416,29 +417,40 @@ extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
   #|   intro.style.whiteSpace = 'pre-wrap';
   #|   intro.textContent = '';
   #|   const lines = text.split('\n');
+  #|   const style = getComputedStyle(root);
+  #|   const maxLinesRaw = parseInt(style.getPropertyValue('--reisen-intro-max-lines'), 10);
+  #|   const intervalRaw = parseInt(style.getPropertyValue('--reisen-intro-line-interval-ms'), 10);
+  #|   const maxLines = Number.isFinite(maxLinesRaw) && maxLinesRaw > 0 ? maxLinesRaw : 6;
+  #|   const lineIntervalMs = Number.isFinite(intervalRaw) && intervalRaw > 0 ? intervalRaw : 2000;
   #|   if (lines.length === 0) {
   #|     root.dataset.reisenIntroDone = '1';
   #|   }
-  #|   lines.forEach((line, idx) => {
-  #|     const row = doc.createElement('div');
-  #|     row.style.opacity = '0';
-  #|     row.style.transition = 'opacity 400ms ease';
-  #|     row.style.marginBottom = '12px';
-  #|     row.textContent = line;
-  #|     row.dataset.reisenIntroLine = String(idx);
-  #|     row.dataset.reisenIntroVisible = '0';
-  #|     intro.appendChild(row);
-  #|     const br = doc.createElement('br');
-  #|     br.style.opacity = '0';
-  #|     intro.appendChild(br);
-  #|     const delay = idx * 2000;
-  #|     setTimeout(() => {
-  #|       row.style.opacity = '1';
-  #|       br.style.opacity = '1';
-  #|       row.dataset.reisenIntroVisible = '1';
-  #|     }, delay);
-  #|   });
-  #|   setTimeout(() => root.dataset.reisenIntroDone = '1', lines.length * 2000);
+  #|   const totalPages = Math.ceil(lines.length / maxLines);
+  #|   const renderPage = (page) => {
+  #|     intro.innerHTML = '';
+  #|     const start = page * maxLines;
+  #|     const end = Math.min(lines.length, start + maxLines);
+  #|     root.dataset.reisenIntroLastPage = page === totalPages - 1 ? '1' : '0';
+  #|     for (let i = start; i < end; i++) {
+  #|       const row = doc.createElement('div');
+  #|       row.style.opacity = '0';
+  #|       row.style.transition = 'opacity 400ms ease';
+  #|       row.style.marginBottom = '12px';
+  #|       row.textContent = lines[i];
+  #|       row.dataset.reisenIntroLine = String(i);
+  #|       row.dataset.reisenIntroVisible = '0';
+  #|       intro.appendChild(row);
+  #|       const localIndex = i - start;
+  #|       setTimeout(() => {
+  #|         row.style.opacity = '1';
+  #|         row.dataset.reisenIntroVisible = '1';
+  #|       }, localIndex * lineIntervalMs);
+  #|     }
+  #|   };
+  #|   for (let page = 0; page < totalPages; page++) {
+  #|     setTimeout(() => renderPage(page), page * maxLines * lineIntervalMs);
+  #|   }
+  #|   setTimeout(() => root.dataset.reisenIntroDone = '1', lines.length * lineIntervalMs);
   #|   const hide = (sel) => {
   #|     const el = root.querySelector(sel);
   #|     if (el) el.style.display = 'none';
@@ -501,11 +513,19 @@ extern "js" fn dom_reveal_intro_line(root_id : String) -> Bool =
   #|   if (!intro) return false;
   #|   const next = intro.querySelector('[data-reisen-intro-line][data-reisen-intro-visible="0"]');
   #|   if (!next) {
-  #|     root.dataset.reisenIntroDone = '1';
-  #|     return true;
+  #|     if (root.dataset.reisenIntroLastPage === '1') {
+  #|       root.dataset.reisenIntroDone = '1';
+  #|       return true;
+  #|     }
+  #|     return false;
   #|   }
   #|   next.style.opacity = '1';
   #|   next.dataset.reisenIntroVisible = '1';
+  #|   const remaining = intro.querySelector('[data-reisen-intro-line][data-reisen-intro-visible="0"]');
+  #|   if (!remaining && root.dataset.reisenIntroLastPage === '1') {
+  #|     root.dataset.reisenIntroDone = '1';
+  #|     return true;
+  #|   }
   #|   return false;
   #| }
 
