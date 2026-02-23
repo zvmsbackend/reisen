@@ -17,6 +17,7 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
     SfxPlayed(id) => AudioCommand::PlaySfx(id)
     Said(_, _, _, _) => AudioCommand::Noop
     IntroShown(_) => AudioCommand::Noop
+    TextBoxShown | TextBoxHidden => AudioCommand::Noop
     _ => AudioCommand::Noop
   }
 }

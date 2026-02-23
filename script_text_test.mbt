@@ -68,6 +68,18 @@ test "parse intro multiline" {
 }
 
 ///|
+test "parse textbox show hide" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "show_textbox\nhide_textbox\ntextbox: show\ntextbox: hide",
+  )
+  assert_eq(script.instructions.length(), 4)
+  assert_true(script.instructions[0] is ShowTextBox)
+  assert_true(script.instructions[1] is HideTextBox)
+  assert_true(script.instructions[2] is ShowTextBox)
+  assert_true(script.instructions[3] is HideTextBox)
+}
+
+///|
 test "parse narrate" {
   let script : Script[Unit] = reisen_parse_text_script(
     "narrate: This is narration",

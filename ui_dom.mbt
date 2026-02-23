@@ -21,6 +21,7 @@ struct UiViewModel {
   typewriter : Bool
   intro_text : String?
   append : Bool
+  text_box_visible : Bool
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
   auto_mode : Bool
@@ -307,6 +308,23 @@ extern "js" fn dom_render_speaker_text(
   #|   if (remaining > 0 && lastIndex < text.length) {
   #|     appendPlain(text.slice(lastIndex));
   #|   }
+  #| }
+
+///|
+extern "js" fn dom_set_text_box_visible(
+  root_id : String,
+  visible : Bool,
+) -> Unit =
+  #| (root_id, visible) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const display = visible ? '' : 'none';
+  #|   const speaker = root.querySelector('[data-reisen="speaker"]');
+  #|   if (speaker) speaker.style.display = display;
+  #|   const dialog = root.querySelector('[data-reisen="dialog"]');
+  #|   if (dialog) dialog.style.display = display;
   #| }
 
 ///|
@@ -691,6 +709,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     None => false
   }
   let intro_text = director.intro_text()
+  let text_box_visible = director.text_box_visible()
   let choices = director
     .choices()
     .map(opt => UiChoiceView::{ id: opt.id, text: opt.text })
@@ -704,6 +723,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     typewriter,
     intro_text,
     append,
+    text_box_visible,
     choices,
     text_input,
     auto_mode: ui.auto_mode,
@@ -758,6 +778,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     self.dirty_speaker = false
     self.dirty_text = false
   }
+  dom_set_text_box_visible(self.root_id, view.text_box_visible)
   if self.dirty_choices {
     let ids = view.choices.map(c => c.id)
     let texts = view.choices.map(c => c.text)

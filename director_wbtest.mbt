@@ -115,3 +115,17 @@ test "director appends dialog text" {
     Some({ speaker: "n", text: "Hello world", typewriter: true, append: true }),
   )
 }
+
+///|
+test "director toggles text box visibility" {
+  let script : Script[Int] = script(builder => {
+    builder.hide_text_box()
+    builder.show_text_box()
+  })
+  let director = Director::new(Runtime::new(script, GameState::new(0)))
+  assert_true(director.text_box_visible())
+  assert_eq(director.step(), TextBoxHidden)
+  assert_true(!director.text_box_visible())
+  assert_eq(director.step(), TextBoxShown)
+  assert_true(director.text_box_visible())
+}

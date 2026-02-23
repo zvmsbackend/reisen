@@ -196,6 +196,16 @@ pub fn[T] ScriptBuilder::intro(self : ScriptBuilder[T], text : String) -> Unit {
 }
 
 ///|
+pub fn[T] ScriptBuilder::show_text_box(self : ScriptBuilder[T]) -> Unit {
+  self.instructions.push(ShowTextBox)
+}
+
+///|
+pub fn[T] ScriptBuilder::hide_text_box(self : ScriptBuilder[T]) -> Unit {
+  self.instructions.push(HideTextBox)
+}
+
+///|
 pub fn[T] ScriptBuilder::narrate(
   self : ScriptBuilder[T],
   text : String,

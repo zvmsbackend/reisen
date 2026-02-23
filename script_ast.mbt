@@ -64,6 +64,8 @@ pub enum Instruction[T] {
   Wait(Int)
   Say(String, String, Bool, Bool)
   Intro(String)
+  ShowTextBox
+  HideTextBox
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode(ScriptHook[T])

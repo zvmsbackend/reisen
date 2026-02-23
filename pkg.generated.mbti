@@ -258,6 +258,7 @@ pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Director::text_box_visible(Self[T]) -> Bool
 pub fn[T] Director::text_input(Self[T]) -> (String, String)?
 
 pub struct DirectorSave[T] {
@@ -265,6 +266,7 @@ pub struct DirectorSave[T] {
   render : RenderState
   dialog : DialogLine?
   intro_text : String?
+  text_box_visible : Bool
 }
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
@@ -348,6 +350,8 @@ pub enum Instruction[T] {
   Wait(Int)
   Say(String, String, Bool, Bool)
   Intro(String)
+  ShowTextBox
+  HideTextBox
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode((GameState[T]) -> Unit)
@@ -408,6 +412,8 @@ pub enum RuntimeEvent {
   Noop
   Said(String, String, Bool, Bool)
   IntroShown(String)
+  TextBoxShown
+  TextBoxHidden
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -469,6 +475,7 @@ pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
+pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
 pub fn[T] ScriptBuilder::intro(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump(Self[T], Label) -> Unit
@@ -486,6 +493,7 @@ pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : 
 pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
+pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 

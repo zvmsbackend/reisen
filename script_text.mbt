@@ -169,6 +169,14 @@ fn[T] reisen_text_script_to_builder(
         if args_str != "" {
           pending_dialog.val = Some((true, "", args_str, false, false))
         }
+      "show_textbox" | "show_text_box" => builder.instructions.push(ShowTextBox)
+      "hide_textbox" | "hide_text_box" => builder.instructions.push(HideTextBox)
+      "textbox" =>
+        match args_str.trim().to_lower() {
+          "show" | "on" => builder.instructions.push(ShowTextBox)
+          "hide" | "off" => builder.instructions.push(HideTextBox)
+          _ => ()
+        }
       "say" => {
         let parts : Array[String] = []
         for part in args_str.split(",") {

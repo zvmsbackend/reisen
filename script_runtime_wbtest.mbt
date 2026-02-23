@@ -139,3 +139,14 @@ test "runtime intro yields intro event" {
   let runtime = Runtime::new(script, GameState::new(0))
   assert_eq(runtime.step(), IntroShown("Prelude"))
 }
+
+///|
+test "runtime textbox events" {
+  let script : Script[Int] = script(builder => {
+    builder.hide_text_box()
+    builder.show_text_box()
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), TextBoxHidden)
+  assert_eq(runtime.step(), TextBoxShown)
+}

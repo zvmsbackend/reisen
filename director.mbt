@@ -16,6 +16,7 @@ priv struct UiState {
   mut choices : Array[ChoiceOption]
   mut text_input : (String, String)?
   mut intro_text : String?
+  mut text_box_visible : Bool
 }
 
 ///|
@@ -33,6 +34,7 @@ pub struct DirectorSave[T] {
   render : RenderState
   dialog : DialogLine?
   intro_text : String?
+  text_box_visible : Bool
 } derive(ToJson, FromJson)
 
 ///|
@@ -47,7 +49,13 @@ struct Director[T] {
 pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
   {
     runtime,
-    ui: { dialog: None, choices: [], text_input: None, intro_text: None },
+    ui: {
+      dialog: None,
+      choices: [],
+      text_input: None,
+      intro_text: None,
+      text_box_visible: true,
+    },
     render: {
       background: None,
       figures: {},
@@ -99,6 +107,8 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
       self.ui.choices = []
       self.ui.text_input = None
     }
+    TextBoxShown => self.ui.text_box_visible = true
+    TextBoxHidden => self.ui.text_box_visible = false
     BackgroundShown(id) => self.render.background = Some(id)
     FigureShown(id, placement) => self.render.figures.set(id, placement)
     FigureHidden(id) => self.render.figures.remove(id)
@@ -140,6 +150,11 @@ pub fn[T] Director::dialog(self : Director[T]) -> DialogLine? {
 ///|
 pub fn[T] Director::intro_text(self : Director[T]) -> String? {
   self.ui.intro_text
+}
+
+///|
+pub fn[T] Director::text_box_visible(self : Director[T]) -> Bool {
+  self.ui.text_box_visible
 }
 
 ///|
@@ -222,6 +237,7 @@ pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
     },
     dialog: self.ui.dialog,
     intro_text: self.ui.intro_text,
+    text_box_visible: self.ui.text_box_visible,
   }
   save.to_json().stringify()
 }
@@ -239,6 +255,7 @@ pub fn[T] Director::from_save(
       choices: [],
       text_input: None,
       intro_text: save.intro_text,
+      text_box_visible: save.text_box_visible,
     },
     render: save.render,
     last_event_said: true,
