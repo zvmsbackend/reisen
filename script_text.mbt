@@ -177,6 +177,18 @@ fn[T] reisen_text_script_to_builder(
           "hide" | "off" => builder.instructions.push(HideTextBox)
           _ => ()
         }
+      "avatar" => {
+        let value = args_str.trim().to_string()
+        match value.to_lower() {
+          "hide" | "off" => builder.instructions.push(HideAvatar)
+          _ => if value != "" { builder.instructions.push(ShowAvatar(value)) }
+        }
+      }
+      "show_avatar" =>
+        if args_str != "" {
+          builder.instructions.push(ShowAvatar(args_str))
+        }
+      "hide_avatar" => builder.instructions.push(HideAvatar)
       "say" => {
         let parts : Array[String] = []
         for part in args_str.split(",") {

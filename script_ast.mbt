@@ -66,6 +66,8 @@ pub enum Instruction[T] {
   Intro(String)
   ShowTextBox
   HideTextBox
+  ShowAvatar(String)
+  HideAvatar
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode(ScriptHook[T])

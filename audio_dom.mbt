@@ -18,6 +18,7 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
     Said(_, _, _, _) => AudioCommand::Noop
     IntroShown(_) => AudioCommand::Noop
     TextBoxShown | TextBoxHidden => AudioCommand::Noop
+    AvatarShown(_) | AvatarHidden => AudioCommand::Noop
     _ => AudioCommand::Noop
   }
 }

@@ -206,6 +206,19 @@ pub fn[T] ScriptBuilder::hide_text_box(self : ScriptBuilder[T]) -> Unit {
 }
 
 ///|
+pub fn[T] ScriptBuilder::show_avatar(
+  self : ScriptBuilder[T],
+  figure : Figure,
+) -> Unit {
+  self.instructions.push(ShowAvatar(figure.id))
+}
+
+///|
+pub fn[T] ScriptBuilder::hide_avatar(self : ScriptBuilder[T]) -> Unit {
+  self.instructions.push(HideAvatar)
+}
+
+///|
 pub fn[T] ScriptBuilder::narrate(
   self : ScriptBuilder[T],
   text : String,

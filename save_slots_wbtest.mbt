@@ -58,6 +58,14 @@ test "save slots are isolated by namespace" {
 }
 
 ///|
+test "persistent vars list remains stable" {
+  persistent_delete_in("avatar", "hero")
+  persistent_set_text_in("avatar", "hero", "id")
+  let keys = persistent_keys_in("avatar")
+  assert_true(keys.contains("hero"))
+}
+
+///|
 test "persistent vars are stored outside save slots" {
   persistent_delete_in("lap", "count")
   persistent_delete_in("lap", "flag")

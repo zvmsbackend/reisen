@@ -129,3 +129,16 @@ test "director toggles text box visibility" {
   assert_eq(director.step(), TextBoxShown)
   assert_true(director.text_box_visible())
 }
+
+///|
+test "director tracks avatar id" {
+  let script : Script[Int] = script(builder => {
+    builder.show_avatar(Figure::{ id: "hero" })
+    builder.hide_avatar()
+  })
+  let director = Director::new(Runtime::new(script, GameState::new(0)))
+  assert_eq(director.step(), AvatarShown("hero"))
+  assert_eq(director.avatar_id(), Some("hero"))
+  assert_eq(director.step(), AvatarHidden)
+  assert_eq(director.avatar_id(), None)
+}

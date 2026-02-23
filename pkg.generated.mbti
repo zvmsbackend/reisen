@@ -273,6 +273,7 @@ pub impl @json.FromJson for DialogLine
 
 type Director[T]
 pub fn[T] Director::animations(Self[T]) -> Array[(String, AnimationSpec)]
+pub fn[T] Director::avatar_id(Self[T]) -> String?
 pub fn[T] Director::background(Self[T]) -> String?
 pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -299,6 +300,7 @@ pub struct DirectorSave[T] {
   dialog : DialogLine?
   intro_text : String?
   text_box_visible : Bool
+  avatar_id : String?
 }
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
@@ -384,6 +386,8 @@ pub enum Instruction[T] {
   Intro(String)
   ShowTextBox
   HideTextBox
+  ShowAvatar(String)
+  HideAvatar
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode((GameState[T]) -> Unit)
@@ -446,6 +450,8 @@ pub enum RuntimeEvent {
   IntroShown(String)
   TextBoxShown
   TextBoxHidden
+  AvatarShown(String)
+  AvatarHidden
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -506,6 +512,7 @@ pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
+pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
@@ -523,6 +530,7 @@ pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool) -> Unit
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool) -> Unit
 pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
+pub fn[T] ScriptBuilder::show_avatar(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit

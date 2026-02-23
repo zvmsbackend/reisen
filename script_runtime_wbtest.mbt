@@ -150,3 +150,14 @@ test "runtime textbox events" {
   assert_eq(runtime.step(), TextBoxHidden)
   assert_eq(runtime.step(), TextBoxShown)
 }
+
+///|
+test "runtime avatar events" {
+  let script : Script[Int] = script(builder => {
+    builder.show_avatar(Figure::{ id: "hero" })
+    builder.hide_avatar()
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), AvatarShown("hero"))
+  assert_eq(runtime.step(), AvatarHidden)
+}

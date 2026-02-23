@@ -9,6 +9,8 @@ pub enum RuntimeEvent {
   IntroShown(String)
   TextBoxShown
   TextBoxHidden
+  AvatarShown(String)
+  AvatarHidden
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -171,6 +173,14 @@ fn[T] Runtime::run_inst(
     HideTextBox => {
       self.ip = self.ip + 1
       TextBoxHidden
+    }
+    ShowAvatar(id) => {
+      self.ip = self.ip + 1
+      AvatarShown(id)
+    }
+    HideAvatar => {
+      self.ip = self.ip + 1
+      AvatarHidden
     }
     Choice(options) => {
       self.ip = self.ip + 1

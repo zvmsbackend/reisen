@@ -80,6 +80,18 @@ test "parse textbox show hide" {
 }
 
 ///|
+test "parse avatar show hide" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "avatar: hero\navatar: hide\nshow_avatar: ally\nhide_avatar",
+  )
+  assert_eq(script.instructions.length(), 4)
+  assert_true(script.instructions[0] is ShowAvatar("hero"))
+  assert_true(script.instructions[1] is HideAvatar)
+  assert_true(script.instructions[2] is ShowAvatar("ally"))
+  assert_true(script.instructions[3] is HideAvatar)
+}
+
+///|
 test "parse narrate" {
   let script : Script[Unit] = reisen_parse_text_script(
     "narrate: This is narration",

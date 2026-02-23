@@ -151,6 +151,12 @@ fn[T] GameRunner::apply_event_effects(
       }
       self.ui.mark_dirty_text()
     }
+    AvatarShown(_) | AvatarHidden => {
+      if mark_ui_for_text {
+        self.ui_dirty = true
+      }
+      self.ui.mark_dirty_text()
+    }
     IntroShown(_) | ScriptEnded => {
       if mark_ui_for_text {
         self.ui_dirty = true

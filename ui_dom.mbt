@@ -22,6 +22,7 @@ struct UiViewModel {
   intro_text : String?
   append : Bool
   text_box_visible : Bool
+  avatar_id : String?
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
   auto_mode : Bool
@@ -248,8 +249,14 @@ extern "js" fn dom_render_speaker_text(
   #|     dialog.setAttribute('data-reisen', 'dialog');
   #|     root.appendChild(dialog);
   #|   }
-  #|   dialog.style.whiteSpace = 'pre-wrap';
-  #|   dialog.innerHTML = '';
+  #|   let dialogText = dialog.querySelector('[data-reisen="dialog-text"]');
+  #|   if (!dialogText) {
+  #|     dialogText = doc.createElement('div');
+  #|     dialogText.setAttribute('data-reisen', 'dialog-text');
+  #|     dialog.appendChild(dialogText);
+  #|   }
+  #|   dialogText.style.whiteSpace = 'pre-wrap';
+  #|   dialogText.innerHTML = '';
   #|   if (visible_count <= 0) return;
   #|   const rubyPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
   #|   const stylePattern = /\[([^\]]+)\]\{([^}]+)\}/g;
@@ -264,7 +271,7 @@ extern "js" fn dom_render_speaker_text(
   #|     if (!chunk) return;
   #|     const visible = chunk.slice(0, remaining);
   #|     if (visible) {
-  #|       dialog.appendChild(doc.createTextNode(visible));
+  #|       dialogText.appendChild(doc.createTextNode(visible));
   #|       remaining -= visible.length;
   #|     }
   #|   };
@@ -291,12 +298,12 @@ extern "js" fn dom_render_speaker_text(
   #|         const rt = doc.createElement('rt');
   #|         rt.textContent = match[2];
   #|         ruby.appendChild(rt);
-  #|         dialog.appendChild(ruby);
+  #|         dialogText.appendChild(ruby);
   #|       } else {
   #|         const span = doc.createElement('span');
   #|         span.textContent = base;
   #|         span.setAttribute('style', match[2]);
-  #|         dialog.appendChild(span);
+  #|         dialogText.appendChild(span);
   #|       }
   #|       remaining -= base.length;
   #|     } else {
@@ -325,6 +332,40 @@ extern "js" fn dom_set_text_box_visible(
   #|   if (speaker) speaker.style.display = display;
   #|   const dialog = root.querySelector('[data-reisen="dialog"]');
   #|   if (dialog) dialog.style.display = display;
+  #| }
+
+///|
+extern "js" fn dom_set_avatar(root_id : String, avatar_id : String?) -> Unit =
+  #| (root_id, avatar_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const dialog = root.querySelector('[data-reisen="dialog"]');
+  #|   if (!dialog) return;
+  #|   let avatar = dialog.querySelector('[data-reisen="avatar"]');
+  #|   if (!avatar) {
+  #|     avatar = doc.createElement('img');
+  #|     avatar.setAttribute('data-reisen', 'avatar');
+  #|     dialog.appendChild(avatar);
+  #|   }
+  #|   if (!avatar_id) {
+  #|     avatar.style.display = 'none';
+  #|     avatar.removeAttribute('src');
+  #|     dialog.removeAttribute('data-reisen-avatar');
+  #|     return;
+  #|   }
+  #|   const map = globalThis.__reisenImageUrls;
+  #|   const url = map && map.get ? map.get(avatar_id) : (map ? map[avatar_id] : null);
+  #|   if (!url) {
+  #|     avatar.style.display = 'none';
+  #|     avatar.removeAttribute('src');
+  #|     dialog.removeAttribute('data-reisen-avatar');
+  #|     return;
+  #|   }
+  #|   avatar.style.display = '';
+  #|   avatar.src = url;
+  #|   dialog.setAttribute('data-reisen-avatar', 'on');
   #| }
 
 ///|
@@ -390,6 +431,7 @@ extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
   #|   };
   #|   hide('[data-reisen="speaker"]');
   #|   hide('[data-reisen="dialog"]');
+  #|   hide('[data-reisen="avatar"]');
   #|   hide('[data-reisen="choices"]');
   #|   hide('[data-reisen="text-input"]');
   #|   const container = root.parentElement || doc;
@@ -413,6 +455,7 @@ extern "js" fn dom_clear_intro(root_id : String) -> Unit =
   #|   };
   #|   show('[data-reisen="speaker"]');
   #|   show('[data-reisen="dialog"]');
+  #|   show('[data-reisen="avatar"]');
   #|   show('[data-reisen="text-input"]');
   #|   const container = root.parentElement || doc;
   #|   const canvases = container.querySelectorAll('canvas');
@@ -710,6 +753,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
   }
   let intro_text = director.intro_text()
   let text_box_visible = director.text_box_visible()
+  let avatar_id = director.avatar_id()
   let choices = director
     .choices()
     .map(opt => UiChoiceView::{ id: opt.id, text: opt.text })
@@ -724,6 +768,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     intro_text,
     append,
     text_box_visible,
+    avatar_id,
     choices,
     text_input,
     auto_mode: ui.auto_mode,
@@ -779,6 +824,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     self.dirty_text = false
   }
   dom_set_text_box_visible(self.root_id, view.text_box_visible)
+  dom_set_avatar(self.root_id, view.avatar_id)
   if self.dirty_choices {
     let ids = view.choices.map(c => c.id)
     let texts = view.choices.map(c => c.text)
