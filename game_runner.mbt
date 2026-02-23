@@ -121,6 +121,70 @@ fn[T] GameRunner::maybe_render_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
+fn[T] GameRunner::apply_event_effects(
+  self : GameRunner[T],
+  event : RuntimeEvent,
+  mark_ui_for_text : Bool,
+) -> Unit {
+  match event {
+    Said(_, _, _, _) => {
+      if mark_ui_for_text {
+        self.ui_dirty = true
+      }
+      self.ui.mark_dirty_text()
+    }
+    ChoicePrompt(_) => {
+      if mark_ui_for_text {
+        self.ui_dirty = true
+      }
+      self.ui.mark_dirty_choices()
+    }
+    TextInputPrompt(_, _) => {
+      if mark_ui_for_text {
+        self.ui_dirty = true
+      }
+      self.ui.mark_dirty_text_input()
+    }
+    IntroShown(_) | ScriptEnded => {
+      if mark_ui_for_text {
+        self.ui_dirty = true
+      }
+      self.ui.mark_all_dirty()
+    }
+    BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
+      self.ui_dirty = true
+      self.render_sync_dirty = true
+    }
+    Animated(_, spec) => {
+      self.ui_dirty = true
+      self.render_sync_dirty = true
+      self.bump_animation_timer(spec.duration_ms)
+    }
+    _ => ()
+  }
+}
+
+///|
+priv enum RenderMode {
+  RenderUi
+  MaybeRenderUi
+}
+
+///|
+fn[T] GameRunner::apply_event_and_render(
+  self : GameRunner[T],
+  event : RuntimeEvent,
+  mark_ui_for_text : Bool,
+  mode : RenderMode,
+) -> Unit {
+  self.apply_event_effects(event, mark_ui_for_text)
+  match mode {
+    RenderMode::RenderUi => self.render_ui()
+    RenderMode::MaybeRenderUi => self.maybe_render_ui()
+  }
+}
+
+///|
 pub fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit {
   self.ui.mark_all_dirty()
   self.render_ui()
@@ -157,39 +221,7 @@ pub fn[T] GameRunner::step(
   if self.director.is_waiting() {
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)
-    match event {
-      Said(_, _, _, _) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_text()
-      }
-      ChoicePrompt(_) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_choices()
-      }
-      TextInputPrompt(_, _) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_text_input()
-      }
-      IntroShown(_) => {
-        self.ui_dirty = true
-        self.ui.mark_all_dirty()
-      }
-      ScriptEnded => {
-        self.ui_dirty = true
-        self.ui.mark_all_dirty()
-      }
-      BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
-        self.ui_dirty = true
-        self.render_sync_dirty = true
-      }
-      Animated(_, spec) => {
-        self.ui_dirty = true
-        self.render_sync_dirty = true
-        self.bump_animation_timer(spec.duration_ms)
-      }
-      _ => ()
-    }
-    self.maybe_render_ui()
+    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
   if !self.director.choices().is_empty() {
@@ -247,39 +279,7 @@ pub fn[T] GameRunner::step(
         self.director.ui.intro_text = None
         let event = self.director.step(elapsed_ms=0)
         (self.event_hook)(event)
-        match event {
-          Said(_, _, _, _) => {
-            self.ui_dirty = true
-            self.ui.mark_dirty_text()
-          }
-          ChoicePrompt(_) => {
-            self.ui_dirty = true
-            self.ui.mark_dirty_choices()
-          }
-          TextInputPrompt(_, _) => {
-            self.ui_dirty = true
-            self.ui.mark_dirty_text_input()
-          }
-          IntroShown(_) => {
-            self.ui_dirty = true
-            self.ui.mark_all_dirty()
-          }
-          ScriptEnded => {
-            self.ui_dirty = true
-            self.ui.mark_all_dirty()
-          }
-          BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
-            self.ui_dirty = true
-            self.render_sync_dirty = true
-          }
-          Animated(_, spec) => {
-            self.ui_dirty = true
-            self.render_sync_dirty = true
-            self.bump_animation_timer(spec.duration_ms)
-          }
-          _ => ()
-        }
-        self.maybe_render_ui()
+        self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
         return event
       }
       self.maybe_render_ui()
@@ -290,39 +290,7 @@ pub fn[T] GameRunner::step(
   if self.director.dialog() is None {
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)
-    match event {
-      Said(_, _, _, _) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_text()
-      }
-      ChoicePrompt(_) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_choices()
-      }
-      TextInputPrompt(_, _) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_text_input()
-      }
-      IntroShown(_) => {
-        self.ui_dirty = true
-        self.ui.mark_all_dirty()
-      }
-      ScriptEnded => {
-        self.ui_dirty = true
-        self.ui.mark_all_dirty()
-      }
-      BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
-        self.ui_dirty = true
-        self.render_sync_dirty = true
-      }
-      Animated(_, spec) => {
-        self.ui_dirty = true
-        self.render_sync_dirty = true
-        self.bump_animation_timer(spec.duration_ms)
-      }
-      _ => ()
-    }
-    self.maybe_render_ui()
+    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
   self.ui.advance_skip_mode_timer(elapsed_ms~)
@@ -336,20 +304,8 @@ pub fn[T] GameRunner::step(
         self.ui.mark_dirty_choices()
         return event
       }
-      Said(_, _, _, _) => {
-        self.ui.mark_dirty_text()
-        self.render_ui()
-        return self.step(elapsed_ms=0)
-      }
-      Animated(_, spec) => {
-        self.ui_dirty = true
-        self.render_sync_dirty = true
-        self.bump_animation_timer(spec.duration_ms)
-        self.render_ui()
-        return self.step(elapsed_ms=0)
-      }
       _ => {
-        self.render_ui()
+        self.apply_event_and_render(event, false, RenderMode::RenderUi)
         return self.step(elapsed_ms=0)
       }
     }
@@ -360,24 +316,7 @@ pub fn[T] GameRunner::step(
       self.ui.complete_typewriter()
       let event = self.director.step(elapsed_ms=0)
       (self.event_hook)(event)
-      match event {
-        Said(_, _, _, _) => self.ui.mark_dirty_text()
-        ChoicePrompt(_) => self.ui.mark_dirty_choices()
-        TextInputPrompt(_, _) => self.ui.mark_dirty_text_input()
-        IntroShown(_) => self.ui.mark_all_dirty()
-        ScriptEnded => self.ui.mark_all_dirty()
-        BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
-          self.ui_dirty = true
-          self.render_sync_dirty = true
-        }
-        Animated(_, spec) => {
-          self.ui_dirty = true
-          self.render_sync_dirty = true
-          self.bump_animation_timer(spec.duration_ms)
-        }
-        _ => ()
-      }
-      self.render_ui()
+      self.apply_event_and_render(event, false, RenderMode::RenderUi)
       return event
     } else {
       ignore(self.ui.advance_typewriter(elapsed_ms~))
@@ -390,39 +329,7 @@ pub fn[T] GameRunner::step(
   if !self.director.last_event_said || self.ui.check_typewriter_click() {
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
-    match event {
-      Said(_, _, _, _) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_text()
-      }
-      ChoicePrompt(_) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_choices()
-      }
-      TextInputPrompt(_, _) => {
-        self.ui_dirty = true
-        self.ui.mark_dirty_text_input()
-      }
-      IntroShown(_) => {
-        self.ui_dirty = true
-        self.ui.mark_all_dirty()
-      }
-      ScriptEnded => {
-        self.ui_dirty = true
-        self.ui.mark_all_dirty()
-      }
-      BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
-        self.ui_dirty = true
-        self.render_sync_dirty = true
-      }
-      Animated(_, spec) => {
-        self.ui_dirty = true
-        self.render_sync_dirty = true
-        self.bump_animation_timer(spec.duration_ms)
-      }
-      _ => ()
-    }
-    self.maybe_render_ui()
+    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
   self.ui.advance_auto_mode_timer(elapsed_ms~)
