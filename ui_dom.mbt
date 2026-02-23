@@ -437,17 +437,28 @@ extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
-  #|   let dialog = root.querySelector('[data-reisen="dialog"]');
-  #|   if (!dialog) {
-  #|     dialog = doc.createElement('div');
-  #|     dialog.setAttribute('data-reisen', 'dialog');
-  #|     root.appendChild(dialog);
-  #|   }
-  #|   const clickHandler = (e) => {
-  #|     root.dataset.reisenTypewriterClick = '1';
+  #|   if (root.__reisenTypewriterBound) return;
+  #|   root.__reisenTypewriterBound = true;
+  #|   const shouldIgnore = (target) => {
+  #|     if (!target) return false;
+  #|     const tag = target.tagName;
+  #|     if (tag === 'INPUT' || tag === 'TEXTAREA') return true;
+  #|     if (target.isContentEditable) return true;
+  #|     if (tag === 'BUTTON') return true;
+  #|     if (target.closest?.('[data-reisen="choices"]')) return true;
+  #|     if (target.closest?.('[data-choice-id]')) return true;
+  #|     return false;
   #|   };
-  #|   dialog.removeEventListener('click', clickHandler);
-  #|   dialog.addEventListener('click', clickHandler);
+  #|   document.addEventListener('click', (e) => {
+  #|     if (shouldIgnore(e.target)) return;
+  #|     root.dataset.reisenTypewriterClick = '1';
+  #|   });
+  #|   doc.addEventListener('keydown', (e) => {
+  #|     if (shouldIgnore(e.target)) return;
+  #|     if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
+  #|       root.dataset.reisenTypewriterClick = '1';
+  #|     }
+  #|   });
   #| }
 
 ///|
