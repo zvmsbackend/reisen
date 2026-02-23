@@ -170,6 +170,25 @@ pub fn[T] ScriptBuilder::say(
 }
 
 ///|
+pub fn[T] ScriptBuilder::say_many(
+  self : ScriptBuilder[T],
+  speaker : String,
+  texts : Array[String],
+) -> Unit {
+  for text in texts {
+    self.instructions.push(Say(speaker, text))
+  }
+}
+
+///|
+pub fn[T] ScriptBuilder::apply(
+  self : ScriptBuilder[T],
+  f : (ScriptBuilder[T]) -> Unit,
+) -> Unit {
+  f(self)
+}
+
+///|
 pub fn[T] ScriptBuilder::menu(
   self : ScriptBuilder[T],
   speaker : String,

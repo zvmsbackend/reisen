@@ -19,6 +19,8 @@ pub fn game_settings_default() -> GameSettings
 
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
 
+pub fn gensym(prefix? : String) -> String
+
 pub fn get_canvas_by_id(String) -> Canvas?
 
 pub fn js_float32_array(Array[Double]) -> @js.Value
@@ -26,6 +28,8 @@ pub fn js_float32_array(Array[Double]) -> @js.Value
 pub fn js_uint16_array(Array[Int]) -> @js.Value
 
 pub fn js_uint8_array(Array[Int]) -> @js.Value
+
+pub fn label(name? : String) -> Label
 
 pub async fn load_bytes(String) -> Bytes
 
@@ -41,7 +45,7 @@ pub fn[T] make_webgl_render_sync_hook_from_canvas_with_config(String, AssetStore
 
 pub fn[T] make_webgl_render_sync_hook_with_config(WebGL, AssetStore, WebglPresenterConfig) -> ((Director[T]) -> Unit) raise
 
-pub fn option(String, String, String) -> ChoiceOption
+pub fn option(String, Label, id? : String) -> ChoiceOption
 
 pub fn place_center(layer? : Int, opacity? : Double) -> FigurePlacement
 
@@ -185,6 +189,10 @@ pub impl Eq for AppPhase
 pub impl Show for AppPhase
 
 type AssetStore
+pub async fn AssetStore::create_background(Self, String, id? : String) -> Background
+pub async fn AssetStore::create_figure(Self, String, id? : String) -> Figure
+pub async fn AssetStore::create_music(Self, String, id? : String) -> Music
+pub async fn AssetStore::create_sfx(Self, String, id? : String) -> Sfx
 pub fn AssetStore::get_bytes(Self, String) -> Bytes?
 pub fn AssetStore::get_image(Self, String) -> Image?
 pub fn AssetStore::get_text(Self, String) -> String?
@@ -207,16 +215,13 @@ pub fn AudioDom::register_many(Self, Array[(String, String)]) -> Unit
 pub fn AudioDom::set_bgm_gain(Self, Double) -> Unit
 pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
 
+type Background
+
 type Canvas
 pub fn Canvas::get_webgl2_context(Self) -> WebGL?
 pub fn Canvas::get_webgl_context(Self) -> WebGL?
-pub impl @js.Cast for Canvas
 
-pub struct ChoiceOption {
-  id : String
-  text : String
-  jump : String
-}
+type ChoiceOption
 pub impl Eq for ChoiceOption
 pub impl Show for ChoiceOption
 pub impl ToJson for ChoiceOption
@@ -225,12 +230,15 @@ pub impl @json.FromJson for ChoiceOption
 type DialogLine
 pub impl Eq for DialogLine
 pub impl Show for DialogLine
+pub impl ToJson for DialogLine
+pub impl @json.FromJson for DialogLine
 
 type Director[T]
 pub fn[T] Director::animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::background(Self[T]) -> String?
 pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
@@ -246,6 +254,7 @@ pub fn[T] Director::text_input(Self[T]) -> (String, String)?
 pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
+  dialog : DialogLine?
 }
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
@@ -260,6 +269,8 @@ pub impl Eq for Easing
 pub impl Show for Easing
 pub impl ToJson for Easing
 pub impl @json.FromJson for Easing
+
+type Figure
 
 pub struct FigurePlacement {
   pos : Position
@@ -327,7 +338,7 @@ pub enum Instruction[T] {
   Say(String, String)
   Choice(Array[ChoiceOption])
   InputText(String, String)
-  RunCode(String, (GameState[T]) -> Unit)
+  RunCode((GameState[T]) -> Unit)
   ShowBackground(String)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)
@@ -336,6 +347,10 @@ pub enum Instruction[T] {
   PlaySfx(String)
   Animate(String, AnimationSpec)
 }
+
+type Label
+
+type Music
 
 pub(all) enum Position {
   Left
@@ -427,29 +442,31 @@ pub struct Script[T] {
 }
 
 type ScriptBuilder[T]
-pub fn[T] ScriptBuilder::animate(Self[T], String, AnimationSpec) -> Unit
-pub fn[T] ScriptBuilder::animate_opacity(Self[T], String, Int, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::animate_position(Self[T], String, Int, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::animate_scale(Self[T], String, Int, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::branch(Self[T], String, String, (GameState[T]) -> Bool) -> Unit
+pub fn[T] ScriptBuilder::animate(Self[T], Figure, AnimationSpec) -> Unit
+pub fn[T] ScriptBuilder::animate_opacity(Self[T], Figure, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::animate_position(Self[T], Figure, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::animate_scale(Self[T], Figure, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
+pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
-pub fn[T] ScriptBuilder::hide_figure(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
-pub fn[T] ScriptBuilder::jump(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::jump_if(Self[T], String, (GameState[T]) -> Bool) -> Unit
-pub fn[T] ScriptBuilder::label(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::jump(Self[T], Label) -> Unit
+pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (GameState[T]) -> Bool) -> Unit
+pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
 pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::narrate(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
-pub fn[T] ScriptBuilder::play_music(Self[T], String, Bool) -> Unit
-pub fn[T] ScriptBuilder::play_sfx(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::run_code(Self[T], String, (GameState[T]) -> Unit) -> Unit
+pub fn[T] ScriptBuilder::play_music(Self[T], Music, Bool) -> Unit
+pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx) -> Unit
+pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String) -> Unit
-pub fn[T] ScriptBuilder::scene(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::show_figure(Self[T], String, FigurePlacement) -> Unit
-pub fn[T] ScriptBuilder::show_figure_at(Self[T], String, Position, layer? : Int, opacity? : Double) -> Unit
+pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String]) -> Unit
+pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
+pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
+pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 
@@ -459,6 +476,8 @@ pub enum SettingsContext {
 }
 pub impl Eq for SettingsContext
 pub impl Show for SettingsContext
+
+type Sfx
 
 pub struct SlotView {
   slot : String
@@ -544,22 +563,16 @@ pub fn WebGL::uniform_matrix4(Self, WebGLUniformLocation, Bool, @js.Value) -> Un
 pub fn WebGL::use_program(Self, WebGLProgram) -> Unit
 pub fn WebGL::vertex_attrib_pointer(Self, Int, Int, Int, Bool, Int, Int) -> Unit
 pub fn WebGL::viewport(Self, Int, Int, Int, Int) -> Unit
-pub impl @js.Cast for WebGL
 
 type WebGLBuffer
-pub impl @js.Cast for WebGLBuffer
 
 type WebGLProgram
-pub impl @js.Cast for WebGLProgram
 
 type WebGLShader
-pub impl @js.Cast for WebGLShader
 
 type WebGLTexture
-pub impl @js.Cast for WebGLTexture
 
 type WebGLUniformLocation
-pub impl @js.Cast for WebGLUniformLocation
 
 pub struct WebglPresenterConfig {
   position_entry_offset_ratio : Double
