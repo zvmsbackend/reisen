@@ -248,6 +248,10 @@ pub fn[T : FromJson + ToJson] AppController::tick(
                   self.render_sync,
                   self.event_hook,
                 )
+                match settings_read_in(self.save_ns) {
+                  Some(settings) => runner.apply_settings(settings)
+                  None => ()
+                }
                 runner.sync_ui()
                 self.runner = Some(runner)
                 self.phase = AppPhase::InGame
@@ -268,6 +272,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         SettingsAction::NewGame => {
           self.settings_menu.clear()
           self.saved_director_json = None
+          let settings = settings_read_in(self.save_ns)
           self.runner = Some(
             start_game(
               self.script,
@@ -275,6 +280,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
               self.ui_root_id,
               render_sync=self.render_sync,
               event_hook=self.event_hook,
+              settings?,
             ),
           )
           self.phase = AppPhase::InGame

@@ -356,4 +356,6 @@ pub fn[T] GameRunner::apply_settings(
   settings : GameSettings,
 ) -> Unit {
   self.ui.set_text_speed(settings.text_speed)
+  audio_dom_set_bgm_gain(settings.bgm_volume)
+  audio_dom_set_sfx_gain(settings.sfx_volume)
 }

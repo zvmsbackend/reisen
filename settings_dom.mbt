@@ -147,6 +147,9 @@ extern "js" fn settings_dom_render(
   #|     input.value = value;
   #|     input.step = step;
   #|     input.setAttribute('data-reisen-setting', id);
+  #|     input.addEventListener('input', () => {
+  #|       root.dataset.reisenSettingsAction = 'settings_changed';
+  #|     });
   #|     return input;
   #|   };
   #|
@@ -603,11 +606,38 @@ fn SettingsMenu::clear(self : SettingsMenu) -> Unit {
 }
 
 ///|
+fn SettingsMenu::persist_settings(self : SettingsMenu) -> Unit {
+  match settings_dom_read(self.root_id).to_option() {
+    Some(raw) =>
+      try {
+        let settings : GameSettings = @json.from_json(@json.parse(raw))
+        settings_write_in(self.save_ns, settings)
+      } catch {
+        _ => ()
+      }
+    None => ()
+  }
+}
+
+///|
 fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
   match settings_action_kind(self.root_id).to_option() {
-    Some("start_menu") => SettingsAction::StartMenu
-    Some("new_game") => SettingsAction::NewGame
+    Some("start_menu") => {
+      if self.view_mode is SettingsViewMode::Settings {
+        self.persist_settings()
+      }
+      SettingsAction::StartMenu
+    }
+    Some("new_game") => {
+      if self.view_mode is SettingsViewMode::Settings {
+        self.persist_settings()
+      }
+      SettingsAction::NewGame
+    }
     Some("back") => {
+      if self.view_mode is SettingsViewMode::Settings {
+        self.persist_settings()
+      }
       settings_action_clear(self.root_id)
       match self.view_mode {
         SettingsViewMode::SaveList | SettingsViewMode::LoadList =>
@@ -627,6 +657,7 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
           }
         }
         SettingsViewMode::Settings => {
+          self.persist_settings()
           self.view_mode = SettingsViewMode::SaveList
           SettingsAction::ViewChanged
         }
@@ -642,6 +673,7 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
           }
         }
         SettingsViewMode::Settings => {
+          self.persist_settings()
           self.view_mode = SettingsViewMode::LoadList
           SettingsAction::ViewChanged
         }
@@ -701,6 +733,11 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
         }
         _ => SettingsAction::NoAction
       }
+    }
+    Some("settings_changed") => {
+      settings_action_clear(self.root_id)
+      self.persist_settings()
+      SettingsAction::NoAction
     }
     _ => SettingsAction::NoAction
   }

@@ -1,4 +1,18 @@
 ///|
+extern "js" fn read_sfx_gain() -> Double =
+  #| () => globalThis.__reisenSfxGain ?? -1
+
+///|
+extern "js" fn set_dummy_bgm() -> Unit =
+  #| () => {
+  #|   globalThis.__reisenBgm = { volume: 0 };
+  #| }
+
+///|
+extern "js" fn read_bgm_volume() -> Double =
+  #| () => (globalThis.__reisenBgm?.volume ?? -1)
+
+///|
 test "runner drives script and choice flow" {
   let left = label()
   let right = label()
@@ -25,6 +39,26 @@ test "runner drives script and choice flow" {
   ui.simulate_click()
   assert_true(runner.step() is ChoicePrompt(_))
   assert_eq(runner.submit_choice("right"), Said("guide", "R"))
+}
+
+///|
+test "runner apply settings updates text speed and audio gains" {
+  let runtime = Runtime::new(script(_ => ()), GameState::new(0))
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(Director::new(runtime), ui)
+
+  set_dummy_bgm()
+  runner.apply_settings({ text_speed: 25, bgm_volume: 0.42, sfx_volume: 0.33 })
+
+  assert_eq(ui.text_speed_ms_per_char(), 2000 / 25)
+  let bgm = read_bgm_volume()
+  let sfx = read_sfx_gain()
+  if bgm < 0.4199 || bgm > 0.4201 {
+    fail("Expected bgm volume ~0.42")
+  }
+  if sfx < 0.3299 || sfx > 0.3301 {
+    fail("Expected sfx gain ~0.33")
+  }
 }
 
 ///|
