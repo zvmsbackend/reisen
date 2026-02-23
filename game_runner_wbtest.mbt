@@ -128,3 +128,24 @@ test "runner event hook receives emitted events" {
   assert_eq(seen.length(), 1)
   assert_eq(seen[0], Said("n", "t"))
 }
+
+///|
+test "runner keeps rendering during animations" {
+  let calls : Array[Int] = []
+  let hook : RenderSyncHook[Int] = _ => calls.push(1)
+  let script : Script[Int] = script(builder => {
+    builder.animate_opacity(Figure::{ id: "hero" }, 200)
+  })
+  let runner = GameRunner::new_with_render_sync(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    UiDom::new("app"),
+    hook,
+  )
+
+  let _ = runner.step()
+  let before = calls.length()
+  ignore(runner.tick(elapsed_ms=16))
+  let after = calls.length()
+
+  assert_true(after > before)
+}

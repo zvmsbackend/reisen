@@ -16,6 +16,7 @@ struct GameRunner[T] {
   mut ui_dirty : Bool
   mut render_sync_dirty : Bool
   mut pending_action : String?
+  mut animation_remaining_ms : Int
 }
 
 ///|
@@ -28,6 +29,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     ui_dirty: true,
     render_sync_dirty: true,
     pending_action: None,
+    animation_remaining_ms: 0,
   }
 }
 
@@ -45,6 +47,7 @@ pub fn[T] GameRunner::new_with_render_sync(
     ui_dirty: true,
     render_sync_dirty: true,
     pending_action: None,
+    animation_remaining_ms: 0,
   }
 }
 
@@ -63,6 +66,36 @@ pub fn[T] GameRunner::new_with_hooks(
     ui_dirty: true,
     render_sync_dirty: true,
     pending_action: None,
+    animation_remaining_ms: 0,
+  }
+}
+
+///|
+fn[T] GameRunner::bump_animation_timer(
+  self : GameRunner[T],
+  duration_ms : Int,
+) -> Unit {
+  println(duration_ms)
+  if duration_ms <= 0 {
+    return
+  }
+  if duration_ms > self.animation_remaining_ms {
+    self.animation_remaining_ms = duration_ms
+  }
+}
+
+///|
+fn[T] GameRunner::advance_animation_timer(
+  self : GameRunner[T],
+  elapsed_ms : Int,
+) -> Unit {
+  if self.animation_remaining_ms <= 0 {
+    return
+  }
+  let remaining = self.animation_remaining_ms - elapsed_ms
+  self.animation_remaining_ms = if remaining < 0 { 0 } else { remaining }
+  if self.animation_remaining_ms > 0 {
+    self.render_sync_dirty = true
   }
 }
 
@@ -100,6 +133,7 @@ pub fn[T] GameRunner::step(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
+  self.advance_animation_timer(elapsed_ms)
   match self.ui.take_action() {
     Some(action) => {
       match action {
@@ -183,6 +217,11 @@ pub fn[T] GameRunner::step(
         self.ui_dirty = true
         self.render_sync_dirty = true
       }
+      Animated(_, spec) => {
+        self.ui_dirty = true
+        self.render_sync_dirty = true
+        self.bump_animation_timer(spec.duration_ms)
+      }
       _ => ()
     }
     self.maybe_render_ui()
@@ -201,6 +240,13 @@ pub fn[T] GameRunner::step(
       }
       Said(_, _) => {
         self.ui.mark_dirty_text()
+        self.render_ui()
+        return self.step(elapsed_ms=0)
+      }
+      Animated(_, spec) => {
+        self.ui_dirty = true
+        self.render_sync_dirty = true
+        self.bump_animation_timer(spec.duration_ms)
         self.render_ui()
         return self.step(elapsed_ms=0)
       }
@@ -224,6 +270,11 @@ pub fn[T] GameRunner::step(
         BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
           self.ui_dirty = true
           self.render_sync_dirty = true
+        }
+        Animated(_, spec) => {
+          self.ui_dirty = true
+          self.render_sync_dirty = true
+          self.bump_animation_timer(spec.duration_ms)
         }
         _ => ()
       }
@@ -260,6 +311,11 @@ pub fn[T] GameRunner::step(
       BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
         self.ui_dirty = true
         self.render_sync_dirty = true
+      }
+      Animated(_, spec) => {
+        self.ui_dirty = true
+        self.render_sync_dirty = true
+        self.bump_animation_timer(spec.duration_ms)
       }
       _ => ()
     }
@@ -303,9 +359,15 @@ pub fn[T] GameRunner::submit_choice(
 ///|
 /// Advances one frame and reports whether loop should continue.
 pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool {
-  (!(self.step(elapsed_ms~) is ScriptEnded)) catch {
+  let keep_running = try self.step(elapsed_ms~) catch {
     _ => false
+  } noraise {
+    event => !(event is ScriptEnded)
   }
+  if self.animation_remaining_ms > 0 {
+    self.sync_canvas()
+  }
+  keep_running
 }
 
 ///|
