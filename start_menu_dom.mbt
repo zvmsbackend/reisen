@@ -18,14 +18,6 @@ priv struct StartMenu {
 }
 
 ///|
-pub struct SlotView {
-  slot : String
-  title : String
-  preview : String
-  updated_at_ms : Double
-}
-
-///|
 fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
@@ -49,30 +41,6 @@ fn choose_continue_slot(entries : Array[SaveSlotEntry]) -> String? {
     }
   }
   best_slot
-}
-
-///|
-fn to_slot_view(entry : SaveSlotEntry) -> SlotView {
-  match entry.meta {
-    Some(meta) => {
-      let title = if meta.title == "" { entry.slot } else { meta.title }
-      {
-        slot: entry.slot,
-        title,
-        preview: meta.preview,
-        updated_at_ms: meta.updated_at_ms,
-      }
-    }
-    None =>
-      { slot: entry.slot, title: entry.slot, preview: "", updated_at_ms: -1.0 }
-  }
-}
-
-///|
-fn sorted_slot_views(entries : Array[SaveSlotEntry]) -> Array[SlotView] {
-  let views = entries.map(to_slot_view)
-  views.sort_by_key(view => -view.updated_at_ms)
-  views
 }
 
 ///|

@@ -477,13 +477,6 @@ pub impl Show for SettingsContext
 
 type Sfx
 
-pub struct SlotView {
-  slot : String
-  title : String
-  preview : String
-  updated_at_ms : Double
-}
-
 type UiChoiceView
 pub impl Eq for UiChoiceView
 pub impl Show for UiChoiceView

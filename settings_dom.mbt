@@ -19,9 +19,7 @@ priv enum SettingsAction {
   ViewChanged
   NoAction
   Back
-  Saved
   NewGame
-  Load
   StartMenu
   SaveSlot(String)
   LoadSlot(String)

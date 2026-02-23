@@ -18,16 +18,3 @@ test "choose_continue_slot falls back when metadata missing" {
 test "choose_continue_slot none when no entries" {
   assert_eq(choose_continue_slot([]), None)
 }
-
-///|
-test "sorted_slot_views orders newest metadata first" {
-  let entries = [
-    { slot: "old", meta: Some(save_slot_meta("Old", "", updated_at_ms=5.0)) },
-    { slot: "new", meta: Some(save_slot_meta("New", "", updated_at_ms=9.0)) },
-    { slot: "none", meta: None },
-  ]
-  let views = sorted_slot_views(entries)
-  assert_eq(views[0].slot, "new")
-  assert_eq(views[1].slot, "old")
-  assert_eq(views[2].slot, "none")
-}

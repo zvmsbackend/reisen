@@ -22,13 +22,11 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
 ///|
 struct AudioDom {
   urls : Map[String, String]
-  mut bgm_gain : Double
-  mut sfx_gain : Double
 }
 
 ///|
 pub fn AudioDom::new() -> AudioDom {
-  { urls: {}, bgm_gain: 0.7, sfx_gain: 0.8 }
+  { urls: {} }
 }
 
 ///|
@@ -52,16 +50,14 @@ pub fn AudioDom::register_sfx(
 }
 
 ///|
-pub fn AudioDom::set_bgm_gain(self : AudioDom, gain : Double) -> Unit {
+pub fn AudioDom::set_bgm_gain(_self : AudioDom, gain : Double) -> Unit {
   let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
-  self.bgm_gain = clamped
   audio_dom_set_bgm_gain(clamped)
 }
 
 ///|
-pub fn AudioDom::set_sfx_gain(self : AudioDom, gain : Double) -> Unit {
+pub fn AudioDom::set_sfx_gain(_self : AudioDom, gain : Double) -> Unit {
   let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
-  self.sfx_gain = clamped
   audio_dom_set_sfx_gain(clamped)
 }
 

@@ -213,60 +213,6 @@ pub fn UiDom::simulate_click(self : UiDom) -> Unit {
 }
 
 ///|
-extern "js" fn dom_render(
-  root_id : String,
-  speaker : String,
-  text : String,
-  choice_ids : Array[String],
-  choice_texts : Array[String],
-) -> Unit =
-  #| (root_id, speaker, text, choice_ids, choice_texts) => {
-  #|   const doc = globalThis.document;
-  #|   if (!doc) return;
-  #|   const root = doc.getElementById(root_id);
-  #|   if (!root) return;
-  #|
-  #|   let dialog = root.querySelector('[data-reisen="dialog"]');
-  #|   if (!dialog) {
-  #|     dialog = doc.createElement('div');
-  #|     dialog.setAttribute('data-reisen', 'dialog');
-  #|     root.appendChild(dialog);
-  #|   }
-  #|   let nameEl = root.querySelector('[data-reisen="speaker"]');
-  #|   if (!nameEl) {
-  #|     nameEl = doc.createElement('div');
-  #|     nameEl.setAttribute('data-reisen', 'speaker');
-  #|     root.appendChild(nameEl);
-  #|   }
-  #|   nameEl.textContent = speaker;
-  #|   dialog.textContent = text;
-  #|
-  #|   let choices = root.querySelector('[data-reisen="choices"]');
-  #|   if (!choices) {
-  #|     choices = doc.createElement('div');
-  #|     choices.setAttribute('data-reisen', 'choices');
-  #|     root.appendChild(choices);
-  #|   }
-  #|   choices.innerHTML = '';
-  #|   if (choice_ids.length === 0) {
-  #|     choices.style.display = 'none';
-  #|   } else {
-  #|     choices.style.display = 'flex';
-  #|     for (let i = 0; i < choice_ids.length; i++) {
-  #|       const btn = doc.createElement('button');
-  #|       const choice_id = choice_ids[i];
-  #|       btn.type = 'button';
-  #|       btn.textContent = choice_texts[i] ?? choice_id;
-  #|       btn.setAttribute('data-choice-id', choice_id);
-  #|       btn.addEventListener('click', () => {
-  #|         root.dataset.reisenSelectedChoice = choice_id;
-  #|       });
-  #|       choices.appendChild(btn);
-  #|     }
-  #|   }
-  #| }
-
-///|
 extern "js" fn dom_render_speaker_text(
   root_id : String,
   speaker : String,

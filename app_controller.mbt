@@ -268,7 +268,6 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             }
           }
         }
-        SettingsAction::Saved => self.settings_menu.render()
         SettingsAction::NewGame => {
           self.settings_menu.clear()
           self.saved_director_json = None
@@ -285,7 +284,6 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           )
           self.phase = AppPhase::InGame
         }
-        SettingsAction::Load => self.settings_menu.render()
         SettingsAction::StartMenu => {
           self.save_autosave_if_enabled()
           (self.event_hook)(MusicStopped)
