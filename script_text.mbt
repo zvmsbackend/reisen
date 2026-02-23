@@ -56,16 +56,25 @@ fn parse_typewriter_flag(raw : String) -> Bool? {
 }
 
 ///|
+fn[T] flush_pending_dialog(
+  builder : ScriptBuilder[T],
+  pending : Ref[(String, String, Bool)?],
+) -> Unit {
+  match pending.val {
+    Some((speaker, text, typewriter)) => builder.say(speaker, text, typewriter~)
+    None => ()
+  }
+  pending.val = None
+}
+
+///|
 fn[T] reisen_text_script_to_builder(
   text : String,
   builder : ScriptBuilder[T],
 ) -> Unit {
   let lines : Array[String] = []
   for line in text.split("\n") {
-    let s = line.trim().to_string()
-    if s != "" {
-      lines.push(s)
-    }
+    lines.push(line.to_string())
   }
 
   let mut choice_options : Array[ChoiceOption] = []
@@ -73,16 +82,36 @@ fn[T] reisen_text_script_to_builder(
   let mut choice_prompt = ""
   let mut in_choice = false
   let mut last_speaker = None
+  let pending_dialog : Ref[(String, String, Bool)?] = Ref::new(None)
 
-  for line in lines {
-    if line.has_prefix("#") {
+  for raw in lines {
+    let trimmed = raw.trim().to_string()
+    if trimmed == "" {
+      continue
+    }
+    if trimmed.has_prefix("|") {
+      match pending_dialog.val {
+        Some((speaker, text, typewriter)) => {
+          let mut extra = (try! trimmed[1:]).to_string()
+          if extra.has_prefix(" ") {
+            extra = (try! extra[1:]).to_string()
+          }
+          pending_dialog.val = Some((speaker, text + "\n" + extra, typewriter))
+        }
+        None => ()
+      }
+      continue
+    }
+    if pending_dialog.val is Some(_) {
+      flush_pending_dialog(builder, pending_dialog)
+    }
+    if trimmed.has_prefix("#") {
       continue
     }
 
-    let (cmd, args_str) = get_first_part(line, ":")
+    let (cmd, args_str) = get_first_part(trimmed, ":")
 
     if in_choice {
-      let trimmed = line.trim()
       if trimmed.has_prefix("- ") || trimmed == "-" {
         if not(choice_options.is_empty()) {
           builder.menu(choice_speaker, choice_prompt, choice_options)
@@ -126,7 +155,7 @@ fn[T] reisen_text_script_to_builder(
               (join_parts(parts, 0, parts.length() - 1), flag)
             _ => (join_parts(parts, 0, parts.length()), true)
           }
-          builder.narrate(text, typewriter~)
+          pending_dialog.val = Some(("", text, typewriter))
         }
       }
       "say" => {
@@ -143,11 +172,11 @@ fn[T] reisen_text_script_to_builder(
             _ => (join_parts(parts, 1, parts.length()), true)
           }
           match (speaker, last_speaker) {
-            ("", Some(s)) => builder.say(s, text, typewriter~)
-            ("", None) => builder.say("", text, typewriter~)
+            ("", Some(s)) => pending_dialog.val = Some((s, text, typewriter))
+            ("", None) => pending_dialog.val = Some(("", text, typewriter))
             (s, _) => {
               last_speaker = Some(s)
-              builder.say(s, text, typewriter~)
+              pending_dialog.val = Some((s, text, typewriter))
             }
           }
         }
@@ -284,6 +313,9 @@ fn[T] reisen_text_script_to_builder(
     }
   }
 
+  if pending_dialog.val is Some(_) {
+    flush_pending_dialog(builder, pending_dialog)
+  }
   if in_choice && not(choice_options.is_empty()) {
     builder.menu(choice_speaker, choice_prompt, choice_options)
   }

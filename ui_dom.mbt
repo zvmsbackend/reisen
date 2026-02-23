@@ -239,6 +239,7 @@ extern "js" fn dom_render_speaker_text(
   #|     dialog.setAttribute('data-reisen', 'dialog');
   #|     root.appendChild(dialog);
   #|   }
+  #|   dialog.style.whiteSpace = 'pre-wrap';
   #|   dialog.textContent = text;
   #| }
 

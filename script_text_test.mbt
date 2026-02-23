@@ -36,6 +36,18 @@ test "parse say without typewriter" {
 }
 
 ///|
+test "parse multiline say" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "say: Speaker, Line one\n| Line two\n| Line three",
+  )
+  assert_eq(script.instructions.length(), 1)
+  assert_true(
+    script.instructions[0]
+    is Say("Speaker", "Line one\nLine two\nLine three", true),
+  )
+}
+
+///|
 test "parse narrate" {
   let script : Script[Unit] = reisen_parse_text_script(
     "narrate: This is narration",
