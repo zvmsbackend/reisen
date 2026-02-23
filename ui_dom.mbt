@@ -269,7 +269,7 @@ extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
   #|   intro.style.background = 'black';
   #|   intro.style.color = 'white';
   #|   intro.style.fontFamily = "'Cormorant Garamond', 'Times New Roman', serif";
-  #|   intro.style.fontSize = '32px';
+  #|   intro.style.fontSize = '72px';
   #|   intro.style.lineHeight = '1.4';
   #|   intro.style.whiteSpace = 'pre-wrap';
   #|   intro.textContent = '';
@@ -286,9 +286,13 @@ extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
   #|     row.dataset.reisenIntroLine = String(idx);
   #|     row.dataset.reisenIntroVisible = '0';
   #|     intro.appendChild(row);
+  #|     const br = doc.createElement('br');
+  #|     br.style.opacity = '0';
+  #|     intro.appendChild(br);
   #|     const delay = idx * 2000;
   #|     setTimeout(() => {
   #|       row.style.opacity = '1';
+  #|       br.style.opacity = '1';
   #|       row.dataset.reisenIntroVisible = '1';
   #|     }, delay);
   #|   });
