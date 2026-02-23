@@ -219,6 +219,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             }
             true
           } else {
+            (self.event_hook)(MusicStopped)
             runner.clear_ui()
             self.runner = None
             self.menu.render()
@@ -281,6 +282,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         SettingsAction::Load => self.settings_menu.render()
         SettingsAction::StartMenu => {
           self.save_autosave_if_enabled()
+          (self.event_hook)(MusicStopped)
           self.settings_menu.clear()
           self.saved_director_json = None
           self.runner = None

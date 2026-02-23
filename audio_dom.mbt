@@ -32,19 +32,23 @@ pub fn AudioDom::new() -> AudioDom {
 }
 
 ///|
-pub fn AudioDom::register(self : AudioDom, id : String, url : String) -> Unit {
+pub fn AudioDom::register_music(
+  self : AudioDom,
+  url : String,
+  id? : String = gensym(prefix="music"),
+) -> Music {
   self.urls[id] = url
+  { id, }
 }
 
 ///|
-pub fn AudioDom::register_many(
+pub fn AudioDom::register_sfx(
   self : AudioDom,
-  entries : Array[(String, String)],
-) -> Unit {
-  for id_url in entries {
-    let (id, url) = id_url
-    self.urls[id] = url
-  }
+  url : String,
+  id? : String = gensym(prefix="sfx"),
+) -> Sfx {
+  self.urls[id] = url
+  { id, }
 }
 
 ///|

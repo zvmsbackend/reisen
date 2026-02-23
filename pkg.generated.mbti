@@ -189,10 +189,6 @@ pub impl Eq for AppPhase
 pub impl Show for AppPhase
 
 type AssetStore
-pub async fn AssetStore::create_background(Self, String, id? : String) -> Background
-pub async fn AssetStore::create_figure(Self, String, id? : String) -> Figure
-pub async fn AssetStore::create_music(Self, String, id? : String) -> Music
-pub async fn AssetStore::create_sfx(Self, String, id? : String) -> Sfx
 pub fn AssetStore::get_bytes(Self, String) -> Bytes?
 pub fn AssetStore::get_image(Self, String) -> Image?
 pub fn AssetStore::get_text(Self, String) -> String?
@@ -200,6 +196,8 @@ pub fn AssetStore::new() -> Self
 pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
 pub fn AssetStore::put_image(Self, String, Image) -> Unit
 pub fn AssetStore::put_text(Self, String, String) -> Unit
+pub async fn AssetStore::register_background(Self, String, id? : String) -> Background
+pub async fn AssetStore::register_figure(Self, String, id? : String) -> Figure
 
 type AudioCommand
 pub impl Eq for AudioCommand
@@ -210,8 +208,8 @@ pub fn AudioDom::apply_settings(Self, GameSettings) -> Unit
 pub fn AudioDom::as_event_hook(Self) -> (RuntimeEvent) -> Unit
 pub fn AudioDom::handle_event(Self, RuntimeEvent) -> Unit
 pub fn AudioDom::new() -> Self
-pub fn AudioDom::register(Self, String, String) -> Unit
-pub fn AudioDom::register_many(Self, Array[(String, String)]) -> Unit
+pub fn AudioDom::register_music(Self, String, id? : String) -> Music
+pub fn AudioDom::register_sfx(Self, String, id? : String) -> Sfx
 pub fn AudioDom::set_bgm_gain(Self, Double) -> Unit
 pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
 
