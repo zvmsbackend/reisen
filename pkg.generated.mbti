@@ -531,7 +531,7 @@ pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
-pub fn[T] ScriptBuilder::show_avatar(Self[T], Figure) -> Unit
+pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit

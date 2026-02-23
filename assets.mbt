@@ -50,15 +50,6 @@ extern "js" fn u8array_to_int_array(u8 : @js.Value) -> Array[Int] =
   #| (u8) => Array.from(u8)
 
 ///|
-extern "js" fn register_image_url(id : String, url : String) -> Unit =
-  #| (id, url) => {
-  #|   if (!globalThis.__reisenImageUrls) {
-  #|     globalThis.__reisenImageUrls = new Map();
-  #|   }
-  #|   globalThis.__reisenImageUrls.set(id, url);
-  #| }
-
-///|
 fn int_array_to_bytes(xs : Array[Int]) -> Bytes {
   Bytes::from_array(xs.map(x => x.to_byte()))
 }
@@ -143,7 +134,6 @@ pub async fn AssetStore::register_figure(
   url : String,
   id? : String = gensym(prefix="figure"),
 ) -> Figure {
-  register_image_url(id, url)
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
@@ -157,7 +147,6 @@ pub async fn AssetStore::register_background(
   url : String,
   id? : String = gensym(prefix="background"),
 ) -> Background {
-  register_image_url(id, url)
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)

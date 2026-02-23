@@ -208,9 +208,9 @@ pub fn[T] ScriptBuilder::hide_text_box(self : ScriptBuilder[T]) -> Unit {
 ///|
 pub fn[T] ScriptBuilder::show_avatar(
   self : ScriptBuilder[T],
-  figure : Figure,
+  url : String,
 ) -> Unit {
-  self.instructions.push(ShowAvatar(figure.id))
+  self.instructions.push(ShowAvatar(url))
 }
 
 ///|

@@ -223,11 +223,11 @@ test "runtime textbox events" {
 ///|
 test "runtime avatar events" {
   let script : Script[Int] = script(builder => {
-    builder.show_avatar(Figure::{ id: "hero" })
+    builder.show_avatar("/avatar.png")
     builder.hide_avatar()
   })
   let runtime = Runtime::new(script, GameState::new(0))
-  assert_eq(runtime.step(), AvatarShown("hero"))
+  assert_eq(runtime.step(), AvatarShown("/avatar.png"))
   assert_eq(runtime.step(), AvatarHidden)
 }
 

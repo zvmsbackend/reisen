@@ -370,8 +370,7 @@ extern "js" fn dom_set_avatar(root_id : String, avatar_id : String?) -> Unit =
   #|     dialog.removeAttribute('data-reisen-avatar');
   #|     return;
   #|   }
-  #|   const map = globalThis.__reisenImageUrls;
-  #|   const url = map && map.get ? map.get(avatar_id) : (map ? map[avatar_id] : null);
+  #|   const url = avatar_id;
   #|   if (!url) {
   #|     avatar.style.display = 'none';
   #|     avatar.removeAttribute('src');
