@@ -133,6 +133,13 @@ pub fn[T] GameRunner::step(
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
   self.advance_animation_timer(elapsed_ms)
+  if self.director.is_waiting() {
+    if self.ui.skip_mode {
+      self.director.skip_wait()
+    } else if self.ui.check_typewriter_click() {
+      self.director.skip_wait()
+    }
+  }
   match self.ui.take_action() {
     Some(action) => {
       match action {
@@ -146,6 +153,40 @@ pub fn[T] GameRunner::step(
       return Noop
     }
     None => ()
+  }
+  if self.director.is_waiting() {
+    let event = self.director.step(elapsed_ms~)
+    (self.event_hook)(event)
+    match event {
+      Said(_, _) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_text()
+      }
+      ChoicePrompt(_) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_choices()
+      }
+      TextInputPrompt(_, _) => {
+        self.ui_dirty = true
+        self.ui.mark_dirty_text_input()
+      }
+      ScriptEnded => {
+        self.ui_dirty = true
+        self.ui.mark_all_dirty()
+      }
+      BackgroundShown(_) | FigureHidden(_) | FigureShown(_) => {
+        self.ui_dirty = true
+        self.render_sync_dirty = true
+      }
+      Animated(_, spec) => {
+        self.ui_dirty = true
+        self.render_sync_dirty = true
+        self.bump_animation_timer(spec.duration_ms)
+      }
+      _ => ()
+    }
+    self.maybe_render_ui()
+    return event
   }
   if !self.director.choices().is_empty() {
     match self.ui.take_selected_choice() {

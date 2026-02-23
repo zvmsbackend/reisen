@@ -243,6 +243,16 @@ pub fn[T] Runtime::step(
 }
 
 ///|
+pub fn[T] Runtime::is_waiting(self : Runtime[T]) -> Bool {
+  self.wait_ms > 0
+}
+
+///|
+pub fn[T] Runtime::skip_wait(self : Runtime[T]) -> Unit {
+  self.wait_ms = 0
+}
+
+///|
 pub fn[T] Runtime::choose(
   self : Runtime[T],
   id : String,

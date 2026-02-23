@@ -130,6 +130,62 @@ test "runner event hook receives emitted events" {
 }
 
 ///|
+test "runner click skips wait" {
+  let script : Script[Int] = script(builder => {
+    builder.wait(200)
+    builder.say("n", "done")
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+  )
+
+  assert_true(runner.step() is WaitStarted(200))
+  ui.simulate_click()
+  assert_true(runner.step() is Said("n", "done"))
+}
+
+///|
+test "wait advances with elapsed even when dialog remains" {
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "first")
+    builder.wait(100)
+    builder.say("n", "after")
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+  )
+
+  assert_true(runner.step() is Said("n", "first"))
+  ui.simulate_click()
+  assert_true(runner.step() is WaitStarted(100))
+  assert_true(runner.step(elapsed_ms=120) is Said("n", "after"))
+}
+
+///|
+test "skip mode ignores waits" {
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "first")
+    builder.wait(200)
+    builder.say("n", "after")
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+  )
+
+  assert_true(runner.step() is Said("n", "first"))
+  ui.simulate_click()
+  assert_true(runner.step() is WaitStarted(200))
+  ui.set_skip_mode(true)
+  assert_true(runner.step(elapsed_ms=0) is Said("n", "after"))
+}
+
+///|
 test "runner keeps rendering during animations" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)

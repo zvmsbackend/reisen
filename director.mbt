@@ -131,6 +131,16 @@ pub fn[T] Director::text_input(self : Director[T]) -> (String, String)? {
 }
 
 ///|
+pub fn[T] Director::is_waiting(self : Director[T]) -> Bool {
+  self.runtime.is_waiting()
+}
+
+///|
+pub fn[T] Director::skip_wait(self : Director[T]) -> Unit {
+  self.runtime.skip_wait()
+}
+
+///|
 pub fn[T] Director::submit_text_input(
   self : Director[T],
   value : String,

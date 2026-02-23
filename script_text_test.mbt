@@ -96,6 +96,13 @@ test "parse stop_music" {
 }
 
 ///|
+test "parse wait" {
+  let script : Script[Unit] = reisen_parse_text_script("wait: 120")
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is Wait(120))
+}
+
+///|
 test "parse animate range" {
   let script : Script[Unit] = reisen_parse_text_script(
     "animate: hero, opacity, 400, 0.2, 0.8",

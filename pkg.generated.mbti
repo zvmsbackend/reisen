@@ -249,10 +249,12 @@ pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::from_save(Script[T], DirectorSave[T]) -> Self[T] raise ScriptRuntimeError
+pub fn[T] Director::is_waiting(Self[T]) -> Bool
 pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String
+pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::text_input(Self[T]) -> (String, String)?
@@ -391,9 +393,11 @@ pub struct Runtime[T] {
 }
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
+pub fn[T] Runtime::is_waiting(Self[T]) -> Bool
 pub fn[T] Runtime::new(Script[T], GameState[T]) -> Self[T]
 pub fn[T] Runtime::save(Self[T]) -> RuntimeSave[T]
 pub fn[T : ToJson] Runtime::save_json(Self[T]) -> String
+pub fn[T] Runtime::skip_wait(Self[T]) -> Unit
 pub fn[T] Runtime::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 

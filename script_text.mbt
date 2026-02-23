@@ -83,8 +83,8 @@ fn[T] reisen_text_script_to_builder(
         }
       "jump" => if args_str != "" { builder.instructions.push(Jump(args_str)) }
       "wait" => {
-        // Skip wait parsing for now - would need number parsing
-        let _ = args_str
+        let ms = (try? @strconv.parse_int(args_str)).unwrap_or(0)
+        builder.instructions.push(Wait(ms))
       }
       "narrate" | "narration" => builder.narrate(args_str)
       "say" => {
