@@ -221,6 +221,10 @@ pub fn[T] GameRunner::step(
       match action {
         "auto" => self.ui.toggle_auto_mode()
         "skip" => self.ui.toggle_skip_mode()
+        "skip_on" => self.ui.set_skip_mode(true)
+        "skip_off" => self.ui.set_skip_mode(false)
+        "skip_hold_on" => self.ui.set_skip_hold(true)
+        "skip_hold_off" => self.ui.set_skip_hold(false)
         "settings" | "qsave" | "save" => self.pending_action = Some(action)
         _ => ()
       }

@@ -79,7 +79,9 @@ fn[T] AppController::start_menu_music_start(self : AppController[T]) -> Unit {
   if self.menu_music_id is None || self.menu_music_playing {
     return
   }
-  guard self.menu_music_id is Some(menu_music_id) && !self.menu_music_playing else { return }
+  guard self.menu_music_id is Some(menu_music_id) && !self.menu_music_playing else {
+    return
+  }
   (self.event_hook)(MusicPlayed(menu_music_id, self.menu_music_loop))
   self.menu_music_playing = true
 }

@@ -41,6 +41,7 @@ struct UiDom {
   auto_mode_delay_ms : Int
   mut auto_mode_last_advance_ms : Int
   mut skip_mode : Bool
+  mut skip_hold : Bool
   skip_mode_delay_ms : Int
   mut skip_mode_last_advance_ms : Int
   mut simulated_click : Bool
@@ -65,6 +66,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     auto_mode_delay_ms: 2000,
     auto_mode_last_advance_ms: 0,
     skip_mode: false,
+    skip_hold: false,
     skip_mode_delay_ms: 50,
     skip_mode_last_advance_ms: 0,
     simulated_click: false,
@@ -186,13 +188,26 @@ pub fn UiDom::set_skip_mode(self : UiDom, enabled : Bool) -> Unit {
 }
 
 ///|
+pub fn UiDom::set_skip_hold(self : UiDom, enabled : Bool) -> Unit {
+  self.skip_hold = enabled
+  if enabled {
+    self.skip_mode_last_advance_ms = 0
+  }
+}
+
+///|
+pub fn UiDom::is_skip_active(self : UiDom) -> Bool {
+  self.skip_mode || self.skip_hold
+}
+
+///|
 pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
   self.set_skip_mode(not(self.skip_mode))
 }
 
 ///|
 pub fn UiDom::should_skip_advance(self : UiDom) -> Bool {
-  if not(self.skip_mode) {
+  if not(self.is_skip_active()) {
     return false
   }
   if not(self.is_typewriter_done()) {
@@ -203,7 +218,7 @@ pub fn UiDom::should_skip_advance(self : UiDom) -> Bool {
 
 ///|
 pub fn UiDom::advance_skip_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
-  if not(self.skip_mode) {
+  if not(self.is_skip_active()) {
     return
   }
   if not(self.is_typewriter_done()) {
@@ -719,8 +734,18 @@ extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
   #|   });
   #|   doc.addEventListener('keydown', (e) => {
   #|     if (shouldIgnore(e.target)) return;
+  #|     if (e.key === 'Control') {
+  #|       root.dataset.reisenAction = 'skip_hold_on';
+  #|       return;
+  #|     }
   #|     if (e.key === ' ' || e.key === 'Spacebar' || e.key === 'Enter') {
   #|       root.dataset.reisenTypewriterClick = '1';
+  #|     }
+  #|   });
+  #|   doc.addEventListener('keyup', (e) => {
+  #|     if (shouldIgnore(e.target)) return;
+  #|     if (e.key === 'Control') {
+  #|       root.dataset.reisenAction = 'skip_hold_off';
   #|     }
   #|   });
   #| }

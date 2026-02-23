@@ -216,7 +216,7 @@ pub impl ToJson for AnimationSpec
 pub impl @json.FromJson for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, menu_music? : String, menu_music_loop? : Bool, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, menu_music? : Music, menu_music_loop? : Bool, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
@@ -556,6 +556,7 @@ pub fn UiDom::advance_skip_mode_timer(Self, elapsed_ms~ : Int) -> Unit
 pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
 pub fn UiDom::clear_game_ui(Self) -> Unit
 pub fn UiDom::complete_typewriter(Self) -> Unit
+pub fn UiDom::is_skip_active(Self) -> Bool
 pub fn UiDom::is_typewriter_done(Self) -> Bool
 pub fn UiDom::mark_all_dirty(Self) -> Unit
 pub fn UiDom::mark_auto_advanced(Self) -> Unit
@@ -565,6 +566,7 @@ pub fn UiDom::mark_dirty_text(Self) -> Unit
 pub fn UiDom::mark_dirty_text_input(Self) -> Unit
 pub fn UiDom::mark_skip_advanced(Self) -> Unit
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
+pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
 pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
 pub fn UiDom::set_text_speed(Self, Int) -> Unit
 pub fn UiDom::should_auto_advance(Self) -> Bool
