@@ -326,6 +326,7 @@ extern "js" fn dom_render_text_input(
   #|     }
   #|   });
   #|   inputContainer.appendChild(input);
+  #|   input.focus();
   #|
   #|   const submitBtn = doc.createElement('button');
   #|   submitBtn.type = 'button';
