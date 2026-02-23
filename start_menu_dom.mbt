@@ -117,7 +117,7 @@ extern "js" fn start_menu_dom_render(
   #|   let menu = root.querySelector('[data-reisen="start-menu"]');
   #|   if (!menu) {
   #|     menu = doc.createElement('div');
-  #|     menu.setAttribute('data-reisen', 'start-menu');
+  #|     menu.dataset.reisen = 'start-menu';
   #|     root.appendChild(menu);
   #|   }
   #|
@@ -131,7 +131,7 @@ extern "js" fn start_menu_dom_render(
   #|   menu.innerHTML = '';
   #|
   #|   const actions = doc.createElement('div');
-  #|   actions.setAttribute('data-reisen', 'start-actions');
+  #|   actions.dataset.reisen = 'start-actions';
   #|
   #|   const mkButton = (text, kind, slot = '') => {
   #|     const btn = doc.createElement('button');
@@ -163,12 +163,12 @@ extern "js" fn start_gate_dom_render(root_id : String) -> Unit =
   #|   let gate = root.querySelector('[data-reisen="start-gate"]');
   #|   if (!gate) {
   #|     gate = doc.createElement('div');
-  #|     gate.setAttribute('data-reisen', 'start-gate');
+  #|     gate.dataset.reisen = 'start-gate';
   #|     root.appendChild(gate);
   #|   }
   #|   gate.innerHTML = '';
   #|   const text = doc.createElement('div');
-  #|   text.setAttribute('data-reisen', 'start-gate-text');
+  #|   text.dataset.reisen = 'start-gate-text';
   #|   text.textContent = 'Click to Start';
   #|   gate.appendChild(text);
   #|   if (!gate.__reisenGateBound) {
@@ -204,14 +204,14 @@ extern "js" fn start_logo_dom_render(
   #|   let logo = root.querySelector('[data-reisen="start-logo"]');
   #|   if (!logo) {
   #|     logo = doc.createElement('div');
-  #|     logo.setAttribute('data-reisen', 'start-logo');
+  #|     logo.dataset.reisen = 'start-logo';
   #|     root.appendChild(logo);
   #|   }
   #|   const ms = typeof duration_ms === 'number' ? duration_ms : 2000;
-  #|   logo.style.animation = `start-logo-fade ${ms}ms ease-in-out forwards`;
+  #|   logo.style.setProperty('--reisen-start-logo-duration', `${ms}ms`);
   #|   logo.innerHTML = '';
   #|   const img = doc.createElement('img');
-  #|   img.setAttribute('data-reisen', 'start-logo-image');
+  #|   img.dataset.reisen = 'start-logo-image';
   #|   img.src = url;
   #|   logo.appendChild(img);
   #|   if (!logo.__reisenLogoBound) {

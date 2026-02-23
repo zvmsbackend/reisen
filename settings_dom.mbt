@@ -113,7 +113,7 @@ extern "js" fn settings_dom_render(
   #|   let menu = root.querySelector('[data-reisen="settings-menu"]');
   #|   if (!menu) {
   #|     menu = doc.createElement('div');
-  #|     menu.setAttribute('data-reisen', 'settings-menu');
+  #|     menu.dataset.reisen = 'settings-menu';
   #|     root.appendChild(menu);
   #|   }
   #|
@@ -122,14 +122,14 @@ extern "js" fn settings_dom_render(
   #|     menu.style.backgroundSize = 'cover';
   #|     menu.style.backgroundPosition = 'center';
   #|   }
+  #|   if (context) {
+  #|     menu.dataset.reisenContext = context;
+  #|   }
   #|
   #|   menu.innerHTML = '';
   #|
   #|   const settingsPanel = doc.createElement('div');
-  #|   settingsPanel.style.background = 'var(--bg-secondary, rgba(0, 0, 0, 0.85))';
-  #|   settingsPanel.style.padding = '20px 24px';
-  #|   settingsPanel.style.borderRadius = '12px';
-  #|   settingsPanel.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.3)';
+  #|   settingsPanel.dataset.reisen = 'settings-panel';
   #|
   #|   const mkLabel = (text) => {
   #|     const label = doc.createElement('label');
@@ -144,7 +144,7 @@ extern "js" fn settings_dom_render(
   #|     input.max = max;
   #|     input.value = value;
   #|     input.step = step;
-  #|     input.setAttribute('data-reisen-setting', id);
+  #|     input.dataset.reisenSetting = id;
   #|     input.addEventListener('input', () => {
   #|       root.dataset.reisenSettingsAction = 'settings_changed';
   #|     });
@@ -155,15 +155,13 @@ extern "js" fn settings_dom_render(
   #|     const input = doc.createElement('input');
   #|     input.type = 'checkbox';
   #|     input.checked = checked;
-  #|     input.setAttribute('data-reisen-setting', id);
+  #|     input.dataset.reisenSetting = id;
   #|     return input;
   #|   };
   #|
   #|   const mkRow = (labelText, control) => {
   #|     const row = doc.createElement('div');
-  #|     row.style.display = 'flex';
-  #|     row.style.alignItems = 'center';
-  #|     row.style.gap = '8px';
+  #|     row.dataset.reisen = 'settings-row';
   #|     row.appendChild(mkLabel(labelText));
   #|     row.appendChild(control);
   #|     return row;
@@ -176,8 +174,7 @@ extern "js" fn settings_dom_render(
   #|   menu.appendChild(settingsPanel);
   #|
   #|   const actions = doc.createElement('div');
-  #|   actions.setAttribute('data-reisen', 'settings-actions');
-  #|   actions.style.marginTop = '16px';
+  #|   actions.dataset.reisen = 'settings-actions';
   #|
   #|   const mkButton = (text, kind) => {
   #|     const btn = doc.createElement('button');
@@ -283,7 +280,7 @@ extern "js" fn settings_dom_render_slots(
   #|   let menu = root.querySelector('[data-reisen="settings-menu"]');
   #|   if (!menu) {
   #|     menu = doc.createElement('div');
-  #|     menu.setAttribute('data-reisen', 'settings-menu');
+  #|     menu.dataset.reisen = 'settings-menu';
   #|     root.appendChild(menu);
   #|   }
   #|
@@ -297,26 +294,20 @@ extern "js" fn settings_dom_render_slots(
   #|
   #|   const title = doc.createElement('h2');
   #|   title.textContent = mode === 'save' ? 'Save Game' : 'Load Game';
-  #|   title.style.color = 'var(--text-primary, #fff)';
-  #|   title.style.marginBottom = '16px';
+  #|   title.dataset.reisen = 'settings-title';
   #|   menu.appendChild(title);
   #|
   #|   // Tab buttons for slot types
   #|   const tabs = doc.createElement('div');
-  #|   tabs.style.display = 'flex';
-  #|   tabs.style.gap = '8px';
-  #|   tabs.style.marginBottom = '16px';
+  #|   tabs.dataset.reisen = 'settings-tabs';
+  #|   menu.dataset.reisenSlotType = slot_type;
   #|
   #|   const mkTab = (text, type) => {
   #|     const btn = doc.createElement('button');
   #|     btn.type = 'button';
   #|     btn.textContent = text;
-  #|     btn.style.padding = '8px 16px';
-  #|     btn.style.background = slot_type === type ? 'var(--button-hover, rgba(255,255,255,0.2))' : 'transparent';
-  #|     btn.style.color = 'var(--text-primary, #fff)';
-  #|     btn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
-  #|     btn.style.borderRadius = '4px';
-  #|     btn.style.cursor = 'pointer';
+  #|     btn.dataset.reisen = 'settings-tab';
+  #|     btn.dataset.reisenSlotType = type;
   #|     btn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = 'slot_type';
   #|       root.dataset.reisenSettingsSlotType = type;
@@ -331,61 +322,26 @@ extern "js" fn settings_dom_render_slots(
   #|
   #|   // Grid container
   #|   const grid = doc.createElement('div');
-  #|   grid.style.display = 'grid';
-  #|   grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
-  #|   grid.style.gap = '16px';
-  #|   grid.style.background = 'var(--bg-secondary, rgba(0,0,0,0.85))';
-  #|   grid.style.padding = '16px';
-  #|   grid.style.borderRadius = '8px';
-  #|   grid.style.boxShadow = '0 4px 24px rgba(0, 0, 0, 0.3)';
-  #|   grid.style.maxHeight = '500px';
-  #|   grid.style.overflowY = 'auto';
-  #|   grid.style.width = 'min(90vw, 800px)';
-  #|   grid.style.boxSizing = 'border-box';
-  #|   grid.style.gridTemplateRows = 'repeat(3, min(120px, 20vh))';
+  #|   grid.dataset.reisen = 'settings-grid';
   #|
   #|   const mkSlotButton = (slot, title_, preview) => {
   #|     const btn = doc.createElement('button');
   #|     btn.type = 'button';
-  #|     btn.style.padding = '16px';
-  #|     btn.style.textAlign = 'left';
-  #|     btn.style.background = 'transparent';
-  #|     btn.style.color = 'var(--text-primary, #fff)';
-  #|     btn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.2))';
-  #|     btn.style.borderRadius = '4px';
-  #|     btn.style.cursor = 'pointer';
-  #|     btn.style.display = 'flex';
-  #|     btn.style.flexDirection = 'column';
-  #|     btn.style.gap = '8px';
-  #|     btn.style.justifyContent = 'space-between';
-  #|     btn.style.height = '100%';
-  #|     btn.style.boxSizing = 'border-box';
-  #|     btn.style.position = 'relative';
+  #|     btn.dataset.reisen = 'settings-slot';
   #|     const titleSpan = doc.createElement('span');
   #|     titleSpan.textContent = title_;
-  #|     titleSpan.style.fontWeight = 'bold';
+  #|     titleSpan.dataset.reisen = 'settings-slot-title';
   #|     btn.appendChild(titleSpan);
   #|     if (preview) {
   #|       const previewSpan = doc.createElement('span');
   #|       previewSpan.textContent = preview.substring(0, 50) + (preview.length > 50 ? '...' : '');
-  #|       previewSpan.style.fontSize = '12px';
-  #|       previewSpan.style.color = 'var(--text-secondary, rgba(255,255,255,0.7))';
+  #|       previewSpan.dataset.reisen = 'settings-slot-preview';
   #|       btn.appendChild(previewSpan);
   #|     }
   #|     const deleteBtn = doc.createElement('button');
   #|     deleteBtn.type = 'button';
   #|     deleteBtn.textContent = '×';
-  #|     deleteBtn.style.position = 'absolute';
-  #|     deleteBtn.style.top = '4px';
-  #|     deleteBtn.style.right = '4px';
-  #|     deleteBtn.style.padding = '2px 6px';
-  #|     deleteBtn.style.background = 'rgba(255,0,0,0.3)';
-  #|     deleteBtn.style.color = '#fff';
-  #|     deleteBtn.style.border = 'none';
-  #|     deleteBtn.style.borderRadius = '50%';
-  #|     deleteBtn.style.cursor = 'pointer';
-  #|     deleteBtn.style.fontSize = '14px';
-  #|     deleteBtn.style.lineHeight = '1';
+  #|     deleteBtn.dataset.reisen = 'settings-slot-delete';
   #|     deleteBtn.addEventListener('click', (e) => {
   #|       e.stopPropagation();
   #|       if (confirm('Delete this save slot?')) {
@@ -412,39 +368,24 @@ extern "js" fn settings_dom_render_slots(
   #|   // Navigation buttons
   #|   if (max_pages > 1) {
   #|     const nav = doc.createElement('div');
-  #|     nav.style.display = 'flex';
-  #|     nav.style.justifyContent = 'space-between';
-  #|     nav.style.marginTop = '16px';
+  #|     nav.dataset.reisen = 'settings-nav';
   #|
   #|     const prevBtn = doc.createElement('button');
   #|     prevBtn.type = 'button';
   #|     prevBtn.textContent = 'Prev';
   #|     prevBtn.disabled = current_page <= 0;
-  #|     prevBtn.style.padding = '8px 16px';
-  #|     prevBtn.style.background = 'var(--bg-secondary, rgba(255,255,255,0.1))';
-  #|     prevBtn.style.color = 'var(--text-primary, #fff)';
-  #|     prevBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
-  #|     prevBtn.style.borderRadius = '4px';
-  #|     prevBtn.style.cursor = current_page <= 0 ? 'not-allowed' : 'pointer';
-  #|     prevBtn.style.opacity = current_page <= 0 ? '0.5' : '1';
+  #|     prevBtn.dataset.reisen = 'settings-nav-prev';
   #|     prevBtn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = 'prev_page';
   #|     });
   #|     const pageInfo = doc.createElement('span');
   #|     pageInfo.textContent = `Page ${current_page + 1}`;
-  #|     pageInfo.style.color = 'var(--text-primary, #fff)';
-  #|     pageInfo.style.alignSelf = 'center';
+  #|     pageInfo.dataset.reisen = 'settings-page-info';
   #|     const nextBtn = doc.createElement('button');
   #|     nextBtn.type = 'button';
   #|     nextBtn.textContent = 'Next';
   #|     nextBtn.disabled = current_page >= max_pages - 1;
-  #|     nextBtn.style.padding = '8px 16px';
-  #|     nextBtn.style.background = 'var(--bg-secondary, rgba(255,255,255,0.1))';
-  #|     nextBtn.style.color = 'var(--text-primary, #fff)';
-  #|     nextBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
-  #|     nextBtn.style.borderRadius = '4px';
-  #|     nextBtn.style.cursor = current_page >= max_pages - 1 ? 'not-allowed' : 'pointer';
-  #|     nextBtn.style.opacity = current_page >= max_pages - 1 ? '0.5' : '1';
+  #|     nextBtn.dataset.reisen = 'settings-nav-next';
   #|     nextBtn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = 'next_page';
   #|     });
@@ -458,13 +399,7 @@ extern "js" fn settings_dom_render_slots(
   #|   const backBtn = doc.createElement('button');
   #|   backBtn.type = 'button';
   #|   backBtn.textContent = 'Back';
-  #|   backBtn.style.marginTop = '16px';
-  #|   backBtn.style.padding = '10px 24px';
-  #|   backBtn.style.background = 'transparent';
-  #|   backBtn.style.color = 'var(--text-primary, #fff)';
-  #|   backBtn.style.border = '1px solid var(--border-color, rgba(255,255,255,0.3))';
-  #|   backBtn.style.borderRadius = '4px';
-  #|   backBtn.style.cursor = 'pointer';
+  #|   backBtn.dataset.reisen = 'settings-back';
   #|   backBtn.addEventListener('click', () => {
   #|     root.dataset.reisenSettingsAction = 'back';
   #|   });

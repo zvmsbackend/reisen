@@ -113,6 +113,7 @@ html, body {
 [data-reisen="dialog-text"] {
   flex: 1 1 auto;
   min-width: 0;
+  white-space: pre-wrap;
 }
 
 [data-reisen="avatar"] {
@@ -232,6 +233,10 @@ html, body {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
+[data-reisen="settings-actions"] {
+  margin-top: 16px;
+}
+
 [data-reisen="start-gate"] {
   position: absolute;
   top: 0;
@@ -255,6 +260,7 @@ html, body {
   justify-content: center;
   background: var(--bg-secondary);
   opacity: 0;
+  animation: start-logo-fade var(--reisen-start-logo-duration, 2000ms) ease-in-out forwards;
 }
 
 [data-reisen="start-logo-image"] {
@@ -342,12 +348,143 @@ html, body {
   background: var(--button-hover);
 }
 
-[data-reisen="settings-menu"] h2 {
+[data-reisen="settings-title"] {
   color: var(--text-primary);
   margin-bottom: 16px;
   font-size: 24px;
   text-align: center;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+[data-reisen="settings-panel"] {
+  background: var(--bg-secondary);
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
+
+[data-reisen="settings-row"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+[data-reisen="settings-tabs"] {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+[data-reisen="settings-tab"] {
+  padding: 8px 16px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+[data-reisen="settings-menu"][data-reisen-slot-type="autosave"]
+[data-reisen="settings-tab"][data-reisen-slot-type="autosave"],
+[data-reisen="settings-menu"][data-reisen-slot-type="quicksave"]
+[data-reisen="settings-tab"][data-reisen-slot-type="quicksave"],
+[data-reisen="settings-menu"][data-reisen-slot-type="normal"]
+[data-reisen="settings-tab"][data-reisen-slot-type="normal"] {
+  background: var(--button-hover);
+  border-color: var(--border-hover);
+}
+
+[data-reisen="settings-grid"] {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, min(120px, 20vh));
+  gap: 16px;
+  background: var(--bg-secondary);
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  max-height: 500px;
+  overflow-y: auto;
+  width: min(90vw, 800px);
+  box-sizing: border-box;
+}
+
+[data-reisen="settings-slot"] {
+  padding: 16px;
+  text-align: left;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: space-between;
+  height: 100%;
+  box-sizing: border-box;
+  position: relative;
+}
+
+[data-reisen="settings-slot-title"] {
+  font-weight: 600;
+}
+
+[data-reisen="settings-slot-preview"] {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+[data-reisen="settings-slot-delete"] {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 6px;
+  background: rgba(255, 0, 0, 0.3);
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+}
+
+[data-reisen="settings-nav"] {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  width: min(90vw, 800px);
+}
+
+[data-reisen="settings-nav-prev"],
+[data-reisen="settings-nav-next"] {
+  padding: 8px 16px;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+[data-reisen="settings-nav-prev"]:disabled,
+[data-reisen="settings-nav-next"]:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+[data-reisen="settings-page-info"] {
+  color: var(--text-primary);
+  align-self: center;
+}
+
+[data-reisen="settings-back"] {
+  margin-top: 16px;
+  padding: 10px 24px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  cursor: pointer;
 }
 
 [data-reisen-setting] {
@@ -442,4 +579,31 @@ label {
 [data-reisen="text-input"] button:hover {
   background: var(--button-hover);
   border-color: var(--border-hover);
+}
+
+[data-reisen="intro"] {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  text-align: left;
+  padding: 24px;
+  background: black;
+  color: white;
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-size: 72px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+[data-reisen="intro-line"] {
+  opacity: 0;
+  margin-bottom: 12px;
+  transition: opacity 400ms ease;
+}
+
+[data-reisen="intro-line"][data-reisen-intro-visible="1"] {
+  opacity: 1;
 }

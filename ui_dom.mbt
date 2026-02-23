@@ -253,7 +253,7 @@ extern "js" fn dom_render_speaker_text(
   #|   let nameEl = root.querySelector('[data-reisen="speaker"]');
   #|   if (!nameEl) {
   #|     nameEl = doc.createElement('div');
-  #|     nameEl.setAttribute('data-reisen', 'speaker');
+  #|     nameEl.dataset.reisen = 'speaker';
   #|     root.appendChild(nameEl);
   #|   }
   #|   nameEl.textContent = speaker;
@@ -261,16 +261,15 @@ extern "js" fn dom_render_speaker_text(
   #|   let dialog = root.querySelector('[data-reisen="dialog"]');
   #|   if (!dialog) {
   #|     dialog = doc.createElement('div');
-  #|     dialog.setAttribute('data-reisen', 'dialog');
+  #|     dialog.dataset.reisen = 'dialog';
   #|     root.appendChild(dialog);
   #|   }
   #|   let dialogText = dialog.querySelector('[data-reisen="dialog-text"]');
   #|   if (!dialogText) {
   #|     dialogText = doc.createElement('div');
-  #|     dialogText.setAttribute('data-reisen', 'dialog-text');
+  #|     dialogText.dataset.reisen = 'dialog-text';
   #|     dialog.appendChild(dialogText);
   #|   }
-  #|   dialogText.style.whiteSpace = 'pre-wrap';
   #|   dialogText.innerHTML = '';
   #|   if (visible_count <= 0) return;
   #|   const rubyPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
@@ -361,7 +360,7 @@ extern "js" fn dom_set_avatar(root_id : String, avatar_id : String?) -> Unit =
   #|   let avatar = dialog.querySelector('[data-reisen="avatar"]');
   #|   if (!avatar) {
   #|     avatar = doc.createElement('img');
-  #|     avatar.setAttribute('data-reisen', 'avatar');
+  #|     avatar.dataset.reisen = 'avatar';
   #|     dialog.appendChild(avatar);
   #|   }
   #|   if (!avatar_id) {
@@ -379,7 +378,7 @@ extern "js" fn dom_set_avatar(root_id : String, avatar_id : String?) -> Unit =
   #|   }
   #|   avatar.style.display = '';
   #|   avatar.src = url;
-  #|   dialog.setAttribute('data-reisen-avatar', 'on');
+  #|   dialog.dataset.reisenAvatar = 'on';
   #| }
 
 ///|
@@ -400,21 +399,9 @@ extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
   #|   let intro = root.querySelector('[data-reisen="intro"]');
   #|   if (!intro) {
   #|     intro = doc.createElement('div');
-  #|     intro.setAttribute('data-reisen', 'intro');
+  #|     intro.dataset.reisen = 'intro';
   #|     root.appendChild(intro);
   #|   }
-  #|   intro.style.position = 'absolute';
-  #|   intro.style.inset = '0';
-  #|   intro.style.alignItems = 'flex-start';
-  #|   intro.style.justifyContent = 'flex-start';
-  #|   intro.style.textAlign = 'left';
-  #|   intro.style.padding = '24px';
-  #|   intro.style.background = 'black';
-  #|   intro.style.color = 'white';
-  #|   intro.style.fontFamily = "'Cormorant Garamond', 'Times New Roman', serif";
-  #|   intro.style.fontSize = '72px';
-  #|   intro.style.lineHeight = '1.4';
-  #|   intro.style.whiteSpace = 'pre-wrap';
   #|   intro.textContent = '';
   #|   const lines = text.split('\n');
   #|   const style = getComputedStyle(root);
@@ -433,16 +420,13 @@ extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
   #|     root.dataset.reisenIntroLastPage = page === totalPages - 1 ? '1' : '0';
   #|     for (let i = start; i < end; i++) {
   #|       const row = doc.createElement('div');
-  #|       row.style.opacity = '0';
-  #|       row.style.transition = 'opacity 400ms ease';
-  #|       row.style.marginBottom = '12px';
+  #|       row.dataset.reisen = 'intro-line';
   #|       row.textContent = lines[i];
   #|       row.dataset.reisenIntroLine = String(i);
   #|       row.dataset.reisenIntroVisible = '0';
   #|       intro.appendChild(row);
   #|       const localIndex = i - start;
   #|       setTimeout(() => {
-  #|         row.style.opacity = '1';
   #|         row.dataset.reisenIntroVisible = '1';
   #|       }, localIndex * lineIntervalMs);
   #|     }
@@ -519,7 +503,6 @@ extern "js" fn dom_reveal_intro_line(root_id : String) -> Bool =
   #|     }
   #|     return false;
   #|   }
-  #|   next.style.opacity = '1';
   #|   next.dataset.reisenIntroVisible = '1';
   #|   const remaining = intro.querySelector('[data-reisen-intro-line][data-reisen-intro-visible="0"]');
   #|   if (!remaining && root.dataset.reisenIntroLastPage === '1') {
@@ -554,20 +537,20 @@ extern "js" fn dom_render_choices(
   #|   let choices = root.querySelector('[data-reisen="choices"]');
   #|   if (!choices) {
   #|     choices = doc.createElement('div');
-  #|     choices.setAttribute('data-reisen', 'choices');
+  #|     choices.dataset.reisen = 'choices';
   #|     root.appendChild(choices);
   #|   }
   #|   choices.innerHTML = '';
   #|   if (choice_ids.length === 0) {
   #|     choices.style.display = 'none';
   #|   } else {
-  #|     choices.style.display = 'flex';
+  #|     choices.style.display = '';
   #|     for (let i = 0; i < choice_ids.length; i++) {
   #|       const btn = doc.createElement('button');
   #|       const choice_id = choice_ids[i];
   #|       btn.type = 'button';
   #|       btn.textContent = choice_texts[i] ?? choice_id;
-  #|       btn.setAttribute('data-choice-id', choice_id);
+  #|       btn.dataset.choiceId = choice_id;
   #|       btn.addEventListener('click', () => {
   #|         root.dataset.reisenSelectedChoice = choice_id;
   #|       });
@@ -606,7 +589,7 @@ extern "js" fn dom_render_text_input(
   #|   let inputContainer = root.querySelector('[data-reisen="text-input"]');
   #|   if (!inputContainer) {
   #|     inputContainer = doc.createElement('div');
-  #|     inputContainer.setAttribute('data-reisen', 'text-input');
+  #|     inputContainer.dataset.reisen = 'text-input';
   #|     root.appendChild(inputContainer);
   #|   }
   #|   inputContainer.innerHTML = '';
@@ -617,7 +600,7 @@ extern "js" fn dom_render_text_input(
   #|
   #|   const input = doc.createElement('input');
   #|   input.type = 'text';
-  #|   input.setAttribute('data-reisen-input-var', var_name);
+  #|   input.dataset.reisenInputVar = var_name;
   #|   input.addEventListener('keydown', (e) => {
   #|     if (e.key === 'Enter') {
   #|       root.dataset.reisenSubmittedInput = input.value;
@@ -665,7 +648,7 @@ extern "js" fn dom_render_action_buttons(
   #|   let actions = root.querySelector('[data-reisen="game-actions"]');
   #|   if (!actions) {
   #|     actions = doc.createElement('div');
-  #|     actions.setAttribute('data-reisen', 'game-actions');
+  #|     actions.dataset.reisen = 'game-actions';
   #|     root.appendChild(actions);
   #|   }
   #|   actions.innerHTML = '';
@@ -683,13 +666,13 @@ extern "js" fn dom_render_action_buttons(
   #|     btn.type = 'button';
   #|     btn.textContent = btnInfo.label;
   #|     if (btnInfo.data === 'auto') {
-  #|       btn.setAttribute('data-reisen-action', 'auto');
+  #|       btn.dataset.reisenAction = 'auto';
   #|       btn.classList.toggle('active', auto_mode);
   #|     } else if (btnInfo.data === 'skip') {
-  #|       btn.setAttribute('data-reisen-action', 'skip');
+  #|       btn.dataset.reisenAction = 'skip';
   #|       btn.classList.toggle('active', skip_mode);
   #|     } else {
-  #|       btn.setAttribute('data-reisen-action', btnInfo.id);
+  #|       btn.dataset.reisenAction = btnInfo.id;
   #|     }
   #|     btn.addEventListener('click', () => {
   #|       root.dataset.reisenAction = btnInfo.id;
