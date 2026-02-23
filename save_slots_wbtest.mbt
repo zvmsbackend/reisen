@@ -56,3 +56,25 @@ test "save slots are isolated by namespace" {
   assert_true(save_slot_list_in("game_a").contains("shared"))
   assert_true(save_slot_list_in("game_b").contains("shared"))
 }
+
+///|
+test "persistent vars are stored outside save slots" {
+  persistent_delete_in("lap", "count")
+  persistent_delete_in("lap", "flag")
+  persistent_delete_in("lap", "name")
+
+  assert_eq(persistent_get_int_in("lap", "count", default=0), 0)
+  assert_eq(persistent_get_flag_in("lap", "flag", default=false), false)
+  assert_eq(persistent_get_text_in("lap", "name", default=""), "")
+
+  persistent_set_int_in("lap", "count", 3)
+  persistent_set_flag_in("lap", "flag", true)
+  persistent_set_text_in("lap", "name", "loop")
+
+  assert_eq(persistent_get_int_in("lap", "count", default=0), 3)
+  assert_eq(persistent_get_flag_in("lap", "flag", default=false), true)
+  assert_eq(persistent_get_text_in("lap", "name", default=""), "loop")
+  assert_true(persistent_keys_in("lap").contains("count"))
+  assert_true(persistent_keys_in("lap").contains("flag"))
+  assert_true(persistent_keys_in("lap").contains("name"))
+}

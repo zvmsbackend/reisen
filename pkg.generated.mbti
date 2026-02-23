@@ -53,6 +53,38 @@ pub fn[T] make_webgl_render_sync_hook_with_config(WebGL, AssetStore, WebglPresen
 
 pub fn option(String, Label, id? : String) -> ChoiceOption
 
+pub fn persistent_delete(String) -> Unit
+
+pub fn persistent_delete_in(String, String) -> Unit
+
+pub fn persistent_get_flag(String, default? : Bool) -> Bool
+
+pub fn persistent_get_flag_in(String, String, default? : Bool) -> Bool
+
+pub fn persistent_get_int(String, default? : Int) -> Int
+
+pub fn persistent_get_int_in(String, String, default? : Int) -> Int
+
+pub fn persistent_get_text(String, default? : String) -> String
+
+pub fn persistent_get_text_in(String, String, default? : String) -> String
+
+pub fn persistent_keys() -> Array[String]
+
+pub fn persistent_keys_in(String) -> Array[String]
+
+pub fn persistent_set_flag(String, Bool) -> Unit
+
+pub fn persistent_set_flag_in(String, String, Bool) -> Unit
+
+pub fn persistent_set_int(String, Int) -> Unit
+
+pub fn persistent_set_int_in(String, String, Int) -> Unit
+
+pub fn persistent_set_text(String, String) -> Unit
+
+pub fn persistent_set_text_in(String, String, String) -> Unit
+
 pub fn place_center(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn place_custom(Double, Double, layer? : Int, opacity? : Double) -> FigurePlacement

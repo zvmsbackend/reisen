@@ -15,6 +15,9 @@ let default_save_namespace = "global"
 let settings_prefix = "reisen.settings."
 
 ///|
+let persistent_prefix = "reisen.persist."
+
+///|
 pub struct SaveSlotMeta {
   title : String
   preview : String
@@ -239,6 +242,76 @@ fn settings_key_in(ns : String) -> String {
 }
 
 ///|
+fn persistent_key_in(ns : String, key : String) -> String {
+  persistent_prefix + ns + "." + key
+}
+
+///|
+pub fn persistent_set_flag_in(ns : String, key : String, value : Bool) -> Unit {
+  storage_set_item(persistent_key_in(ns, key), if value { "1" } else { "0" })
+}
+
+///|
+pub fn persistent_get_flag_in(
+  ns : String,
+  key : String,
+  default? : Bool = false,
+) -> Bool {
+  match storage_get_item(persistent_key_in(ns, key)).to_option() {
+    Some(raw) => raw == "1" || raw.to_lower() == "true"
+    None => default
+  }
+}
+
+///|
+pub fn persistent_set_int_in(ns : String, key : String, value : Int) -> Unit {
+  storage_set_item(persistent_key_in(ns, key), value.to_string())
+}
+
+///|
+pub fn persistent_get_int_in(
+  ns : String,
+  key : String,
+  default? : Int = 0,
+) -> Int {
+  match storage_get_item(persistent_key_in(ns, key)).to_option() {
+    Some(raw) => (try? @strconv.parse_int(raw)).unwrap_or(default)
+    None => default
+  }
+}
+
+///|
+pub fn persistent_set_text_in(
+  ns : String,
+  key : String,
+  value : String,
+) -> Unit {
+  storage_set_item(persistent_key_in(ns, key), value)
+}
+
+///|
+pub fn persistent_get_text_in(
+  ns : String,
+  key : String,
+  default? : String = "",
+) -> String {
+  match storage_get_item(persistent_key_in(ns, key)).to_option() {
+    Some(raw) => raw
+    None => default
+  }
+}
+
+///|
+pub fn persistent_delete_in(ns : String, key : String) -> Unit {
+  storage_remove_item(persistent_key_in(ns, key))
+}
+
+///|
+pub fn persistent_keys_in(ns : String) -> Array[String] {
+  storage_list_slots(persistent_prefix + ns + ".")
+}
+
+///|
 pub fn settings_write_in(ns : String, settings : GameSettings) -> Unit {
   storage_set_item(settings_key_in(ns), settings.to_json().stringify())
 }
@@ -259,4 +332,44 @@ pub fn settings_write(settings : GameSettings) -> Unit {
 ///|
 pub fn settings_read() -> GameSettings? {
   settings_read_in(default_save_namespace)
+}
+
+///|
+pub fn persistent_set_flag(key : String, value : Bool) -> Unit {
+  persistent_set_flag_in(default_save_namespace, key, value)
+}
+
+///|
+pub fn persistent_get_flag(key : String, default? : Bool = false) -> Bool {
+  persistent_get_flag_in(default_save_namespace, key, default~)
+}
+
+///|
+pub fn persistent_set_int(key : String, value : Int) -> Unit {
+  persistent_set_int_in(default_save_namespace, key, value)
+}
+
+///|
+pub fn persistent_get_int(key : String, default? : Int = 0) -> Int {
+  persistent_get_int_in(default_save_namespace, key, default~)
+}
+
+///|
+pub fn persistent_set_text(key : String, value : String) -> Unit {
+  persistent_set_text_in(default_save_namespace, key, value)
+}
+
+///|
+pub fn persistent_get_text(key : String, default? : String = "") -> String {
+  persistent_get_text_in(default_save_namespace, key, default~)
+}
+
+///|
+pub fn persistent_delete(key : String) -> Unit {
+  persistent_delete_in(default_save_namespace, key)
+}
+
+///|
+pub fn persistent_keys() -> Array[String] {
+  persistent_keys_in(default_save_namespace)
 }
