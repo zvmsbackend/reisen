@@ -38,13 +38,24 @@ test "option helper builds expected choice option" {
 
 ///|
 test "placement helpers produce expected placement values" {
-  assert_eq(place_left(), { pos: Left, layer: 0, opacity: 1.0 })
-  assert_eq(place_center(layer=2), { pos: Center, layer: 2, opacity: 1.0 })
-  assert_eq(place_right(opacity=0.6), { pos: Right, layer: 0, opacity: 0.6 })
+  assert_eq(place_left(), { pos: Left, layer: 0, opacity: 1.0, scale: 1.0 })
+  assert_eq(place_center(layer=2), {
+    pos: Center,
+    layer: 2,
+    opacity: 1.0,
+    scale: 1.0,
+  })
+  assert_eq(place_right(opacity=0.6), {
+    pos: Right,
+    layer: 0,
+    opacity: 0.6,
+    scale: 1.0,
+  })
   assert_eq(place_custom(0.25, 0.75, layer=3, opacity=0.5), {
     pos: Custom(0.25, 0.75),
     layer: 3,
     opacity: 0.5,
+    scale: 1.0,
   })
 }
 
@@ -54,16 +65,43 @@ test "animation helpers produce expected animation specs" {
     prop: Opacity,
     duration_ms: 120,
     easing: Linear,
+    from: None,
+    to: None,
   })
   assert_eq(anim_position(240, easing=EaseInOut), {
     prop: Position,
     duration_ms: 240,
     easing: EaseInOut,
+    from: None,
+    to: None,
   })
   assert_eq(anim_scale(360, easing=EaseOut), {
     prop: Scale,
     duration_ms: 360,
     easing: EaseOut,
+    from: None,
+    to: None,
+  })
+  assert_eq(anim_opacity_range(100, 0.1, 0.9), {
+    prop: Opacity,
+    duration_ms: 100,
+    easing: Linear,
+    from: Some([0.1]),
+    to: Some([0.9]),
+  })
+  assert_eq(anim_position_range(200, -0.1, 0.0, 0.0, 0.0), {
+    prop: Position,
+    duration_ms: 200,
+    easing: Linear,
+    from: Some([-0.1, 0.0]),
+    to: Some([0.0, 0.0]),
+  })
+  assert_eq(anim_scale_range(150, 0.5, 1.0), {
+    prop: Scale,
+    duration_ms: 150,
+    easing: Linear,
+    from: Some([0.5]),
+    to: Some([1.0]),
   })
 }
 
@@ -110,19 +148,22 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   assert_true(built.instructions[0] is ShowBackground("bg_school"))
   assert_true(
     built.instructions[1]
-    is ShowFigure("alice", { pos: Left, layer: 2, opacity: 0.7 }),
+    is ShowFigure("alice", { pos: Left, layer: 2, opacity: 0.7, scale: 1.0 }),
   )
   assert_true(
     built.instructions[2]
-    is Animate("alice", { prop: Opacity, duration_ms: 120, easing: Linear }),
+    is Animate("alice", { prop: Opacity, duration_ms: 120, easing: Linear, .. }),
   )
   assert_true(
     built.instructions[3]
-    is Animate("alice", { prop: Position, duration_ms: 180, easing: EaseInOut }),
+    is Animate(
+      "alice",
+      { prop: Position, duration_ms: 180, easing: EaseInOut, .. }
+    ),
   )
   assert_true(
     built.instructions[4]
-    is Animate("alice", { prop: Scale, duration_ms: 240, easing: EaseOut }),
+    is Animate("alice", { prop: Scale, duration_ms: 240, easing: EaseOut, .. }),
   )
   assert_true(built.instructions[5] is Say("", "done"))
 }

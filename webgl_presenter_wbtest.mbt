@@ -18,7 +18,13 @@ test "figure rect custom uses normalized top-left coordinates" {
 
 ///|
 test "opacity animation interpolates and completes" {
-  let anim : OpacityAnim = { start_ms: 100, duration_ms: 200, easing: Linear }
+  let anim : OpacityAnim = {
+    start_ms: 100,
+    duration_ms: 200,
+    easing: Linear,
+    from: None,
+    to: None,
+  }
   let (o1, done1) = apply_opacity_animation(0.8, 100, anim)
   assert_eq((o1, done1), (0.0, false))
 
@@ -32,26 +38,40 @@ test "opacity animation interpolates and completes" {
 
 ///|
 test "position animation moves upward to target y" {
-  let anim : PositionAnim = { start_ms: 0, duration_ms: 100, easing: Linear }
+  let anim : PositionAnim = {
+    start_ms: 0,
+    duration_ms: 100,
+    easing: Linear,
+    from_x: None,
+    from_y: None,
+    to_x: None,
+    to_y: None,
+  }
   let (_, y0, done0) = apply_position_animation(
-    100.0, 200.0, 0.04, 1000.0, 0, anim,
+    100.0, 200.0, 0.04, 1000.0, 1000.0, 0, anim,
   )
   assert_eq((y0, done0), (240.0, false))
 
   let (_, y1, done1) = apply_position_animation(
-    100.0, 200.0, 0.04, 1000.0, 50, anim,
+    100.0, 200.0, 0.04, 1000.0, 1000.0, 50, anim,
   )
   assert_eq((y1, done1), (220.0, false))
 
   let (_, y2, done2) = apply_position_animation(
-    100.0, 200.0, 0.04, 1000.0, 100, anim,
+    100.0, 200.0, 0.04, 1000.0, 1000.0, 100, anim,
   )
   assert_eq((y2, done2), (200.0, true))
 }
 
 ///|
 test "scale animation grows around center" {
-  let anim : ScaleAnim = { start_ms: 0, duration_ms: 100, easing: Linear }
+  let anim : ScaleAnim = {
+    start_ms: 0,
+    duration_ms: 100,
+    easing: Linear,
+    from: None,
+    to: None,
+  }
   let (x0, y0, w0, h0, done0) = apply_scale_animation(
     100.0, 200.0, 300.0, 400.0, 0.0, 0, anim,
   )

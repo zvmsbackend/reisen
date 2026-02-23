@@ -94,3 +94,20 @@ test "parse stop_music" {
   let script : Script[Unit] = reisen_parse_text_script("stop_music")
   assert_eq(script.instructions.length(), 1)
 }
+
+///|
+test "parse animate range" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "animate: hero, opacity, 400, 0.2, 0.8",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    Animate(_, spec) => {
+      inspect(spec.prop, content="Opacity")
+      assert_eq(spec.duration_ms, 400)
+      assert_eq(spec.from, Some([0.2]))
+      assert_eq(spec.to, Some([0.8]))
+    }
+    _ => fail("Expected Animate instruction")
+  }
+}

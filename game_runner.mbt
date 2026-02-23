@@ -75,7 +75,6 @@ fn[T] GameRunner::bump_animation_timer(
   self : GameRunner[T],
   duration_ms : Int,
 ) -> Unit {
-  println(duration_ms)
   if duration_ms <= 0 {
     return
   }

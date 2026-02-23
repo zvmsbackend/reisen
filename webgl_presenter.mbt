@@ -54,6 +54,8 @@ priv struct OpacityAnim {
   start_ms : Int
   duration_ms : Int
   easing : Easing
+  from : Double?
+  to : Double?
 }
 
 ///|
@@ -61,6 +63,10 @@ priv struct PositionAnim {
   start_ms : Int
   duration_ms : Int
   easing : Easing
+  from_x : Double?
+  from_y : Double?
+  to_x : Double?
+  to_y : Double?
 }
 
 ///|
@@ -68,6 +74,8 @@ priv struct ScaleAnim {
   start_ms : Int
   duration_ms : Int
   easing : Easing
+  from : Double?
+  to : Double?
 }
 
 ///|
@@ -146,10 +154,19 @@ fn apply_opacity_animation(
     anim.duration_ms,
     anim.easing,
   )
-  if done {
-    (base_opacity, true)
-  } else {
-    (base_opacity * p, false)
+  match (anim.from, anim.to) {
+    (None, None) =>
+      if done {
+        (base_opacity, true)
+      } else {
+        (base_opacity * p, false)
+      }
+    _ => {
+      let from = anim.from.unwrap_or(base_opacity)
+      let to = anim.to.unwrap_or(base_opacity)
+      let value = if done { to } else { from + (to - from) * p }
+      (value, done)
+    }
   }
 }
 
@@ -191,11 +208,20 @@ fn animation_progress(
 }
 
 ///|
+fn anim_value(values : Array[Double]?, idx : Int) -> Double? {
+  match values {
+    Some(arr) => if idx < arr.length() { Some(arr[idx]) } else { None }
+    None => None
+  }
+}
+
+///|
 fn apply_position_animation(
   x : Double,
   y : Double,
   offset_ratio : Double,
   viewport_h : Double,
+  viewport_w : Double,
   now_ms : Int,
   anim : PositionAnim,
 ) -> (Double, Double, Bool) {
@@ -205,12 +231,33 @@ fn apply_position_animation(
     anim.duration_ms,
     anim.easing,
   )
-  let start_y = y + viewport_h * offset_ratio
-  let animated_y = start_y + (y - start_y) * p
-  if done {
-    (x, y, true)
-  } else {
-    (x, animated_y, false)
+  match (anim.from_x, anim.from_y, anim.to_x, anim.to_y) {
+    (None, None, None, None) => {
+      let start_y = y + viewport_h * offset_ratio
+      let animated_y = start_y + (y - start_y) * p
+      if done {
+        (x, y, true)
+      } else {
+        (x, animated_y, false)
+      }
+    }
+    _ => {
+      let from_x = anim.from_x.unwrap_or(0.0) * viewport_w
+      let from_y = anim.from_y.unwrap_or(0.0) * viewport_h
+      let to_x = anim.to_x.unwrap_or(0.0) * viewport_w
+      let to_y = anim.to_y.unwrap_or(0.0) * viewport_h
+      let start_x = x + from_x
+      let start_y = y + from_y
+      let end_x = x + to_x
+      let end_y = y + to_y
+      let animated_x = start_x + (end_x - start_x) * p
+      let animated_y = start_y + (end_y - start_y) * p
+      if done {
+        (end_x, end_y, true)
+      } else {
+        (animated_x, animated_y, false)
+      }
+    }
   }
 }
 
@@ -230,7 +277,23 @@ fn apply_scale_animation(
     anim.duration_ms,
     anim.easing,
   )
-  let s = if done { 1.0 } else { entry_scale + (1.0 - entry_scale) * p }
+  let s = match (anim.from, anim.to) {
+    (None, None) =>
+      if done {
+        1.0
+      } else {
+        entry_scale + (1.0 - entry_scale) * p
+      }
+    _ => {
+      let from = anim.from.unwrap_or(1.0)
+      let to = anim.to.unwrap_or(1.0)
+      if done {
+        to
+      } else {
+        from + (to - from) * p
+      }
+    }
+  }
   let sw = w * s
   let sh = h * s
   let cx = x + w / 2.0
@@ -275,18 +338,26 @@ fn[T] WebglPresenter::pull_new_animations(
           start_ms: self.timeline_ms,
           duration_ms: spec.duration_ms,
           easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
         })
       Position =>
         self.position_anims.set(target, {
           start_ms: self.timeline_ms,
           duration_ms: spec.duration_ms,
           easing: spec.easing,
+          from_x: anim_value(spec.from, 0),
+          from_y: anim_value(spec.from, 1),
+          to_x: anim_value(spec.to, 0),
+          to_y: anim_value(spec.to, 1),
         })
       Scale =>
         self.scale_anims.set(target, {
           start_ms: self.timeline_ms,
           duration_ms: spec.duration_ms,
           easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
         })
     }
   }
@@ -386,7 +457,9 @@ fn[T] WebglPresenter::sync_impl(
   let finished_opacity : Array[String] = []
   let finished_position : Array[String] = []
   let finished_scale : Array[String] = []
-  for id, placement in director.figures() {
+  let updated_figures : Array[(String, FigurePlacement)] = []
+  let figures = director.figures()
+  for id, placement in figures {
     let tex = self.texture_for(id)
     let (base_x, base_y, max_w, max_h) = figure_rect(placement.pos, w, h)
     let (actual_w, actual_h) = fit_figure(id, max_w, max_h, self.texture_sizes)
@@ -396,6 +469,8 @@ fn[T] WebglPresenter::sync_impl(
       Right => base_x + (max_w - actual_w) / 2.0
       _ => base_x
     }
+    let mut next_placement = placement
+    let mut update_placement = false
     let (x1, y1) = match self.position_anims.get(id) {
       Some(anim) => {
         let (ax, ay, done) = apply_position_animation(
@@ -403,11 +478,25 @@ fn[T] WebglPresenter::sync_impl(
           base_y,
           self.config.position_entry_offset_ratio,
           h,
+          w,
           self.timeline_ms,
           anim,
         )
         if done {
           finished_position.push(id)
+          let has_custom = anim.from_x is Some(_) ||
+            anim.from_y is Some(_) ||
+            anim.to_x is Some(_) ||
+            anim.to_y is Some(_)
+          if has_custom {
+            next_placement = {
+              pos: Custom(ax / w, ay / h),
+              layer: placement.layer,
+              opacity: placement.opacity,
+              scale: placement.scale,
+            }
+            update_placement = true
+          }
         }
         (ax, ay)
       }
@@ -418,18 +507,30 @@ fn[T] WebglPresenter::sync_impl(
         let (sx, sy, sw, sh, done) = apply_scale_animation(
           x1,
           y1,
-          actual_w,
-          actual_h,
+          actual_w * placement.scale,
+          actual_h * placement.scale,
           self.config.scale_entry_from,
           self.timeline_ms,
           anim,
         )
         if done {
           finished_scale.push(id)
+          match anim.to {
+            Some(value) => {
+              next_placement = {
+                pos: next_placement.pos,
+                layer: next_placement.layer,
+                opacity: next_placement.opacity,
+                scale: value,
+              }
+              update_placement = true
+            }
+            None => ()
+          }
         }
         (sx, sy, sw, sh)
       }
-      None => (x1, y1, actual_w, actual_h)
+      None => (x1, y1, actual_w * placement.scale, actual_h * placement.scale)
     }
     let opacity = match self.opacity_anims.get(id) {
       Some(anim) => {
@@ -440,6 +541,18 @@ fn[T] WebglPresenter::sync_impl(
         )
         if done {
           finished_opacity.push(id)
+          match anim.to {
+            Some(value) => {
+              next_placement = {
+                pos: next_placement.pos,
+                layer: next_placement.layer,
+                opacity: value,
+                scale: next_placement.scale,
+              }
+              update_placement = true
+            }
+            None => ()
+          }
         }
         animated
       }
@@ -454,6 +567,9 @@ fn[T] WebglPresenter::sync_impl(
       opacity,
       layer: placement.layer,
     })
+    if update_placement {
+      updated_figures.push((id, next_placement))
+    }
   }
   for id in finished_opacity {
     self.opacity_anims.remove(id)
@@ -463,6 +579,10 @@ fn[T] WebglPresenter::sync_impl(
   }
   for id in finished_scale {
     self.scale_anims.remove(id)
+  }
+  for entry in updated_figures {
+    let (id, placement) = entry
+    figures.set(id, placement)
   }
 
   self.renderer.draw_with_viewport(w, h)

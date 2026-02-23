@@ -112,7 +112,7 @@ fn[T] reisen_text_script_to_builder(
             _ => Center
           }
           builder.instructions.push(
-            ShowFigure(id, { pos: position, layer: 0, opacity: 1.0 }),
+            ShowFigure(id, { pos: position, layer: 0, opacity: 1.0, scale: 1.0 }),
           )
         }
       }
@@ -136,37 +136,79 @@ fn[T] reisen_text_script_to_builder(
           builder.instructions.push(PlaySfx(args_str))
         }
       "animate" | "anim" => {
-        let (target, rest) = get_first_part(args_str, ",")
-        let (prop, arg_str) = get_first_part(rest, ",")
-        if target != "" && prop != "" {
-          let prop_lower = prop.to_lower()
-          let arg = (try? @strconv.parse_int(arg_str)).unwrap_or(500)
-          match prop_lower {
-            "opacity" | "alpha" | "fade" =>
-              builder.instructions.push(
-                Animate(target, {
-                  prop: Opacity,
-                  duration_ms: arg,
-                  easing: Linear,
-                }),
-              )
-            "position" | "pos" | "move" =>
-              builder.instructions.push(
-                Animate(target, {
-                  prop: Position,
-                  duration_ms: arg,
-                  easing: Linear,
-                }),
-              )
-            "scale" | "size" =>
-              builder.instructions.push(
-                Animate(target, {
-                  prop: Scale,
-                  duration_ms: arg,
-                  easing: Linear,
-                }),
-              )
-            _ => ()
+        let parts : Array[String] = []
+        for part in args_str.split(",") {
+          parts.push(part.trim().to_string())
+        }
+        if parts.length() >= 3 {
+          let target = parts[0]
+          let prop = parts[1]
+          let duration_str = parts[2]
+          if target != "" && prop != "" {
+            let prop_lower = prop.to_lower()
+            let duration_ms = (try? @strconv.parse_int(duration_str)).unwrap_or(
+              500,
+            )
+            let from_value = if parts.length() >= 4 {
+              Some((try? @strconv.parse_double(parts[3])).unwrap_or(0.0))
+            } else {
+              None
+            }
+            let to_value = if parts.length() >= 5 {
+              Some((try? @strconv.parse_double(parts[4])).unwrap_or(0.0))
+            } else {
+              None
+            }
+            let spec = match prop_lower {
+              "opacity" | "alpha" | "fade" =>
+                match (from_value, to_value) {
+                  (Some(from), Some(to)) =>
+                    anim_opacity_range(duration_ms, from, to, easing=Linear)
+                  _ => anim_opacity(duration_ms, easing=Linear)
+                }
+              "position" | "pos" | "move" =>
+                if parts.length() >= 7 {
+                  let from_x = (try? @strconv.parse_double(parts[3])).unwrap_or(
+                    0.0,
+                  )
+                  let from_y = (try? @strconv.parse_double(parts[4])).unwrap_or(
+                    0.0,
+                  )
+                  let to_x = (try? @strconv.parse_double(parts[5])).unwrap_or(
+                    0.0,
+                  )
+                  let to_y = (try? @strconv.parse_double(parts[6])).unwrap_or(
+                    0.0,
+                  )
+                  anim_position_range(
+                    duration_ms,
+                    from_x,
+                    from_y,
+                    to_x,
+                    to_y,
+                    easing=Linear,
+                  )
+                } else {
+                  anim_position(duration_ms, easing=Linear)
+                }
+              "scale" | "size" =>
+                match (from_value, to_value) {
+                  (Some(from), Some(to)) =>
+                    anim_scale_range(duration_ms, from, to, easing=Linear)
+                  _ => anim_scale(duration_ms, easing=Linear)
+                }
+              _ => anim_opacity(duration_ms, easing=Linear)
+            }
+            if prop_lower == "opacity" ||
+              prop_lower == "alpha" ||
+              prop_lower == "fade" ||
+              prop_lower == "position" ||
+              prop_lower == "pos" ||
+              prop_lower == "move" ||
+              prop_lower == "scale" ||
+              prop_lower == "size" {
+              builder.instructions.push(Animate(target, spec))
+            }
           }
         }
       }

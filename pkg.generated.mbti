@@ -9,9 +9,15 @@ import {
 // Values
 pub fn anim_opacity(Int, easing? : Easing) -> AnimationSpec
 
+pub fn anim_opacity_range(Int, Double, Double, easing? : Easing) -> AnimationSpec
+
 pub fn anim_position(Int, easing? : Easing) -> AnimationSpec
 
+pub fn anim_position_range(Int, Double, Double, Double, Double, easing? : Easing) -> AnimationSpec
+
 pub fn anim_scale(Int, easing? : Easing) -> AnimationSpec
+
+pub fn anim_scale_range(Int, Double, Double, easing? : Easing) -> AnimationSpec
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
@@ -169,6 +175,8 @@ pub struct AnimationSpec {
   prop : AnimProp
   duration_ms : Int
   easing : Easing
+  from : Array[Double]?
+  to : Array[Double]?
 }
 pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
@@ -274,6 +282,7 @@ pub struct FigurePlacement {
   pos : Position
   layer : Int
   opacity : Double
+  scale : Double
 }
 pub impl Eq for FigurePlacement
 pub impl Show for FigurePlacement
@@ -442,8 +451,11 @@ pub struct Script[T] {
 type ScriptBuilder[T]
 pub fn[T] ScriptBuilder::animate(Self[T], Figure, AnimationSpec) -> Unit
 pub fn[T] ScriptBuilder::animate_opacity(Self[T], Figure, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::animate_opacity_range(Self[T], Figure, Int, Double, Double, easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::animate_position(Self[T], Figure, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::animate_position_range(Self[T], Figure, Int, Double, Double, Double, Double, easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::animate_scale(Self[T], Figure, Int, easing? : Easing) -> Unit
+pub fn[T] ScriptBuilder::animate_scale_range(Self[T], Figure, Int, Double, Double, easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError

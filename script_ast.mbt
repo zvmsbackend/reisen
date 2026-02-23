@@ -29,6 +29,8 @@ pub struct AnimationSpec {
   prop : AnimProp
   duration_ms : Int
   easing : Easing
+  from : Array[Double]?
+  to : Array[Double]?
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -36,6 +38,7 @@ pub struct FigurePlacement {
   pos : Position
   layer : Int
   opacity : Double
+  scale : Double
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|

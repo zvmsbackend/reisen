@@ -56,7 +56,7 @@ pub fn label(name? : String = gensym(prefix="label")) -> Label {
 
 ///|
 pub fn place_left(layer? : Int = 0, opacity? : Double = 1.0) -> FigurePlacement {
-  { pos: Left, layer, opacity }
+  { pos: Left, layer, opacity, scale: 1.0 }
 }
 
 ///|
@@ -64,7 +64,7 @@ pub fn place_center(
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> FigurePlacement {
-  { pos: Center, layer, opacity }
+  { pos: Center, layer, opacity, scale: 1.0 }
 }
 
 ///|
@@ -72,7 +72,7 @@ pub fn place_right(
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> FigurePlacement {
-  { pos: Right, layer, opacity }
+  { pos: Right, layer, opacity, scale: 1.0 }
 }
 
 ///|
@@ -82,7 +82,7 @@ pub fn place_custom(
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> FigurePlacement {
-  { pos: Custom(x, y), layer, opacity }
+  { pos: Custom(x, y), layer, opacity, scale: 1.0 }
 }
 
 ///|
@@ -90,7 +90,7 @@ pub fn anim_opacity(
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Opacity, duration_ms, easing }
+  { prop: Opacity, duration_ms, easing, from: None, to: None }
 }
 
 ///|
@@ -98,7 +98,7 @@ pub fn anim_position(
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Position, duration_ms, easing }
+  { prop: Position, duration_ms, easing, from: None, to: None }
 }
 
 ///|
@@ -106,7 +106,45 @@ pub fn anim_scale(
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Scale, duration_ms, easing }
+  { prop: Scale, duration_ms, easing, from: None, to: None }
+}
+
+///|
+pub fn anim_opacity_range(
+  duration_ms : Int,
+  from : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  { prop: Opacity, duration_ms, easing, from: Some([from]), to: Some([to]) }
+}
+
+///|
+pub fn anim_position_range(
+  duration_ms : Int,
+  from_x : Double,
+  from_y : Double,
+  to_x : Double,
+  to_y : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: Position,
+    duration_ms,
+    easing,
+    from: Some([from_x, from_y]),
+    to: Some([to_x, to_y]),
+  }
+}
+
+///|
+pub fn anim_scale_range(
+  duration_ms : Int,
+  from : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  { prop: Scale, duration_ms, easing, from: Some([from]), to: Some([to]) }
 }
 
 ///|
@@ -249,7 +287,9 @@ pub fn[T] ScriptBuilder::show_figure_at(
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> Unit {
-  self.instructions.push(ShowFigure(figure.id, { pos, layer, opacity }))
+  self.instructions.push(
+    ShowFigure(figure.id, { pos, layer, opacity, scale: 1.0 }),
+  )
 }
 
 ///|
@@ -299,6 +339,20 @@ pub fn[T] ScriptBuilder::animate_opacity(
 }
 
 ///|
+pub fn[T] ScriptBuilder::animate_opacity_range(
+  self : ScriptBuilder[T],
+  target : Figure,
+  duration_ms : Int,
+  from : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id, anim_opacity_range(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
 pub fn[T] ScriptBuilder::animate_position(
   self : ScriptBuilder[T],
   target : Figure,
@@ -311,6 +365,25 @@ pub fn[T] ScriptBuilder::animate_position(
 }
 
 ///|
+pub fn[T] ScriptBuilder::animate_position_range(
+  self : ScriptBuilder[T],
+  target : Figure,
+  duration_ms : Int,
+  from_x : Double,
+  from_y : Double,
+  to_x : Double,
+  to_y : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(
+      target.id,
+      anim_position_range(duration_ms, from_x, from_y, to_x, to_y, easing~),
+    ),
+  )
+}
+
+///|
 pub fn[T] ScriptBuilder::animate_scale(
   self : ScriptBuilder[T],
   target : Figure,
@@ -318,6 +391,20 @@ pub fn[T] ScriptBuilder::animate_scale(
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(Animate(target.id, anim_scale(duration_ms, easing~)))
+}
+
+///|
+pub fn[T] ScriptBuilder::animate_scale_range(
+  self : ScriptBuilder[T],
+  target : Figure,
+  duration_ms : Int,
+  from : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id, anim_scale_range(duration_ms, from, to, easing~)),
+  )
 }
 
 ///|
