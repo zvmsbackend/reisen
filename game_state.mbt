@@ -82,14 +82,30 @@ pub fn[T] GameState::set_text_var(
 pub fn[T] GameState::interpolate(self : GameState[T], text : String) -> String {
   let result = StringBuilder::new()
   let mut in_brace = false
+  let mut in_style = false
+  let mut last_bracket_end = false
   let mut var_name = ""
 
   for c in text {
-    match c {
-      '{' => {
-        in_brace = true
-        var_name = ""
+    if in_style {
+      if c == '}' {
+        result.write_string("}")
+        in_style = false
+      } else {
+        result.write_string(c.to_string())
       }
+      continue
+    }
+    match c {
+      '{' =>
+        if last_bracket_end {
+          result.write_string("{")
+          in_style = true
+          last_bracket_end = false
+        } else {
+          in_brace = true
+          var_name = ""
+        }
       '}' => {
         if in_brace && var_name != "" {
           let value = self.text_var(var_name)
@@ -104,6 +120,12 @@ pub fn[T] GameState::interpolate(self : GameState[T], text : String) -> String {
         if in_brace {
           var_name = var_name + c.to_string()
         } else {
+          if last_bracket_end {
+            last_bracket_end = false
+          }
+          if c == ']' {
+            last_bracket_end = true
+          }
           result.write_string(c.to_string())
         }
     }

@@ -94,7 +94,7 @@ pub fn UiDom::text_speed_ms_per_char(self : UiDom) -> Int {
 ///|
 pub fn UiDom::start_typewriter(self : UiDom, text : String) -> Unit {
   self.typewriter_raw_text = text
-  self.typewriter_text = dom_strip_ruby_markup(text)
+  self.typewriter_text = dom_strip_text_markup(text)
   self.typewriter_visible = 0
   self.typewriter_last_update_ms = 0
 }
@@ -251,9 +251,14 @@ extern "js" fn dom_render_speaker_text(
   #|   dialog.innerHTML = '';
   #|   if (visible_count <= 0) return;
   #|   const rubyPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+  #|   const stylePattern = /\[([^\]]+)\]\{([^}]+)\}/g;
   #|   let lastIndex = 0;
   #|   let remaining = visible_count;
   #|   let match;
+  #|   const nextMatch = (pattern) => {
+  #|     const m = pattern.exec(text);
+  #|     return m ? { match: m, index: m.index } : null;
+  #|   };
   #|   const appendPlain = (chunk) => {
   #|     if (!chunk) return;
   #|     const visible = chunk.slice(0, remaining);
@@ -262,20 +267,36 @@ extern "js" fn dom_render_speaker_text(
   #|       remaining -= visible.length;
   #|     }
   #|   };
-  #|   while (remaining > 0 && (match = rubyPattern.exec(text)) !== null) {
+  #|   while (remaining > 0) {
+  #|     const rubyNext = nextMatch(rubyPattern);
+  #|     const styleNext = nextMatch(stylePattern);
+  #|     let next = rubyNext;
+  #|     let kind = 'ruby';
+  #|     if (!next || (styleNext && styleNext.index < next.index)) {
+  #|       next = styleNext;
+  #|       kind = 'style';
+  #|     }
+  #|     if (!next) break;
+  #|     match = next.match;
   #|     if (match.index > lastIndex) {
   #|       appendPlain(text.slice(lastIndex, match.index));
   #|     }
   #|     if (remaining <= 0) break;
-  #|     const base = match[1];
-  #|     const rubyText = match[2];
+  #|     const base = kind === 'ruby' ? match[1] : match[1];
   #|     if (remaining >= base.length) {
-  #|       const ruby = doc.createElement('ruby');
-  #|       ruby.appendChild(doc.createTextNode(base));
-  #|       const rt = doc.createElement('rt');
-  #|       rt.textContent = rubyText;
-  #|       ruby.appendChild(rt);
-  #|       dialog.appendChild(ruby);
+  #|       if (kind === 'ruby') {
+  #|         const ruby = doc.createElement('ruby');
+  #|         ruby.appendChild(doc.createTextNode(base));
+  #|         const rt = doc.createElement('rt');
+  #|         rt.textContent = match[2];
+  #|         ruby.appendChild(rt);
+  #|         dialog.appendChild(ruby);
+  #|       } else {
+  #|         const span = doc.createElement('span');
+  #|         span.textContent = base;
+  #|         span.setAttribute('style', match[2]);
+  #|         dialog.appendChild(span);
+  #|       }
   #|       remaining -= base.length;
   #|     } else {
   #|       appendPlain(base);
@@ -289,8 +310,10 @@ extern "js" fn dom_render_speaker_text(
   #| }
 
 ///|
-extern "js" fn dom_strip_ruby_markup(text : String) -> String =
-  #| (text) => text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+extern "js" fn dom_strip_text_markup(text : String) -> String =
+  #| (text) => text
+  #|   .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
+  #|   .replace(/\[([^\]]+)\]\{([^}]+)\}/g, '$1')
 
 ///|
 extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
@@ -703,7 +726,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       view.text.has_prefix(self.typewriter_raw_text) {
       let prev_len = self.typewriter_text.length()
       self.typewriter_raw_text = view.text
-      self.typewriter_text = dom_strip_ruby_markup(view.text)
+      self.typewriter_text = dom_strip_text_markup(view.text)
       if self.typewriter_visible < prev_len {
         self.typewriter_visible = prev_len
       }
@@ -712,7 +735,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       self.start_typewriter(view.text)
     } else {
       self.typewriter_raw_text = view.text
-      self.typewriter_text = dom_strip_ruby_markup(view.text)
+      self.typewriter_text = dom_strip_text_markup(view.text)
       self.typewriter_visible = self.typewriter_text.length()
       self.typewriter_last_update_ms = 0
     }
