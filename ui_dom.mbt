@@ -31,6 +31,7 @@ struct UiViewModel {
 struct UiDom {
   root_id : String
   mut text_speed : Int
+  mut typewriter_raw_text : String
   mut typewriter_text : String
   mut typewriter_visible : Int
   mut typewriter_last_update_ms : Int
@@ -54,6 +55,7 @@ fn UiDom::new(root_id : String) -> UiDom {
   {
     root_id,
     text_speed: 50,
+    typewriter_raw_text: "",
     typewriter_text: "",
     typewriter_visible: 0,
     typewriter_last_update_ms: 0,
@@ -91,7 +93,8 @@ pub fn UiDom::text_speed_ms_per_char(self : UiDom) -> Int {
 
 ///|
 pub fn UiDom::start_typewriter(self : UiDom, text : String) -> Unit {
-  self.typewriter_text = text
+  self.typewriter_raw_text = text
+  self.typewriter_text = dom_strip_ruby_markup(text)
   self.typewriter_visible = 0
   self.typewriter_last_update_ms = 0
 }
@@ -222,8 +225,9 @@ extern "js" fn dom_render_speaker_text(
   root_id : String,
   speaker : String,
   text : String,
+  visible_count : Int,
 ) -> Unit =
-  #| (root_id, speaker, text) => {
+  #| (root_id, speaker, text, visible_count) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -244,8 +248,49 @@ extern "js" fn dom_render_speaker_text(
   #|     root.appendChild(dialog);
   #|   }
   #|   dialog.style.whiteSpace = 'pre-wrap';
-  #|   dialog.textContent = text;
+  #|   dialog.innerHTML = '';
+  #|   if (visible_count <= 0) return;
+  #|   const rubyPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
+  #|   let lastIndex = 0;
+  #|   let remaining = visible_count;
+  #|   let match;
+  #|   const appendPlain = (chunk) => {
+  #|     if (!chunk) return;
+  #|     const visible = chunk.slice(0, remaining);
+  #|     if (visible) {
+  #|       dialog.appendChild(doc.createTextNode(visible));
+  #|       remaining -= visible.length;
+  #|     }
+  #|   };
+  #|   while (remaining > 0 && (match = rubyPattern.exec(text)) !== null) {
+  #|     if (match.index > lastIndex) {
+  #|       appendPlain(text.slice(lastIndex, match.index));
+  #|     }
+  #|     if (remaining <= 0) break;
+  #|     const base = match[1];
+  #|     const rubyText = match[2];
+  #|     if (remaining >= base.length) {
+  #|       const ruby = doc.createElement('ruby');
+  #|       ruby.appendChild(doc.createTextNode(base));
+  #|       const rt = doc.createElement('rt');
+  #|       rt.textContent = rubyText;
+  #|       ruby.appendChild(rt);
+  #|       dialog.appendChild(ruby);
+  #|       remaining -= base.length;
+  #|     } else {
+  #|       appendPlain(base);
+  #|       break;
+  #|     }
+  #|     lastIndex = match.index + match[0].length;
+  #|   }
+  #|   if (remaining > 0 && lastIndex < text.length) {
+  #|     appendPlain(text.slice(lastIndex));
+  #|   }
   #| }
+
+///|
+extern "js" fn dom_strip_ruby_markup(text : String) -> String =
+  #| (text) => text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
 
 ///|
 extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
@@ -652,12 +697,13 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   } else {
     dom_clear_intro(self.root_id)
   }
-  if view.text != self.typewriter_text && view.text != "" {
+  if view.text != self.typewriter_raw_text && view.text != "" {
     if view.append &&
       view.typewriter &&
-      view.text.has_prefix(self.typewriter_text) {
+      view.text.has_prefix(self.typewriter_raw_text) {
       let prev_len = self.typewriter_text.length()
-      self.typewriter_text = view.text
+      self.typewriter_raw_text = view.text
+      self.typewriter_text = dom_strip_ruby_markup(view.text)
       if self.typewriter_visible < prev_len {
         self.typewriter_visible = prev_len
       }
@@ -665,21 +711,27 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     } else if view.typewriter {
       self.start_typewriter(view.text)
     } else {
-      self.typewriter_text = view.text
+      self.typewriter_raw_text = view.text
+      self.typewriter_text = dom_strip_ruby_markup(view.text)
       self.typewriter_visible = self.typewriter_text.length()
       self.typewriter_last_update_ms = 0
     }
   }
   dom_setup_typewriter_click(self.root_id)
-  let display_text = if view.text == "" {
-    ""
+  let visible_count = if view.text == "" {
+    0
   } else if self.is_typewriter_done() {
-    self.typewriter_text
+    self.typewriter_text.length()
   } else {
-    self.typewriter_visible_text().to_string()
+    self.typewriter_visible
   }
   if self.dirty_speaker || self.dirty_text {
-    dom_render_speaker_text(self.root_id, view.speaker, display_text)
+    dom_render_speaker_text(
+      self.root_id,
+      view.speaker,
+      self.typewriter_raw_text,
+      visible_count,
+    )
     self.dirty_speaker = false
     self.dirty_text = false
   }
