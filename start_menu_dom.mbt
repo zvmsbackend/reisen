@@ -17,6 +17,12 @@ priv enum StartGateAction {
 }
 
 ///|
+priv enum StartLogoAction {
+  NoAction
+  Done
+}
+
+///|
 priv struct StartMenu {
   root_id : String
   save_ns : String
@@ -50,6 +56,31 @@ fn StartMenu::take_gate_action(self : StartMenu) -> StartGateAction {
       StartGateAction::Start
     }
     _ => StartGateAction::NoAction
+  }
+}
+
+///|
+fn StartMenu::render_logo(
+  self : StartMenu,
+  url : String,
+  duration_ms : Int,
+) -> Unit {
+  start_logo_dom_render(self.root_id, url, duration_ms)
+}
+
+///|
+fn StartMenu::clear_logo(self : StartMenu) -> Unit {
+  start_logo_dom_clear(self.root_id)
+}
+
+///|
+fn StartMenu::take_logo_action(self : StartMenu) -> StartLogoAction {
+  match start_logo_action_kind(self.root_id).to_option() {
+    Some("done") => {
+      start_logo_action_clear(self.root_id)
+      StartLogoAction::Done
+    }
+    _ => StartLogoAction::NoAction
   }
 }
 
@@ -157,6 +188,70 @@ extern "js" fn start_gate_dom_clear(root_id : String) -> Unit =
   #|   if (!root) return;
   #|   const gate = root.querySelector('[data-reisen="start-gate"]');
   #|   if (gate) gate.remove();
+  #| }
+
+///|
+extern "js" fn start_logo_dom_render(
+  root_id : String,
+  url : String,
+  duration_ms : Int,
+) -> Unit =
+  #| (root_id, url, duration_ms) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   let logo = root.querySelector('[data-reisen="start-logo"]');
+  #|   if (!logo) {
+  #|     logo = doc.createElement('div');
+  #|     logo.setAttribute('data-reisen', 'start-logo');
+  #|     root.appendChild(logo);
+  #|   }
+  #|   const ms = typeof duration_ms === 'number' ? duration_ms : 2000;
+  #|   logo.style.animation = `start-logo-fade ${ms}ms ease-in-out forwards`;
+  #|   logo.innerHTML = '';
+  #|   const img = doc.createElement('img');
+  #|   img.setAttribute('data-reisen', 'start-logo-image');
+  #|   img.src = url;
+  #|   logo.appendChild(img);
+  #|   if (!logo.__reisenLogoBound) {
+  #|     logo.__reisenLogoBound = true;
+  #|     logo.addEventListener('click', () => {
+  #|       root.dataset.reisenLogoActionKind = 'done';
+  #|     });
+  #|   }
+  #| }
+
+///|
+extern "js" fn start_logo_dom_clear(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const logo = root.querySelector('[data-reisen="start-logo"]');
+  #|   if (logo) logo.remove();
+  #| }
+
+///|
+extern "js" fn start_logo_action_kind(root_id : String) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const kind = root.dataset.reisenLogoActionKind;
+  #|   return kind || null;
+  #| }
+
+///|
+extern "js" fn start_logo_action_clear(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   delete root.dataset.reisenLogoActionKind;
   #| }
 
 ///|

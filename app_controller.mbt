@@ -4,6 +4,7 @@
 ///|
 pub enum AppPhase {
   StartGate
+  StartLogo
   StartMenu
   Settings
   InGame
@@ -20,6 +21,9 @@ struct AppController[T] {
   menu_music_id : String?
   menu_music_loop : Bool
   mut menu_music_playing : Bool
+  start_logo_url : String
+  start_logo_duration_ms : Int
+  mut start_logo_elapsed_ms : Int
   menu : StartMenu
   settings_menu : SettingsMenu
   mut phase : AppPhase
@@ -41,6 +45,8 @@ pub fn[T] AppController::new(
   settings_background? : String = "",
   menu_music? : Music,
   menu_music_loop? : Bool = true,
+  start_logo_url? : String = "",
+  start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
 ) -> AppController[T] {
@@ -54,6 +60,9 @@ pub fn[T] AppController::new(
     menu_music_id: menu_music.map(music => music.id),
     menu_music_loop,
     menu_music_playing: false,
+    start_logo_url,
+    start_logo_duration_ms,
+    start_logo_elapsed_ms: 0,
     menu: StartMenu::new(
       ui_root_id,
       save_namespace~,
@@ -94,10 +103,19 @@ fn[T] AppController::start_menu_music_stop(self : AppController[T]) -> Unit {
 
 ///|
 fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
+  self.menu.clear_logo()
   self.menu.clear_gate()
   self.menu.render()
   self.phase = AppPhase::StartMenu
   self.start_menu_music_start()
+}
+
+///|
+fn[T] AppController::enter_start_logo(self : AppController[T]) -> Unit {
+  self.menu.clear_gate()
+  self.menu.render_logo(self.start_logo_url, self.start_logo_duration_ms)
+  self.start_logo_elapsed_ms = 0
+  self.phase = AppPhase::StartLogo
 }
 
 ///|
@@ -227,8 +245,24 @@ pub fn[T : FromJson + ToJson] AppController::tick(
   match self.phase {
     AppPhase::StartGate => {
       match self.menu.take_gate_action() {
-        StartGateAction::Start => self.enter_start_menu()
+        StartGateAction::Start =>
+          if self.start_logo_url == "" {
+            self.enter_start_menu()
+          } else {
+            self.enter_start_logo()
+          }
         StartGateAction::NoAction => ()
+      }
+      true
+    }
+    AppPhase::StartLogo => {
+      self.start_logo_elapsed_ms += elapsed_ms
+      match self.menu.take_logo_action() {
+        StartLogoAction::Done => self.enter_start_menu()
+        StartLogoAction::NoAction =>
+          if self.start_logo_elapsed_ms >= self.start_logo_duration_ms {
+            self.enter_start_menu()
+          }
       }
       true
     }
