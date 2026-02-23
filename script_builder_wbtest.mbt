@@ -130,7 +130,9 @@ test "menu helper emits say then choice" {
     ])
   })
 
-  assert_true(built.instructions[1] is Say("narrator", "Pick one", true, false))
+  assert_true(
+    built.instructions[1] is Say("narrator", "Pick one", true, false, None),
+  )
   assert_true(built.instructions[2] is Choice(_))
 }
 
@@ -165,5 +167,5 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
     built.instructions[4]
     is Animate("alice", { prop: Scale, duration_ms: 240, easing: EaseOut, .. }),
   )
-  assert_true(built.instructions[5] is Say("", "done", true, false))
+  assert_true(built.instructions[5] is Say("", "done", true, false, None))
 }

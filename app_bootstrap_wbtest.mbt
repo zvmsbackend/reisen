@@ -7,7 +7,7 @@ test "start_game wires runner and performs initial sync" {
 
   // Initial sync in bootstrap.
   assert_eq(calls.length(), 1)
-  assert_eq(runner.step(), Said("narrator", "hello", true, false))
+  assert_eq(runner.step(), Said("narrator", "hello", true, false, None))
   assert_eq(calls.length(), 1)
 }
 
@@ -25,7 +25,7 @@ test "start_game supports optional hooks" {
   )
 
   assert_eq(calls.length(), 1)
-  assert_eq(runner.step(), Said("narrator", "hello", true, false))
+  assert_eq(runner.step(), Said("narrator", "hello", true, false, None))
   assert_eq(calls.length(), 1)
   assert_eq(events.length(), 1)
 }
@@ -37,11 +37,11 @@ test "start_game_from_save resumes script" {
     builder.say("n", "b")
   })
   let runtime = Runtime::new(script, GameState::new(0))
-  assert_eq(runtime.step(), Said("n", "a", true, false))
+  assert_eq(runtime.step(), Said("n", "a", true, false, None))
   let saved = runtime.save_json()
 
   let runner = start_game_from_save(script, saved, "app")
-  assert_eq(runner.step(), Said("n", "b", true, false))
+  assert_eq(runner.step(), Said("n", "b", true, false, None))
 }
 
 ///|
@@ -53,11 +53,11 @@ test "save_runner_to_slot and start_game_from_slot roundtrip" {
   })
 
   let runner = start_game(script, GameState::new(0), "app")
-  assert_eq(runner.step(), Said("n", "a", true, false))
+  assert_eq(runner.step(), Said("n", "a", true, false, None))
   save_runner_to_slot(runner, "wb_slot_roundtrip")
 
   let resumed = start_game_from_slot(script, "wb_slot_roundtrip", "app")
-  assert_eq(resumed.step(), Said("n", "a", true, false))
+  assert_eq(resumed.step(), Said("n", "a", true, false, None))
 }
 
 ///|
@@ -104,7 +104,7 @@ test "start_game_from_slot respects save namespace" {
     builder.say("n", "b")
   })
   let runner = start_game(script, GameState::new(0), "app")
-  assert_eq(runner.step(), Said("n", "a", true, false))
+  assert_eq(runner.step(), Said("n", "a", true, false, None))
   save_runner_to_slot(runner, "shared_slot", save_namespace="game_a")
 
   let ok = start_game_from_slot(
@@ -113,7 +113,7 @@ test "start_game_from_slot respects save namespace" {
     "app",
     save_namespace="game_a",
   )
-  assert_eq(ok.step(), Said("n", "a", true, false))
+  assert_eq(ok.step(), Said("n", "a", true, false, None))
 
   let bad : Result[GameRunner[Int], Error] = try? start_game_from_slot(
     script,

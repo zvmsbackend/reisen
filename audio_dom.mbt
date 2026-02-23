@@ -15,7 +15,11 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
     MusicPlayed(id, should_loop) => AudioCommand::PlayMusic(id, should_loop)
     MusicStopped => AudioCommand::StopMusic
     SfxPlayed(id) => AudioCommand::PlaySfx(id)
-    Said(_, _, _, _) => AudioCommand::Noop
+    Said(_, _, _, _, voice) =>
+      match voice {
+        Some(id) => AudioCommand::PlaySfx(id)
+        None => AudioCommand::Noop
+      }
     IntroShown(_) => AudioCommand::Noop
     TextBoxShown | TextBoxHidden => AudioCommand::Noop
     AvatarShown(_) | AvatarHidden => AudioCommand::Noop

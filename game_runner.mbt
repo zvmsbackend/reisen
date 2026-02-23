@@ -127,7 +127,7 @@ fn[T] GameRunner::apply_event_effects(
   mark_ui_for_text : Bool,
 ) -> Unit {
   match event {
-    Said(_, _, _, _) => {
+    Said(_, _, _, _, _) => {
       if mark_ui_for_text {
         self.ui_dirty = true
       }
@@ -362,7 +362,8 @@ pub fn[T] GameRunner::step(
 ///|
 fn[T] GameRunner::current_dialog_event(self : GameRunner[T]) -> RuntimeEvent {
   match self.director.dialog() {
-    Some(line) => Said(line.speaker, line.text, line.typewriter, line.append)
+    Some(line) =>
+      Said(line.speaker, line.text, line.typewriter, line.append, None)
     None => Noop
   }
 }

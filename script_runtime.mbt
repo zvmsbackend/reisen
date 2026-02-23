@@ -5,7 +5,7 @@
 ///|
 pub enum RuntimeEvent {
   Noop
-  Said(String, String, Bool, Bool)
+  Said(String, String, Bool, Bool, String?)
   IntroShown(String)
   TextBoxShown
   TextBoxHidden
@@ -155,11 +155,17 @@ fn[T] Runtime::run_inst(
       self.wait_ms = if ms < 0 { 0 } else { ms }
       WaitStarted(self.wait_ms)
     }
-    Say(name, text, typewriter, append) => {
+    Say(name, text, typewriter, append, voice) => {
       self.ip = self.ip + 1
       let interpolated = self.state.interpolate(text)
       let name_interpolated = self.state.interpolate(name)
-      Said(name_interpolated, interpolated, typewriter, append)
+      let voice_interpolated = match voice {
+        Some(v) => Some(self.state.interpolate(v))
+        None => None
+      }
+      Said(
+        name_interpolated, interpolated, typewriter, append, voice_interpolated,
+      )
     }
     Intro(text) => {
       self.ip = self.ip + 1

@@ -224,8 +224,10 @@ pub fn[T] ScriptBuilder::narrate(
   text : String,
   typewriter? : Bool = true,
   append? : Bool = false,
+  voice? : String = "",
 ) -> Unit {
-  self.instructions.push(Say("", text, typewriter, append))
+  let voice_id = if voice == "" { None } else { Some(voice) }
+  self.instructions.push(Say("", text, typewriter, append, voice_id))
 }
 
 ///|
@@ -235,8 +237,10 @@ pub fn[T] ScriptBuilder::say(
   text : String,
   typewriter? : Bool = true,
   append? : Bool = false,
+  voice? : String = "",
 ) -> Unit {
-  self.instructions.push(Say(speaker, text, typewriter, append))
+  let voice_id = if voice == "" { None } else { Some(voice) }
+  self.instructions.push(Say(speaker, text, typewriter, append, voice_id))
 }
 
 ///|
@@ -246,9 +250,11 @@ pub fn[T] ScriptBuilder::say_many(
   texts : Array[String],
   typewriter? : Bool = true,
   append? : Bool = false,
+  voice? : String = "",
 ) -> Unit {
+  let voice_id = if voice == "" { None } else { Some(voice) }
   for text in texts {
-    self.instructions.push(Say(speaker, text, typewriter, append))
+    self.instructions.push(Say(speaker, text, typewriter, append, voice_id))
   }
 }
 
@@ -267,7 +273,7 @@ pub fn[T] ScriptBuilder::menu(
   prompt : String,
   options : Array[ChoiceOption],
 ) -> Unit {
-  self.instructions.push(Say(speaker, prompt, true, false))
+  self.instructions.push(Say(speaker, prompt, true, false, None))
   self.instructions.push(Choice(options))
 }
 
