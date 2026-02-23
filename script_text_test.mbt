@@ -27,6 +27,15 @@ test "parse say" {
 }
 
 ///|
+test "parse say without typewriter" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "say: Speaker, Hello world, false",
+  )
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is Say("Speaker", "Hello world", false))
+}
+
+///|
 test "parse narrate" {
   let script : Script[Unit] = reisen_parse_text_script(
     "narrate: This is narration",

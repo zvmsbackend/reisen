@@ -22,7 +22,7 @@ test "runtime step and choose" {
   assert_true(e1 is ChoicePrompt(_))
 
   let e2 = runtime.choose("right")
-  assert_eq(e2, Said("narrator", "right"))
+  assert_eq(e2, Said("narrator", "right", true))
 }
 
 ///|
@@ -31,7 +31,7 @@ test "script helper builds runnable script" {
     builder.say("narrator", "hello")
   })
   let runtime = Runtime::new(compiled, GameState::new(0))
-  assert_eq(runtime.step(), Said("narrator", "hello"))
+  assert_eq(runtime.step(), Said("narrator", "hello", true))
 }
 
 ///|
@@ -52,7 +52,7 @@ test "branch helper routes to then label when predicate is true" {
   let state = GameState::new(0)
   state.set_flag("go_then", true)
   let runtime = Runtime::new(compiled, state)
-  assert_eq(runtime.step(), Said("narrator", "then"))
+  assert_eq(runtime.step(), Said("narrator", "then", true))
 }
 
 ///|
@@ -72,7 +72,7 @@ test "branch helper routes to else label when predicate is false" {
 
   let state = GameState::new(0)
   let runtime = Runtime::new(compiled, state)
-  assert_eq(runtime.step(), Said("narrator", "else"))
+  assert_eq(runtime.step(), Said("narrator", "else", true))
 }
 
 ///|
@@ -94,9 +94,9 @@ test "menu helper yields prompt then choice" {
   })
 
   let runtime = Runtime::new(compiled, GameState::new(0))
-  assert_eq(runtime.step(), Said("guide", "Which path?"))
+  assert_eq(runtime.step(), Said("guide", "Which path?", true))
   assert_true(runtime.step() is ChoicePrompt(_))
-  assert_eq(runtime.choose("b"), Said("guide", "B"))
+  assert_eq(runtime.choose("b"), Said("guide", "B", true))
 }
 
 ///|
@@ -105,7 +105,7 @@ test "runtime save and restore json" {
     Label("start"),
     Wait(100),
     RunCode(gs => gs.set_int_var("count", gs.int_var("count") + 1)),
-    Say("narrator", "done"),
+    Say("narrator", "done", true),
   ])
   let state = GameState::new(0)
   let runtime = Runtime::new(script, state)
@@ -118,5 +118,14 @@ test "runtime save and restore json" {
   )
   guard restored_result is Ok(restored) else { fail("restore failed") }
 
-  assert_eq(restored.step(elapsed_ms=100), Said("narrator", "done"))
+  assert_eq(restored.step(elapsed_ms=100), Said("narrator", "done", true))
+}
+
+///|
+test "runtime say supports disabling typewriter" {
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "instant", typewriter=false)
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), Said("n", "instant", false))
 }

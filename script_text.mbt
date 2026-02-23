@@ -30,6 +30,32 @@ fn get_first_part(s : String, sep : String) -> (String, String) {
 }
 
 ///|
+fn join_parts(
+  parts : Array[String],
+  start : Int,
+  end_exclusive : Int,
+) -> String {
+  let mut out = ""
+  for i in start..<end_exclusive {
+    if i > start {
+      out = out + ", "
+    }
+    out = out + parts[i]
+  }
+  out
+}
+
+///|
+fn parse_typewriter_flag(raw : String) -> Bool? {
+  let v = raw.trim().to_lower()
+  match v {
+    "true" | "1" | "yes" | "on" | "typewriter" => Some(true)
+    "false" | "0" | "no" | "off" | "instant" | "instantaneous" => Some(false)
+    _ => None
+  }
+}
+
+///|
 fn[T] reisen_text_script_to_builder(
   text : String,
   builder : ScriptBuilder[T],
@@ -86,15 +112,43 @@ fn[T] reisen_text_script_to_builder(
         let ms = (try? @strconv.parse_int(args_str)).unwrap_or(0)
         builder.instructions.push(Wait(ms))
       }
-      "narrate" | "narration" => builder.narrate(args_str)
+      "narrate" | "narration" => {
+        let parts : Array[String] = []
+        for part in args_str.split(",") {
+          parts.push(part.trim().to_string())
+        }
+        if parts.is_empty() {
+          ()
+        } else {
+          let maybe_flag = parse_typewriter_flag(parts[parts.length() - 1])
+          let (text, typewriter) = match maybe_flag {
+            Some(flag) if parts.length() > 1 =>
+              (join_parts(parts, 0, parts.length() - 1), flag)
+            _ => (join_parts(parts, 0, parts.length()), true)
+          }
+          builder.narrate(text, typewriter~)
+        }
+      }
       "say" => {
-        let (speaker, text) = get_first_part(args_str, ",")
-        match (speaker, last_speaker) {
-          ("", Some(s)) => builder.say(s, text)
-          ("", None) => builder.say("", text)
-          (s, _) => {
-            last_speaker = Some(s)
-            builder.say(s, text)
+        let parts : Array[String] = []
+        for part in args_str.split(",") {
+          parts.push(part.trim().to_string())
+        }
+        if parts.length() >= 2 {
+          let speaker = parts[0]
+          let maybe_flag = parse_typewriter_flag(parts[parts.length() - 1])
+          let (text, typewriter) = match maybe_flag {
+            Some(flag) if parts.length() > 2 =>
+              (join_parts(parts, 1, parts.length() - 1), flag)
+            _ => (join_parts(parts, 1, parts.length()), true)
+          }
+          match (speaker, last_speaker) {
+            ("", Some(s)) => builder.say(s, text, typewriter~)
+            ("", None) => builder.say("", text, typewriter~)
+            (s, _) => {
+              last_speaker = Some(s)
+              builder.say(s, text, typewriter~)
+            }
           }
         }
       }

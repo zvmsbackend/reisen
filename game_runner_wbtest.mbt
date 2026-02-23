@@ -34,11 +34,11 @@ test "runner drives script and choice flow" {
   let ui = UiDom::new("app")
   let runner = GameRunner::new(Director::new(runtime), ui)
 
-  assert_eq(runner.step(), Said("guide", "Pick"))
+  assert_eq(runner.step(), Said("guide", "Pick", true))
   ui.complete_typewriter()
   ui.simulate_click()
   assert_true(runner.step() is ChoicePrompt(_))
-  assert_eq(runner.submit_choice("right"), Said("guide", "R"))
+  assert_eq(runner.submit_choice("right"), Said("guide", "R", true))
 }
 
 ///|
@@ -93,7 +93,7 @@ test "runner render sync hook is called on ui sync and step" {
 
   runner.sync_ui()
   assert_eq(calls.length(), 1)
-  assert_eq(runner.step(), Said("narrator", "hello"))
+  assert_eq(runner.step(), Said("narrator", "hello", true))
   assert_eq(calls.length(), 1)
 }
 
@@ -124,9 +124,9 @@ test "runner event hook receives emitted events" {
     _ => (),
     event => seen.push(event),
   )
-  assert_eq(runner.step(), Said("n", "t"))
+  assert_eq(runner.step(), Said("n", "t", true))
   assert_eq(seen.length(), 1)
-  assert_eq(seen[0], Said("n", "t"))
+  assert_eq(seen[0], Said("n", "t", true))
 }
 
 ///|
@@ -143,7 +143,7 @@ test "runner click skips wait" {
 
   assert_true(runner.step() is WaitStarted(200))
   ui.simulate_click()
-  assert_true(runner.step() is Said("n", "done"))
+  assert_true(runner.step() is Said("n", "done", true))
 }
 
 ///|
@@ -159,10 +159,10 @@ test "wait advances with elapsed even when dialog remains" {
     ui,
   )
 
-  assert_true(runner.step() is Said("n", "first"))
+  assert_true(runner.step() is Said("n", "first", true))
   ui.simulate_click()
   assert_true(runner.step() is WaitStarted(100))
-  assert_true(runner.step(elapsed_ms=120) is Said("n", "after"))
+  assert_true(runner.step(elapsed_ms=120) is Said("n", "after", true))
 }
 
 ///|
@@ -178,11 +178,11 @@ test "skip mode ignores waits" {
     ui,
   )
 
-  assert_true(runner.step() is Said("n", "first"))
+  assert_true(runner.step() is Said("n", "first", true))
   ui.simulate_click()
   assert_true(runner.step() is WaitStarted(200))
   ui.set_skip_mode(true)
-  assert_true(runner.step(elapsed_ms=0) is Said("n", "after"))
+  assert_true(runner.step(elapsed_ms=0) is Said("n", "after", true))
 }
 
 ///|

@@ -158,7 +158,7 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)
     match event {
-      Said(_, _) => {
+      Said(_, _, _) => {
         self.ui_dirty = true
         self.ui.mark_dirty_text()
       }
@@ -237,7 +237,7 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms~)
     (self.event_hook)(event)
     match event {
-      Said(_, _) => {
+      Said(_, _, _) => {
         self.ui_dirty = true
         self.ui.mark_dirty_text()
       }
@@ -278,7 +278,7 @@ pub fn[T] GameRunner::step(
         self.ui.mark_dirty_choices()
         return event
       }
-      Said(_, _) => {
+      Said(_, _, _) => {
         self.ui.mark_dirty_text()
         self.render_ui()
         return self.step(elapsed_ms=0)
@@ -303,7 +303,7 @@ pub fn[T] GameRunner::step(
       let event = self.director.step(elapsed_ms=0)
       (self.event_hook)(event)
       match event {
-        Said(_, _) => self.ui.mark_dirty_text()
+        Said(_, _, _) => self.ui.mark_dirty_text()
         ChoicePrompt(_) => self.ui.mark_dirty_choices()
         TextInputPrompt(_, _) => self.ui.mark_dirty_text_input()
         ScriptEnded => self.ui.mark_all_dirty()
@@ -332,7 +332,7 @@ pub fn[T] GameRunner::step(
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     match event {
-      Said(_, _) => {
+      Said(_, _, _) => {
         self.ui_dirty = true
         self.ui.mark_dirty_text()
       }
@@ -380,7 +380,7 @@ pub fn[T] GameRunner::step(
 ///|
 fn[T] GameRunner::current_dialog_event(self : GameRunner[T]) -> RuntimeEvent {
   match self.director.dialog() {
-    Some(line) => Said(line.speaker, line.text)
+    Some(line) => Said(line.speaker, line.text, line.typewriter)
     None => Noop
   }
 }

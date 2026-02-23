@@ -18,6 +18,7 @@ struct UiTextInputView {
 struct UiViewModel {
   speaker : String
   text : String
+  typewriter : Bool
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
   auto_mode : Bool
@@ -479,6 +480,10 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     Some(line) => (line.speaker, line.text)
     None => ("", "")
   }
+  let typewriter = match director.dialog() {
+    Some(line) => line.typewriter
+    None => true
+  }
   let choices = director
     .choices()
     .map(opt => UiChoiceView::{ id: opt.id, text: opt.text })
@@ -489,6 +494,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
   {
     speaker,
     text,
+    typewriter,
     choices,
     text_input,
     auto_mode: ui.auto_mode,
@@ -499,7 +505,13 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
 ///|
 fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   if view.text != self.typewriter_text && view.text != "" {
-    self.start_typewriter(view.text)
+    if view.typewriter {
+      self.start_typewriter(view.text)
+    } else {
+      self.typewriter_text = view.text
+      self.typewriter_visible = self.typewriter_text.length()
+      self.typewriter_last_update_ms = 0
+    }
   }
   dom_setup_typewriter_click(self.root_id)
   let display_text = if view.text == "" {

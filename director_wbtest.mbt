@@ -38,8 +38,11 @@ test "director maps runtime events into ui and render state" {
   assert_true(director.step() is Animated("alice", _))
   assert_eq(director.animations().length(), 1)
 
-  assert_eq(director.step(), Said("alice", "Where to?"))
-  assert_eq(director.dialog(), Some({ speaker: "alice", text: "Where to?" }))
+  assert_eq(director.step(), Said("alice", "Where to?", true))
+  assert_eq(
+    director.dialog(),
+    Some({ speaker: "alice", text: "Where to?", typewriter: true }),
+  )
 
   assert_true(director.step() is ChoicePrompt(_))
   assert_eq(director.choices().length(), 2)
@@ -47,7 +50,7 @@ test "director maps runtime events into ui and render state" {
   assert_eq(director.choose("a"), SfxPlayed("confirm"))
   assert_eq(director.last_sfx(), Some("confirm"))
 
-  assert_eq(director.step(), Said("alice", "A"))
+  assert_eq(director.step(), Said("alice", "A", true))
 }
 
 ///|
@@ -71,8 +74,11 @@ test "director branch false path through choose" {
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
   ignore(director.step())
   ignore(director.step())
-  assert_eq(director.choose("right"), Said("guide", "R"))
-  assert_eq(director.dialog(), Some({ speaker: "guide", text: "R" }))
+  assert_eq(director.choose("right"), Said("guide", "R", true))
+  assert_eq(
+    director.dialog(),
+    Some({ speaker: "guide", text: "R", typewriter: true }),
+  )
 }
 
 ///|
@@ -83,9 +89,9 @@ test "director save json resumes runtime position" {
   })
 
   let director = Director::new(Runtime::new(script, GameState::new(0)))
-  assert_eq(director.step(), Said("n", "a"))
+  assert_eq(director.step(), Said("n", "a", true))
   let saved = director.save_json()
 
   let restored : Director[Int] = director_from_save_json(script, saved)
-  assert_eq(restored.step(), Said("n", "b"))
+  assert_eq(restored.step(), Said("n", "b", true))
 }

@@ -5,7 +5,7 @@
 ///|
 pub enum RuntimeEvent {
   Noop
-  Said(String, String)
+  Said(String, String, Bool)
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -150,11 +150,11 @@ fn[T] Runtime::run_inst(
       self.wait_ms = if ms < 0 { 0 } else { ms }
       WaitStarted(self.wait_ms)
     }
-    Say(name, text) => {
+    Say(name, text, typewriter) => {
       self.ip = self.ip + 1
       let interpolated = self.state.interpolate(text)
       let name_interpolated = self.state.interpolate(name)
-      Said(name_interpolated, interpolated)
+      Said(name_interpolated, interpolated, typewriter)
     }
     Choice(options) => {
       self.ip = self.ip + 1
