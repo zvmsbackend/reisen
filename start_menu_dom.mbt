@@ -11,6 +11,12 @@ priv enum StartMenuAction {
 }
 
 ///|
+priv enum StartGateAction {
+  NoAction
+  Start
+}
+
+///|
 priv struct StartMenu {
   root_id : String
   save_ns : String
@@ -24,6 +30,27 @@ fn StartMenu::new(
   background? : String = "",
 ) -> StartMenu {
   { root_id, save_ns: save_namespace, background }
+}
+
+///|
+fn StartMenu::render_gate(self : StartMenu) -> Unit {
+  start_gate_dom_render(self.root_id)
+}
+
+///|
+fn StartMenu::clear_gate(self : StartMenu) -> Unit {
+  start_gate_dom_clear(self.root_id)
+}
+
+///|
+fn StartMenu::take_gate_action(self : StartMenu) -> StartGateAction {
+  match start_gate_action_kind(self.root_id).to_option() {
+    Some("start") => {
+      start_gate_action_clear(self.root_id)
+      StartGateAction::Start
+    }
+    _ => StartGateAction::NoAction
+  }
 }
 
 ///|
@@ -93,6 +120,61 @@ extern "js" fn start_menu_dom_render(
   #|   actions.appendChild(mkButton('Load', 'load'));
   #|   actions.appendChild(mkButton('Settings', 'settings'));
   #|   menu.appendChild(actions);
+  #| }
+
+///|
+extern "js" fn start_gate_dom_render(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   let gate = root.querySelector('[data-reisen="start-gate"]');
+  #|   if (!gate) {
+  #|     gate = doc.createElement('div');
+  #|     gate.setAttribute('data-reisen', 'start-gate');
+  #|     root.appendChild(gate);
+  #|   }
+  #|   gate.innerHTML = '';
+  #|   const btn = doc.createElement('button');
+  #|   btn.type = 'button';
+  #|   btn.textContent = 'Click to Start';
+  #|   btn.addEventListener('click', () => {
+  #|     root.dataset.reisenGateActionKind = 'start';
+  #|   });
+  #|   gate.appendChild(btn);
+  #| }
+
+///|
+extern "js" fn start_gate_dom_clear(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const gate = root.querySelector('[data-reisen="start-gate"]');
+  #|   if (gate) gate.remove();
+  #| }
+
+///|
+extern "js" fn start_gate_action_kind(root_id : String) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const kind = root.dataset.reisenGateActionKind;
+  #|   return kind || null;
+  #| }
+
+///|
+extern "js" fn start_gate_action_clear(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   delete root.dataset.reisenGateActionKind;
   #| }
 
 ///|

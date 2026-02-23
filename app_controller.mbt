@@ -3,6 +3,7 @@
 
 ///|
 pub enum AppPhase {
+  StartGate
   StartMenu
   Settings
   InGame
@@ -63,22 +64,18 @@ pub fn[T] AppController::new(
       save_namespace~,
       background=settings_background,
     ),
-    phase: AppPhase::StartMenu,
+    phase: AppPhase::StartGate,
     render_sync,
     event_hook,
     runner: None,
     saved_director_json: None,
   }
-  app.menu.render()
-  app.start_menu_music_start()
+  app.menu.render_gate()
   app
 }
 
 ///|
 fn[T] AppController::start_menu_music_start(self : AppController[T]) -> Unit {
-  if self.menu_music_id is None || self.menu_music_playing {
-    return
-  }
   guard self.menu_music_id is Some(menu_music_id) && !self.menu_music_playing else {
     return
   }
@@ -97,6 +94,7 @@ fn[T] AppController::start_menu_music_stop(self : AppController[T]) -> Unit {
 
 ///|
 fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
+  self.menu.clear_gate()
   self.menu.render()
   self.phase = AppPhase::StartMenu
   self.start_menu_music_start()
@@ -227,6 +225,13 @@ pub fn[T : FromJson + ToJson] AppController::tick(
   elapsed_ms? : Int = 0,
 ) -> Bool {
   match self.phase {
+    AppPhase::StartGate => {
+      match self.menu.take_gate_action() {
+        StartGateAction::Start => self.enter_start_menu()
+        StartGateAction::NoAction => ()
+      }
+      true
+    }
     AppPhase::InGame =>
       match self.runner {
         Some(runner) =>

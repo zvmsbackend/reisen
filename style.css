@@ -232,6 +232,35 @@ html, body {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
 }
 
+[data-reisen="start-gate"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-secondary);
+}
+
+[data-reisen="start-gate"] button {
+  min-width: 200px;
+  padding: 16px 36px;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-hover);
+  border-radius: 6px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+[data-reisen="start-gate"] button:hover {
+  background: var(--button-hover);
+  border-color: var(--border-hover);
+}
+
 [data-reisen="start-actions"] button,
 [data-reisen="settings-actions"] button {
   min-width: 180px;

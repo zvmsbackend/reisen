@@ -3,7 +3,8 @@ test "app controller enters game on new game action" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(script, () => GameState::new(0), "app")
 
-  assert_eq(app.phase(), AppPhase::StartMenu)
+  assert_eq(app.phase(), AppPhase::StartGate)
+  app.enter_start_menu()
   app.handle_menu_action(StartMenuAction::NewGame)
   assert_eq(app.phase(), AppPhase::InGame)
 }
@@ -14,6 +15,7 @@ test "app controller stays in menu when loading missing slot" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(script, () => GameState::new(0), "app")
   // Load from start menu now goes to settings
+  app.enter_start_menu()
   app.handle_menu_action(StartMenuAction::NoAction)
   assert_eq(app.phase(), AppPhase::StartMenu)
 }
@@ -38,6 +40,7 @@ test "app controller can continue from saved slot" {
     "app",
     save_namespace="app_test_ns_continue",
   )
+  app.enter_start_menu()
   app.handle_menu_action(StartMenuAction::Continue("slot1"))
   assert_eq(app.phase(), AppPhase::InGame)
 }

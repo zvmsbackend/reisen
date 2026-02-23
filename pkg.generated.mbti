@@ -221,6 +221,7 @@ pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
 pub enum AppPhase {
+  StartGate
   StartMenu
   Settings
   InGame
