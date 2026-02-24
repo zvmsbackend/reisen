@@ -190,3 +190,25 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
     is Say(speaker="", text="done", typewriter=true, append=false, voice=None),
   )
 }
+
+///|
+test "effect helper emits apply effect" {
+  let built : Script[Int] = script(builder => {
+    builder.effect(dummy_figure("alice"), effect("glow"), [
+      effect_param("intensity", 0.6),
+      effect_param("radius", 8.0),
+    ])
+  })
+
+  assert_true(
+    built.instructions[0]
+    is ApplyEffect(
+      "alice",
+      {
+        id: "glow",
+        params: [("intensity", 0.6), ("radius", 8.0)],
+        phase: Some(EffectPhase::Post),
+      }
+    ),
+  )
+}

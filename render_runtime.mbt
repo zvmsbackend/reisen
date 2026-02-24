@@ -21,7 +21,6 @@ priv struct Renderable {
   color_b : Double
   texel_x : Double
   texel_y : Double
-  layer : Int
 }
 
 ///|
@@ -41,7 +40,6 @@ priv struct RenderPipeline {
 ///|
 priv struct Renderer {
   gl : WebGL
-  mesh : QuadMesh
   pipe : RenderPipeline
   items : Array[Renderable]
 }
@@ -93,23 +91,13 @@ fn create_pipeline(
 }
 
 ///|
-fn renderer_new(gl : WebGL, mesh : QuadMesh, pipe : RenderPipeline) -> Renderer {
-  { gl, mesh, pipe, items: [] }
+fn Renderer::new(gl : WebGL, pipe : RenderPipeline) -> Renderer {
+  { gl, pipe, items: [] }
 }
 
 ///|
 fn Renderer::clear(self : Renderer) -> Unit {
   self.items.clear()
-}
-
-///|
-fn Renderer::add(self : Renderer, item : Renderable) -> Unit {
-  self.items.push(item)
-}
-
-///|
-fn sort_by_layer(items : Array[Renderable]) -> Unit {
-  items.sort_by_key(item => item.layer)
 }
 
 ///|
@@ -142,55 +130,33 @@ fn model_matrix(
 }
 
 ///|
-fn Renderer::draw_with_viewport(
-  self : Renderer,
+fn draw_item_with_pipeline(
+  gl : WebGL,
+  mesh : QuadMesh,
+  pipe : RenderPipeline,
+  item : Renderable,
   vw : Double,
   vh : Double,
 ) -> Unit {
-  self.gl.enable(self.gl.constant("BLEND"))
-  self.gl.blend_func(
-    self.gl.constant("SRC_ALPHA"),
-    self.gl.constant("ONE_MINUS_SRC_ALPHA"),
-  )
+  gl.enable(gl.constant("BLEND"))
+  gl.blend_func(gl.constant("SRC_ALPHA"), gl.constant("ONE_MINUS_SRC_ALPHA"))
+  gl.use_program(pipe.program.program)
+  bind_quad_attributes(gl, pipe.program, mesh)
+  gl.uniform1i(pipe.program.u_tex, 0)
+  gl.active_texture(gl.constant("TEXTURE0"))
+  gl.bind_texture(gl.constant("TEXTURE_2D"), item.texture)
 
-  sort_by_layer(self.items)
-  self.gl.use_program(self.pipe.program.program)
-  bind_quad_attributes(self.gl, self.pipe.program, self.mesh)
-  self.gl.uniform1i(self.pipe.program.u_tex, 0)
+  let mat = model_matrix(item.x, item.y, item.w, item.h, item.rotation, vw, vh)
+  let mat_f32 = js_float32_array(mat)
+  gl.uniform_matrix4(pipe.u_model, false, mat_f32)
+  gl.uniform1f(pipe.u_opacity, item.opacity)
+  gl.uniform2f(pipe.u_texel, item.texel_x, item.texel_y)
+  gl.uniform1f(pipe.u_blur, item.blur)
+  gl.uniform1f(pipe.u_brightness, item.brightness)
+  gl.uniform1f(pipe.u_contrast, item.contrast)
+  gl.uniform1f(pipe.u_saturation, item.saturation)
+  gl.uniform1f(pipe.u_gamma, item.gamma)
+  gl.uniform3f(pipe.u_color, item.color_r, item.color_g, item.color_b)
 
-  for item in self.items {
-    self.gl.active_texture(self.gl.constant("TEXTURE0"))
-    self.gl.bind_texture(self.gl.constant("TEXTURE_2D"), item.texture)
-
-    let mat = model_matrix(
-      item.x,
-      item.y,
-      item.w,
-      item.h,
-      item.rotation,
-      vw,
-      vh,
-    )
-    let mat_f32 = js_float32_array(mat)
-    self.gl.uniform_matrix4(self.pipe.u_model, false, mat_f32)
-    self.gl.uniform1f(self.pipe.u_opacity, item.opacity)
-    self.gl.uniform2f(self.pipe.u_texel, item.texel_x, item.texel_y)
-    self.gl.uniform1f(self.pipe.u_blur, item.blur)
-    self.gl.uniform1f(self.pipe.u_brightness, item.brightness)
-    self.gl.uniform1f(self.pipe.u_contrast, item.contrast)
-    self.gl.uniform1f(self.pipe.u_saturation, item.saturation)
-    self.gl.uniform1f(self.pipe.u_gamma, item.gamma)
-    self.gl.uniform3f(
-      self.pipe.u_color,
-      item.color_r,
-      item.color_g,
-      item.color_b,
-    )
-
-    self.gl.draw_arrays(
-      self.gl.constant("TRIANGLES"),
-      0,
-      self.mesh.vertex_count,
-    )
-  }
+  gl.draw_arrays(gl.constant("TRIANGLES"), 0, mesh.vertex_count)
 }

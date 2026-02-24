@@ -20,6 +20,11 @@ struct Sfx {
 }
 
 ///|
+struct Effect {
+  id : String
+}
+
+///|
 struct Label {
   name : String
 }
@@ -37,6 +42,30 @@ pub impl AnimationTarget for Figure with id(self) {
 ///|
 pub impl AnimationTarget for Background with id(self) {
   self.id
+}
+
+///|
+pub fn effect(id : String) -> Effect {
+  { id, }
+}
+
+///|
+pub fn effect_param(name : String, value : Double) -> EffectParam {
+  (name, value)
+}
+
+///|
+pub fn effect_spec(id : String, params : Array[EffectParam]) -> EffectSpec {
+  { id, params, phase: Some(Post) }
+}
+
+///|
+pub fn effect_spec_with_phase(
+  id : String,
+  params : Array[EffectParam],
+  phase : EffectPhase,
+) -> EffectSpec {
+  { id, params, phase: Some(phase) }
 }
 
 ///|
@@ -523,6 +552,18 @@ pub fn[T] ScriptBuilder::stop_music(self : ScriptBuilder[T]) -> Unit {
 ///|
 pub fn[T] ScriptBuilder::play_sfx(self : ScriptBuilder[T], sfx : Sfx) -> Unit {
   self.instructions.push(PlaySfx(sfx.id))
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
+  self : ScriptBuilder[T],
+  target : A,
+  effect : Effect,
+  params : Array[EffectParam],
+) -> Unit {
+  self.instructions.push(
+    ApplyEffect(target.id(), { id: effect.id, params, phase: Some(Post) }),
+  )
 }
 
 ///|

@@ -28,6 +28,7 @@ pub struct RenderState {
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
   animations : Array[(String, AnimationSpec)]
+  effects : Map[String, Array[EffectSpec]]
 } derive(ToJson, FromJson)
 
 ///|
@@ -67,6 +68,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       last_sfx: None,
       last_sfx_interrupted: false,
       animations: [],
+      effects: {},
     },
     last_event_said: false,
   }
@@ -130,6 +132,23 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     SfxStopped =>
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
     Animated(target, spec) => self.render.animations.push((target, spec))
+    EffectApplied(target, spec) => {
+      let current = self.render.effects.get(target).unwrap_or([])
+      let mut replaced = false
+      let updated : Array[EffectSpec] = []
+      for entry in current {
+        if entry.id == spec.id {
+          updated.push(spec)
+          replaced = true
+        } else {
+          updated.push(entry)
+        }
+      }
+      if !replaced {
+        updated.push(spec)
+      }
+      self.render.effects.set(target, updated)
+    }
     WaitStarted(_) => ()
     ScriptEnded => ()
   }
@@ -251,6 +270,14 @@ pub fn[T] Director::animations(
   self : Director[T],
 ) -> Array[(String, AnimationSpec)] {
   self.render.animations
+}
+
+///|
+pub fn[T] Director::effects(
+  self : Director[T],
+  id : String,
+) -> Array[EffectSpec] {
+  self.render.effects.get(id).unwrap_or([])
 }
 
 ///|

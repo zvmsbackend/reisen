@@ -44,6 +44,22 @@ pub struct AnimationSpec {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
+pub(all) enum EffectPhase {
+  Pre
+  Post
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
+pub type EffectParam = (String, Double)
+
+///|
+pub struct EffectSpec {
+  id : String
+  params : Array[EffectParam]
+  phase : EffectPhase?
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
 pub struct FigurePlacement {
   pos : Position
   layer : Int
@@ -94,6 +110,7 @@ pub enum Instruction[T] {
   StopMusic
   PlaySfx(String)
   Animate(String, AnimationSpec)
+  ApplyEffect(String, EffectSpec)
 }
 
 ///|

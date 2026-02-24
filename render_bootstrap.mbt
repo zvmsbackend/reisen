@@ -95,8 +95,30 @@ fn create_program(
 ///|
 fn create_quad_mesh(gl : WebGL) -> QuadMesh raise RenderError {
   let vertices : Array[Double] = [
-    -1.0, -1.0, 0.0, 1.0, -1.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0, 0.0, -1.0, -1.0, 0.0,
-    1.0, 1.0, 1.0, 1.0, 0.0, 1.0, -1.0, 1.0, 1.0,
+    -1.0,
+    -1.0,
+    0.0,
+    1.0,
+    -1.0,
+    1.0,
+    0.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0,
+    0.0,
+    -1.0,
+    -1.0,
+    0.0,
+    1.0,
+    1.0,
+    1.0,
+    1.0,
+    0.0,
+    1.0,
+    -1.0,
+    1.0,
+    1.0,
   ]
   match gl.create_buffer() {
     None => raise RenderError::NullObject(op="createBuffer")

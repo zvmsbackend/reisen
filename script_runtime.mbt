@@ -27,6 +27,7 @@ pub enum RuntimeEvent {
   SfxPlayed(String)
   SfxStopped
   Animated(String, AnimationSpec)
+  EffectApplied(String, EffectSpec)
   WaitStarted(Int)
   ScriptEnded
 } derive(Show, Eq)
@@ -242,6 +243,10 @@ fn[T] Runtime::run_inst(
     Animate(target, spec) => {
       self.ip = self.ip + 1
       Animated(target, spec)
+    }
+    ApplyEffect(target, spec) => {
+      self.ip = self.ip + 1
+      EffectApplied(target, spec)
     }
   }
 }

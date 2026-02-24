@@ -132,6 +132,7 @@ fn init {
 #### With WebGL Rendering
 
 ```moonbit nocheck
+///|
 fn init {
   let canvas = get_canvas_by_id("gl-canvas").unwrap()
   let gl = canvas.get_webgl_context().unwrap()
@@ -146,7 +147,68 @@ fn init {
   )
   run_browser_loop(runner)
 }
+```
+
+### Custom WebGL Effects
+
+Register a custom effect pipeline, then apply it from script by ID.
+Effects are rendered after the base pass by default; set `phase=pre` in the
+script to draw before the base pass, or return `true` to skip the base pass.
+
+```moonbit nocheck
+///|
+fn param_value(
+  params : Array[EffectParam],
+  name : String,
+  fallback : Double,
+) -> Double {
+  params.iter().find_first(p => p.0 == name).map(p => p.1).unwrap_or(fallback)
 }
+
+///|
+fn register_effects() -> Unit {
+  let vert =
+    #| attribute vec2 a_position;
+    #| attribute vec2 a_uv;
+    #| uniform mat4 u_model;
+    #| varying vec2 v_uv;
+    #| void main() {
+    #|   gl_Position = u_model * vec4(a_position, 0.0, 1.0);
+    #|   v_uv = a_uv;
+    #| }
+
+  let frag =
+    #| precision mediump float;
+    #| varying vec2 v_uv;
+    #| uniform sampler2D u_tex;
+    #| uniform float u_opacity;
+    #| uniform float u_intensity;
+    #| void main() {
+    #|   vec4 c = texture2D(u_tex, v_uv);
+    #|   gl_FragColor = vec4(c.rgb * u_intensity, c.a * u_opacity);
+    #| }
+
+  register_webgl_effect_with_shaders("glow", vert, frag, (
+    gl,
+    program,
+    _item,
+    params,
+    _time_ms,
+  ) => {
+    let intensity = param_value(params, "intensity", 1.0)
+    match gl.get_uniform_location(program, "u_intensity") {
+      Some(loc) => gl.uniform1f(loc, intensity)
+      None => ()
+    } // return true to skip the base pass
+    false
+  })
+}
+
+///|
+let my_script : Script[Unit] = try! script(fn(builder) {
+  builder.scene(bg_temple)
+  builder.effect(bg_temple, effect("glow"), [effect_param("intensity", 1.2)])
+})
 ```
 
 #### Full App with Menu (Recommended)

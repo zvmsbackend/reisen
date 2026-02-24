@@ -223,3 +223,21 @@ test "parse animate range" {
     _ => fail("Expected Animate instruction")
   }
 }
+
+///|
+test "parse effect params" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "effect: hero, glow, intensity=0.6, radius=8",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    ApplyEffect(_, spec) => {
+      assert_eq(spec.id, "glow")
+      assert_eq(spec.params.length(), 2)
+      assert_eq(spec.params[0], effect_param("intensity", 0.6))
+      assert_eq(spec.params[1], effect_param("radius", 8.0))
+      assert_eq(spec.phase, Some(EffectPhase::Post))
+    }
+    _ => fail("Expected ApplyEffect instruction")
+  }
+}

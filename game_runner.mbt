@@ -172,6 +172,10 @@ fn[T] GameRunner::apply_event_effects(
       self.render_sync_dirty = true
       self.bump_animation_timer(spec.duration_ms)
     }
+    EffectApplied(_, _) => {
+      self.ui_dirty = true
+      self.render_sync_dirty = true
+    }
     _ => ()
   }
 }

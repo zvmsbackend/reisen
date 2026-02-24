@@ -322,6 +322,42 @@ fn[T] reisen_text_script_to_builder(
         if args_str != "" {
           builder.instructions.push(PlaySfx(args_str))
         }
+      "effect" | "fx" => {
+        let parts : Array[String] = []
+        for part in args_str.split(",") {
+          parts.push(part.trim().to_string())
+        }
+        if parts.length() >= 2 {
+          let target = parts[0]
+          let effect_id = parts[1]
+          if target != "" && effect_id != "" {
+            let params : Array[EffectParam] = []
+            let mut phase : EffectPhase = Post
+            for i = 2; i < parts.length(); i = i + 1 {
+              let entry = parts[i]
+              let (key_raw, value_raw) = get_first_part(entry, "=")
+              let key = key_raw.trim().to_string()
+              let value_str = value_raw.trim().to_string()
+              if key == "phase" {
+                let lower = value_str.to_lower()
+                if lower == "pre" {
+                  phase = Pre
+                } else if lower == "post" {
+                  phase = Post
+                }
+              } else if key != "" && value_str != "" {
+                let value = (try? @strconv.parse_double(value_str)).unwrap_or(
+                  0.0,
+                )
+                params.push((key, value))
+              }
+            }
+            builder.instructions.push(
+              ApplyEffect(target, { id: effect_id, params, phase: Some(phase) }),
+            )
+          }
+        }
+      }
       "animate" | "anim" => {
         let parts : Array[String] = []
         for part in args_str.split(",") {

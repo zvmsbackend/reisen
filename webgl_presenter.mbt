@@ -8,7 +8,8 @@ priv struct WebglPresenter {
   textures : Map[String, WebGLTexture]
   texture_sizes : Map[String, (Int, Int)]
   mesh : QuadMesh
-  blur_pipe : BlurPipeline
+  blur_pipe : RenderPipeline
+  effect_pipelines : Map[String, CustomEffectPipeline]
   config : WebglPresenterConfig
   mut last_background_id : String?
   mut animation_cursor : Int
@@ -37,6 +38,80 @@ pub struct WebglPresenterConfig {
 ///|
 pub fn webgl_presenter_default_config() -> WebglPresenterConfig {
   { position_entry_offset_ratio: 0.04, scale_entry_from: 0.0 }
+}
+
+///|
+priv struct EffectPipeline {
+  program : ShaderProgram
+  u_model : WebGLUniformLocation?
+  u_opacity : WebGLUniformLocation?
+  u_texel : WebGLUniformLocation?
+  u_blur : WebGLUniformLocation?
+  u_brightness : WebGLUniformLocation?
+  u_contrast : WebGLUniformLocation?
+  u_saturation : WebGLUniformLocation?
+  u_gamma : WebGLUniformLocation?
+  u_color : WebGLUniformLocation?
+}
+
+///|
+pub struct EffectDrawable {
+  texture : WebGLTexture
+  x : Double
+  y : Double
+  w : Double
+  h : Double
+  rotation : Double
+  opacity : Double
+  blur : Double
+  brightness : Double
+  contrast : Double
+  saturation : Double
+  gamma : Double
+  color_r : Double
+  color_g : Double
+  color_b : Double
+  texel_x : Double
+  texel_y : Double
+}
+
+///|
+pub type EffectApply = (
+  WebGL,
+  WebGLProgram,
+  EffectDrawable,
+  Array[EffectParam],
+  Int,
+) -> Bool
+
+///|
+priv struct CustomEffectPipeline {
+  pipe : EffectPipeline
+  apply : EffectApply
+}
+
+///|
+type EffectFactory = (WebGL) -> CustomEffectPipeline raise RenderError
+
+///|
+let effect_factories : Map[String, EffectFactory] = {}
+
+///|
+fn register_webgl_effect(id : String, factory : EffectFactory) -> Unit {
+  effect_factories.set(id, factory)
+}
+
+///|
+pub fn register_webgl_effect_with_shaders(
+  id : String,
+  vert_src : String,
+  frag_src : String,
+  apply : EffectApply,
+) -> Unit {
+  register_webgl_effect(id, gl => {
+    pipe: create_effect_pipeline(gl, vert_src, frag_src),
+    apply,
+  })
 }
 
 ///|
@@ -135,65 +210,32 @@ let blur_frag_shader : String =
   #|}
 
 ///|
-priv struct BlurPipeline {
-  program : ShaderProgram
-  u_model : WebGLUniformLocation
-  u_opacity : WebGLUniformLocation
-  u_texel : WebGLUniformLocation
-  u_blur : WebGLUniformLocation
-  u_brightness : WebGLUniformLocation
-  u_contrast : WebGLUniformLocation
-  u_saturation : WebGLUniformLocation
-  u_gamma : WebGLUniformLocation
-  u_color : WebGLUniformLocation
-}
-
-///|
 fn create_blur_pipeline(
   gl : WebGL,
   vert_src : String,
   frag_src : String,
-) -> BlurPipeline raise RenderError {
+) -> RenderPipeline raise RenderError {
+  create_pipeline(gl, vert_src, frag_src)
+}
+
+///|
+fn create_effect_pipeline(
+  gl : WebGL,
+  vert_src : String,
+  frag_src : String,
+) -> EffectPipeline raise RenderError {
   let program = create_program(gl, vert_src, frag_src)
-  match
-    (
-      gl.get_uniform_location(program.program, "u_model"),
-      gl.get_uniform_location(program.program, "u_opacity"),
-      gl.get_uniform_location(program.program, "u_texel"),
-      gl.get_uniform_location(program.program, "u_blur"),
-      gl.get_uniform_location(program.program, "u_brightness"),
-      gl.get_uniform_location(program.program, "u_contrast"),
-      gl.get_uniform_location(program.program, "u_saturation"),
-      gl.get_uniform_location(program.program, "u_gamma"),
-      gl.get_uniform_location(program.program, "u_color"),
-    ) {
-    (
-      Some(u_model),
-      Some(u_opacity),
-      Some(u_texel),
-      Some(u_blur),
-      Some(u_brightness),
-      Some(u_contrast),
-      Some(u_saturation),
-      Some(u_gamma),
-      Some(u_color),
-    ) =>
-      {
-        program,
-        u_model,
-        u_opacity,
-        u_texel,
-        u_blur,
-        u_brightness,
-        u_contrast,
-        u_saturation,
-        u_gamma,
-        u_color,
-      }
-    _ =>
-      raise RenderError::MissingUniform(
-        name="u_model, u_opacity, u_texel, or filters",
-      )
+  {
+    program,
+    u_model: gl.get_uniform_location(program.program, "u_model"),
+    u_opacity: gl.get_uniform_location(program.program, "u_opacity"),
+    u_texel: gl.get_uniform_location(program.program, "u_texel"),
+    u_blur: gl.get_uniform_location(program.program, "u_blur"),
+    u_brightness: gl.get_uniform_location(program.program, "u_brightness"),
+    u_contrast: gl.get_uniform_location(program.program, "u_contrast"),
+    u_saturation: gl.get_uniform_location(program.program, "u_saturation"),
+    u_gamma: gl.get_uniform_location(program.program, "u_gamma"),
+    u_color: gl.get_uniform_location(program.program, "u_color"),
   }
 }
 
@@ -229,6 +271,15 @@ priv struct ScaleAnim {
 }
 
 ///|
+priv struct RenderTask {
+  layer : Int
+  order : Int
+  item : Renderable
+  effects : Array[EffectSpec]
+  base_pipe : RenderPipeline
+}
+
+///|
 extern "js" fn now_ms() -> Int =
   #| () => Math.floor((globalThis.performance?.now?.() ?? Date.now()))
 
@@ -243,7 +294,11 @@ fn WebglPresenter::new(
   let blur_pipe = create_blur_pipeline(
     gl, default_vert_shader, blur_frag_shader,
   )
-  let renderer = renderer_new(gl, mesh, pipe)
+  let renderer = Renderer::new(gl, pipe)
+  let effect_pipelines : Map[String, CustomEffectPipeline] = {}
+  for id, factory in effect_factories {
+    effect_pipelines.set(id, factory(gl))
+  }
   {
     renderer,
     store,
@@ -251,6 +306,7 @@ fn WebglPresenter::new(
     texture_sizes: {},
     mesh,
     blur_pipe,
+    effect_pipelines,
     config,
     last_background_id: None,
     animation_cursor: 0,
@@ -711,56 +767,115 @@ fn fit_background_cover(
 }
 
 ///|
-fn WebglPresenter::draw_blur_background(
+///|
+fn WebglPresenter::draw_effect_pipeline(
   self : WebglPresenter,
-  tex : WebGLTexture,
-  image_id : String,
-  x : Double,
-  y : Double,
-  w : Double,
-  h : Double,
-  rotation : Double,
-  opacity : Double,
-  blur : Double,
-  brightness : Double,
-  contrast : Double,
-  saturation : Double,
-  gamma : Double,
-  color_r : Double,
-  color_g : Double,
-  color_b : Double,
-  texel_x : Double,
-  texel_y : Double,
+  pipeline : CustomEffectPipeline,
+  item : Renderable,
+  params : Array[EffectParam],
   viewport_w : Double,
   viewport_h : Double,
-) -> Unit {
-  match self.texture_sizes.get(image_id) {
-    Some((_tex_w, _tex_h)) => {
-      let gl = self.renderer.gl
-      gl.enable(gl.constant("BLEND"))
-      gl.blend_func(
-        gl.constant("SRC_ALPHA"),
-        gl.constant("ONE_MINUS_SRC_ALPHA"),
-      )
-      gl.use_program(self.blur_pipe.program.program)
-      bind_quad_attributes(gl, self.blur_pipe.program, self.mesh)
-      gl.uniform1i(self.blur_pipe.program.u_tex, 0)
-      gl.active_texture(gl.constant("TEXTURE0"))
-      gl.bind_texture(gl.constant("TEXTURE_2D"), tex)
-      let mat = model_matrix(x, y, w, h, rotation, viewport_w, viewport_h)
-      let mat_f32 = js_float32_array(mat)
-      gl.uniform_matrix4(self.blur_pipe.u_model, false, mat_f32)
-      gl.uniform1f(self.blur_pipe.u_opacity, opacity)
-      gl.uniform2f(self.blur_pipe.u_texel, texel_x, texel_y)
-      gl.uniform1f(self.blur_pipe.u_blur, blur)
-      gl.uniform1f(self.blur_pipe.u_brightness, brightness)
-      gl.uniform1f(self.blur_pipe.u_contrast, contrast)
-      gl.uniform1f(self.blur_pipe.u_saturation, saturation)
-      gl.uniform1f(self.blur_pipe.u_gamma, gamma)
-      gl.uniform3f(self.blur_pipe.u_color, color_r, color_g, color_b)
-      gl.draw_arrays(gl.constant("TRIANGLES"), 0, self.mesh.vertex_count)
-    }
-    None => self.last_background_id = None
+) -> Bool {
+  let drawable : EffectDrawable = {
+    texture: item.texture,
+    x: item.x,
+    y: item.y,
+    w: item.w,
+    h: item.h,
+    rotation: item.rotation,
+    opacity: item.opacity,
+    blur: item.blur,
+    brightness: item.brightness,
+    contrast: item.contrast,
+    saturation: item.saturation,
+    gamma: item.gamma,
+    color_r: item.color_r,
+    color_g: item.color_g,
+    color_b: item.color_b,
+    texel_x: item.texel_x,
+    texel_y: item.texel_y,
+  }
+  let gl = self.renderer.gl
+  gl.use_program(pipeline.pipe.program.program)
+  bind_quad_attributes(gl, pipeline.pipe.program, self.mesh)
+  gl.uniform1i(pipeline.pipe.program.u_tex, 0)
+  gl.active_texture(gl.constant("TEXTURE0"))
+  gl.bind_texture(gl.constant("TEXTURE_2D"), item.texture)
+
+  let mat = model_matrix(
+    item.x,
+    item.y,
+    item.w,
+    item.h,
+    item.rotation,
+    viewport_w,
+    viewport_h,
+  )
+  let mat_f32 = js_float32_array(mat)
+  match pipeline.pipe.u_model {
+    Some(loc) => gl.uniform_matrix4(loc, false, mat_f32)
+    None => ()
+  }
+  match pipeline.pipe.u_opacity {
+    Some(loc) => gl.uniform1f(loc, item.opacity)
+    None => ()
+  }
+  match pipeline.pipe.u_texel {
+    Some(loc) => gl.uniform2f(loc, item.texel_x, item.texel_y)
+    None => ()
+  }
+  match pipeline.pipe.u_blur {
+    Some(loc) => gl.uniform1f(loc, item.blur)
+    None => ()
+  }
+  match pipeline.pipe.u_brightness {
+    Some(loc) => gl.uniform1f(loc, item.brightness)
+    None => ()
+  }
+  match pipeline.pipe.u_contrast {
+    Some(loc) => gl.uniform1f(loc, item.contrast)
+    None => ()
+  }
+  match pipeline.pipe.u_saturation {
+    Some(loc) => gl.uniform1f(loc, item.saturation)
+    None => ()
+  }
+  match pipeline.pipe.u_gamma {
+    Some(loc) => gl.uniform1f(loc, item.gamma)
+    None => ()
+  }
+  match pipeline.pipe.u_color {
+    Some(loc) => gl.uniform3f(loc, item.color_r, item.color_g, item.color_b)
+    None => ()
+  }
+
+  let skip_base = (pipeline.apply)(
+    gl,
+    pipeline.pipe.program.program,
+    drawable,
+    params,
+    self.timeline_ms,
+  )
+  gl.draw_arrays(gl.constant("TRIANGLES"), 0, self.mesh.vertex_count)
+  skip_base
+}
+
+///|
+fn WebglPresenter::effect_pipeline(
+  self : WebglPresenter,
+  id : String,
+) -> CustomEffectPipeline? raise RenderError {
+  match self.effect_pipelines.get(id) {
+    Some(pipeline) => Some(pipeline)
+    None =>
+      match effect_factories.get(id) {
+        Some(factory) => {
+          let pipeline = factory(self.renderer.gl)
+          self.effect_pipelines.set(id, pipeline)
+          Some(pipeline)
+        }
+        None => None
+      }
   }
 }
 
@@ -810,6 +925,8 @@ fn[T] WebglPresenter::sync_impl(
   let finished_opacity : Array[String] = []
   let finished_position : Array[String] = []
   let finished_scale : Array[String] = []
+  let tasks : Array[RenderTask] = []
+  let mut order = 0
 
   match director.background() {
     Some(bg_id) => {
@@ -1045,12 +1162,27 @@ fn[T] WebglPresenter::sync_impl(
           value
         }
       }
-      self.draw_blur_background(
-        tex, bg_id, cover_x, cover_y, cover_w, cover_h, rotation, opacity, cover_blur,
-        brightness, contrast, saturation, gamma, color_r, color_g, color_b, texel_x,
-        texel_y, w, h,
-      )
-      self.renderer.add({
+      let effects = director.effects(bg_id)
+      let cover_item : Renderable = {
+        texture: tex,
+        x: cover_x,
+        y: cover_y,
+        w: cover_w,
+        h: cover_h,
+        rotation,
+        opacity,
+        blur: cover_blur,
+        brightness,
+        contrast,
+        saturation,
+        gamma,
+        color_r,
+        color_g,
+        color_b,
+        texel_x,
+        texel_y,
+      }
+      let base_item : Renderable = {
         texture: tex,
         x: bg_x,
         y: bg_y,
@@ -1068,8 +1200,23 @@ fn[T] WebglPresenter::sync_impl(
         color_b,
         texel_x,
         texel_y,
-        layer: -1000,
+      }
+      tasks.push({
+        layer: -1001,
+        order,
+        item: cover_item,
+        effects,
+        base_pipe: self.blur_pipe,
       })
+      order += 1
+      tasks.push({
+        layer: -1000,
+        order,
+        item: base_item,
+        effects,
+        base_pipe: self.renderer.pipe,
+      })
+      order += 1
     }
     None => ()
   }
@@ -1291,7 +1438,8 @@ fn[T] WebglPresenter::sync_impl(
       }
       None => (0.0, 0.0)
     }
-    self.renderer.add({
+    let effects = director.effects(id)
+    let item : Renderable = {
       texture: tex,
       x,
       y,
@@ -1309,8 +1457,15 @@ fn[T] WebglPresenter::sync_impl(
       color_b,
       texel_x,
       texel_y,
+    }
+    tasks.push({
       layer: placement.layer,
+      order,
+      item,
+      effects,
+      base_pipe: self.renderer.pipe,
     })
+    order += 1
     if update_placement {
       updated_figures.push((id, next_placement))
     }
@@ -1335,7 +1490,37 @@ fn[T] WebglPresenter::sync_impl(
     figures.set(id, placement)
   }
 
-  self.renderer.draw_with_viewport(w, h)
+  tasks.sort_by_key(task => task.layer * 1000000 + task.order)
+  for task in tasks {
+    let mut skip_base = false
+    for spec in task.effects {
+      match self.effect_pipeline(spec.id) {
+        Some(pipeline) => {
+          let skip = self.draw_effect_pipeline(
+            pipeline,
+            task.item,
+            spec.params,
+            w,
+            h,
+          )
+          if skip {
+            skip_base = true
+          }
+        }
+        None => ()
+      }
+    }
+    if !skip_base {
+      draw_item_with_pipeline(
+        self.renderer.gl,
+        self.mesh,
+        task.base_pipe,
+        task.item,
+        w,
+        h,
+      )
+    }
+  }
 }
 
 ///|
