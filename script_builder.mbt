@@ -478,6 +478,11 @@ pub fn[T] ScriptBuilder::wait(self : ScriptBuilder[T], ms : Int) -> Unit {
 }
 
 ///|
+pub fn[T] ScriptBuilder::wait_click(self : ScriptBuilder[T]) -> Unit {
+  self.instructions.push(WaitForClick)
+}
+
+///|
 pub fn[T] ScriptBuilder::intro(self : ScriptBuilder[T], text : String) -> Unit {
   self.instructions.push(Intro(text))
 }

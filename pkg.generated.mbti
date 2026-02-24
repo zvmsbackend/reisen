@@ -485,6 +485,7 @@ pub enum Instruction[T] {
   Jump(String)
   JumpIf(String, (GameState[T]) -> Bool)
   Wait(Int)
+  WaitForClick
   Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
   Intro(String)
   ShowTextBox
@@ -540,6 +541,7 @@ pub struct Runtime[T] {
   mut pending_choices : Array[ChoiceOption]
   mut pending_text_input : (String, String)?
   mut wait_ms : Int
+  mut wait_for_click : Bool
   mut ended : Bool
 }
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -573,6 +575,7 @@ pub enum RuntimeEvent {
   Animated(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
   WaitStarted(Int)
+  WaitForClickStarted
   ScriptEnded
 }
 pub impl Eq for RuntimeEvent
@@ -584,6 +587,7 @@ pub struct RuntimeSave[T] {
   pending_choices : Array[ChoiceOption]
   pending_text_input : (String, String)?
   wait_ms : Int
+  wait_for_click : Bool
   ended : Bool
 }
 pub impl[T : ToJson] ToJson for RuntimeSave[T]
@@ -675,6 +679,7 @@ pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int,
 pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
+pub fn[T] ScriptBuilder::wait_click(Self[T]) -> Unit
 
 pub enum SettingsContext {
   FromStartMenu

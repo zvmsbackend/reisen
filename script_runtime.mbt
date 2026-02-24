@@ -30,6 +30,7 @@ pub enum RuntimeEvent {
   Animated(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
   WaitStarted(Int)
+  WaitForClickStarted
   ScriptEnded
 } derive(Show, Eq)
 
@@ -49,6 +50,7 @@ pub struct Runtime[T] {
   mut pending_choices : Array[ChoiceOption]
   mut pending_text_input : (String, String)?
   mut wait_ms : Int
+  mut wait_for_click : Bool
   mut ended : Bool
 }
 
@@ -59,6 +61,7 @@ pub struct RuntimeSave[T] {
   pending_choices : Array[ChoiceOption]
   pending_text_input : (String, String)?
   wait_ms : Int
+  wait_for_click : Bool
   ended : Bool
 } derive(ToJson, FromJson)
 
@@ -71,6 +74,7 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
     pending_choices: [],
     pending_text_input: None,
     wait_ms: 0,
+    wait_for_click: false,
     ended: false,
   }
 }
@@ -85,6 +89,7 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     pending_choices: self.pending_choices,
     pending_text_input: self.pending_text_input,
     wait_ms: self.wait_ms,
+    wait_for_click: self.wait_for_click,
     ended: self.ended,
   }
 }
@@ -108,6 +113,7 @@ fn[T] Runtime::from_save(
     } else {
       save.wait_ms
     },
+    wait_for_click: save.wait_for_click,
     ended: save.ended,
   }
 }
@@ -163,6 +169,11 @@ fn[T] Runtime::run_inst(
       self.ip = self.ip + 1
       self.wait_ms = if ms < 0 { 0 } else { ms }
       WaitStarted(self.wait_ms)
+    }
+    WaitForClick => {
+      self.ip = self.ip + 1
+      self.wait_for_click = true
+      WaitForClickStarted
     }
     Say(speaker~, text~, typewriter~, append~, voice~) => {
       self.ip = self.ip + 1
@@ -281,6 +292,9 @@ pub fn[T] Runtime::step(
     }
     self.wait_ms = 0
   }
+  if self.wait_for_click {
+    return Noop
+  }
   for {
     if self.ip >= self.script.instructions.length() {
       self.ended = true
@@ -297,12 +311,13 @@ pub fn[T] Runtime::step(
 
 ///|
 pub fn[T] Runtime::is_waiting(self : Runtime[T]) -> Bool {
-  self.wait_ms > 0
+  self.wait_ms > 0 || self.wait_for_click
 }
 
 ///|
 pub fn[T] Runtime::skip_wait(self : Runtime[T]) -> Unit {
   self.wait_ms = 0
+  self.wait_for_click = false
 }
 
 ///|

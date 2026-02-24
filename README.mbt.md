@@ -380,6 +380,7 @@ enum RuntimeEvent {
   SfxPlayed(String, Bool) // asset ID, blocking
   Animated(String, AnimationSpec)
   WaitStarted(Int) // ms remaining
+  WaitForClickStarted
   ScriptEnded
 }
 ```

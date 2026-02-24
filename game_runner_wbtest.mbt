@@ -177,6 +177,26 @@ test "runner click skips wait" {
 }
 
 ///|
+test "runner click advances wait click" {
+  let script : Script[Int] = script(builder => {
+    builder.wait_click()
+    builder.say("n", "done")
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+  )
+
+  assert_true(runner.step() is WaitForClickStarted)
+  ui.simulate_click()
+  assert_true(
+    runner.step()
+    is Said(speaker="n", text="done", typewriter=true, append=false, voice=None),
+  )
+}
+
+///|
 test "wait advances with elapsed even when dialog remains" {
   let script : Script[Int] = script(builder => {
     builder.say("n", "first")

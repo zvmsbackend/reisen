@@ -129,6 +129,7 @@ pub enum Instruction[T] {
   Jump(String)
   JumpIf(String, ScriptPredicate[T])
   Wait(Int)
+  WaitForClick
   Say(
     speaker~ : String,
     text~ : String,

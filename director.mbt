@@ -154,6 +154,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
       self.render.effects.set(target, updated)
     }
     WaitStarted(_) => ()
+    WaitForClickStarted => ()
     ScriptEnded => ()
   }
 }

@@ -208,6 +208,13 @@ test "parse wait" {
 }
 
 ///|
+test "parse wait click" {
+  let script : Script[Unit] = reisen_parse_text_script("wait: click")
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is WaitForClick)
+}
+
+///|
 test "parse animate range" {
   let script : Script[Unit] = reisen_parse_text_script(
     "animate: hero, opacity, 400, 0.2, 0.8",

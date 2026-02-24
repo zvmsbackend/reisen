@@ -1,7 +1,7 @@
 ///|
 /// Textual script format parser for Reisen visual novel engine.
 /// Line-based format: `command: arg1, arg2, ...`
-/// Supports: label, jump, wait, narrate, say, scene, show, hide, music, sfx, animate, choice
+/// Supports: label, jump, wait, wait_click, narrate, say, scene, show, hide, music, sfx, animate, choice
 
 ///|
 pub suberror ReisenTextError {} derive(Show, Eq)
@@ -168,9 +168,15 @@ fn[T] reisen_text_script_to_builder(
         }
       "jump" => if args_str != "" { builder.instructions.push(Jump(args_str)) }
       "wait" => {
-        let ms = (try? @strconv.parse_int(args_str)).unwrap_or(0)
-        builder.instructions.push(Wait(ms))
+        let lower = args_str.trim().to_lower()
+        if lower == "click" || lower == "tap" {
+          builder.instructions.push(WaitForClick)
+        } else {
+          let ms = (try? @strconv.parse_int(args_str)).unwrap_or(0)
+          builder.instructions.push(Wait(ms))
+        }
       }
+      "wait_click" | "wait_for_click" => builder.instructions.push(WaitForClick)
       "narrate" | "narration" => {
         let parts : Array[String] = []
         for part in args_str.split(",") {
