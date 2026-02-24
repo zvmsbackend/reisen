@@ -7,6 +7,8 @@ priv struct WebglPresenter {
   store : AssetStore
   textures : Map[String, WebGLTexture]
   texture_sizes : Map[String, (Int, Int)]
+  mesh : QuadMesh
+  blur_pipe : BlurPipeline
   config : WebglPresenterConfig
   mut animation_cursor : Int
   mut timeline_ms : Int
@@ -50,6 +52,57 @@ let default_frag_shader : String =
   #|}
 
 ///|
+let blur_frag_shader : String =
+  #|precision mediump float;
+  #|varying vec2 v_uv;
+  #|uniform sampler2D u_tex;
+  #|uniform float u_opacity;
+  #|uniform vec2 u_texel;
+  #|void main() {
+  #|  vec2 offset = u_texel * 2.0;
+  #|  vec4 c = vec4(0.0);
+  #|  c += texture2D(u_tex, v_uv + vec2(-offset.x, -offset.y));
+  #|  c += texture2D(u_tex, v_uv + vec2(0.0, -offset.y));
+  #|  c += texture2D(u_tex, v_uv + vec2(offset.x, -offset.y));
+  #|  c += texture2D(u_tex, v_uv + vec2(-offset.x, 0.0));
+  #|  c += texture2D(u_tex, v_uv);
+  #|  c += texture2D(u_tex, v_uv + vec2(offset.x, 0.0));
+  #|  c += texture2D(u_tex, v_uv + vec2(-offset.x, offset.y));
+  #|  c += texture2D(u_tex, v_uv + vec2(0.0, offset.y));
+  #|  c += texture2D(u_tex, v_uv + vec2(offset.x, offset.y));
+  #|  c *= 1.0 / 9.0;
+  #|  gl_FragColor = vec4(c.rgb, c.a * u_opacity);
+  #|}
+
+///|
+priv struct BlurPipeline {
+  program : ShaderProgram
+  u_model : WebGLUniformLocation
+  u_opacity : WebGLUniformLocation
+  u_texel : WebGLUniformLocation
+}
+
+///|
+fn create_blur_pipeline(
+  gl : WebGL,
+  vert_src : String,
+  frag_src : String,
+) -> BlurPipeline raise RenderError {
+  let program = create_program(gl, vert_src, frag_src)
+  match
+    (
+      gl.get_uniform_location(program.program, "u_model"),
+      gl.get_uniform_location(program.program, "u_opacity"),
+      gl.get_uniform_location(program.program, "u_texel"),
+    ) {
+    (Some(u_model), Some(u_opacity), Some(u_texel)) =>
+      { program, u_model, u_opacity, u_texel }
+    _ =>
+      raise RenderError::MissingUniform(name="u_model, u_opacity, or u_texel")
+  }
+}
+
+///|
 priv struct OpacityAnim {
   start_ms : Int
   duration_ms : Int
@@ -90,12 +143,17 @@ fn WebglPresenter::new(
 ) -> WebglPresenter raise RenderError {
   let mesh = create_quad_mesh(gl)
   let pipe = create_pipeline(gl, default_vert_shader, default_frag_shader)
+  let blur_pipe = create_blur_pipeline(
+    gl, default_vert_shader, blur_frag_shader,
+  )
   let renderer = renderer_new(gl, mesh, pipe)
   {
     renderer,
     store,
     textures: {},
     texture_sizes: {},
+    mesh,
+    blur_pipe,
     config,
     animation_cursor: 0,
     timeline_ms: 0,
@@ -395,6 +453,74 @@ fn fit_background(
 }
 
 ///|
+fn fit_background_cover(
+  image_id : String,
+  canvas_w : Double,
+  canvas_h : Double,
+  sizes : Map[String, (Int, Int)],
+) -> (Double, Double, Double, Double) {
+  match sizes.get(image_id) {
+    Some((img_w, img_h)) => {
+      let img_w = img_w.to_double()
+      let img_h = img_h.to_double()
+      let canvas_ratio = canvas_w / canvas_h
+      let img_ratio = img_w / img_h
+      let (scale_w, scale_h) = if img_ratio > canvas_ratio {
+        // Image is wider - fit to height
+        let scale = canvas_h / img_h
+        (img_w * scale, canvas_h)
+      } else {
+        // Image is taller - fit to width
+        let scale = canvas_w / img_w
+        (canvas_w, img_h * scale)
+      }
+      let x = (canvas_w - scale_w) / 2.0
+      let y = (canvas_h - scale_h) / 2.0
+      (x, y, scale_w, scale_h)
+    }
+    None => (0.0, 0.0, canvas_w, canvas_h)
+  }
+}
+
+///|
+fn WebglPresenter::draw_blur_background(
+  self : WebglPresenter,
+  tex : WebGLTexture,
+  image_id : String,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  viewport_w : Double,
+  viewport_h : Double,
+) -> Unit {
+  match self.texture_sizes.get(image_id) {
+    Some((tex_w, tex_h)) => {
+      let texel_x = 1.0 / tex_w.to_double()
+      let texel_y = 1.0 / tex_h.to_double()
+      let gl = self.renderer.gl
+      gl.enable(gl.constant("BLEND"))
+      gl.blend_func(
+        gl.constant("SRC_ALPHA"),
+        gl.constant("ONE_MINUS_SRC_ALPHA"),
+      )
+      gl.use_program(self.blur_pipe.program.program)
+      bind_quad_attributes(gl, self.blur_pipe.program, self.mesh)
+      gl.uniform1i(self.blur_pipe.program.u_tex, 0)
+      gl.active_texture(gl.constant("TEXTURE0"))
+      gl.bind_texture(gl.constant("TEXTURE_2D"), tex)
+      let mat = model_matrix(x, y, w, h, viewport_w, viewport_h)
+      let mat_f32 = js_float32_array(mat)
+      gl.uniform_matrix4(self.blur_pipe.u_model, false, mat_f32)
+      gl.uniform1f(self.blur_pipe.u_opacity, 1.0)
+      gl.uniform2f(self.blur_pipe.u_texel, texel_x, texel_y)
+      gl.draw_arrays(gl.constant("TRIANGLES"), 0, self.mesh.vertex_count)
+    }
+    None => ()
+  }
+}
+
+///|
 fn fit_figure(
   image_id : String,
   max_w : Double,
@@ -440,6 +566,13 @@ fn[T] WebglPresenter::sync_impl(
   match director.background() {
     Some(bg_id) => {
       let tex = self.texture_for(bg_id)
+      let (bx, by, bw, bh) = fit_background_cover(
+        bg_id,
+        w,
+        h,
+        self.texture_sizes,
+      )
+      self.draw_blur_background(tex, bg_id, bx, by, bw, bh, w, h)
       let (x, y, bg_w, bg_h) = fit_background(bg_id, w, h, self.texture_sizes)
       self.renderer.add({
         texture: tex,
