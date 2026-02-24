@@ -4,9 +4,9 @@
 ///|
 struct GalleryImage {
   id : String
-  image_id : String
+  image_url : String
   title : String
-  thumbnail_id : String?
+  thumbnail_url : String?
   replay_label : String?
 } derive(Show, Eq, ToJson, FromJson)
 
@@ -20,9 +20,9 @@ pub fn Background::as_gallery_image(
 ) -> GalleryImage {
   {
     id,
-    image_id: self.id,
+    image_url: self.url,
     title,
-    thumbnail_id: thumbnail.map(b => b.id),
+    thumbnail_url: thumbnail.map(b => b.url),
     replay_label: replay_label.map(l => l.name),
   }
 }
@@ -46,7 +46,7 @@ pub fn GalleryImage::new(
   thumbnail_id? : String,
   replay_label? : String,
 ) -> GalleryImage {
-  { id, image_id, title, thumbnail_id, replay_label }
+  { id, image_url: image_id, title, thumbnail_url: thumbnail_id, replay_label }
 }
 
 ///|

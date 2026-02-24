@@ -45,8 +45,8 @@ fn GalleryMenu::new(
 fn to_gallery_tile_view(ns : String, image : GalleryImage) -> GalleryTileView {
   {
     id: image.id,
-    image_id: image.image_id,
-    thumbnail_id: image.thumbnail_id,
+    image_id: image.image_url,
+    thumbnail_id: image.thumbnail_url,
     title: image.title,
     unlocked: gallery_is_image_unlocked_in(ns, image.id),
     replay_label: image.replay_label,

@@ -151,5 +151,5 @@ pub async fn AssetStore::register_background(
     let img = load_image(url)
     self.put_image(id, img)
   }
-  { id, }
+  { id, url }
 }

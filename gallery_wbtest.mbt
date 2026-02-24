@@ -13,7 +13,7 @@ test "gallery register keeps stable order and replacement" {
   let registered = gallery_registered_images()
   assert_true(registered.length() >= 2)
   assert_eq(registered[registered.length() - 2].id, id_a)
-  assert_eq(registered[registered.length() - 2].image_id, "img_a_new")
+  assert_eq(registered[registered.length() - 2].image_url, "img_a_new")
   assert_eq(registered[registered.length() - 2].replay_label, None)
   assert_eq(registered[registered.length() - 1], b)
 }

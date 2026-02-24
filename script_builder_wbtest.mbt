@@ -1,6 +1,6 @@
 ///|
 fn dummy_bg(id : String) -> Background {
-  { id, }
+  { id, url: "" }
 }
 
 ///|
@@ -20,7 +20,7 @@ fn dummy_music(id : String) -> Music {
 
 ///|
 fn dummy_galley_image(id : String) -> GalleryImage {
-  { id, image_id: id, title: "", thumbnail_id: None, replay_label: None }
+  { id, image_url: id, title: "", thumbnail_url: None, replay_label: None }
 }
 
 ///|

@@ -7,6 +7,7 @@ struct Figure {
 ///|
 struct Background {
   id : String
+  url : String
 }
 
 ///|
