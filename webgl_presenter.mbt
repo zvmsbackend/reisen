@@ -1302,8 +1302,8 @@ fn[T] WebglPresenter::sync_impl(
     let (x, y, w, h) = match self.scale_anims.get(id) {
       Some(anim) => {
         let (sx, sy, sw, sh, done) = apply_scale_animation(
-          base_x,
-          base_y,
+          aligned_x,
+          aligned_y,
           base_w,
           base_h,
           next_placement.scalars.scale,
