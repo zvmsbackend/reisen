@@ -10,6 +10,7 @@ priv struct WebglPresenter {
   mesh : QuadMesh
   blur_pipe : BlurPipeline
   config : WebglPresenterConfig
+  mut last_background_id : String?
   mut animation_cursor : Int
   mut timeline_ms : Int
   mut last_sync_ms : Int
@@ -155,6 +156,7 @@ fn WebglPresenter::new(
     mesh,
     blur_pipe,
     config,
+    last_background_id: None,
     animation_cursor: 0,
     timeline_ms: 0,
     last_sync_ms: 0,
@@ -517,7 +519,9 @@ fn WebglPresenter::draw_blur_background(
       gl.uniform2f(self.blur_pipe.u_texel, texel_x, texel_y)
       gl.draw_arrays(gl.constant("TRIANGLES"), 0, self.mesh.vertex_count)
     }
-    None => ()
+    None => {
+      self.last_background_id = None
+    }
   }
 }
 
@@ -570,6 +574,15 @@ fn[T] WebglPresenter::sync_impl(
 
   match director.background() {
     Some(bg_id) => {
+      match self.last_background_id {
+        Some(prev) => if prev != bg_id {
+          self.opacity_anims.remove(prev)
+          self.position_anims.remove(prev)
+          self.scale_anims.remove(prev)
+        }
+        None => ()
+      }
+      self.last_background_id = Some(bg_id)
       let tex = self.texture_for(bg_id)
       let (bx, by, bw, bh) = fit_background_cover(
         bg_id,
@@ -782,13 +795,19 @@ fn[T] WebglPresenter::sync_impl(
     }
   }
   for id in finished_opacity {
-    self.opacity_anims.remove(id)
+    if self.last_background_id != Some(id) {
+      self.opacity_anims.remove(id)
+    }
   }
   for id in finished_position {
-    self.position_anims.remove(id)
+    if self.last_background_id != Some(id) {
+      self.position_anims.remove(id)
+    }
   }
   for id in finished_scale {
-    self.scale_anims.remove(id)
+    if self.last_background_id != Some(id) {
+      self.scale_anims.remove(id)
+    }
   }
   for entry in updated_figures {
     let (id, placement) = entry
