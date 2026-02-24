@@ -615,11 +615,12 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
   duration_ms? : Int,
   easing? : Easing = Linear,
 ) -> Unit {
+  let resolved_phase = phase.unwrap_or(Post)
   self.instructions.push(
     ApplyEffect(target.id(), {
       id: effect.id,
       params,
-      phase,
+      phase: Some(resolved_phase),
       duration_ms,
       easing: Some(easing),
     }),
