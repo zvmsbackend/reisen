@@ -6,6 +6,7 @@ pub enum AppPhase {
   StartGate
   StartLogo
   StartMenu
+  Gallery
   Settings
   InGame
 } derive(Show, Eq)
@@ -25,7 +26,9 @@ struct AppController[T] {
   start_logo_duration_ms : Int
   mut start_logo_elapsed_ms : Int
   menu : StartMenu
+  gallery_menu : GalleryMenu
   settings_menu : SettingsMenu
+  show_gallery_entry : Bool
   mut phase : AppPhase
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
@@ -43,6 +46,8 @@ pub fn[T] AppController::new(
   autosave_title? : String = "",
   menu_background? : String = "",
   settings_background? : String = "",
+  gallery_background? : String = "",
+  show_gallery_entry? : Bool = false,
   menu_music? : Music,
   menu_music_loop? : Bool = true,
   start_logo_url? : String = "",
@@ -67,12 +72,19 @@ pub fn[T] AppController::new(
       ui_root_id,
       save_namespace~,
       background=menu_background,
+      show_gallery_entry~,
+    ),
+    gallery_menu: GalleryMenu::new(
+      ui_root_id,
+      save_namespace~,
+      background=gallery_background,
     ),
     settings_menu: SettingsMenu::new(
       ui_root_id,
       save_namespace~,
       background=settings_background,
     ),
+    show_gallery_entry,
     phase: AppPhase::StartGate,
     render_sync,
     event_hook,
@@ -103,6 +115,7 @@ fn[T] AppController::start_menu_music_stop(self : AppController[T]) -> Unit {
 
 ///|
 fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
+  self.gallery_menu.clear()
   self.menu.clear_logo()
   self.menu.clear_gate()
   self.menu.render()
@@ -181,6 +194,12 @@ fn[T : FromJson] AppController::handle_menu_action(
       self.settings_menu.render()
       self.phase = AppPhase::Settings
     }
+    Gallery =>
+      if self.show_gallery_entry {
+        self.menu.clear()
+        self.gallery_menu.render()
+        self.phase = AppPhase::Gallery
+      }
   }
 }
 
@@ -404,6 +423,24 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         }
         SettingsAction::ViewChanged => self.settings_menu.render()
         SettingsAction::NoAction => ()
+      }
+      true
+    }
+    AppPhase::Gallery => {
+      match self.gallery_menu.take_action() {
+        GalleryAction::Back => {
+          self.gallery_menu.clear()
+          self.enter_start_menu()
+        }
+        GalleryAction::Open(_)
+        | GalleryAction::Close
+        | GalleryAction::Prev
+        | GalleryAction::Next => self.gallery_menu.render()
+        GalleryAction::Replay(label) => {
+          ignore(label)
+          self.gallery_menu.render()
+        }
+        GalleryAction::NoAction => ()
       }
       true
     }

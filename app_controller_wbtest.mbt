@@ -44,3 +44,17 @@ test "app controller can continue from saved slot" {
   app.handle_menu_action(StartMenuAction::Continue("slot1"))
   assert_eq(app.phase(), AppPhase::InGame)
 }
+
+///|
+test "app controller opens gallery when enabled" {
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    script,
+    () => GameState::new(0),
+    "app",
+    show_gallery_entry=true,
+  )
+  app.enter_start_menu()
+  app.handle_menu_action(StartMenuAction::Gallery)
+  assert_eq(app.phase(), AppPhase::Gallery)
+}

@@ -8,6 +8,7 @@ priv enum StartMenuAction {
   Continue(String)
   Load
   Settings
+  Gallery
 }
 
 ///|
@@ -27,6 +28,7 @@ priv struct StartMenu {
   root_id : String
   save_ns : String
   background : String
+  show_gallery_entry : Bool
 }
 
 ///|
@@ -34,8 +36,9 @@ fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
   background? : String = "",
+  show_gallery_entry? : Bool = false,
 ) -> StartMenu {
-  { root_id, save_ns: save_namespace, background }
+  { root_id, save_ns: save_namespace, background, show_gallery_entry }
 }
 
 ///|
@@ -107,8 +110,9 @@ extern "js" fn start_menu_dom_render(
   has_continue : Bool,
   continue_slot : String,
   background : String,
+  has_gallery : Bool,
 ) -> Unit =
-  #| (root_id, has_continue, continue_slot, background) => {
+  #| (root_id, has_continue, continue_slot, background, has_gallery) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -150,6 +154,9 @@ extern "js" fn start_menu_dom_render(
   #|   actions.appendChild(continueBtn);
   #|   actions.appendChild(mkButton('Load', 'load'));
   #|   actions.appendChild(mkButton('Settings', 'settings'));
+  #|   if (has_gallery) {
+  #|     actions.appendChild(mkButton('Gallery', 'gallery'));
+  #|   }
   #|   menu.appendChild(actions);
   #| }
 
@@ -314,8 +321,21 @@ fn StartMenu::render(self : StartMenu) -> Unit {
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>
-      start_menu_dom_render(self.root_id, true, slot, self.background)
-    None => start_menu_dom_render(self.root_id, false, "", self.background)
+      start_menu_dom_render(
+        self.root_id,
+        true,
+        slot,
+        self.background,
+        self.show_gallery_entry,
+      )
+    None =>
+      start_menu_dom_render(
+        self.root_id,
+        false,
+        "",
+        self.background,
+        self.show_gallery_entry,
+      )
   }
 }
 
@@ -363,6 +383,10 @@ fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
     Some("settings") => {
       start_menu_action_clear(self.root_id)
       StartMenuAction::Settings
+    }
+    Some("gallery") => {
+      start_menu_action_clear(self.root_id)
+      StartMenuAction::Gallery
     }
     _ => StartMenuAction::NoAction
   }
