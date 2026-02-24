@@ -33,11 +33,40 @@ pub fn GalleryImage::new(
 }
 
 ///|
+pub fn cg(
+  id : String,
+  image_id : String,
+  title? : String = "",
+  thumbnail_id? : String,
+  replay_label? : String,
+) -> GalleryImage {
+  { id, image_id, title, thumbnail_id, replay_label }
+}
+
+///|
 pub fn gallery_register_image(image : GalleryImage) -> Unit {
   if !gallery_images.contains(image.id) {
     gallery_image_order.push(image.id)
   }
   gallery_images.set(image.id, image)
+}
+
+///|
+pub fn register_cg(image : GalleryImage) -> Unit {
+  gallery_register_image(image)
+}
+
+///|
+pub fn register_cg_image(
+  id : String,
+  image_id : String,
+  title? : String = "",
+  thumbnail_id? : String,
+  replay_label? : String,
+) -> GalleryImage {
+  let entry : GalleryImage = { id, image_id, title, thumbnail_id, replay_label }
+  register_cg(entry)
+  entry
 }
 
 ///|
@@ -63,8 +92,18 @@ pub fn gallery_unlock_image(id : String) -> Unit {
 }
 
 ///|
+pub fn unlock_cg(id : String) -> Unit {
+  gallery_unlock_image(id)
+}
+
+///|
 pub fn gallery_unlock_image_in(ns : String, id : String) -> Unit {
   persistent_set_flag_in(ns, gallery_image_unlock_key(id), true)
+}
+
+///|
+pub fn unlock_cg_in(ns : String, id : String) -> Unit {
+  gallery_unlock_image_in(ns, id)
 }
 
 ///|

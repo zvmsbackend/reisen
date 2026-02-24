@@ -474,6 +474,12 @@ pub impl Show for GalleryImage
 pub impl ToJson for GalleryImage
 pub impl @json.FromJson for GalleryImage
 
+type GalleryTileView
+pub impl Eq for GalleryTileView
+pub impl Show for GalleryTileView
+pub impl ToJson for GalleryTileView
+pub impl @json.FromJson for GalleryTileView
+
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], RuntimeEvent) -> Unit
 pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit

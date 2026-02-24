@@ -75,11 +75,11 @@ test "gallery replayable list only contains unlocked replay entries" {
 ///|
 test "cg helpers register and unlock" {
   let id = gensym(prefix="wb_cg")
-  let entry = GalleryImage::new(id, "img_cg", title="CG")
+  let entry = register_cg_image(id, "img_cg", title="CG")
   assert_eq(gallery_image_by_id(id), Some(entry))
   gallery_lock_image(id)
   assert_eq(gallery_is_image_unlocked(id), false)
-  gallery_unlock_image(id)
+  unlock_cg(id)
   assert_eq(gallery_is_image_unlocked(id), true)
   gallery_lock_image(id)
 }
