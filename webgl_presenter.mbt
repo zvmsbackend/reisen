@@ -17,6 +17,15 @@ priv struct WebglPresenter {
   opacity_anims : Map[String, OpacityAnim]
   position_anims : Map[String, PositionAnim]
   scale_anims : Map[String, ScaleAnim]
+  rotation_anims : Map[String, OpacityAnim]
+  blur_anims : Map[String, OpacityAnim]
+  brightness_anims : Map[String, OpacityAnim]
+  contrast_anims : Map[String, OpacityAnim]
+  saturation_anims : Map[String, OpacityAnim]
+  gamma_anims : Map[String, OpacityAnim]
+  color_r_anims : Map[String, OpacityAnim]
+  color_g_anims : Map[String, OpacityAnim]
+  color_b_anims : Map[String, OpacityAnim]
 }
 
 ///|
@@ -47,9 +56,42 @@ let default_frag_shader : String =
   #|varying vec2 v_uv;
   #|uniform sampler2D u_tex;
   #|uniform float u_opacity;
+  #|uniform vec2 u_texel;
+  #|uniform float u_blur;
+  #|uniform float u_brightness;
+  #|uniform float u_contrast;
+  #|uniform float u_saturation;
+  #|uniform float u_gamma;
+  #|uniform vec3 u_color;
+  #|vec3 apply_filters(vec3 color) {
+  #|  color *= u_color;
+  #|  color *= u_brightness;
+  #|  color = (color - 0.5) * u_contrast + 0.5;
+  #|  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+  #|  color = mix(vec3(luma), color, u_saturation);
+  #|  float safe_gamma = max(u_gamma, 0.0001);
+  #|  color = pow(max(color, 0.0), vec3(1.0 / safe_gamma));
+  #|  return color;
+  #|}
   #|void main() {
-  #|  vec4 c = texture2D(u_tex, v_uv);
-  #|  gl_FragColor = vec4(c.rgb, c.a * u_opacity);
+  #|  vec4 c = vec4(0.0);
+  #|  if (u_blur <= 0.0) {
+  #|    c = texture2D(u_tex, v_uv);
+  #|  } else {
+  #|    vec2 offset = u_texel * u_blur;
+  #|    c += texture2D(u_tex, v_uv + vec2(-offset.x, -offset.y));
+  #|    c += texture2D(u_tex, v_uv + vec2(0.0, -offset.y));
+  #|    c += texture2D(u_tex, v_uv + vec2(offset.x, -offset.y));
+  #|    c += texture2D(u_tex, v_uv + vec2(-offset.x, 0.0));
+  #|    c += texture2D(u_tex, v_uv);
+  #|    c += texture2D(u_tex, v_uv + vec2(offset.x, 0.0));
+  #|    c += texture2D(u_tex, v_uv + vec2(-offset.x, offset.y));
+  #|    c += texture2D(u_tex, v_uv + vec2(0.0, offset.y));
+  #|    c += texture2D(u_tex, v_uv + vec2(offset.x, offset.y));
+  #|    c *= 1.0 / 9.0;
+  #|  }
+  #|  vec3 color = apply_filters(c.rgb);
+  #|  gl_FragColor = vec4(color, c.a * u_opacity);
   #|}
 
 ///|
@@ -59,9 +101,25 @@ let blur_frag_shader : String =
   #|uniform sampler2D u_tex;
   #|uniform float u_opacity;
   #|uniform vec2 u_texel;
+  #|uniform float u_blur;
+  #|uniform float u_brightness;
+  #|uniform float u_contrast;
+  #|uniform float u_saturation;
+  #|uniform float u_gamma;
+  #|uniform vec3 u_color;
+  #|vec3 apply_filters(vec3 color) {
+  #|  color *= u_color;
+  #|  color *= u_brightness;
+  #|  color = (color - 0.5) * u_contrast + 0.5;
+  #|  float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+  #|  color = mix(vec3(luma), color, u_saturation);
+  #|  float safe_gamma = max(u_gamma, 0.0001);
+  #|  color = pow(max(color, 0.0), vec3(1.0 / safe_gamma));
+  #|  return color;
+  #|}
   #|void main() {
-  #|  vec2 offset = u_texel * 2.0;
   #|  vec4 c = vec4(0.0);
+  #|  vec2 offset = u_texel * max(u_blur, 0.0);
   #|  c += texture2D(u_tex, v_uv + vec2(-offset.x, -offset.y));
   #|  c += texture2D(u_tex, v_uv + vec2(0.0, -offset.y));
   #|  c += texture2D(u_tex, v_uv + vec2(offset.x, -offset.y));
@@ -72,7 +130,8 @@ let blur_frag_shader : String =
   #|  c += texture2D(u_tex, v_uv + vec2(0.0, offset.y));
   #|  c += texture2D(u_tex, v_uv + vec2(offset.x, offset.y));
   #|  c *= 1.0 / 9.0;
-  #|  gl_FragColor = vec4(c.rgb, c.a * u_opacity);
+  #|  vec3 color = apply_filters(c.rgb);
+  #|  gl_FragColor = vec4(color, c.a * u_opacity);
   #|}
 
 ///|
@@ -81,6 +140,12 @@ priv struct BlurPipeline {
   u_model : WebGLUniformLocation
   u_opacity : WebGLUniformLocation
   u_texel : WebGLUniformLocation
+  u_blur : WebGLUniformLocation
+  u_brightness : WebGLUniformLocation
+  u_contrast : WebGLUniformLocation
+  u_saturation : WebGLUniformLocation
+  u_gamma : WebGLUniformLocation
+  u_color : WebGLUniformLocation
 }
 
 ///|
@@ -95,11 +160,40 @@ fn create_blur_pipeline(
       gl.get_uniform_location(program.program, "u_model"),
       gl.get_uniform_location(program.program, "u_opacity"),
       gl.get_uniform_location(program.program, "u_texel"),
+      gl.get_uniform_location(program.program, "u_blur"),
+      gl.get_uniform_location(program.program, "u_brightness"),
+      gl.get_uniform_location(program.program, "u_contrast"),
+      gl.get_uniform_location(program.program, "u_saturation"),
+      gl.get_uniform_location(program.program, "u_gamma"),
+      gl.get_uniform_location(program.program, "u_color"),
     ) {
-    (Some(u_model), Some(u_opacity), Some(u_texel)) =>
-      { program, u_model, u_opacity, u_texel }
+    (
+      Some(u_model),
+      Some(u_opacity),
+      Some(u_texel),
+      Some(u_blur),
+      Some(u_brightness),
+      Some(u_contrast),
+      Some(u_saturation),
+      Some(u_gamma),
+      Some(u_color),
+    ) =>
+      {
+        program,
+        u_model,
+        u_opacity,
+        u_texel,
+        u_blur,
+        u_brightness,
+        u_contrast,
+        u_saturation,
+        u_gamma,
+        u_color,
+      }
     _ =>
-      raise RenderError::MissingUniform(name="u_model, u_opacity, or u_texel")
+      raise RenderError::MissingUniform(
+        name="u_model, u_opacity, u_texel, or filters",
+      )
   }
 }
 
@@ -163,6 +257,15 @@ fn WebglPresenter::new(
     opacity_anims: {},
     position_anims: {},
     scale_anims: {},
+    rotation_anims: {},
+    blur_anims: {},
+    brightness_anims: {},
+    contrast_anims: {},
+    saturation_anims: {},
+    gamma_anims: {},
+    color_r_anims: {},
+    color_g_anims: {},
+    color_b_anims: {},
   }
 }
 
@@ -368,6 +471,29 @@ fn apply_scale_animation(
 }
 
 ///|
+fn apply_scalar_animation(
+  base_value : Double,
+  now_ms : Int,
+  anim : OpacityAnim,
+) -> (Double, Bool) {
+  let (p, done) = animation_progress(
+    now_ms,
+    anim.start_ms,
+    anim.duration_ms,
+    anim.easing,
+  )
+  match (anim.from, anim.to) {
+    (None, None) => (base_value, done)
+    _ => {
+      let from = anim.from.unwrap_or(base_value)
+      let to = anim.to.unwrap_or(base_value)
+      let value = if done { to } else { from + (to - from) * p }
+      (value, done)
+    }
+  }
+}
+
+///|
 fn WebglPresenter::update_timeline(self : WebglPresenter) -> Unit {
   let now = now_ms()
   if self.last_sync_ms <= 0 {
@@ -413,6 +539,78 @@ fn[T] WebglPresenter::pull_new_animations(
         })
       Scale =>
         self.scale_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      Rotation =>
+        self.rotation_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      Blur =>
+        self.blur_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      Brightness =>
+        self.brightness_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      Contrast =>
+        self.contrast_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      Saturation =>
+        self.saturation_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      Gamma =>
+        self.gamma_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      ColorRed =>
+        self.color_r_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      ColorGreen =>
+        self.color_g_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: spec.duration_ms,
+          easing: spec.easing,
+          from: anim_value(spec.from, 0),
+          to: anim_value(spec.to, 0),
+        })
+      ColorBlue =>
+        self.color_b_anims.set(target, {
           start_ms: self.timeline_ms,
           duration_ms: spec.duration_ms,
           easing: spec.easing,
@@ -493,14 +691,23 @@ fn WebglPresenter::draw_blur_background(
   y : Double,
   w : Double,
   h : Double,
+  rotation : Double,
   opacity : Double,
+  blur : Double,
+  brightness : Double,
+  contrast : Double,
+  saturation : Double,
+  gamma : Double,
+  color_r : Double,
+  color_g : Double,
+  color_b : Double,
+  texel_x : Double,
+  texel_y : Double,
   viewport_w : Double,
   viewport_h : Double,
 ) -> Unit {
   match self.texture_sizes.get(image_id) {
-    Some((tex_w, tex_h)) => {
-      let texel_x = 1.0 / tex_w.to_double()
-      let texel_y = 1.0 / tex_h.to_double()
+    Some((_tex_w, _tex_h)) => {
       let gl = self.renderer.gl
       gl.enable(gl.constant("BLEND"))
       gl.blend_func(
@@ -512,16 +719,20 @@ fn WebglPresenter::draw_blur_background(
       gl.uniform1i(self.blur_pipe.program.u_tex, 0)
       gl.active_texture(gl.constant("TEXTURE0"))
       gl.bind_texture(gl.constant("TEXTURE_2D"), tex)
-      let mat = model_matrix(x, y, w, h, viewport_w, viewport_h)
+      let mat = model_matrix(x, y, w, h, rotation, viewport_w, viewport_h)
       let mat_f32 = js_float32_array(mat)
       gl.uniform_matrix4(self.blur_pipe.u_model, false, mat_f32)
       gl.uniform1f(self.blur_pipe.u_opacity, opacity)
       gl.uniform2f(self.blur_pipe.u_texel, texel_x, texel_y)
+      gl.uniform1f(self.blur_pipe.u_blur, blur)
+      gl.uniform1f(self.blur_pipe.u_brightness, brightness)
+      gl.uniform1f(self.blur_pipe.u_contrast, contrast)
+      gl.uniform1f(self.blur_pipe.u_saturation, saturation)
+      gl.uniform1f(self.blur_pipe.u_gamma, gamma)
+      gl.uniform3f(self.blur_pipe.u_color, color_r, color_g, color_b)
       gl.draw_arrays(gl.constant("TRIANGLES"), 0, self.mesh.vertex_count)
     }
-    None => {
-      self.last_background_id = None
-    }
+    None => self.last_background_id = None
   }
 }
 
@@ -575,11 +786,21 @@ fn[T] WebglPresenter::sync_impl(
   match director.background() {
     Some(bg_id) => {
       match self.last_background_id {
-        Some(prev) => if prev != bg_id {
-          self.opacity_anims.remove(prev)
-          self.position_anims.remove(prev)
-          self.scale_anims.remove(prev)
-        }
+        Some(prev) =>
+          if prev != bg_id {
+            self.opacity_anims.remove(prev)
+            self.position_anims.remove(prev)
+            self.scale_anims.remove(prev)
+            self.rotation_anims.remove(prev)
+            self.blur_anims.remove(prev)
+            self.brightness_anims.remove(prev)
+            self.contrast_anims.remove(prev)
+            self.saturation_anims.remove(prev)
+            self.gamma_anims.remove(prev)
+            self.color_r_anims.remove(prev)
+            self.color_g_anims.remove(prev)
+            self.color_b_anims.remove(prev)
+          }
         None => ()
       }
       self.last_background_id = Some(bg_id)
@@ -600,6 +821,23 @@ fn[T] WebglPresenter::sync_impl(
       let mut bg_width = bg_w
       let mut bg_height = bg_h
       let mut opacity = 1.0
+      let mut rotation = 0.0
+      let mut blur = 0.0
+      let mut brightness = 1.0
+      let mut contrast = 1.0
+      let mut saturation = 1.0
+      let mut gamma = 1.0
+      let mut color_r = 1.0
+      let mut color_g = 1.0
+      let mut color_b = 1.0
+      let (texel_x, texel_y) = match self.texture_sizes.get(bg_id) {
+        Some((tex_w, tex_h)) => {
+          let tx = if tex_w == 0 { 0.0 } else { 1.0 / tex_w.to_double() }
+          let ty = if tex_h == 0 { 0.0 } else { 1.0 / tex_h.to_double() }
+          (tx, ty)
+        }
+        None => (0.0, 0.0)
+      }
       match self.position_anims.get(bg_id) {
         Some(anim) => {
           let (ax, ay, done) = apply_position_animation(
@@ -665,8 +903,117 @@ fn[T] WebglPresenter::sync_impl(
         }
         None => ()
       }
+      match self.rotation_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            0.0,
+            self.timeline_ms,
+            anim,
+          )
+          rotation = animated
+        }
+        None => ()
+      }
+      match self.blur_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            0.0,
+            self.timeline_ms,
+            anim,
+          )
+          blur = animated
+        }
+        None => ()
+      }
+      match self.brightness_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          brightness = animated
+        }
+        None => ()
+      }
+      match self.contrast_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          contrast = animated
+        }
+        None => ()
+      }
+      match self.saturation_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          saturation = animated
+        }
+        None => ()
+      }
+      match self.gamma_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          gamma = animated
+        }
+        None => ()
+      }
+      match self.color_r_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          color_r = animated
+        }
+        None => ()
+      }
+      match self.color_g_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          color_g = animated
+        }
+        None => ()
+      }
+      match self.color_b_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, _done) = apply_scalar_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          color_b = animated
+        }
+        None => ()
+      }
+      let cover_blur = {
+        let value = 2.0 + blur
+        if value < 0.0 {
+          0.0
+        } else {
+          value
+        }
+      }
       self.draw_blur_background(
-        tex, bg_id, cover_x, cover_y, cover_w, cover_h, opacity, w, h,
+        tex, bg_id, cover_x, cover_y, cover_w, cover_h, rotation, opacity, cover_blur,
+        brightness, contrast, saturation, gamma, color_r, color_g, color_b, texel_x,
+        texel_y, w, h,
       )
       self.renderer.add({
         texture: tex,
@@ -674,7 +1021,18 @@ fn[T] WebglPresenter::sync_impl(
         y: bg_y,
         w: bg_width,
         h: bg_height,
+        rotation,
         opacity,
+        blur,
+        brightness,
+        contrast,
+        saturation,
+        gamma,
+        color_r,
+        color_g,
+        color_b,
+        texel_x,
+        texel_y,
         layer: -1000,
       })
     }
@@ -686,19 +1044,23 @@ fn[T] WebglPresenter::sync_impl(
     let tex = self.texture_for(id)
     let (base_x, base_y, max_w, max_h) = figure_rect(placement.pos, w, h)
     let (actual_w, actual_h) = fit_figure(id, max_w, max_h, self.texture_sizes)
-    let final_x = match placement.pos {
-      Center => (w - actual_w) / 2.0
-      Left => base_x + (max_w - actual_w) / 2.0
-      Right => base_x + (max_w - actual_w) / 2.0
-      _ => base_x
+    let scaled_w = actual_w * placement.scale
+    let scaled_h = actual_h * placement.scale
+    let (aligned_x, aligned_y) = match placement.pos {
+      Center => ((w - scaled_w) / 2.0, base_y + (max_h - scaled_h) / 2.0)
+      Left =>
+        (base_x + (max_w - scaled_w) / 2.0, base_y + (max_h - scaled_h) / 2.0)
+      Right =>
+        (base_x + (max_w - scaled_w) / 2.0, base_y + (max_h - scaled_h) / 2.0)
+      _ => (base_x, base_y)
     }
     let mut next_placement = placement
     let mut update_placement = false
     let (x1, y1) = match self.position_anims.get(id) {
       Some(anim) => {
         let (ax, ay, done) = apply_position_animation(
-          base_x,
-          base_y,
+          aligned_x,
+          aligned_y,
           self.config.position_entry_offset_ratio,
           h,
           w,
@@ -723,15 +1085,15 @@ fn[T] WebglPresenter::sync_impl(
         }
         (ax, ay)
       }
-      None => (final_x, base_y)
+      None => (aligned_x, aligned_y)
     }
     let (x, y, w, h) = match self.scale_anims.get(id) {
       Some(anim) => {
         let (sx, sy, sw, sh, done) = apply_scale_animation(
           x1,
           y1,
-          actual_w * placement.scale,
-          actual_h * placement.scale,
+          scaled_w,
+          scaled_h,
           self.config.scale_entry_from,
           self.timeline_ms,
           anim,
@@ -753,7 +1115,7 @@ fn[T] WebglPresenter::sync_impl(
         }
         (sx, sy, sw, sh)
       }
-      None => (x1, y1, actual_w * placement.scale, actual_h * placement.scale)
+      None => (x1, y1, scaled_w, scaled_h)
     }
     let opacity = match self.opacity_anims.get(id) {
       Some(anim) => {
@@ -781,13 +1143,131 @@ fn[T] WebglPresenter::sync_impl(
       }
       None => placement.opacity
     }
+    let rotation = match self.rotation_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          0.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 0.0
+    }
+    let blur = match self.blur_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          0.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 0.0
+    }
+    let brightness = match self.brightness_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          1.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 1.0
+    }
+    let contrast = match self.contrast_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          1.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 1.0
+    }
+    let saturation = match self.saturation_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          1.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 1.0
+    }
+    let gamma = match self.gamma_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          1.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 1.0
+    }
+    let color_r = match self.color_r_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          1.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 1.0
+    }
+    let color_g = match self.color_g_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          1.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 1.0
+    }
+    let color_b = match self.color_b_anims.get(id) {
+      Some(anim) => {
+        let (animated, _done) = apply_scalar_animation(
+          1.0,
+          self.timeline_ms,
+          anim,
+        )
+        animated
+      }
+      None => 1.0
+    }
+    let (texel_x, texel_y) = match self.texture_sizes.get(id) {
+      Some((tex_w, tex_h)) => {
+        let tx = if tex_w == 0 { 0.0 } else { 1.0 / tex_w.to_double() }
+        let ty = if tex_h == 0 { 0.0 } else { 1.0 / tex_h.to_double() }
+        (tx, ty)
+      }
+      None => (0.0, 0.0)
+    }
     self.renderer.add({
       texture: tex,
       x,
       y,
       w,
       h,
+      rotation,
       opacity,
+      blur,
+      brightness,
+      contrast,
+      saturation,
+      gamma,
+      color_r,
+      color_g,
+      color_b,
+      texel_x,
+      texel_y,
       layer: placement.layer,
     })
     if update_placement {

@@ -400,6 +400,267 @@ fn[T] reisen_text_script_to_builder(
                 } else {
                   anim_scale(duration_ms, None, 1.0, easing=Linear)
                 }
+              "rotation" | "rotate" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(0.0)
+                  let to = to_value.unwrap_or(0.0)
+                  {
+                    prop: Rotation,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(0.0)
+                  {
+                    prop: Rotation,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: Rotation,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([0.0]),
+                  }
+                }
+              "blur" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(0.0)
+                  let to = to_value.unwrap_or(0.0)
+                  {
+                    prop: Blur,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(0.0)
+                  {
+                    prop: Blur,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: Blur,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([0.0]),
+                  }
+                }
+              "brightness" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  {
+                    prop: Brightness,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  {
+                    prop: Brightness,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: Brightness,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([1.0]),
+                  }
+                }
+              "contrast" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  {
+                    prop: Contrast,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  {
+                    prop: Contrast,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: Contrast,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([1.0]),
+                  }
+                }
+              "saturation" | "sat" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  {
+                    prop: Saturation,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  {
+                    prop: Saturation,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: Saturation,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([1.0]),
+                  }
+                }
+              "gamma" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  {
+                    prop: Gamma,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  {
+                    prop: Gamma,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: Gamma,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([1.0]),
+                  }
+                }
+              "red" | "colorred" | "color_r" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  {
+                    prop: ColorRed,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  {
+                    prop: ColorRed,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: ColorRed,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([1.0]),
+                  }
+                }
+              "green" | "colorgreen" | "color_g" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  {
+                    prop: ColorGreen,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  {
+                    prop: ColorGreen,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: ColorGreen,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([1.0]),
+                  }
+                }
+              "blue" | "colorblue" | "color_b" =>
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  {
+                    prop: ColorBlue,
+                    duration_ms,
+                    easing: Linear,
+                    from: Some([from]),
+                    to: Some([to]),
+                  }
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  {
+                    prop: ColorBlue,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([to]),
+                  }
+                } else {
+                  {
+                    prop: ColorBlue,
+                    duration_ms,
+                    easing: Linear,
+                    from: None,
+                    to: Some([1.0]),
+                  }
+                }
               _ => anim_opacity(duration_ms, None, 1.0, easing=Linear)
             }
             if prop_lower == "opacity" ||
@@ -409,7 +670,24 @@ fn[T] reisen_text_script_to_builder(
               prop_lower == "pos" ||
               prop_lower == "move" ||
               prop_lower == "scale" ||
-              prop_lower == "size" {
+              prop_lower == "size" ||
+              prop_lower == "rotation" ||
+              prop_lower == "rotate" ||
+              prop_lower == "blur" ||
+              prop_lower == "brightness" ||
+              prop_lower == "contrast" ||
+              prop_lower == "saturation" ||
+              prop_lower == "sat" ||
+              prop_lower == "gamma" ||
+              prop_lower == "red" ||
+              prop_lower == "colorred" ||
+              prop_lower == "color_r" ||
+              prop_lower == "green" ||
+              prop_lower == "colorgreen" ||
+              prop_lower == "color_g" ||
+              prop_lower == "blue" ||
+              prop_lower == "colorblue" ||
+              prop_lower == "color_b" {
               builder.instructions.push(Animate(target, spec))
             }
           }

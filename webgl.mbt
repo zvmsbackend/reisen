@@ -278,6 +278,16 @@ pub extern "js" fn WebGL::uniform2f(
   #| (gl, loc, v0, v1) => gl.uniform2f(loc, v0, v1)
 
 ///|
+pub extern "js" fn WebGL::uniform3f(
+  self : WebGL,
+  loc : WebGLUniformLocation,
+  v0 : Double,
+  v1 : Double,
+  v2 : Double,
+) -> Unit =
+  #| (gl, loc, v0, v1, v2) => gl.uniform3f(loc, v0, v1, v2)
+
+///|
 pub extern "js" fn WebGL::uniform4f(
   self : WebGL,
   loc : WebGLUniformLocation,

@@ -143,6 +143,138 @@ pub fn anim_scale(
 }
 
 ///|
+pub fn anim_rotation(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: Rotation,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
+}
+
+///|
+pub fn anim_blur(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  { prop: Blur, duration_ms, easing, from: from.map(n => [n]), to: Some([to]) }
+}
+
+///|
+pub fn anim_brightness(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: Brightness,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
+}
+
+///|
+pub fn anim_contrast(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: Contrast,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
+}
+
+///|
+pub fn anim_saturation(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: Saturation,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
+}
+
+///|
+pub fn anim_gamma(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  { prop: Gamma, duration_ms, easing, from: from.map(n => [n]), to: Some([to]) }
+}
+
+///|
+pub fn anim_color_red(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: ColorRed,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
+}
+
+///|
+pub fn anim_color_green(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: ColorGreen,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
+}
+
+///|
+pub fn anim_color_blue(
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing? : Easing = Linear,
+) -> AnimationSpec {
+  {
+    prop: ColorBlue,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
+}
+
+///|
 pub fn[T] ScriptBuilder::new() -> ScriptBuilder[T] {
   { instructions: [] }
 }
@@ -410,6 +542,132 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
 ) -> Unit {
   self.instructions.push(
     Animate(target.id(), anim_scale(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_rotation(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_blur(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_brightness(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_contrast(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_saturation(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_gamma(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_color_red(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_color_green(duration_ms, from, to, easing~)),
+  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_blue(
+  self : ScriptBuilder[T],
+  target : A,
+  duration_ms : Int,
+  from? : Double,
+  to : Double,
+  easing? : Easing = Linear,
+) -> Unit {
+  self.instructions.push(
+    Animate(target.id(), anim_color_blue(duration_ms, from, to, easing~)),
   )
 }
 

@@ -1,5 +1,6 @@
 import {
   "moonbit-community/js-ffi/js",
+  "moonbitlang/core/math",
   "moonbitlang/core/json",
   "moonbitlang/core/strconv",
 }

@@ -7,9 +7,27 @@ import {
 }
 
 // Values
+pub fn anim_blur(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
+pub fn anim_brightness(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
+pub fn anim_color_blue(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
+pub fn anim_color_green(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
+pub fn anim_color_red(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
+pub fn anim_contrast(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
+pub fn anim_gamma(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
 pub fn anim_opacity(Int, Double?, Double, easing? : Easing) -> AnimationSpec
 
 pub fn anim_position(Int, (Double, Double)?, (Double, Double), easing? : Easing) -> AnimationSpec
+
+pub fn anim_rotation(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+
+pub fn anim_saturation(Int, Double?, Double, easing? : Easing) -> AnimationSpec
 
 pub fn anim_scale(Int, Double?, Double, easing? : Easing) -> AnimationSpec
 
@@ -191,6 +209,15 @@ pub enum AnimProp {
   Opacity
   Position
   Scale
+  Rotation
+  Blur
+  Brightness
+  Contrast
+  Saturation
+  Gamma
+  ColorRed
+  ColorGreen
+  ColorBlue
 }
 pub impl Eq for AnimProp
 pub impl Show for AnimProp
@@ -504,8 +531,17 @@ pub struct Script[T] {
 
 type ScriptBuilder[T]
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate(Self[T], A, AnimationSpec) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_blue(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : (Double, Double), (Double, Double), easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
@@ -620,6 +656,7 @@ pub fn WebGL::tex_param_i(Self, Int, Int, Int) -> Unit
 pub fn WebGL::uniform1f(Self, WebGLUniformLocation, Double) -> Unit
 pub fn WebGL::uniform1i(Self, WebGLUniformLocation, Int) -> Unit
 pub fn WebGL::uniform2f(Self, WebGLUniformLocation, Double, Double) -> Unit
+pub fn WebGL::uniform3f(Self, WebGLUniformLocation, Double, Double, Double) -> Unit
 pub fn WebGL::uniform4f(Self, WebGLUniformLocation, Double, Double, Double, Double) -> Unit
 pub fn WebGL::uniform_matrix4(Self, WebGLUniformLocation, Bool, @js.Value) -> Unit
 pub fn WebGL::use_program(Self, WebGLProgram) -> Unit

@@ -22,6 +22,15 @@ pub enum AnimProp {
   Opacity
   Position
   Scale
+  Rotation
+  Blur
+  Brightness
+  Contrast
+  Saturation
+  Gamma
+  ColorRed
+  ColorGreen
+  ColorBlue
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
