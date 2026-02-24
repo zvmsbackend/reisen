@@ -22,7 +22,7 @@ priv struct UiState {
 
 ///|
 pub struct RenderState {
-  mut background : String?
+  mut background : BackgroundState?
   figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
   mut last_sfx : String?
@@ -122,7 +122,9 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     TextBoxHidden => self.ui.text_box_visible = false
     AvatarShown(id) => self.ui.avatar_id = Some(id)
     AvatarHidden => self.ui.avatar_id = None
-    BackgroundShown(id) => self.render.background = Some(id)
+    BackgroundShown(id) =>
+      self.render.background = Some({ id, scalars: ScalarState::default() })
+    BackgroundShownState(state) => self.render.background = Some(state)
     FigureShown(id, placement) => self.render.figures.set(id, placement)
     FigureHidden(id) => self.render.figures.remove(id)
     MusicPlayed(id, should_loop) => self.render.music = Some((id, should_loop))
@@ -234,7 +236,23 @@ pub fn[T] Director::submit_text_input(
 
 ///|
 pub fn[T] Director::background(self : Director[T]) -> String? {
+  match self.render.background {
+    Some(state) => Some(state.id)
+    None => None
+  }
+}
+
+///|
+pub fn[T] Director::background_state(self : Director[T]) -> BackgroundState? {
   self.render.background
+}
+
+///|
+pub fn[T] Director::set_background_state(
+  self : Director[T],
+  state : BackgroundState,
+) -> Unit {
+  self.render.background = Some(state)
 }
 
 ///|

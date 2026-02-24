@@ -29,7 +29,11 @@ test "director maps runtime events into ui and render state" {
   assert_true(director.step() is FigureShown("alice", _))
   assert_eq(
     director.figure("alice"),
-    Some({ pos: Left, layer: 1, opacity: 0.9, scale: 1.0 }),
+    Some({
+      pos: Left,
+      layer: 1,
+      scalars: { ..ScalarState::default(), opacity: 0.9 },
+    }),
   )
 
   assert_eq(director.step(), MusicPlayed("bgm_theme", true))

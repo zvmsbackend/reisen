@@ -18,21 +18,21 @@ test "figure rect custom uses normalized top-left coordinates" {
 
 ///|
 test "opacity animation interpolates and completes" {
-  let anim : OpacityAnim = {
+  let anim : ScalarAnim = {
     start_ms: 100,
     duration_ms: 200,
     easing: Linear,
     from: None,
     to: None,
   }
-  let (o1, done1) = apply_opacity_animation(0.8, 100, anim)
+  let (o1, done1) = apply_scalar_animation(0.8, 100, anim)
   assert_eq((o1, done1), (0.0, false))
 
-  let (o2, done2) = apply_opacity_animation(0.8, 200, anim)
+  let (o2, done2) = apply_scalar_animation(0.8, 200, anim)
   assert_true(o2 > 0.39 && o2 < 0.41)
   assert_true(!done2)
 
-  let (o3, done3) = apply_opacity_animation(0.8, 301, anim)
+  let (o3, done3) = apply_scalar_animation(0.8, 301, anim)
   assert_eq((o3, done3), (0.8, true))
 }
 
@@ -75,17 +75,17 @@ test "scale animation grows around center" {
     anchor_y: 0.5,
   }
   let (x0, y0, w0, h0, done0) = apply_scale_animation(
-    100.0, 200.0, 300.0, 400.0, 0.0, 0, anim,
+    100.0, 200.0, 300.0, 400.0, 1.0, 0.0, 0, anim,
   )
   assert_eq((x0, y0, w0, h0, done0), (250.0, 400.0, 0.0, 0.0, false))
 
   let (x1, y1, w1, h1, done1) = apply_scale_animation(
-    100.0, 200.0, 300.0, 400.0, 0.0, 50, anim,
+    100.0, 200.0, 300.0, 400.0, 1.0, 0.0, 50, anim,
   )
   assert_eq((x1, y1, w1, h1, done1), (175.0, 300.0, 150.0, 200.0, false))
 
   let (x2, y2, w2, h2, done2) = apply_scale_animation(
-    100.0, 200.0, 300.0, 400.0, 0.0, 100, anim,
+    100.0, 200.0, 300.0, 400.0, 1.0, 0.0, 100, anim,
   )
   assert_eq((x2, y2, w2, h2, done2), (100.0, 200.0, 300.0, 400.0, true))
 }

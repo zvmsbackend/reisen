@@ -151,7 +151,7 @@ pub fn label(name? : String = gensym(prefix="label")) -> Label {
 
 ///|
 pub fn place_left(layer? : Int = 0, opacity? : Double = 1.0) -> FigurePlacement {
-  { pos: Left, layer, opacity, scale: 1.0 }
+  { pos: Left, layer, scalars: { ..ScalarState::default(), opacity, } }
 }
 
 ///|
@@ -159,7 +159,7 @@ pub fn place_center(
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> FigurePlacement {
-  { pos: Center, layer, opacity, scale: 1.0 }
+  { pos: Center, layer, scalars: { ..ScalarState::default(), opacity, } }
 }
 
 ///|
@@ -167,7 +167,7 @@ pub fn place_right(
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> FigurePlacement {
-  { pos: Right, layer, opacity, scale: 1.0 }
+  { pos: Right, layer, scalars: { ..ScalarState::default(), opacity, } }
 }
 
 ///|
@@ -177,7 +177,7 @@ pub fn place_custom(
   layer? : Int = 0,
   opacity? : Double = 1.0,
 ) -> FigurePlacement {
-  { pos: Custom(x, y), layer, opacity, scale: 1.0 }
+  { pos: Custom(x, y), layer, scalars: { ..ScalarState::default(), opacity, } }
 }
 
 ///|
@@ -557,6 +557,26 @@ pub fn[T] ScriptBuilder::scene(
 }
 
 ///|
+pub fn[T] ScriptBuilder::scene_with_scalars(
+  self : ScriptBuilder[T],
+  id : String,
+  scalars : ScalarState,
+) -> Unit {
+  self.instructions.push(ShowBackgroundState({ id, scalars }))
+}
+
+///|
+pub fn[T] ScriptBuilder::scene_with_opacity_scale(
+  self : ScriptBuilder[T],
+  id : String,
+  opacity : Double,
+  scale : Double,
+) -> Unit {
+  let scalars = { ..ScalarState::default(), opacity, scale }
+  self.instructions.push(ShowBackgroundState({ id, scalars }))
+}
+
+///|
 pub fn[T] ScriptBuilder::show_figure(
   self : ScriptBuilder[T],
   figure : Figure,
@@ -574,7 +594,11 @@ pub fn[T] ScriptBuilder::show_figure_at(
   opacity? : Double = 1.0,
 ) -> Unit {
   self.instructions.push(
-    ShowFigure(figure.id, { pos, layer, opacity, scale: 1.0 }),
+    ShowFigure(figure.id, {
+      pos,
+      layer,
+      scalars: { ..ScalarState::default(), opacity, },
+    }),
   )
 }
 

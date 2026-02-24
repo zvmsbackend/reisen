@@ -16,18 +16,18 @@ priv struct WebglPresenter {
   mut animation_cursor : Int
   mut timeline_ms : Int
   mut last_sync_ms : Int
-  opacity_anims : Map[String, OpacityAnim]
+  opacity_anims : Map[String, ScalarAnim]
   position_anims : Map[String, PositionAnim]
   scale_anims : Map[String, ScaleAnim]
-  rotation_anims : Map[String, OpacityAnim]
-  blur_anims : Map[String, OpacityAnim]
-  brightness_anims : Map[String, OpacityAnim]
-  contrast_anims : Map[String, OpacityAnim]
-  saturation_anims : Map[String, OpacityAnim]
-  gamma_anims : Map[String, OpacityAnim]
-  color_r_anims : Map[String, OpacityAnim]
-  color_g_anims : Map[String, OpacityAnim]
-  color_b_anims : Map[String, OpacityAnim]
+  rotation_anims : Map[String, ScalarAnim]
+  blur_anims : Map[String, ScalarAnim]
+  brightness_anims : Map[String, ScalarAnim]
+  contrast_anims : Map[String, ScalarAnim]
+  saturation_anims : Map[String, ScalarAnim]
+  gamma_anims : Map[String, ScalarAnim]
+  color_r_anims : Map[String, ScalarAnim]
+  color_g_anims : Map[String, ScalarAnim]
+  color_b_anims : Map[String, ScalarAnim]
   effect_start_ms : Map[String, Int]
   effect_signatures : Map[String, String]
   effect_from_params : Map[String, Array[EffectParam]]
@@ -254,7 +254,7 @@ fn create_effect_pipeline(
 }
 
 ///|
-priv struct OpacityAnim {
+priv struct ScalarAnim {
   start_ms : Int
   duration_ms : Int
   easing : Easing
@@ -383,10 +383,10 @@ fn figure_rect(
 }
 
 ///|
-fn apply_opacity_animation(
-  base_opacity : Double,
+fn apply_scalar_animation(
+  base_value : Double,
   now_ms : Int,
-  anim : OpacityAnim,
+  anim : ScalarAnim,
 ) -> (Double, Bool) {
   let (p, done) = animation_progress(
     now_ms,
@@ -397,13 +397,13 @@ fn apply_opacity_animation(
   match (anim.from, anim.to) {
     (None, None) =>
       if done {
-        (base_opacity, true)
+        (base_value, true)
       } else {
-        (base_opacity * p, false)
+        (base_value * p, false)
       }
     _ => {
-      let from = anim.from.unwrap_or(base_opacity)
-      let to = anim.to.unwrap_or(base_opacity)
+      let from = anim.from.unwrap_or(base_value)
+      let to = anim.to.unwrap_or(base_value)
       let value = if done { to } else { from + (to - from) * p }
       (value, done)
     }
@@ -514,6 +514,7 @@ fn apply_scale_animation(
   y : Double,
   w : Double,
   h : Double,
+  base_value : Double,
   entry_scale : Double,
   now_ms : Int,
   anim : ScaleAnim,
@@ -532,7 +533,7 @@ fn apply_scale_animation(
         entry_scale + (1.0 - entry_scale) * p
       }
     _ => {
-      let from = anim.from.unwrap_or(1.0)
+      let from = anim.from.unwrap_or(base_value)
       let to = anim.to.unwrap_or(1.0)
       if done {
         to
@@ -601,29 +602,6 @@ fn effect_signature(spec : EffectSpec) -> String {
 }
 
 ///|
-fn apply_scalar_animation(
-  base_value : Double,
-  now_ms : Int,
-  anim : OpacityAnim,
-) -> (Double, Bool) {
-  let (p, done) = animation_progress(
-    now_ms,
-    anim.start_ms,
-    anim.duration_ms,
-    anim.easing,
-  )
-  match (anim.from, anim.to) {
-    (None, None) => (base_value, done)
-    _ => {
-      let from = anim.from.unwrap_or(base_value)
-      let to = anim.to.unwrap_or(base_value)
-      let value = if done { to } else { from + (to - from) * p }
-      (value, done)
-    }
-  }
-}
-
-///|
 fn WebglPresenter::update_timeline(self : WebglPresenter) -> Unit {
   let now = now_ms()
   if self.last_sync_ms <= 0 {
@@ -671,16 +649,8 @@ fn[T] WebglPresenter::pull_new_animations(
       continue
     }
     let (target, spec) = entry
-    match spec.prop {
-      Opacity =>
-        self.opacity_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      Position =>
+    let target_map = match spec.prop {
+      Position => {
         self.position_anims.set(target, {
           start_ms: self.timeline_ms,
           duration_ms: spec.duration_ms,
@@ -690,6 +660,8 @@ fn[T] WebglPresenter::pull_new_animations(
           to_x: anim_value(spec.to, 0),
           to_y: anim_value(spec.to, 1),
         })
+        continue
+      }
       Scale => {
         let (anchor_x, anchor_y) = anim_anchor(spec.anchor)
         self.scale_anims.set(target, {
@@ -701,79 +673,25 @@ fn[T] WebglPresenter::pull_new_animations(
           anchor_x,
           anchor_y,
         })
+        continue
       }
-      Rotation =>
-        self.rotation_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      Blur =>
-        self.blur_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      Brightness =>
-        self.brightness_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      Contrast =>
-        self.contrast_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      Saturation =>
-        self.saturation_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      Gamma =>
-        self.gamma_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      ColorRed =>
-        self.color_r_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      ColorGreen =>
-        self.color_g_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
-      ColorBlue =>
-        self.color_b_anims.set(target, {
-          start_ms: self.timeline_ms,
-          duration_ms: spec.duration_ms,
-          easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
-        })
+      Opacity => self.opacity_anims
+      Rotation => self.rotation_anims
+      Blur => self.blur_anims
+      Brightness => self.brightness_anims
+      Contrast => self.contrast_anims
+      Saturation => self.saturation_anims
+      Gamma => self.gamma_anims
+      ColorRed => self.color_r_anims
+      ColorGreen => self.color_g_anims
+      ColorBlue => self.color_b_anims
+    }
+    target_map[target] = {
+      start_ms: self.timeline_ms,
+      duration_ms: spec.duration_ms,
+      easing: spec.easing,
+      from: anim_value(spec.from, 0),
+      to: anim_value(spec.to, 0),
     }
   }
   self.animation_cursor = all.length()
@@ -935,6 +853,138 @@ fn WebglPresenter::draw_effect_pipeline(
 }
 
 ///|
+priv struct ScalarAccumulator {
+  mut opacity : Double
+  mut rotation : Double
+  mut blur : Double
+  mut brightness : Double
+  mut contrast : Double
+  mut saturation : Double
+  mut gamma : Double
+  mut color_r : Double
+  mut color_g : Double
+  mut color_b : Double
+}
+
+///|
+fn ScalarAccumulator::from_scalar_state(
+  state : ScalarState,
+) -> ScalarAccumulator {
+  {
+    opacity: state.opacity,
+    rotation: state.rotation,
+    blur: state.blur,
+    brightness: state.brightness,
+    contrast: state.contrast,
+    saturation: state.saturation,
+    gamma: state.gamma,
+    color_r: state.color_r,
+    color_g: state.color_g,
+    color_b: state.color_b,
+  }
+}
+
+///|
+fn WebglPresenter::update_scalar_state(
+  self : WebglPresenter,
+  init_state : ScalarState,
+  scalar_acc : ScalarAccumulator,
+  id : String,
+) -> (Bool, ScalarState) {
+  fn apply_scalar_anim_to_state(
+    state : (Bool, ScalarState),
+    anim_map : Map[String, ScalarAnim],
+    get_value : (ScalarState) -> Double,
+    set_value : (ScalarState, Double) -> ScalarState,
+    update_scalar_acc : (Double) -> Unit,
+  ) -> (Bool, ScalarState) {
+    match anim_map.get(id) {
+      Some(anim) => {
+        let (animated, done) = apply_scalar_animation(
+          get_value(state.1),
+          self.timeline_ms,
+          anim,
+        )
+        update_scalar_acc(animated)
+        if done {
+          match anim.to {
+            Some(value) => (true, set_value(state.1, value))
+            None => state
+          }
+        } else {
+          state
+        }
+      }
+      None => {
+        update_scalar_acc(get_value(state.1))
+        state
+      }
+    }
+  }
+  (false, init_state)
+  |> apply_scalar_anim_to_state(
+    self.opacity_anims,
+    s => s.opacity,
+    (s, v) => { ..s, opacity: v },
+    v => scalar_acc.opacity = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.rotation_anims,
+    s => s.rotation,
+    (s, v) => { ..s, rotation: v },
+    v => scalar_acc.rotation = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.blur_anims,
+    s => s.blur,
+    (s, v) => { ..s, blur: v },
+    v => scalar_acc.blur = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.brightness_anims,
+    s => s.brightness,
+    (s, v) => { ..s, brightness: v },
+    v => scalar_acc.brightness = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.contrast_anims,
+    s => s.contrast,
+    (s, v) => { ..s, contrast: v },
+    v => scalar_acc.contrast = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.saturation_anims,
+    s => s.saturation,
+    (s, v) => { ..s, saturation: v },
+    v => scalar_acc.saturation = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.gamma_anims,
+    s => s.gamma,
+    (s, v) => { ..s, gamma: v },
+    v => scalar_acc.gamma = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.color_r_anims,
+    s => s.color_r,
+    (s, v) => { ..s, color_r: v },
+    v => scalar_acc.color_r = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.color_g_anims,
+    s => s.color_g,
+    (s, v) => { ..s, color_g: v },
+    v => scalar_acc.color_g = v,
+  )
+  |> apply_scalar_anim_to_state(
+    self.color_b_anims,
+    s => s.color_b,
+    (s, v) => { ..s, color_b: v },
+    v => scalar_acc.color_b = v,
+  )
+}
+
+///|
 fn WebglPresenter::effect_pipeline(
   self : WebglPresenter,
   id : String,
@@ -942,14 +992,13 @@ fn WebglPresenter::effect_pipeline(
   match self.effect_pipelines.get(id) {
     Some(pipeline) => Some(pipeline)
     None =>
-      match effect_factories.get(id) {
-        Some(factory) => {
-          let pipeline = factory(self.renderer.gl)
-          self.effect_pipelines.set(id, pipeline)
-          Some(pipeline)
-        }
-        None => None
-      }
+      effect_factories
+      .get(id)
+      .map(factory => {
+        let pipeline = factory(self.renderer.gl)
+        self.effect_pipelines.set(id, pipeline)
+        pipeline
+      })
   }
 }
 
@@ -1005,14 +1054,16 @@ fn[T] WebglPresenter::sync_impl(
   self.renderer.gl.clear_color(0.0, 0.0, 0.0, 1.0)
   self.renderer.gl.clear(self.renderer.gl.constant("COLOR_BUFFER_BIT"))
 
-  let finished_opacity : Array[String] = []
   let finished_position : Array[String] = []
   let finished_scale : Array[String] = []
   let tasks : Array[RenderTask] = []
   let mut order = 0
 
-  match director.background() {
-    Some(bg_id) => {
+  match director.background_state() {
+    Some(bg_state) => {
+      let bg_id = bg_state.id
+      let mut next_bg_state = bg_state
+      let mut update_bg_state = false
       match self.last_background_id {
         Some(prev) =>
           if prev != bg_id {
@@ -1040,24 +1091,10 @@ fn[T] WebglPresenter::sync_impl(
         self.texture_sizes,
       )
       let (x, y, bg_w, bg_h) = fit_background(bg_id, w, h, self.texture_sizes)
-      let mut cover_x = bx
-      let mut cover_y = by
-      let mut cover_w = bw
-      let mut cover_h = bh
       let mut bg_x = x
       let mut bg_y = y
       let mut bg_width = bg_w
       let mut bg_height = bg_h
-      let mut opacity = 1.0
-      let mut rotation = 0.0
-      let mut blur = 0.0
-      let mut brightness = 1.0
-      let mut contrast = 1.0
-      let mut saturation = 1.0
-      let mut gamma = 1.0
-      let mut color_r = 1.0
-      let mut color_g = 1.0
-      let mut color_b = 1.0
       let (texel_x, texel_y) = match self.texture_sizes.get(bg_id) {
         Some((tex_w, tex_h)) => {
           let tx = if tex_w == 0 { 0.0 } else { 1.0 / tex_w.to_double() }
@@ -1065,6 +1102,16 @@ fn[T] WebglPresenter::sync_impl(
           (tx, ty)
         }
         None => (0.0, 0.0)
+      }
+      let base_scale = bg_state.scalars.scale
+      if base_scale != 1.0 {
+        let (sx, sy, sw, sh) = scale_rect_with_anchor(
+          bg_x, bg_y, bg_width, bg_height, base_scale, 0.5, 0.5,
+        )
+        bg_x = sx
+        bg_y = sy
+        bg_width = sw
+        bg_height = sh
       }
       match self.position_anims.get(bg_id) {
         Some(anim) => {
@@ -1077,12 +1124,8 @@ fn[T] WebglPresenter::sync_impl(
             self.timeline_ms,
             anim,
           )
-          let dx = ax - bg_x
-          let dy = ay - bg_y
           bg_x = ax
           bg_y = ay
-          cover_x += dx
-          cover_y += dy
           if done {
             finished_position.push(bg_id)
           }
@@ -1092,153 +1135,50 @@ fn[T] WebglPresenter::sync_impl(
       match self.scale_anims.get(bg_id) {
         Some(anim) => {
           let (sx, sy, sw, sh, done) = apply_scale_animation(
-            bg_x,
-            bg_y,
-            bg_width,
-            bg_height,
+            x,
+            y,
+            bg_w,
+            bg_h,
+            bg_state.scalars.scale,
             self.config.scale_entry_from,
             self.timeline_ms,
             anim,
           )
-          let scale = if bg_width == 0.0 { 1.0 } else { sw / bg_width }
           bg_x = sx
           bg_y = sy
           bg_width = sw
           bg_height = sh
-          let (cx, cy, cw, ch) = scale_rect_with_anchor(
-            cover_x,
-            cover_y,
-            cover_w,
-            cover_h,
-            scale,
-            anim.anchor_x,
-            anim.anchor_y,
-          )
-          cover_x = cx
-          cover_y = cy
-          cover_w = cw
-          cover_h = ch
           if done {
             finished_scale.push(bg_id)
+            match anim.to {
+              Some(value) => {
+                next_bg_state = {
+                  id: next_bg_state.id,
+                  scalars: { ..next_bg_state.scalars, scale: value },
+                }
+                update_bg_state = true
+              }
+              None => ()
+            }
           }
         }
         None => ()
       }
-      match self.opacity_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, done) = apply_opacity_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          opacity = animated
-          if done {
-            finished_opacity.push(bg_id)
-          }
-        }
-        None => ()
-      }
-      match self.rotation_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            0.0,
-            self.timeline_ms,
-            anim,
-          )
-          rotation = animated
-        }
-        None => ()
-      }
-      match self.blur_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            0.0,
-            self.timeline_ms,
-            anim,
-          )
-          blur = animated
-        }
-        None => ()
-      }
-      match self.brightness_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          brightness = animated
-        }
-        None => ()
-      }
-      match self.contrast_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          contrast = animated
-        }
-        None => ()
-      }
-      match self.saturation_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          saturation = animated
-        }
-        None => ()
-      }
-      match self.gamma_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          gamma = animated
-        }
-        None => ()
-      }
-      match self.color_r_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          color_r = animated
-        }
-        None => ()
-      }
-      match self.color_g_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          color_g = animated
-        }
-        None => ()
-      }
-      match self.color_b_anims.get(bg_id) {
-        Some(anim) => {
-          let (animated, _done) = apply_scalar_animation(
-            1.0,
-            self.timeline_ms,
-            anim,
-          )
-          color_b = animated
-        }
-        None => ()
+      let scalar_acc = ScalarAccumulator::from_scalar_state(
+        next_bg_state.scalars,
+      )
+      let (updated, new_scalar_state) = self.update_scalar_state(
+        next_bg_state.scalars,
+        scalar_acc,
+        bg_id,
+      )
+      update_bg_state = update_bg_state || updated
+      let next_bg_state = { ..next_bg_state, scalars: new_scalar_state }
+      if update_bg_state {
+        director.set_background_state(next_bg_state)
       }
       let cover_blur = {
-        let value = 2.0 + blur
+        let value = 2.0 + scalar_acc.blur
         if value < 0.0 {
           0.0
         } else {
@@ -1248,20 +1188,20 @@ fn[T] WebglPresenter::sync_impl(
       let effects = director.effects(bg_id)
       let cover_item : Renderable = {
         texture: tex,
-        x: cover_x,
-        y: cover_y,
-        w: cover_w,
-        h: cover_h,
-        rotation,
-        opacity,
+        x: bx,
+        y: by,
+        w: bw,
+        h: bh,
+        rotation: scalar_acc.rotation,
+        opacity: scalar_acc.opacity,
         blur: cover_blur,
-        brightness,
-        contrast,
-        saturation,
-        gamma,
-        color_r,
-        color_g,
-        color_b,
+        brightness: scalar_acc.brightness,
+        contrast: scalar_acc.contrast,
+        saturation: scalar_acc.saturation,
+        gamma: scalar_acc.gamma,
+        color_r: scalar_acc.color_r,
+        color_g: scalar_acc.color_g,
+        color_b: scalar_acc.color_b,
         texel_x,
         texel_y,
       }
@@ -1271,16 +1211,16 @@ fn[T] WebglPresenter::sync_impl(
         y: bg_y,
         w: bg_width,
         h: bg_height,
-        rotation,
-        opacity,
-        blur,
-        brightness,
-        contrast,
-        saturation,
-        gamma,
-        color_r,
-        color_g,
-        color_b,
+        rotation: scalar_acc.rotation,
+        opacity: scalar_acc.opacity,
+        blur: scalar_acc.blur,
+        brightness: scalar_acc.brightness,
+        contrast: scalar_acc.contrast,
+        saturation: scalar_acc.saturation,
+        gamma: scalar_acc.gamma,
+        color_r: scalar_acc.color_r,
+        color_g: scalar_acc.color_g,
+        color_b: scalar_acc.color_b,
         texel_x,
         texel_y,
       }
@@ -1311,14 +1251,22 @@ fn[T] WebglPresenter::sync_impl(
     let tex = self.texture_for(id)
     let (base_x, base_y, max_w, max_h) = figure_rect(placement.pos, w, h)
     let (actual_w, actual_h) = fit_figure(id, max_w, max_h, self.texture_sizes)
-    let scaled_w = actual_w * placement.scale
-    let scaled_h = actual_h * placement.scale
+    let base_scale = placement.scalars.scale
+    let base_scaled_w = actual_w * base_scale
+    let base_scaled_h = actual_h * base_scale
     let (aligned_x, aligned_y) = match placement.pos {
-      Center => ((w - scaled_w) / 2.0, base_y + (max_h - scaled_h) / 2.0)
+      Center =>
+        ((w - base_scaled_w) / 2.0, base_y + (max_h - base_scaled_h) / 2.0)
       Left =>
-        (base_x + (max_w - scaled_w) / 2.0, base_y + (max_h - scaled_h) / 2.0)
+        (
+          base_x + (max_w - base_scaled_w) / 2.0,
+          base_y + (max_h - base_scaled_h) / 2.0,
+        )
       Right =>
-        (base_x + (max_w - scaled_w) / 2.0, base_y + (max_h - scaled_h) / 2.0)
+        (
+          base_x + (max_w - base_scaled_w) / 2.0,
+          base_y + (max_h - base_scaled_h) / 2.0,
+        )
       _ => (base_x, base_y)
     }
     let mut next_placement = placement
@@ -1341,12 +1289,7 @@ fn[T] WebglPresenter::sync_impl(
             anim.to_x is Some(_) ||
             anim.to_y is Some(_)
           if has_custom {
-            next_placement = {
-              pos: Custom(ax / w, ay / h),
-              layer: placement.layer,
-              opacity: placement.opacity,
-              scale: placement.scale,
-            }
+            next_placement = { ..next_placement, pos: Custom(ax / w, ay / h) }
             update_placement = true
           }
         }
@@ -1354,13 +1297,16 @@ fn[T] WebglPresenter::sync_impl(
       }
       None => (aligned_x, aligned_y)
     }
+    let base_w = actual_w
+    let base_h = actual_h
     let (x, y, w, h) = match self.scale_anims.get(id) {
       Some(anim) => {
         let (sx, sy, sw, sh, done) = apply_scale_animation(
-          x1,
-          y1,
-          scaled_w,
-          scaled_h,
+          base_x,
+          base_y,
+          base_w,
+          base_h,
+          next_placement.scalars.scale,
           self.config.scale_entry_from,
           self.timeline_ms,
           anim,
@@ -1378,8 +1324,7 @@ fn[T] WebglPresenter::sync_impl(
               next_placement = {
                 pos: next_pos,
                 layer: next_placement.layer,
-                opacity: next_placement.opacity,
-                scale: value,
+                scalars: { ..next_placement.scalars, scale: value },
               }
               update_placement = true
             }
@@ -1388,133 +1333,18 @@ fn[T] WebglPresenter::sync_impl(
         }
         (sx, sy, sw, sh)
       }
-      None => (x1, y1, scaled_w, scaled_h)
+      None => (x1, y1, base_scaled_w, base_scaled_h)
     }
-    let opacity = match self.opacity_anims.get(id) {
-      Some(anim) => {
-        let (animated, done) = apply_opacity_animation(
-          placement.opacity,
-          self.timeline_ms,
-          anim,
-        )
-        if done {
-          finished_opacity.push(id)
-          match anim.to {
-            Some(value) => {
-              next_placement = {
-                pos: next_placement.pos,
-                layer: next_placement.layer,
-                opacity: value,
-                scale: next_placement.scale,
-              }
-              update_placement = true
-            }
-            None => ()
-          }
-        }
-        animated
-      }
-      None => placement.opacity
-    }
-    let rotation = match self.rotation_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          0.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 0.0
-    }
-    let blur = match self.blur_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          0.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 0.0
-    }
-    let brightness = match self.brightness_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          1.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 1.0
-    }
-    let contrast = match self.contrast_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          1.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 1.0
-    }
-    let saturation = match self.saturation_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          1.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 1.0
-    }
-    let gamma = match self.gamma_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          1.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 1.0
-    }
-    let color_r = match self.color_r_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          1.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 1.0
-    }
-    let color_g = match self.color_g_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          1.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 1.0
-    }
-    let color_b = match self.color_b_anims.get(id) {
-      Some(anim) => {
-        let (animated, _done) = apply_scalar_animation(
-          1.0,
-          self.timeline_ms,
-          anim,
-        )
-        animated
-      }
-      None => 1.0
-    }
+    let scalar_acc = ScalarAccumulator::from_scalar_state(
+      next_placement.scalars,
+    )
+    let (updated, new_scalar_state) = self.update_scalar_state(
+      next_placement.scalars,
+      scalar_acc,
+      id,
+    )
+    let update_placement = update_placement || updated
+    let next_placement = { ..next_placement, scalars: new_scalar_state }
     let (texel_x, texel_y) = match self.texture_sizes.get(id) {
       Some((tex_w, tex_h)) => {
         let tx = if tex_w == 0 { 0.0 } else { 1.0 / tex_w.to_double() }
@@ -1530,16 +1360,16 @@ fn[T] WebglPresenter::sync_impl(
       y,
       w,
       h,
-      rotation,
-      opacity,
-      blur,
-      brightness,
-      contrast,
-      saturation,
-      gamma,
-      color_r,
-      color_g,
-      color_b,
+      rotation: scalar_acc.rotation,
+      opacity: scalar_acc.opacity,
+      blur: scalar_acc.blur,
+      brightness: scalar_acc.brightness,
+      contrast: scalar_acc.contrast,
+      saturation: scalar_acc.saturation,
+      gamma: scalar_acc.gamma,
+      color_r: scalar_acc.color_r,
+      color_g: scalar_acc.color_g,
+      color_b: scalar_acc.color_b,
       texel_x,
       texel_y,
     }
@@ -1554,11 +1384,6 @@ fn[T] WebglPresenter::sync_impl(
     order += 1
     if update_placement {
       updated_figures.push((id, next_placement))
-    }
-  }
-  for id in finished_opacity {
-    if self.last_background_id != Some(id) {
-      self.opacity_anims.remove(id)
     }
   }
   for id in finished_position {

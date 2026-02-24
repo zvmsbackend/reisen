@@ -38,24 +38,25 @@ test "option helper builds expected choice option" {
 
 ///|
 test "placement helpers produce expected placement values" {
-  assert_eq(place_left(), { pos: Left, layer: 0, opacity: 1.0, scale: 1.0 })
+  assert_eq(place_left(), {
+    pos: Left,
+    layer: 0,
+    scalars: ScalarState::default(),
+  })
   assert_eq(place_center(layer=2), {
     pos: Center,
     layer: 2,
-    opacity: 1.0,
-    scale: 1.0,
+    scalars: ScalarState::default(),
   })
   assert_eq(place_right(opacity=0.6), {
     pos: Right,
     layer: 0,
-    opacity: 0.6,
-    scale: 1.0,
+    scalars: { ..ScalarState::default(), opacity: 0.6 },
   })
   assert_eq(place_custom(0.25, 0.75, layer=3, opacity=0.5), {
     pos: Custom(0.25, 0.75),
     layer: 3,
-    opacity: 0.5,
-    scale: 1.0,
+    scalars: { ..ScalarState::default(), opacity: 0.5 },
   })
 }
 
@@ -166,10 +167,14 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   })
 
   assert_true(built.instructions[0] is ShowBackground("bg_school"))
-  assert_true(
-    built.instructions[1]
-    is ShowFigure("alice", { pos: Left, layer: 2, opacity: 0.7, scale: 1.0 }),
-  )
+  match built.instructions[1] {
+    ShowFigure("alice", placement) => {
+      assert_eq(placement.pos, Left)
+      assert_eq(placement.layer, 2)
+      assert_eq(placement.scalars, { ..ScalarState::default(), opacity: 0.7 })
+    }
+    _ => fail("Expected ShowFigure for alice")
+  }
   assert_true(
     built.instructions[2]
     is Animate("alice", { prop: Opacity, duration_ms: 120, easing: Linear, .. }),

@@ -20,6 +20,7 @@ pub enum RuntimeEvent {
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
+  BackgroundShownState(BackgroundState)
   FigureShown(String, FigurePlacement)
   FigureHidden(String)
   MusicPlayed(String, Bool)
@@ -219,6 +220,10 @@ fn[T] Runtime::run_inst(
     ShowBackground(id) => {
       self.ip = self.ip + 1
       BackgroundShown(id)
+    }
+    ShowBackgroundState(state) => {
+      self.ip = self.ip + 1
+      BackgroundShownState(state)
     }
     ShowFigure(id, placement) => {
       self.ip = self.ip + 1

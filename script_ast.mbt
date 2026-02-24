@@ -44,6 +44,38 @@ pub struct AnimationSpec {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
+pub struct ScalarState {
+  opacity : Double
+  scale : Double
+  rotation : Double
+  blur : Double
+  brightness : Double
+  contrast : Double
+  saturation : Double
+  gamma : Double
+  color_r : Double
+  color_g : Double
+  color_b : Double
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
+pub impl Default for ScalarState with default() {
+  {
+    opacity: 1.0,
+    scale: 1.0,
+    rotation: 0.0,
+    blur: 0.0,
+    brightness: 1.0,
+    contrast: 1.0,
+    saturation: 1.0,
+    gamma: 1.0,
+    color_r: 1.0,
+    color_g: 1.0,
+    color_b: 1.0,
+  }
+}
+
+///|
 pub(all) enum EffectPhase {
   Pre
   Post
@@ -65,8 +97,13 @@ pub struct EffectSpec {
 pub struct FigurePlacement {
   pos : Position
   layer : Int
-  opacity : Double
-  scale : Double
+  scalars : ScalarState
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
+pub struct BackgroundState {
+  id : String
+  scalars : ScalarState
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -106,6 +143,7 @@ pub enum Instruction[T] {
   InputText(String, String)
   RunCode(ScriptHook[T])
   ShowBackground(String)
+  ShowBackgroundState(BackgroundState)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)
   PlayMusic(String, Bool)

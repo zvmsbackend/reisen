@@ -299,7 +299,11 @@ fn[T] reisen_text_script_to_builder(
             _ => Center
           }
           builder.instructions.push(
-            ShowFigure(id, { pos: position, layer: 0, opacity: 1.0, scale: 1.0 }),
+            ShowFigure(id, {
+              pos: position,
+              layer: 0,
+              scalars: ScalarState::default(),
+            }),
           )
         }
       }

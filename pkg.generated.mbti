@@ -296,6 +296,15 @@ pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
 type Background
 pub impl AnimationTarget for Background
 
+pub struct BackgroundState {
+  id : String
+  scalars : ScalarState
+}
+pub impl Eq for BackgroundState
+pub impl Show for BackgroundState
+pub impl ToJson for BackgroundState
+pub impl @json.FromJson for BackgroundState
+
 type Canvas
 pub fn Canvas::get_webgl2_context(Self) -> WebGL?
 pub fn Canvas::get_webgl_context(Self) -> WebGL?
@@ -316,6 +325,7 @@ type Director[T]
 pub fn[T] Director::animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::avatar_id(Self[T]) -> String?
 pub fn[T] Director::background(Self[T]) -> String?
+pub fn[T] Director::background_state(Self[T]) -> BackgroundState?
 pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
@@ -331,6 +341,7 @@ pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
 pub fn[T] Director::render_epoch(Self[T]) -> String
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String
+pub fn[T] Director::set_background_state(Self[T], BackgroundState) -> Unit
 pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -409,8 +420,7 @@ pub impl AnimationTarget for Figure
 pub struct FigurePlacement {
   pos : Position
   layer : Int
-  opacity : Double
-  scale : Double
+  scalars : ScalarState
 }
 pub impl Eq for FigurePlacement
 pub impl Show for FigurePlacement
@@ -481,6 +491,7 @@ pub enum Instruction[T] {
   InputText(String, String)
   RunCode((GameState[T]) -> Unit)
   ShowBackground(String)
+  ShowBackgroundState(BackgroundState)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)
   PlayMusic(String, Bool)
@@ -506,7 +517,7 @@ pub impl ToJson for Position
 pub impl @json.FromJson for Position
 
 pub struct RenderState {
-  mut background : String?
+  mut background : BackgroundState?
   figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
   mut last_sfx : String?
@@ -548,6 +559,7 @@ pub enum RuntimeEvent {
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
+  BackgroundShownState(BackgroundState)
   FigureShown(String, FigurePlacement)
   FigureHidden(String)
   MusicPlayed(String, Bool)
@@ -589,6 +601,25 @@ pub impl Eq for SaveSlotMeta
 pub impl Show for SaveSlotMeta
 pub impl ToJson for SaveSlotMeta
 pub impl @json.FromJson for SaveSlotMeta
+
+pub struct ScalarState {
+  opacity : Double
+  scale : Double
+  rotation : Double
+  blur : Double
+  brightness : Double
+  contrast : Double
+  saturation : Double
+  gamma : Double
+  color_r : Double
+  color_g : Double
+  color_b : Double
+}
+pub impl Default for ScalarState
+pub impl Eq for ScalarState
+pub impl Show for ScalarState
+pub impl ToJson for ScalarState
+pub impl @json.FromJson for ScalarState
 
 pub struct Script[T] {
   instructions : Array[Instruction[T]]
@@ -632,6 +663,8 @@ pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
+pub fn[T] ScriptBuilder::scene_with_opacity_scale(Self[T], String, Double, Double) -> Unit
+pub fn[T] ScriptBuilder::scene_with_scalars(Self[T], String, ScalarState) -> Unit
 pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
