@@ -71,3 +71,15 @@ test "gallery replayable list only contains unlocked replay entries" {
   assert_true(gallery_replayable_images_in(ns).contains(replayable))
   assert_true(!gallery_replayable_images_in(ns).contains(plain))
 }
+
+///|
+test "cg helpers register and unlock" {
+  let id = gensym(prefix="wb_cg")
+  let entry = GalleryImage::new(id, "img_cg", title="CG")
+  assert_eq(gallery_image_by_id(id), Some(entry))
+  gallery_lock_image(id)
+  assert_eq(gallery_is_image_unlocked(id), false)
+  gallery_unlock_image(id)
+  assert_eq(gallery_is_image_unlocked(id), true)
+  gallery_lock_image(id)
+}

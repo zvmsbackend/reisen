@@ -1,7 +1,7 @@
 ///|
 /// Textual script format parser for Reisen visual novel engine.
 /// Line-based format: `command: arg1, arg2, ...`
-/// Supports: label, jump, wait, wait_click, narrate, say, scene, show, hide, music, sfx, animate, choice
+/// Supports: label, jump, wait, wait_click, unlock_cg, narrate, say, scene, show, hide, music, sfx, animate, choice
 
 ///|
 pub suberror ReisenTextError {} derive(Show, Eq)
@@ -177,6 +177,10 @@ fn[T] reisen_text_script_to_builder(
         }
       }
       "wait_click" | "wait_for_click" => builder.instructions.push(WaitForClick)
+      "unlock_cg" | "unlock_gallery" =>
+        if args_str != "" {
+          builder.instructions.push(UnlockCg(args_str))
+        }
       "narrate" | "narration" => {
         let parts : Array[String] = []
         for part in args_str.split(",") {

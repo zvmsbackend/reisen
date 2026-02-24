@@ -483,6 +483,14 @@ pub fn[T] ScriptBuilder::wait_click(self : ScriptBuilder[T]) -> Unit {
 }
 
 ///|
+pub fn[T] ScriptBuilder::unlock_cg(
+  self : ScriptBuilder[T],
+  id : String,
+) -> Unit {
+  self.instructions.push(UnlockCg(id))
+}
+
+///|
 pub fn[T] ScriptBuilder::intro(self : ScriptBuilder[T], text : String) -> Unit {
   self.instructions.push(Intro(text))
 }

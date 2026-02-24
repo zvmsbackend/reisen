@@ -27,6 +27,7 @@ pub enum RuntimeEvent {
   MusicStopped
   SfxPlayed(String, Bool)
   SfxStopped
+  CgUnlocked(String)
   Animated(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
   WaitStarted(Int)
@@ -255,6 +256,11 @@ fn[T] Runtime::run_inst(
     PlaySfx(id, blocking) => {
       self.ip = self.ip + 1
       SfxPlayed(id, blocking)
+    }
+    UnlockCg(id) => {
+      self.ip = self.ip + 1
+      gallery_unlock_image(id)
+      CgUnlocked(id)
     }
     Animate(target, spec) => {
       self.ip = self.ip + 1

@@ -215,6 +215,13 @@ test "parse wait click" {
 }
 
 ///|
+test "parse unlock cg" {
+  let script : Script[Unit] = reisen_parse_text_script("unlock_cg: cg_ending_1")
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is UnlockCg("cg_ending_1"))
+}
+
+///|
 test "parse animate range" {
   let script : Script[Unit] = reisen_parse_text_script(
     "animate: hero, opacity, 400, 0.2, 0.8",

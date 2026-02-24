@@ -152,6 +152,7 @@ pub enum Instruction[T] {
   PlayMusic(String, Bool)
   StopMusic
   PlaySfx(String, Bool)
+  UnlockCg(String)
   Animate(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
 }

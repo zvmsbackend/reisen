@@ -10,6 +10,7 @@ A visual novel engine built in MoonBit, rendered in the browser via WebGL.
 - Save/load system with multiple slots
 - Typewriter text effect
 - Basic animations (fade, move, scale)
+- Gallery CG registration and unlock state
 - Start menu, settings, and autosave
 
 ## Quick Start
@@ -58,6 +59,30 @@ reisen/
 ```
 
 ## Writing a Game
+
+### Gallery CG Registration
+
+```mbt nocheck
+let cg_ending = register_cg_image(
+  "cg_ending_1",
+  "bg_ending_1",
+  title="First Ending",
+  replay_label="ending_1_replay",
+)
+
+// Or manual register via struct value
+register_cg(cg("cg_secret", "bg_secret", title="Secret"))
+```
+
+Unlock from script:
+
+```mbt nocheck
+///|
+let s : Script[Unit] = script(builder => builder.unlock_cg("cg_ending_1"))
+
+// Text script command
+// unlock_cg: cg_ending_1
+```
 
 ### 1. Define Your Game State
 

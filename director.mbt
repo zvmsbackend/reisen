@@ -135,6 +135,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     }
     SfxStopped =>
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
+    CgUnlocked(_) => ()
     Animated(target, spec) => self.render.animations.push((target, spec))
     EffectApplied(target, spec) => {
       let current = self.render.effects.get(target).unwrap_or([])
