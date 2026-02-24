@@ -71,6 +71,8 @@ test "scale animation grows around center" {
     easing: Linear,
     from: None,
     to: None,
+    anchor_x: 0.5,
+    anchor_y: 0.5,
   }
   let (x0, y0, w0, h0, done0) = apply_scale_animation(
     100.0, 200.0, 300.0, 400.0, 0.0, 0, anim,

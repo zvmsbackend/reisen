@@ -113,6 +113,7 @@ pub fn anim_opacity(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -129,6 +130,7 @@ pub fn anim_position(
     easing,
     from: from.map(n => [n.0, n.1]),
     to: Some([to.0, to.1]),
+    anchor: None,
   }
 }
 
@@ -137,9 +139,17 @@ pub fn anim_scale(
   duration_ms : Int,
   from : Double?,
   to : Double,
+  anchor? : (Double, Double) = (0.5, 0.5),
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Scale, duration_ms, easing, from: from.map(n => [n]), to: Some([to]) }
+  {
+    prop: Scale,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+    anchor: Some([anchor.0, anchor.1]),
+  }
 }
 
 ///|
@@ -155,6 +165,7 @@ pub fn anim_rotation(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -165,7 +176,14 @@ pub fn anim_blur(
   to : Double,
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Blur, duration_ms, easing, from: from.map(n => [n]), to: Some([to]) }
+  {
+    prop: Blur,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+    anchor: None,
+  }
 }
 
 ///|
@@ -181,6 +199,7 @@ pub fn anim_brightness(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -197,6 +216,7 @@ pub fn anim_contrast(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -213,6 +233,7 @@ pub fn anim_saturation(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -223,7 +244,14 @@ pub fn anim_gamma(
   to : Double,
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Gamma, duration_ms, easing, from: from.map(n => [n]), to: Some([to]) }
+  {
+    prop: Gamma,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+    anchor: None,
+  }
 }
 
 ///|
@@ -239,6 +267,7 @@ pub fn anim_color_red(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -255,6 +284,7 @@ pub fn anim_color_green(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -271,6 +301,7 @@ pub fn anim_color_blue(
     easing,
     from: from.map(n => [n]),
     to: Some([to]),
+    anchor: None,
   }
 }
 
@@ -538,10 +569,11 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
   duration_ms : Int,
   from? : Double,
   to : Double,
+  anchor? : (Double, Double) = (0.5, 0.5),
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_scale(duration_ms, from, to, easing~)),
+    Animate(target.id(), anim_scale(duration_ms, from, to, anchor~, easing~)),
   )
 }
 

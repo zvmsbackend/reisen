@@ -40,6 +40,7 @@ pub struct AnimationSpec {
   easing : Easing
   from : Array[Double]?
   to : Array[Double]?
+  anchor : Array[Double]?
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|

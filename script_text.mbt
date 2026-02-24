@@ -390,7 +390,40 @@ fn[T] reisen_text_script_to_builder(
                   anim_position(duration_ms, None, (0.0, 0.0), easing=Linear)
                 }
               "scale" | "size" =>
-                if parts.length() >= 5 {
+                if parts.length() >= 7 {
+                  let from = (try? @strconv.parse_double(parts[3])).unwrap_or(
+                    1.0,
+                  )
+                  let to = (try? @strconv.parse_double(parts[4])).unwrap_or(1.0)
+                  let anchor_x = (try? @strconv.parse_double(parts[5])).unwrap_or(
+                    0.5,
+                  )
+                  let anchor_y = (try? @strconv.parse_double(parts[6])).unwrap_or(
+                    0.5,
+                  )
+                  anim_scale(
+                    duration_ms,
+                    Some(from),
+                    to,
+                    anchor=(anchor_x, anchor_y),
+                    easing=Linear,
+                  )
+                } else if parts.length() >= 6 {
+                  let to = (try? @strconv.parse_double(parts[3])).unwrap_or(1.0)
+                  let anchor_x = (try? @strconv.parse_double(parts[4])).unwrap_or(
+                    0.5,
+                  )
+                  let anchor_y = (try? @strconv.parse_double(parts[5])).unwrap_or(
+                    0.5,
+                  )
+                  anim_scale(
+                    duration_ms,
+                    None,
+                    to,
+                    anchor=(anchor_x, anchor_y),
+                    easing=Linear,
+                  )
+                } else if parts.length() >= 5 {
                   let from = from_value.unwrap_or(1.0)
                   let to = to_value.unwrap_or(1.0)
                   anim_scale(duration_ms, Some(from), to, easing=Linear)
@@ -410,6 +443,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(0.0)
@@ -419,6 +453,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -427,6 +462,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([0.0]),
+                    anchor: None,
                   }
                 }
               "blur" =>
@@ -439,6 +475,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(0.0)
@@ -448,6 +485,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -456,6 +494,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([0.0]),
+                    anchor: None,
                   }
                 }
               "brightness" =>
@@ -468,6 +507,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(1.0)
@@ -477,6 +517,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -485,6 +526,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([1.0]),
+                    anchor: None,
                   }
                 }
               "contrast" =>
@@ -497,6 +539,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(1.0)
@@ -506,6 +549,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -514,6 +558,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([1.0]),
+                    anchor: None,
                   }
                 }
               "saturation" | "sat" =>
@@ -526,6 +571,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(1.0)
@@ -535,6 +581,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -543,6 +590,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([1.0]),
+                    anchor: None,
                   }
                 }
               "gamma" =>
@@ -555,6 +603,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(1.0)
@@ -564,6 +613,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -572,6 +622,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([1.0]),
+                    anchor: None,
                   }
                 }
               "red" | "colorred" | "color_r" =>
@@ -584,6 +635,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(1.0)
@@ -593,6 +645,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -601,6 +654,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([1.0]),
+                    anchor: None,
                   }
                 }
               "green" | "colorgreen" | "color_g" =>
@@ -613,6 +667,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(1.0)
@@ -622,6 +677,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -630,6 +686,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([1.0]),
+                    anchor: None,
                   }
                 }
               "blue" | "colorblue" | "color_b" =>
@@ -642,6 +699,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: Some([from]),
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else if parts.length() >= 4 {
                   let to = from_value.unwrap_or(1.0)
@@ -651,6 +709,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([to]),
+                    anchor: None,
                   }
                 } else {
                   {
@@ -659,6 +718,7 @@ fn[T] reisen_text_script_to_builder(
                     easing: Linear,
                     from: None,
                     to: Some([1.0]),
+                    anchor: None,
                   }
                 }
               _ => anim_opacity(duration_ms, None, 1.0, easing=Linear)

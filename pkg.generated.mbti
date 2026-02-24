@@ -29,7 +29,7 @@ pub fn anim_rotation(Int, Double?, Double, easing? : Easing) -> AnimationSpec
 
 pub fn anim_saturation(Int, Double?, Double, easing? : Easing) -> AnimationSpec
 
-pub fn anim_scale(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : Easing) -> AnimationSpec
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
@@ -230,6 +230,7 @@ pub struct AnimationSpec {
   easing : Easing
   from : Array[Double]?
   to : Array[Double]?
+  anchor : Array[Double]?
 }
 pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
@@ -542,7 +543,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, f
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : (Double, Double), (Double, Double), easing? : Easing) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, anchor? : (Double, Double), easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError

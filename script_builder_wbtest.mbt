@@ -67,6 +67,7 @@ test "animation helpers produce expected animation specs" {
     easing: Linear,
     from: None,
     to: Some([1.0]),
+    anchor: None,
   })
   assert_eq(anim_position(240, None, (0.0, 0.0), easing=EaseInOut), {
     prop: Position,
@@ -74,6 +75,7 @@ test "animation helpers produce expected animation specs" {
     easing: EaseInOut,
     from: None,
     to: Some([0.0, 0.0]),
+    anchor: None,
   })
   assert_eq(anim_scale(360, None, 1.0, easing=EaseOut), {
     prop: Scale,
@@ -81,6 +83,7 @@ test "animation helpers produce expected animation specs" {
     easing: EaseOut,
     from: None,
     to: Some([1.0]),
+    anchor: Some([0.5, 0.5]),
   })
   assert_eq(anim_opacity(100, Some(0.1), 0.9), {
     prop: Opacity,
@@ -88,6 +91,7 @@ test "animation helpers produce expected animation specs" {
     easing: Linear,
     from: Some([0.1]),
     to: Some([0.9]),
+    anchor: None,
   })
   assert_eq(anim_position(200, Some((-0.1, 0.0)), (0.0, 0.0)), {
     prop: Position,
@@ -95,6 +99,7 @@ test "animation helpers produce expected animation specs" {
     easing: Linear,
     from: Some([-0.1, 0.0]),
     to: Some([0.0, 0.0]),
+    anchor: None,
   })
   assert_eq(anim_scale(150, Some(0.5), 1.0), {
     prop: Scale,
@@ -102,6 +107,7 @@ test "animation helpers produce expected animation specs" {
     easing: Linear,
     from: Some([0.5]),
     to: Some([1.0]),
+    anchor: Some([0.5, 0.5]),
   })
 }
 

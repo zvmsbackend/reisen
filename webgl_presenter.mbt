@@ -224,6 +224,8 @@ priv struct ScaleAnim {
   easing : Easing
   from : Double?
   to : Double?
+  anchor_x : Double
+  anchor_y : Double
 }
 
 ///|
@@ -379,6 +381,13 @@ fn anim_value(values : Array[Double]?, idx : Int) -> Double? {
 }
 
 ///|
+fn anim_anchor(values : Array[Double]?) -> (Double, Double) {
+  let x = anim_value(values, 0).unwrap_or(0.5)
+  let y = anim_value(values, 1).unwrap_or(0.5)
+  (x, y)
+}
+
+///|
 fn apply_position_animation(
   x : Double,
   y : Double,
@@ -459,15 +468,30 @@ fn apply_scale_animation(
   }
   let sw = w * s
   let sh = h * s
-  let cx = x + w / 2.0
-  let cy = y + h / 2.0
-  let sx = cx - sw / 2.0
-  let sy = cy - sh / 2.0
-  if done {
-    (x, y, w, h, true)
-  } else {
-    (sx, sy, sw, sh, false)
-  }
+  let ax = x + w * anim.anchor_x
+  let ay = y + h * anim.anchor_y
+  let sx = ax - sw * anim.anchor_x
+  let sy = ay - sh * anim.anchor_y
+  (sx, sy, sw, sh, done)
+}
+
+///|
+fn scale_rect_with_anchor(
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  scale : Double,
+  anchor_x : Double,
+  anchor_y : Double,
+) -> (Double, Double, Double, Double) {
+  let sw = w * scale
+  let sh = h * scale
+  let ax = x + w * anchor_x
+  let ay = y + h * anchor_y
+  let sx = ax - sw * anchor_x
+  let sy = ay - sh * anchor_y
+  (sx, sy, sw, sh)
 }
 
 ///|
@@ -537,14 +561,18 @@ fn[T] WebglPresenter::pull_new_animations(
           to_x: anim_value(spec.to, 0),
           to_y: anim_value(spec.to, 1),
         })
-      Scale =>
+      Scale => {
+        let (anchor_x, anchor_y) = anim_anchor(spec.anchor)
         self.scale_anims.set(target, {
           start_ms: self.timeline_ms,
           duration_ms: spec.duration_ms,
           easing: spec.easing,
           from: anim_value(spec.from, 0),
           to: anim_value(spec.to, 0),
+          anchor_x,
+          anchor_y,
         })
+      }
       Rotation =>
         self.rotation_anims.set(target, {
           start_ms: self.timeline_ms,
@@ -877,12 +905,19 @@ fn[T] WebglPresenter::sync_impl(
           bg_y = sy
           bg_width = sw
           bg_height = sh
-          let cover_cx = cover_x + cover_w / 2.0
-          let cover_cy = cover_y + cover_h / 2.0
-          cover_w = cover_w * scale
-          cover_h = cover_h * scale
-          cover_x = cover_cx - cover_w / 2.0
-          cover_y = cover_cy - cover_h / 2.0
+          let (cx, cy, cw, ch) = scale_rect_with_anchor(
+            cover_x,
+            cover_y,
+            cover_w,
+            cover_h,
+            scale,
+            anim.anchor_x,
+            anim.anchor_y,
+          )
+          cover_x = cx
+          cover_y = cy
+          cover_w = cw
+          cover_h = ch
           if done {
             finished_scale.push(bg_id)
           }
@@ -1100,10 +1135,16 @@ fn[T] WebglPresenter::sync_impl(
         )
         if done {
           finished_scale.push(id)
+          let anchor_changed = anim.anchor_x != 0.5 || anim.anchor_y != 0.5
           match anim.to {
             Some(value) => {
+              let next_pos = if anchor_changed {
+                Custom(sx / w, sy / h)
+              } else {
+                next_placement.pos
+              }
               next_placement = {
-                pos: next_placement.pos,
+                pos: next_pos,
                 layer: next_placement.layer,
                 opacity: next_placement.opacity,
                 scale: value,
