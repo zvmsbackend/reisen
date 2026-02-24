@@ -49,6 +49,32 @@ pub fn effect_spec_with_phase_duration(String, Array[(String, Double)], EffectPh
 
 pub fn effect_spec_with_timing(String, Array[(String, Double)], EffectPhase, Int, Easing, blocking? : Bool) -> EffectSpec
 
+pub fn gallery_image_by_id(String) -> GalleryImage?
+
+pub fn gallery_is_image_unlocked(String) -> Bool
+
+pub fn gallery_is_image_unlocked_in(String, String) -> Bool
+
+pub fn gallery_lock_image(String) -> Unit
+
+pub fn gallery_lock_image_in(String, String) -> Unit
+
+pub fn gallery_register_image(GalleryImage) -> Unit
+
+pub fn gallery_registered_images() -> Array[GalleryImage]
+
+pub fn gallery_replayable_images() -> Array[GalleryImage]
+
+pub fn gallery_replayable_images_in(String) -> Array[GalleryImage]
+
+pub fn gallery_unlock_image(String) -> Unit
+
+pub fn gallery_unlock_image_in(String, String) -> Unit
+
+pub fn gallery_unlocked_images() -> Array[GalleryImage]
+
+pub fn gallery_unlocked_images_in(String) -> Array[GalleryImage]
+
 pub fn game_settings_default() -> GameSettings
 
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
@@ -430,6 +456,19 @@ pub impl Eq for FigurePlacement
 pub impl Show for FigurePlacement
 pub impl ToJson for FigurePlacement
 pub impl @json.FromJson for FigurePlacement
+
+pub struct GalleryImage {
+  id : String
+  image_id : String
+  title : String
+  thumbnail_id : String?
+  replay_label : String?
+}
+pub fn GalleryImage::new(String, String, title? : String, thumbnail_id? : String, replay_label? : String) -> Self
+pub impl Eq for GalleryImage
+pub impl Show for GalleryImage
+pub impl ToJson for GalleryImage
+pub impl @json.FromJson for GalleryImage
 
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], RuntimeEvent) -> Unit
