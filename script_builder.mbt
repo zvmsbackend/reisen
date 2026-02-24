@@ -56,7 +56,7 @@ pub fn effect_param(name : String, value : Double) -> EffectParam {
 
 ///|
 pub fn effect_spec(id : String, params : Array[EffectParam]) -> EffectSpec {
-  { id, params, phase: Some(Post) }
+  { id, params, phase: Some(Post), duration_ms: None, easing: Some(Linear) }
 }
 
 ///|
@@ -65,7 +65,58 @@ pub fn effect_spec_with_phase(
   params : Array[EffectParam],
   phase : EffectPhase,
 ) -> EffectSpec {
-  { id, params, phase: Some(phase) }
+  { id, params, phase: Some(phase), duration_ms: None, easing: Some(Linear) }
+}
+
+///|
+pub fn effect_spec_with_duration(
+  id : String,
+  params : Array[EffectParam],
+  duration_ms : Int,
+) -> EffectSpec {
+  let duration = if duration_ms < 0 { 0 } else { duration_ms }
+  {
+    id,
+    params,
+    phase: Some(Post),
+    duration_ms: Some(duration),
+    easing: Some(Linear),
+  }
+}
+
+///|
+pub fn effect_spec_with_phase_duration(
+  id : String,
+  params : Array[EffectParam],
+  phase : EffectPhase,
+  duration_ms : Int,
+) -> EffectSpec {
+  let duration = if duration_ms < 0 { 0 } else { duration_ms }
+  {
+    id,
+    params,
+    phase: Some(phase),
+    duration_ms: Some(duration),
+    easing: Some(Linear),
+  }
+}
+
+///|
+pub fn effect_spec_with_timing(
+  id : String,
+  params : Array[EffectParam],
+  phase : EffectPhase,
+  duration_ms : Int,
+  easing : Easing,
+) -> EffectSpec {
+  let duration = if duration_ms < 0 { 0 } else { duration_ms }
+  {
+    id,
+    params,
+    phase: Some(phase),
+    duration_ms: Some(duration),
+    easing: Some(easing),
+  }
 }
 
 ///|
@@ -560,9 +611,18 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
   target : A,
   effect : Effect,
   params : Array[EffectParam],
+  phase? : EffectPhase,
+  duration_ms? : Int,
+  easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    ApplyEffect(target.id(), { id: effect.id, params, phase: Some(Post) }),
+    ApplyEffect(target.id(), {
+      id: effect.id,
+      params,
+      phase,
+      duration_ms,
+      easing: Some(easing),
+    }),
   )
 }
 

@@ -154,6 +154,8 @@ fn init {
 Register a custom effect pipeline, then apply it from script by ID.
 Effects are rendered after the base pass by default; set `phase=pre` in the
 script to draw before the base pass, or return `true` to skip the base pass.
+You can also supply `duration=ms` and `easing=` to animate effect params; the
+final values are preserved after the duration.
 
 ```moonbit nocheck
 ///|
@@ -166,7 +168,7 @@ fn param_value(
 }
 
 ///|
-fn register_effects() -> Unit {
+fn register_glow_effect() -> Effect {
   let vert =
     #| attribute vec2 a_position;
     #| attribute vec2 a_uv;
@@ -188,26 +190,29 @@ fn register_effects() -> Unit {
     #|   gl_FragColor = vec4(c.rgb * u_intensity, c.a * u_opacity);
     #| }
 
-  register_webgl_effect_with_shaders("glow", vert, frag, (
-    gl,
-    program,
-    _item,
-    params,
-    _time_ms,
-  ) => {
-    let intensity = param_value(params, "intensity", 1.0)
-    match gl.get_uniform_location(program, "u_intensity") {
-      Some(loc) => gl.uniform1f(loc, intensity)
-      None => ()
-    } // return true to skip the base pass
-    false
-  })
+  register_webgl_effect_with_shaders(
+    vert,
+    frag,
+    (gl, program, _item, params, _time_ms) => {
+      let intensity = param_value(params, "intensity", 1.0)
+      match gl.get_uniform_location(program, "u_intensity") {
+        Some(loc) => gl.uniform1f(loc, intensity)
+        None => ()
+      } // return true to skip the base pass
+      false
+    },
+    defaults=[effect_param("intensity", 1.0)],
+    id="glow",
+  )
 }
+
+///|
+let glow = register_glow_effect()
 
 ///|
 let my_script : Script[Unit] = try! script(fn(builder) {
   builder.scene(bg_temple)
-  builder.effect(bg_temple, effect("glow"), [effect_param("intensity", 1.2)])
+  builder.effect(bg_temple, glow, [effect_param("intensity", 1.2)])
 })
 ```
 

@@ -27,6 +27,9 @@ priv struct WebglPresenter {
   color_r_anims : Map[String, OpacityAnim]
   color_g_anims : Map[String, OpacityAnim]
   color_b_anims : Map[String, OpacityAnim]
+  effect_start_ms : Map[String, Int]
+  effect_signatures : Map[String, String]
+  effect_from_params : Map[String, Array[EffectParam]]
 }
 
 ///|
@@ -97,21 +100,31 @@ type EffectFactory = (WebGL) -> CustomEffectPipeline raise RenderError
 let effect_factories : Map[String, EffectFactory] = {}
 
 ///|
-fn register_webgl_effect(id : String, factory : EffectFactory) -> Unit {
+let effect_defaults : Map[String, Array[EffectParam]] = {}
+
+///|
+fn register_webgl_effect_with_defaults(
+  id : String,
+  defaults : Array[EffectParam],
+  factory : EffectFactory,
+) -> Unit {
   effect_factories.set(id, factory)
+  effect_defaults.set(id, defaults)
 }
 
 ///|
 pub fn register_webgl_effect_with_shaders(
-  id : String,
   vert_src : String,
   frag_src : String,
   apply : EffectApply,
-) -> Unit {
-  register_webgl_effect(id, gl => {
+  defaults? : Array[EffectParam] = [],
+  id? : String = gensym(prefix="effect"),
+) -> Effect {
+  register_webgl_effect_with_defaults(id, defaults, gl => {
     pipe: create_effect_pipeline(gl, vert_src, frag_src),
     apply,
   })
+  { id, }
 }
 
 ///|
@@ -274,6 +287,7 @@ priv struct ScaleAnim {
 priv struct RenderTask {
   layer : Int
   order : Int
+  target_id : String
   item : Renderable
   effects : Array[EffectSpec]
   base_pipe : RenderPipeline
@@ -324,6 +338,9 @@ fn WebglPresenter::new(
     color_r_anims: {},
     color_g_anims: {},
     color_b_anims: {},
+    effect_start_ms: {},
+    effect_signatures: {},
+    effect_from_params: {},
   }
 }
 
@@ -551,6 +568,37 @@ fn scale_rect_with_anchor(
 }
 
 ///|
+fn effect_key(target : String, id : String) -> String {
+  target + "::" + id
+}
+
+///|
+fn effect_signature(spec : EffectSpec) -> String {
+  let phase = match spec.phase {
+    Some(Pre) => "pre"
+    Some(Post) => "post"
+    None => "post"
+  }
+  let duration = match spec.duration_ms {
+    Some(ms) => ms.to_string()
+    None => "none"
+  }
+  let easing = match spec.easing {
+    Some(Linear) => "linear"
+    Some(EaseIn) => "easein"
+    Some(EaseOut) => "easeout"
+    Some(EaseInOut) => "easeinout"
+    None => "linear"
+  }
+  let params : Array[String] = []
+  for entry in spec.params {
+    let (name, value) = entry
+    params.push(name + "=" + value.to_string())
+  }
+  spec.id + "|" + phase + "|" + duration + "|" + easing + "|" + params.join(";")
+}
+
+///|
 fn apply_scalar_animation(
   base_value : Double,
   now_ms : Int,
@@ -767,6 +815,7 @@ fn fit_background_cover(
 }
 
 ///|
+
 ///|
 fn WebglPresenter::draw_effect_pipeline(
   self : WebglPresenter,
@@ -1204,6 +1253,7 @@ fn[T] WebglPresenter::sync_impl(
       tasks.push({
         layer: -1001,
         order,
+        target_id: bg_id,
         item: cover_item,
         effects,
         base_pipe: self.blur_pipe,
@@ -1212,6 +1262,7 @@ fn[T] WebglPresenter::sync_impl(
       tasks.push({
         layer: -1000,
         order,
+        target_id: bg_id,
         item: base_item,
         effects,
         base_pipe: self.renderer.pipe,
@@ -1461,6 +1512,7 @@ fn[T] WebglPresenter::sync_impl(
     tasks.push({
       layer: placement.layer,
       order,
+      target_id: id,
       item,
       effects,
       base_pipe: self.renderer.pipe,
@@ -1491,23 +1543,83 @@ fn[T] WebglPresenter::sync_impl(
   }
 
   tasks.sort_by_key(task => task.layer * 1000000 + task.order)
+  let active_effects : Array[String] = []
   for task in tasks {
     let mut skip_base = false
     for spec in task.effects {
-      match self.effect_pipeline(spec.id) {
-        Some(pipeline) => {
-          let skip = self.draw_effect_pipeline(
-            pipeline,
-            task.item,
-            spec.params,
-            w,
-            h,
+      let key = effect_key(task.target_id, spec.id)
+      let signature = effect_signature(spec)
+      active_effects.push(key)
+      match self.effect_signatures.get(key) {
+        Some(prev) =>
+          if prev != signature {
+            self.effect_signatures.set(key, signature)
+            self.effect_start_ms.set(key, self.timeline_ms)
+            let defaults = match effect_defaults.get(spec.id) {
+              Some(list) if list.length() > 0 => list
+              _ => spec.params
+            }
+            self.effect_from_params.set(key, defaults)
+          }
+        None => {
+          self.effect_signatures.set(key, signature)
+          self.effect_start_ms.set(key, self.timeline_ms)
+          let defaults = match effect_defaults.get(spec.id) {
+            Some(list) if list.length() > 0 => list
+            _ => spec.params
+          }
+          self.effect_from_params.set(key, defaults)
+        }
+      }
+      let mut progress : Double = 1.0
+      match (spec.duration_ms, self.effect_start_ms.get(key)) {
+        (Some(duration), Some(start_ms)) => {
+          let (p, done) = animation_progress(
+            self.timeline_ms,
+            start_ms,
+            duration,
+            spec.easing.unwrap_or(Linear),
           )
-          if skip {
-            skip_base = true
+          progress = p
+          if done {
+            progress = 1.0
           }
         }
-        None => ()
+        _ => ()
+      }
+      let phase = spec.phase.unwrap_or(Post)
+      let mut render_params : Array[EffectParam] = []
+      if spec.duration_ms is Some(_) {
+        let from = match self.effect_from_params.get(key) {
+          Some(list) => list
+          None => []
+        }
+        let from_map = Map::from_array(from)
+        for entry in spec.params {
+          let (name, value) = entry
+          let start = from_map.get(name).unwrap_or(value)
+          let animated = start + (value - start) * progress
+          render_params.push((name, animated))
+        }
+      } else {
+        render_params = spec.params
+      }
+      if phase is Pre {
+        match self.effect_pipeline(spec.id) {
+          Some(pipeline) => {
+            let skip = self.draw_effect_pipeline(
+              pipeline,
+              task.item,
+              render_params,
+              w,
+              h,
+            )
+            if skip {
+              skip_base = true
+            }
+          }
+          None => ()
+        }
       }
     }
     if !skip_base {
@@ -1519,6 +1631,63 @@ fn[T] WebglPresenter::sync_impl(
         w,
         h,
       )
+    }
+    for spec in task.effects {
+      let key = effect_key(task.target_id, spec.id)
+      let mut progress : Double = 1.0
+      match (spec.duration_ms, self.effect_start_ms.get(key)) {
+        (Some(duration), Some(start_ms)) => {
+          let (p, done) = animation_progress(
+            self.timeline_ms,
+            start_ms,
+            duration,
+            spec.easing.unwrap_or(Linear),
+          )
+          progress = p
+          if done {
+            progress = 1.0
+          }
+        }
+        _ => ()
+      }
+      let phase = spec.phase.unwrap_or(Post)
+      let mut render_params : Array[EffectParam] = []
+      if spec.duration_ms is Some(_) {
+        let from = match self.effect_from_params.get(key) {
+          Some(list) => list
+          None => []
+        }
+        let from_map = Map::from_array(from)
+        for entry in spec.params {
+          let (name, value) = entry
+          let start = from_map.get(name).unwrap_or(value)
+          let animated = start + (value - start) * progress
+          render_params.push((name, animated))
+        }
+      } else {
+        render_params = spec.params
+      }
+      if phase is Post {
+        match self.effect_pipeline(spec.id) {
+          Some(pipeline) => {
+            let _skip = self.draw_effect_pipeline(
+              pipeline,
+              task.item,
+              render_params,
+              w,
+              h,
+            )
+          }
+          None => ()
+        }
+      }
+    }
+  }
+  for key in self.effect_start_ms.keys() {
+    if !active_effects.contains(key) {
+      self.effect_start_ms.remove(key)
+      self.effect_signatures.remove(key)
+      self.effect_from_params.remove(key)
     }
   }
 }

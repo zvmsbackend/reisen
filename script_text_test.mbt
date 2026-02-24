@@ -237,6 +237,23 @@ test "parse effect params" {
       assert_eq(spec.params[0], effect_param("intensity", 0.6))
       assert_eq(spec.params[1], effect_param("radius", 8.0))
       assert_eq(spec.phase, Some(EffectPhase::Post))
+      assert_eq(spec.duration_ms, None)
+      assert_eq(spec.easing, Some(Linear))
+    }
+    _ => fail("Expected ApplyEffect instruction")
+  }
+}
+
+///|
+test "parse effect duration" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "effect: hero, glow, duration=500, intensity=0.6",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    ApplyEffect(_, spec) => {
+      assert_eq(spec.id, "glow")
+      assert_eq(spec.duration_ms, Some(500))
     }
     _ => fail("Expected ApplyEffect instruction")
   }

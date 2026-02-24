@@ -208,6 +208,8 @@ test "effect helper emits apply effect" {
         id: "glow",
         params: [("intensity", 0.6), ("radius", 8.0)],
         phase: Some(EffectPhase::Post),
+        duration_ms: None,
+        easing: Some(Linear),
       }
     ),
   )

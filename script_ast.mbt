@@ -57,6 +57,8 @@ pub struct EffectSpec {
   id : String
   params : Array[EffectParam]
   phase : EffectPhase?
+  duration_ms : Int?
+  easing : Easing?
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|

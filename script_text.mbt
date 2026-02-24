@@ -333,6 +333,8 @@ fn[T] reisen_text_script_to_builder(
           if target != "" && effect_id != "" {
             let params : Array[EffectParam] = []
             let mut phase : EffectPhase = Post
+            let mut duration : Int? = None
+            let mut easing : Easing = Linear
             for i = 2; i < parts.length(); i = i + 1 {
               let entry = parts[i]
               let (key_raw, value_raw) = get_first_part(entry, "=")
@@ -345,6 +347,21 @@ fn[T] reisen_text_script_to_builder(
                 } else if lower == "post" {
                   phase = Post
                 }
+              } else if key == "duration" || key == "duration_ms" {
+                let value = (try? @strconv.parse_int(value_str)).unwrap_or(0)
+                let clamped = if value < 0 { 0 } else { value }
+                duration = Some(clamped)
+              } else if key == "easing" {
+                let lower = value_str.to_lower()
+                if lower == "easein" || lower == "ease_in" {
+                  easing = EaseIn
+                } else if lower == "easeout" || lower == "ease_out" {
+                  easing = EaseOut
+                } else if lower == "easeinout" || lower == "ease_in_out" {
+                  easing = EaseInOut
+                } else {
+                  easing = Linear
+                }
               } else if key != "" && value_str != "" {
                 let value = (try? @strconv.parse_double(value_str)).unwrap_or(
                   0.0,
@@ -353,7 +370,13 @@ fn[T] reisen_text_script_to_builder(
               }
             }
             builder.instructions.push(
-              ApplyEffect(target, { id: effect_id, params, phase: Some(phase) }),
+              ApplyEffect(target, {
+                id: effect_id,
+                params,
+                phase: Some(phase),
+                duration_ms: duration,
+                easing: Some(easing),
+              }),
             )
           }
         }

@@ -33,6 +33,20 @@ pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : Ea
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
+pub fn effect(String) -> Effect
+
+pub fn effect_param(String, Double) -> (String, Double)
+
+pub fn effect_spec(String, Array[(String, Double)]) -> EffectSpec
+
+pub fn effect_spec_with_duration(String, Array[(String, Double)], Int) -> EffectSpec
+
+pub fn effect_spec_with_phase(String, Array[(String, Double)], EffectPhase) -> EffectSpec
+
+pub fn effect_spec_with_phase_duration(String, Array[(String, Double)], EffectPhase, Int) -> EffectSpec
+
+pub fn effect_spec_with_timing(String, Array[(String, Double)], EffectPhase, Int, Easing) -> EffectSpec
+
 pub fn game_settings_default() -> GameSettings
 
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
@@ -104,6 +118,8 @@ pub fn place_custom(Double, Double, layer? : Int, opacity? : Double) -> FigurePl
 pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
+
+pub fn register_webgl_effect_with_shaders(String, String, (WebGL, WebGLProgram, EffectDrawable, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
 
 pub fn[T] reisen_parse_text_script(String) -> Script[T] raise ScriptBuildError
 
@@ -304,6 +320,7 @@ pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
+pub fn[T] Director::effects(Self[T], String) -> Array[EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::from_save(Script[T], DirectorSave[T]) -> Self[T] raise ScriptRuntimeError
@@ -341,6 +358,49 @@ pub impl Eq for Easing
 pub impl Show for Easing
 pub impl ToJson for Easing
 pub impl @json.FromJson for Easing
+
+type Effect
+
+pub struct EffectDrawable {
+  texture : WebGLTexture
+  x : Double
+  y : Double
+  w : Double
+  h : Double
+  rotation : Double
+  opacity : Double
+  blur : Double
+  brightness : Double
+  contrast : Double
+  saturation : Double
+  gamma : Double
+  color_r : Double
+  color_g : Double
+  color_b : Double
+  texel_x : Double
+  texel_y : Double
+}
+
+pub(all) enum EffectPhase {
+  Pre
+  Post
+}
+pub impl Eq for EffectPhase
+pub impl Show for EffectPhase
+pub impl ToJson for EffectPhase
+pub impl @json.FromJson for EffectPhase
+
+pub struct EffectSpec {
+  id : String
+  params : Array[(String, Double)]
+  phase : EffectPhase?
+  duration_ms : Int?
+  easing : Easing?
+}
+pub impl Eq for EffectSpec
+pub impl Show for EffectSpec
+pub impl ToJson for EffectSpec
+pub impl @json.FromJson for EffectSpec
 
 type Figure
 pub impl AnimationTarget for Figure
@@ -426,6 +486,7 @@ pub enum Instruction[T] {
   StopMusic
   PlaySfx(String)
   Animate(String, AnimationSpec)
+  ApplyEffect(String, EffectSpec)
 }
 
 type Label
@@ -450,6 +511,7 @@ pub struct RenderState {
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
   animations : Array[(String, AnimationSpec)]
+  effects : Map[String, Array[EffectSpec]]
 }
 pub impl ToJson for RenderState
 pub impl @json.FromJson for RenderState
@@ -491,6 +553,7 @@ pub enum RuntimeEvent {
   SfxPlayed(String)
   SfxStopped
   Animated(String, AnimationSpec)
+  EffectApplied(String, EffectSpec)
   WaitStarted(Int)
   ScriptEnded
 }
@@ -548,6 +611,7 @@ pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::effect(Self[T], A, Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
@@ -682,6 +746,10 @@ pub impl Eq for WebglPresenterConfig
 pub impl Show for WebglPresenterConfig
 
 // Type aliases
+pub type EffectApply = (WebGL, WebGLProgram, EffectDrawable, Array[(String, Double)], Int) -> Bool
+
+pub type EffectParam = (String, Double)
+
 pub type EventHook = (RuntimeEvent) -> Unit
 
 pub type RenderSyncHook[T] = (Director[T]) -> Unit
