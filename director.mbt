@@ -129,7 +129,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     FigureHidden(id) => self.render.figures.remove(id)
     MusicPlayed(id, should_loop) => self.render.music = Some((id, should_loop))
     MusicStopped => self.render.music = None
-    SfxPlayed(id) => {
+    SfxPlayed(id, _) => {
       self.render.last_sfx = Some(id)
       self.render.last_sfx_interrupted = false
     }

@@ -7,29 +7,31 @@ import {
 }
 
 // Values
-pub fn anim_blur(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_blur(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_brightness(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_brightness(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_color_blue(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_color_blue(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_color_green(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_color_green(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_color_red(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_color_red(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_contrast(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_contrast(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_gamma(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_gamma(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_opacity(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_opacity(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_position(Int, (Double, Double)?, (Double, Double), easing? : Easing) -> AnimationSpec
+pub fn anim_position(Int, (Double, Double)?, (Double, Double), easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_rotation(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_rotation(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_saturation(Int, Double?, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_saturation(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : Easing) -> AnimationSpec
+pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn audio_dom_has_active_sfx() -> Bool
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
@@ -37,15 +39,15 @@ pub fn effect(String) -> Effect
 
 pub fn effect_param(String, Double) -> (String, Double)
 
-pub fn effect_spec(String, Array[(String, Double)]) -> EffectSpec
+pub fn effect_spec(String, Array[(String, Double)], blocking? : Bool) -> EffectSpec
 
-pub fn effect_spec_with_duration(String, Array[(String, Double)], Int) -> EffectSpec
+pub fn effect_spec_with_duration(String, Array[(String, Double)], Int, blocking? : Bool) -> EffectSpec
 
-pub fn effect_spec_with_phase(String, Array[(String, Double)], EffectPhase) -> EffectSpec
+pub fn effect_spec_with_phase(String, Array[(String, Double)], EffectPhase, blocking? : Bool) -> EffectSpec
 
-pub fn effect_spec_with_phase_duration(String, Array[(String, Double)], EffectPhase, Int) -> EffectSpec
+pub fn effect_spec_with_phase_duration(String, Array[(String, Double)], EffectPhase, Int, blocking? : Bool) -> EffectSpec
 
-pub fn effect_spec_with_timing(String, Array[(String, Double)], EffectPhase, Int, Easing) -> EffectSpec
+pub fn effect_spec_with_timing(String, Array[(String, Double)], EffectPhase, Int, Easing, blocking? : Bool) -> EffectSpec
 
 pub fn game_settings_default() -> GameSettings
 
@@ -247,6 +249,7 @@ pub struct AnimationSpec {
   from : Array[Double]?
   to : Array[Double]?
   anchor : Array[Double]?
+  blocking : Bool
 }
 pub impl Eq for AnimationSpec
 pub impl Show for AnimationSpec
@@ -408,6 +411,7 @@ pub struct EffectSpec {
   phase : EffectPhase?
   duration_ms : Int?
   easing : Easing?
+  blocking : Bool
 }
 pub impl Eq for EffectSpec
 pub impl Show for EffectSpec
@@ -496,7 +500,7 @@ pub enum Instruction[T] {
   HideFigure(String)
   PlayMusic(String, Bool)
   StopMusic
-  PlaySfx(String)
+  PlaySfx(String, Bool)
   Animate(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
 }
@@ -564,7 +568,7 @@ pub enum RuntimeEvent {
   FigureHidden(String)
   MusicPlayed(String, Bool)
   MusicStopped
-  SfxPlayed(String)
+  SfxPlayed(String, Bool)
   SfxStopped
   Animated(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
@@ -628,23 +632,23 @@ pub struct Script[T] {
 
 type ScriptBuilder[T]
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate(Self[T], A, AnimationSpec) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_blue(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : (Double, Double), (Double, Double), easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, anchor? : (Double, Double), easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_blue(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : (Double, Double), (Double, Double), easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::effect(Self[T], A, Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::effect(Self[T], A, Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
@@ -658,7 +662,7 @@ pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> U
 pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
 pub fn[T] ScriptBuilder::play_music(Self[T], Music, Bool) -> Unit
-pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx) -> Unit
+pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String) -> Unit

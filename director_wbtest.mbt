@@ -65,7 +65,7 @@ test "director maps runtime events into ui and render state" {
   assert_true(director.step() is ChoicePrompt(_))
   assert_eq(director.choices().length(), 2)
 
-  assert_eq(director.choose("a"), SfxPlayed("confirm"))
+  assert_eq(director.choose("a"), SfxPlayed("confirm", false))
   assert_eq(director.last_sfx(), Some("confirm"))
 
   assert_eq(

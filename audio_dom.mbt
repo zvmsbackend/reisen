@@ -15,7 +15,7 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
   match event {
     MusicPlayed(id, should_loop) => AudioCommand::PlayMusic(id, should_loop)
     MusicStopped => AudioCommand::StopMusic
-    SfxPlayed(id) => AudioCommand::PlaySfx(id)
+    SfxPlayed(id, _) => AudioCommand::PlaySfx(id)
     SfxStopped => AudioCommand::StopSfx
     Said(voice~, ..) =>
       match voice {
@@ -150,6 +150,13 @@ extern "js" fn audio_dom_stop_sfx() -> Unit =
   #| }
 
 ///|
+extern "js" fn audio_dom_has_active_sfx_impl() -> Bool =
+  #| () => {
+  #|   const list = globalThis.__reisenSfxActive;
+  #|   return !!(list && list.length);
+  #| }
+
+///|
 pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
   match audio_command_from_event(event) {
     AudioCommand::PlayMusic(id, should_loop) =>
@@ -166,6 +173,11 @@ pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
     AudioCommand::StopSfx => audio_dom_stop_sfx()
     AudioCommand::Noop => ()
   }
+}
+
+///|
+pub fn audio_dom_has_active_sfx() -> Bool {
+  audio_dom_has_active_sfx_impl()
 }
 
 ///|

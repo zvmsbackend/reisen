@@ -55,8 +55,19 @@ pub fn effect_param(name : String, value : Double) -> EffectParam {
 }
 
 ///|
-pub fn effect_spec(id : String, params : Array[EffectParam]) -> EffectSpec {
-  { id, params, phase: Some(Post), duration_ms: None, easing: Some(Linear) }
+pub fn effect_spec(
+  id : String,
+  params : Array[EffectParam],
+  blocking? : Bool = false,
+) -> EffectSpec {
+  {
+    id,
+    params,
+    phase: Some(Post),
+    duration_ms: None,
+    easing: Some(Linear),
+    blocking,
+  }
 }
 
 ///|
@@ -64,8 +75,16 @@ pub fn effect_spec_with_phase(
   id : String,
   params : Array[EffectParam],
   phase : EffectPhase,
+  blocking? : Bool = false,
 ) -> EffectSpec {
-  { id, params, phase: Some(phase), duration_ms: None, easing: Some(Linear) }
+  {
+    id,
+    params,
+    phase: Some(phase),
+    duration_ms: None,
+    easing: Some(Linear),
+    blocking,
+  }
 }
 
 ///|
@@ -73,6 +92,7 @@ pub fn effect_spec_with_duration(
   id : String,
   params : Array[EffectParam],
   duration_ms : Int,
+  blocking? : Bool = false,
 ) -> EffectSpec {
   let duration = if duration_ms < 0 { 0 } else { duration_ms }
   {
@@ -81,6 +101,7 @@ pub fn effect_spec_with_duration(
     phase: Some(Post),
     duration_ms: Some(duration),
     easing: Some(Linear),
+    blocking,
   }
 }
 
@@ -90,6 +111,7 @@ pub fn effect_spec_with_phase_duration(
   params : Array[EffectParam],
   phase : EffectPhase,
   duration_ms : Int,
+  blocking? : Bool = false,
 ) -> EffectSpec {
   let duration = if duration_ms < 0 { 0 } else { duration_ms }
   {
@@ -98,6 +120,7 @@ pub fn effect_spec_with_phase_duration(
     phase: Some(phase),
     duration_ms: Some(duration),
     easing: Some(Linear),
+    blocking,
   }
 }
 
@@ -108,6 +131,7 @@ pub fn effect_spec_with_timing(
   phase : EffectPhase,
   duration_ms : Int,
   easing : Easing,
+  blocking? : Bool = false,
 ) -> EffectSpec {
   let duration = if duration_ms < 0 { 0 } else { duration_ms }
   {
@@ -116,6 +140,7 @@ pub fn effect_spec_with_timing(
     phase: Some(phase),
     duration_ms: Some(duration),
     easing: Some(easing),
+    blocking,
   }
 }
 
@@ -186,6 +211,7 @@ pub fn anim_opacity(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Opacity,
@@ -194,6 +220,7 @@ pub fn anim_opacity(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -203,6 +230,7 @@ pub fn anim_position(
   from : (Double, Double)?,
   to : (Double, Double),
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Position,
@@ -211,6 +239,7 @@ pub fn anim_position(
     from: from.map(n => [n.0, n.1]),
     to: Some([to.0, to.1]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -221,6 +250,7 @@ pub fn anim_scale(
   to : Double,
   anchor? : (Double, Double) = (0.5, 0.5),
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Scale,
@@ -229,6 +259,7 @@ pub fn anim_scale(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: Some([anchor.0, anchor.1]),
+    blocking,
   }
 }
 
@@ -238,6 +269,7 @@ pub fn anim_rotation(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Rotation,
@@ -246,6 +278,7 @@ pub fn anim_rotation(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -255,6 +288,7 @@ pub fn anim_blur(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Blur,
@@ -263,6 +297,7 @@ pub fn anim_blur(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -272,6 +307,7 @@ pub fn anim_brightness(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Brightness,
@@ -280,6 +316,7 @@ pub fn anim_brightness(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -289,6 +326,7 @@ pub fn anim_contrast(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Contrast,
@@ -297,6 +335,7 @@ pub fn anim_contrast(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -306,6 +345,7 @@ pub fn anim_saturation(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Saturation,
@@ -314,6 +354,7 @@ pub fn anim_saturation(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -323,6 +364,7 @@ pub fn anim_gamma(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: Gamma,
@@ -331,6 +373,7 @@ pub fn anim_gamma(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -340,6 +383,7 @@ pub fn anim_color_red(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: ColorRed,
@@ -348,6 +392,7 @@ pub fn anim_color_red(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -357,6 +402,7 @@ pub fn anim_color_green(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: ColorGreen,
@@ -365,6 +411,7 @@ pub fn anim_color_green(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -374,6 +421,7 @@ pub fn anim_color_blue(
   from : Double?,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> AnimationSpec {
   {
     prop: ColorBlue,
@@ -382,6 +430,7 @@ pub fn anim_color_blue(
     from: from.map(n => [n]),
     to: Some([to]),
     anchor: None,
+    blocking,
   }
 }
 
@@ -625,8 +674,12 @@ pub fn[T] ScriptBuilder::stop_music(self : ScriptBuilder[T]) -> Unit {
 }
 
 ///|
-pub fn[T] ScriptBuilder::play_sfx(self : ScriptBuilder[T], sfx : Sfx) -> Unit {
-  self.instructions.push(PlaySfx(sfx.id))
+pub fn[T] ScriptBuilder::play_sfx(
+  self : ScriptBuilder[T],
+  sfx : Sfx,
+  blocking? : Bool = false,
+) -> Unit {
+  self.instructions.push(PlaySfx(sfx.id, blocking))
 }
 
 ///|
@@ -638,6 +691,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
   phase? : EffectPhase,
   duration_ms? : Int,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   let resolved_phase = phase.unwrap_or(Post)
   self.instructions.push(
@@ -647,6 +701,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
       phase: Some(resolved_phase),
       duration_ms,
       easing: Some(easing),
+      blocking,
     }),
   )
 }
@@ -668,9 +723,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_opacity(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_opacity(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -682,9 +741,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   from? : (Double, Double),
   to : (Double, Double),
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_position(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_position(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -697,9 +760,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
   to : Double,
   anchor? : (Double, Double) = (0.5, 0.5),
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_scale(duration_ms, from, to, anchor~, easing~)),
+    Animate(
+      target.id(),
+      anim_scale(duration_ms, from, to, anchor~, easing~, blocking~),
+    ),
   )
 }
 
@@ -711,9 +778,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_rotation(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_rotation(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -725,9 +796,10 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_blur(duration_ms, from, to, easing~)),
+    Animate(target.id(), anim_blur(duration_ms, from, to, easing~, blocking~)),
   )
 }
 
@@ -739,9 +811,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_brightness(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_brightness(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -753,9 +829,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_contrast(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_contrast(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -767,9 +847,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_saturation(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_saturation(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -781,9 +865,10 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_gamma(duration_ms, from, to, easing~)),
+    Animate(target.id(), anim_gamma(duration_ms, from, to, easing~, blocking~)),
   )
 }
 
@@ -795,9 +880,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_color_red(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_color_red(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -809,9 +898,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_color_green(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_color_green(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 
@@ -823,9 +916,13 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_blue(
   from? : Double,
   to : Double,
   easing? : Easing = Linear,
+  blocking? : Bool = false,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_color_blue(duration_ms, from, to, easing~)),
+    Animate(
+      target.id(),
+      anim_color_blue(duration_ms, from, to, easing~, blocking~),
+    ),
   )
 }
 

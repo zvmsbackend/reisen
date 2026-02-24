@@ -17,6 +17,9 @@ struct GameRunner[T] {
   mut render_sync_dirty : Bool
   mut pending_action : String?
   mut animation_remaining_ms : Int
+  mut blocking_remaining_ms : Int
+  mut blocking_wait_sfx : Bool
+  mut blocking_until_click : Bool
 }
 
 ///|
@@ -30,6 +33,9 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     render_sync_dirty: true,
     pending_action: None,
     animation_remaining_ms: 0,
+    blocking_remaining_ms: 0,
+    blocking_wait_sfx: false,
+    blocking_until_click: false,
   }
 }
 
@@ -48,6 +54,9 @@ pub fn[T] GameRunner::new_with_render_sync(
     render_sync_dirty: true,
     pending_action: None,
     animation_remaining_ms: 0,
+    blocking_remaining_ms: 0,
+    blocking_wait_sfx: false,
+    blocking_until_click: false,
   }
 }
 
@@ -67,6 +76,9 @@ pub fn[T] GameRunner::new_with_hooks(
     render_sync_dirty: true,
     pending_action: None,
     animation_remaining_ms: 0,
+    blocking_remaining_ms: 0,
+    blocking_wait_sfx: false,
+    blocking_until_click: false,
   }
 }
 
@@ -96,6 +108,52 @@ fn[T] GameRunner::advance_animation_timer(
   if self.animation_remaining_ms > 0 {
     self.render_sync_dirty = true
   }
+}
+
+///|
+fn[T] GameRunner::bump_blocking_timer(
+  self : GameRunner[T],
+  duration_ms : Int,
+) -> Unit {
+  if duration_ms <= 0 {
+    return
+  }
+  if duration_ms > self.blocking_remaining_ms {
+    self.blocking_remaining_ms = duration_ms
+  }
+}
+
+///|
+fn[T] GameRunner::advance_blocking_timer(
+  self : GameRunner[T],
+  elapsed_ms : Int,
+) -> Unit {
+  if self.blocking_remaining_ms <= 0 {
+    return
+  }
+  let remaining = self.blocking_remaining_ms - elapsed_ms
+  self.blocking_remaining_ms = if remaining < 0 { 0 } else { remaining }
+}
+
+///|
+fn[T] GameRunner::clear_blocking(self : GameRunner[T]) -> Unit {
+  self.blocking_remaining_ms = 0
+  self.blocking_wait_sfx = false
+  self.blocking_until_click = false
+}
+
+///|
+fn[T] GameRunner::is_blocking_active(self : GameRunner[T]) -> Bool {
+  if self.blocking_until_click {
+    return true
+  }
+  if self.blocking_wait_sfx {
+    if audio_dom_has_active_sfx() {
+      return true
+    }
+    self.blocking_wait_sfx = false
+  }
+  self.blocking_remaining_ms > 0
 }
 
 ///|
@@ -171,11 +229,25 @@ fn[T] GameRunner::apply_event_effects(
       self.ui_dirty = true
       self.render_sync_dirty = true
       self.bump_animation_timer(spec.duration_ms)
+      if spec.blocking {
+        self.bump_blocking_timer(spec.duration_ms)
+      }
     }
-    EffectApplied(_, _) => {
+    EffectApplied(_, spec) => {
       self.ui_dirty = true
       self.render_sync_dirty = true
+      match spec.duration_ms {
+        Some(duration) => self.bump_animation_timer(duration)
+        None => ()
+      }
+      if spec.blocking {
+        match spec.duration_ms {
+          Some(duration) => self.bump_blocking_timer(duration)
+          None => self.blocking_until_click = true
+        }
+      }
     }
+    SfxPlayed(_, blocking) => if blocking { self.blocking_wait_sfx = true }
     _ => ()
   }
 }
@@ -213,6 +285,7 @@ pub fn[T] GameRunner::step(
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
   self.advance_animation_timer(elapsed_ms)
+  self.advance_blocking_timer(elapsed_ms)
   if self.director.is_waiting() {
     if self.ui.skip_mode {
       self.director.skip_wait()
@@ -237,6 +310,14 @@ pub fn[T] GameRunner::step(
       return Noop
     }
     None => ()
+  }
+  if self.is_blocking_active() {
+    if self.ui.check_typewriter_click() {
+      self.clear_blocking()
+    } else {
+      self.maybe_render_ui()
+      return Noop
+    }
   }
   if self.director.is_waiting() {
     let event = self.director.step(elapsed_ms~)

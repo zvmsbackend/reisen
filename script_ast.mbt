@@ -41,6 +41,7 @@ pub struct AnimationSpec {
   from : Array[Double]?
   to : Array[Double]?
   anchor : Array[Double]?
+  blocking : Bool
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -91,6 +92,7 @@ pub struct EffectSpec {
   phase : EffectPhase?
   duration_ms : Int?
   easing : Easing?
+  blocking : Bool
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -148,7 +150,7 @@ pub enum Instruction[T] {
   HideFigure(String)
   PlayMusic(String, Bool)
   StopMusic
-  PlaySfx(String)
+  PlaySfx(String, Bool)
   Animate(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
 }

@@ -219,6 +219,7 @@ test "parse animate range" {
       assert_eq(spec.duration_ms, 400)
       assert_eq(spec.from, Some([0.2]))
       assert_eq(spec.to, Some([0.8]))
+      assert_eq(spec.blocking, false)
     }
     _ => fail("Expected Animate instruction")
   }
@@ -239,6 +240,7 @@ test "parse effect params" {
       assert_eq(spec.phase, Some(EffectPhase::Post))
       assert_eq(spec.duration_ms, None)
       assert_eq(spec.easing, Some(Linear))
+      assert_eq(spec.blocking, false)
     }
     _ => fail("Expected ApplyEffect instruction")
   }
@@ -254,7 +256,20 @@ test "parse effect duration" {
     ApplyEffect(_, spec) => {
       assert_eq(spec.id, "glow")
       assert_eq(spec.duration_ms, Some(500))
+      assert_eq(spec.blocking, false)
     }
     _ => fail("Expected ApplyEffect instruction")
+  }
+}
+
+///|
+test "parse blocking animation" {
+  let script : Script[Unit] = reisen_parse_text_script(
+    "animate: hero, opacity, 100, blocking=true",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    Animate(_, spec) => assert_eq(spec.blocking, true)
+    _ => fail("Expected Animate instruction")
   }
 }

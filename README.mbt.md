@@ -377,7 +377,7 @@ enum RuntimeEvent {
   FigureHidden(String)
   MusicPlayed(String, Bool) // asset ID, loop
   MusicStopped
-  SfxPlayed(String) // asset ID
+  SfxPlayed(String, Bool) // asset ID, blocking
   Animated(String, AnimationSpec)
   WaitStarted(Int) // ms remaining
   ScriptEnded
@@ -391,7 +391,7 @@ Use `event_hook` to react to events (e.g., play audio):
 let runner = start_game(script, state, "ui-root", event_hook=event => {
   match event {
     MusicPlayed(id, loop_) => audio.play_music(id, loop_~)
-    SfxPlayed(id) => audio.play_sfx(id)
+    SfxPlayed(id, _) => audio.play_sfx(id)
     _ => ()
   }
 })

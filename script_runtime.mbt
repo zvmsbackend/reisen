@@ -25,7 +25,7 @@ pub enum RuntimeEvent {
   FigureHidden(String)
   MusicPlayed(String, Bool)
   MusicStopped
-  SfxPlayed(String)
+  SfxPlayed(String, Bool)
   SfxStopped
   Animated(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
@@ -241,9 +241,9 @@ fn[T] Runtime::run_inst(
       self.ip = self.ip + 1
       MusicStopped
     }
-    PlaySfx(id) => {
+    PlaySfx(id, blocking) => {
       self.ip = self.ip + 1
-      SfxPlayed(id)
+      SfxPlayed(id, blocking)
     }
     Animate(target, spec) => {
       self.ip = self.ip + 1

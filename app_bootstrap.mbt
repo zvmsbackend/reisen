@@ -39,7 +39,7 @@ pub fn[T] validate_script_audio_assets(
         if store.get_bytes(id) is None {
           raise AppBootstrapError::MissingAudioAsset(id~)
         }
-      PlaySfx(id) =>
+      PlaySfx(id, _) =>
         if store.get_bytes(id) is None {
           raise AppBootstrapError::MissingAudioAsset(id~)
         }
@@ -95,7 +95,7 @@ pub fn[T : FromJson] start_game_from_save(
     None => ()
   }
   match runner.director().take_interrupted_sfx() {
-    Some(id) => event_hook(SfxPlayed(id))
+    Some(id) => event_hook(SfxPlayed(id, false))
     None => ()
   }
   runner.sync_ui()

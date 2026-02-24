@@ -5,7 +5,10 @@ test "audio command mapping from runtime event" {
     PlayMusic("bgm", true),
   )
   assert_eq(audio_command_from_event(MusicStopped), StopMusic)
-  assert_eq(audio_command_from_event(SfxPlayed("click")), PlaySfx("click"))
+  assert_eq(
+    audio_command_from_event(SfxPlayed("click", false)),
+    PlaySfx("click"),
+  )
   assert_eq(
     audio_command_from_event(
       Said(speaker="n", text="t", typewriter=true, append=false, voice=None),
@@ -34,6 +37,6 @@ test "audio dom register and hook are callable" {
 
   // Avoid hard dependency on browser Audio constructor in tests.
   hook(MusicPlayed("missing", false))
-  hook(SfxPlayed("missing"))
+  hook(SfxPlayed("missing", false))
   hook(MusicStopped)
 }
