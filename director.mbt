@@ -26,6 +26,7 @@ pub struct RenderState {
   figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
   mut last_sfx : String?
+  mut last_sfx_interrupted : Bool
   animations : Array[(String, AnimationSpec)]
 } derive(ToJson, FromJson)
 
@@ -64,6 +65,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       figures: {},
       music: None,
       last_sfx: None,
+      last_sfx_interrupted: false,
       animations: [],
     },
     last_event_said: false,
@@ -79,7 +81,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
   }
   match event {
     Noop => ()
-    Said(speaker~, text~, typewriter~, append~, ..) => {
+    Said(speaker~, text~, typewriter~, append~, voice~) => {
       let (resolved_speaker, resolved_text) = match self.ui.dialog {
         Some(prev) if append => (prev.speaker, prev.text + text)
         _ => (speaker, text)
@@ -93,6 +95,8 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
       self.ui.intro_text = None
       self.ui.choices = []
       self.ui.text_input = None
+      self.render.last_sfx = voice
+      self.render.last_sfx_interrupted = false
     }
     ChoicePrompt(options) => {
       self.ui.intro_text = None
@@ -119,7 +123,12 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     FigureHidden(id) => self.render.figures.remove(id)
     MusicPlayed(id, should_loop) => self.render.music = Some((id, should_loop))
     MusicStopped => self.render.music = None
-    SfxPlayed(id) => self.render.last_sfx = Some(id)
+    SfxPlayed(id) => {
+      self.render.last_sfx = Some(id)
+      self.render.last_sfx_interrupted = false
+    }
+    SfxStopped =>
+      self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
     Animated(target, spec) => self.render.animations.push((target, spec))
     WaitStarted(_) => ()
     ScriptEnded => ()
@@ -228,6 +237,16 @@ pub fn[T] Director::last_sfx(self : Director[T]) -> String? {
 }
 
 ///|
+pub fn[T] Director::take_interrupted_sfx(self : Director[T]) -> String? {
+  if self.render.last_sfx_interrupted {
+    self.render.last_sfx_interrupted = false
+    self.render.last_sfx
+  } else {
+    None
+  }
+}
+
+///|
 pub fn[T] Director::animations(
   self : Director[T],
 ) -> Array[(String, AnimationSpec)] {
@@ -238,13 +257,7 @@ pub fn[T] Director::animations(
 pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
   let save : DirectorSave[T] = {
     runtime: self.runtime.save(),
-    render: {
-      background: self.render.background,
-      figures: self.render.figures,
-      music: self.render.music,
-      last_sfx: self.render.last_sfx,
-      animations: self.render.animations,
-    },
+    render: self.render,
     dialog: self.ui.dialog,
     intro_text: self.ui.intro_text,
     text_box_visible: self.ui.text_box_visible,

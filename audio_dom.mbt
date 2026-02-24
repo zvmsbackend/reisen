@@ -7,6 +7,7 @@ enum AudioCommand {
   PlayMusic(String, Bool)
   StopMusic
   PlaySfx(String)
+  StopSfx
 } derive(Show, Eq)
 
 ///|
@@ -15,6 +16,7 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
     MusicPlayed(id, should_loop) => AudioCommand::PlayMusic(id, should_loop)
     MusicStopped => AudioCommand::StopMusic
     SfxPlayed(id) => AudioCommand::PlaySfx(id)
+    SfxStopped => AudioCommand::StopSfx
     Said(voice~, ..) =>
       match voice {
         Some(id) => AudioCommand::PlaySfx(id)
@@ -107,6 +109,14 @@ extern "js" fn audio_dom_play_sfx(url : String) -> Unit =
   #|   const sfx = new Audio(url);
   #|   const gain = globalThis.__reisenSfxGain ?? 0.8;
   #|   if (sfx.volume !== undefined) sfx.volume = gain;
+  #|   const list = globalThis.__reisenSfxActive ?? (globalThis.__reisenSfxActive = []);
+  #|   list.push(sfx);
+  #|   const cleanup = () => {
+  #|     const idx = list.indexOf(sfx);
+  #|     if (idx >= 0) list.splice(idx, 1);
+  #|   };
+  #|   sfx.addEventListener('ended', cleanup, { once: true });
+  #|   sfx.addEventListener('error', cleanup, { once: true });
   #|   sfx.play?.().catch?.(() => {});
   #| }
 
@@ -126,6 +136,20 @@ extern "js" fn audio_dom_set_sfx_gain(gain : Double) -> Unit =
   #| }
 
 ///|
+extern "js" fn audio_dom_stop_sfx() -> Unit =
+  #| () => {
+  #|   const list = globalThis.__reisenSfxActive;
+  #|   if (!list || !Array.isArray(list)) return;
+  #|   list.forEach((sfx) => {
+  #|     try {
+  #|       sfx.pause?.();
+  #|       sfx.currentTime = 0;
+  #|     } catch (_) {}
+  #|   });
+  #|   list.length = 0;
+  #| }
+
+///|
 pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
   match audio_command_from_event(event) {
     AudioCommand::PlayMusic(id, should_loop) =>
@@ -139,6 +163,7 @@ pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
         Some(url) => audio_dom_play_sfx(url)
         None => ()
       }
+    AudioCommand::StopSfx => audio_dom_stop_sfx()
     AudioCommand::Noop => ()
   }
 }

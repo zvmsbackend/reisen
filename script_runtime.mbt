@@ -25,6 +25,7 @@ pub enum RuntimeEvent {
   MusicPlayed(String, Bool)
   MusicStopped
   SfxPlayed(String)
+  SfxStopped
   Animated(String, AnimationSpec)
   WaitStarted(Int)
   ScriptEnded

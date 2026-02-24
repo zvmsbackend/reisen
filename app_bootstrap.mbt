@@ -94,6 +94,10 @@ pub fn[T : FromJson] start_game_from_save(
     Some(s) => runner.apply_settings(s)
     None => ()
   }
+  match runner.director().take_interrupted_sfx() {
+    Some(id) => event_hook(SfxPlayed(id))
+    None => ()
+  }
   runner.sync_ui()
   runner
 }

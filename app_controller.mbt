@@ -297,7 +297,9 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             }
             true
           } else {
+            runner.apply_runtime_event(SfxStopped)
             (self.event_hook)(MusicStopped)
+            (self.event_hook)(SfxStopped)
             runner.clear_ui()
             self.runner = None
             self.enter_start_menu()
@@ -356,8 +358,13 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           self.phase = AppPhase::InGame
         }
         SettingsAction::StartMenu => {
-          self.save_autosave_if_enabled()
+          match self.runner {
+            Some(runner) => runner.apply_runtime_event(SfxStopped)
+            None => ()
+          }
           (self.event_hook)(MusicStopped)
+          (self.event_hook)(SfxStopped)
+          self.save_autosave_if_enabled()
           self.settings_menu.clear()
           self.saved_director_json = None
           self.runner = None

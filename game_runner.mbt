@@ -409,6 +409,14 @@ pub fn[T] GameRunner::director(self : GameRunner[T]) -> Director[T] {
 }
 
 ///|
+pub fn[T] GameRunner::apply_runtime_event(
+  self : GameRunner[T],
+  event : RuntimeEvent,
+) -> Unit {
+  self.director.apply_event(event)
+}
+
+///|
 pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
   self.ui.clear_game_ui()
 }
