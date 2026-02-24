@@ -12,6 +12,7 @@ priv struct WebglPresenter {
   effect_pipelines : Map[String, CustomEffectPipeline]
   config : WebglPresenterConfig
   mut last_background_id : String?
+  mut render_epoch : String?
   mut animation_cursor : Int
   mut timeline_ms : Int
   mut last_sync_ms : Int
@@ -323,6 +324,7 @@ fn WebglPresenter::new(
     effect_pipelines,
     config,
     last_background_id: None,
+    render_epoch: None,
     animation_cursor: 0,
     timeline_ms: 0,
     last_sync_ms: 0,
@@ -633,6 +635,29 @@ fn WebglPresenter::update_timeline(self : WebglPresenter) -> Unit {
   if dt > 0 {
     self.timeline_ms = self.timeline_ms + dt
   }
+}
+
+///|
+fn WebglPresenter::reset_effect_state(self : WebglPresenter) -> Unit {
+  self.opacity_anims.clear()
+  self.position_anims.clear()
+  self.scale_anims.clear()
+  self.rotation_anims.clear()
+  self.blur_anims.clear()
+  self.brightness_anims.clear()
+  self.contrast_anims.clear()
+  self.saturation_anims.clear()
+  self.gamma_anims.clear()
+  self.color_r_anims.clear()
+  self.color_g_anims.clear()
+  self.color_b_anims.clear()
+  self.effect_start_ms.clear()
+  self.effect_signatures.clear()
+  self.effect_from_params.clear()
+  self.animation_cursor = 0
+  self.timeline_ms = 0
+  self.last_sync_ms = 0
+  self.last_background_id = None
 }
 
 ///|
@@ -960,6 +985,15 @@ fn[T] WebglPresenter::sync_impl(
   self : WebglPresenter,
   director : Director[T],
 ) -> Unit raise RenderError {
+  let epoch = director.render_epoch()
+  match self.render_epoch {
+    Some(prev) =>
+      if prev != epoch {
+        self.reset_effect_state()
+        self.render_epoch = Some(epoch)
+      }
+    None => self.render_epoch = Some(epoch)
+  }
   let w = window_inner_width()
   let h = window_inner_height()
 

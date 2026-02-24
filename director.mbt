@@ -29,6 +29,7 @@ pub struct RenderState {
   mut last_sfx_interrupted : Bool
   animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
+  render_epoch : String
 } derive(ToJson, FromJson)
 
 ///|
@@ -69,6 +70,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       last_sfx_interrupted: false,
       animations: [],
       effects: {},
+      render_epoch: gensym(prefix="render"),
     },
     last_event_said: false,
   }
@@ -278,6 +280,11 @@ pub fn[T] Director::effects(
   id : String,
 ) -> Array[EffectSpec] {
   self.render.effects.get(id).unwrap_or([])
+}
+
+///|
+pub fn[T] Director::render_epoch(self : Director[T]) -> String {
+  self.render.render_epoch
 }
 
 ///|

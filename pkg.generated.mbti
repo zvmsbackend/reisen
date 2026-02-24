@@ -329,6 +329,7 @@ pub fn[T] Director::is_waiting(Self[T]) -> Bool
 pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
+pub fn[T] Director::render_epoch(Self[T]) -> String
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
@@ -512,6 +513,7 @@ pub struct RenderState {
   mut last_sfx_interrupted : Bool
   animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
+  render_epoch : String
 }
 pub impl ToJson for RenderState
 pub impl @json.FromJson for RenderState
