@@ -491,6 +491,7 @@ fn WebglPresenter::draw_blur_background(
   y : Double,
   w : Double,
   h : Double,
+  opacity : Double,
   viewport_w : Double,
   viewport_h : Double,
 ) -> Unit {
@@ -512,7 +513,7 @@ fn WebglPresenter::draw_blur_background(
       let mat = model_matrix(x, y, w, h, viewport_w, viewport_h)
       let mat_f32 = js_float32_array(mat)
       gl.uniform_matrix4(self.blur_pipe.u_model, false, mat_f32)
-      gl.uniform1f(self.blur_pipe.u_opacity, 1.0)
+      gl.uniform1f(self.blur_pipe.u_opacity, opacity)
       gl.uniform2f(self.blur_pipe.u_texel, texel_x, texel_y)
       gl.draw_arrays(gl.constant("TRIANGLES"), 0, self.mesh.vertex_count)
     }
@@ -563,6 +564,10 @@ fn[T] WebglPresenter::sync_impl(
   self.renderer.gl.clear_color(0.0, 0.0, 0.0, 1.0)
   self.renderer.gl.clear(self.renderer.gl.constant("COLOR_BUFFER_BIT"))
 
+  let finished_opacity : Array[String] = []
+  let finished_position : Array[String] = []
+  let finished_scale : Array[String] = []
+
   match director.background() {
     Some(bg_id) => {
       let tex = self.texture_for(bg_id)
@@ -572,24 +577,96 @@ fn[T] WebglPresenter::sync_impl(
         h,
         self.texture_sizes,
       )
-      self.draw_blur_background(tex, bg_id, bx, by, bw, bh, w, h)
       let (x, y, bg_w, bg_h) = fit_background(bg_id, w, h, self.texture_sizes)
+      let mut cover_x = bx
+      let mut cover_y = by
+      let mut cover_w = bw
+      let mut cover_h = bh
+      let mut bg_x = x
+      let mut bg_y = y
+      let mut bg_width = bg_w
+      let mut bg_height = bg_h
+      let mut opacity = 1.0
+      match self.position_anims.get(bg_id) {
+        Some(anim) => {
+          let (ax, ay, done) = apply_position_animation(
+            bg_x,
+            bg_y,
+            self.config.position_entry_offset_ratio,
+            h,
+            w,
+            self.timeline_ms,
+            anim,
+          )
+          let dx = ax - bg_x
+          let dy = ay - bg_y
+          bg_x = ax
+          bg_y = ay
+          cover_x += dx
+          cover_y += dy
+          if done {
+            finished_position.push(bg_id)
+          }
+        }
+        None => ()
+      }
+      match self.scale_anims.get(bg_id) {
+        Some(anim) => {
+          let (sx, sy, sw, sh, done) = apply_scale_animation(
+            bg_x,
+            bg_y,
+            bg_width,
+            bg_height,
+            self.config.scale_entry_from,
+            self.timeline_ms,
+            anim,
+          )
+          let scale = if bg_width == 0.0 { 1.0 } else { sw / bg_width }
+          bg_x = sx
+          bg_y = sy
+          bg_width = sw
+          bg_height = sh
+          let cover_cx = cover_x + cover_w / 2.0
+          let cover_cy = cover_y + cover_h / 2.0
+          cover_w = cover_w * scale
+          cover_h = cover_h * scale
+          cover_x = cover_cx - cover_w / 2.0
+          cover_y = cover_cy - cover_h / 2.0
+          if done {
+            finished_scale.push(bg_id)
+          }
+        }
+        None => ()
+      }
+      match self.opacity_anims.get(bg_id) {
+        Some(anim) => {
+          let (animated, done) = apply_opacity_animation(
+            1.0,
+            self.timeline_ms,
+            anim,
+          )
+          opacity = animated
+          if done {
+            finished_opacity.push(bg_id)
+          }
+        }
+        None => ()
+      }
+      self.draw_blur_background(
+        tex, bg_id, cover_x, cover_y, cover_w, cover_h, opacity, w, h,
+      )
       self.renderer.add({
         texture: tex,
-        x,
-        y,
-        w: bg_w,
-        h: bg_h,
-        opacity: 1.0,
+        x: bg_x,
+        y: bg_y,
+        w: bg_width,
+        h: bg_height,
+        opacity,
         layer: -1000,
       })
     }
     None => ()
   }
-
-  let finished_opacity : Array[String] = []
-  let finished_position : Array[String] = []
-  let finished_scale : Array[String] = []
   let updated_figures : Array[(String, FigurePlacement)] = []
   let figures = director.figures()
   for id, placement in figures {

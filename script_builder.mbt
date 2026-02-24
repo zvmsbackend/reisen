@@ -25,6 +25,21 @@ struct Label {
 }
 
 ///|
+trait AnimationTarget {
+  id(Self) -> String
+}
+
+///|
+pub impl AnimationTarget for Figure with id(self) {
+  self.id
+}
+
+///|
+pub impl AnimationTarget for Background with id(self) {
+  self.id
+}
+
+///|
 struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
 }
@@ -368,54 +383,56 @@ pub fn[T] ScriptBuilder::play_sfx(self : ScriptBuilder[T], sfx : Sfx) -> Unit {
 }
 
 ///|
-pub fn[T] ScriptBuilder::animate(
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate(
   self : ScriptBuilder[T],
-  target : Figure,
+  target : A,
   spec : AnimationSpec,
 ) -> Unit {
-  self.instructions.push(Animate(target.id, spec))
+  self.instructions.push(Animate(target.id(), spec))
 }
 
 ///|
-pub fn[T] ScriptBuilder::animate_opacity(
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(
   self : ScriptBuilder[T],
-  target : Figure,
+  target : A,
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> Unit {
-  self.instructions.push(Animate(target.id, anim_opacity(duration_ms, easing~)))
+  self.instructions.push(
+    Animate(target.id(), anim_opacity(duration_ms, easing~)),
+  )
 }
 
 ///|
-pub fn[T] ScriptBuilder::animate_opacity_range(
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity_range(
   self : ScriptBuilder[T],
-  target : Figure,
+  target : A,
   duration_ms : Int,
   from : Double,
   to : Double,
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id, anim_opacity_range(duration_ms, from, to, easing~)),
+    Animate(target.id(), anim_opacity_range(duration_ms, from, to, easing~)),
   )
 }
 
 ///|
-pub fn[T] ScriptBuilder::animate_position(
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   self : ScriptBuilder[T],
-  target : Figure,
+  target : A,
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id, anim_position(duration_ms, easing~)),
+    Animate(target.id(), anim_position(duration_ms, easing~)),
   )
 }
 
 ///|
-pub fn[T] ScriptBuilder::animate_position_range(
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position_range(
   self : ScriptBuilder[T],
-  target : Figure,
+  target : A,
   duration_ms : Int,
   from_x : Double,
   from_y : Double,
@@ -425,33 +442,33 @@ pub fn[T] ScriptBuilder::animate_position_range(
 ) -> Unit {
   self.instructions.push(
     Animate(
-      target.id,
+      target.id(),
       anim_position_range(duration_ms, from_x, from_y, to_x, to_y, easing~),
     ),
   )
 }
 
 ///|
-pub fn[T] ScriptBuilder::animate_scale(
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
   self : ScriptBuilder[T],
-  target : Figure,
+  target : A,
   duration_ms : Int,
   easing? : Easing = Linear,
 ) -> Unit {
-  self.instructions.push(Animate(target.id, anim_scale(duration_ms, easing~)))
+  self.instructions.push(Animate(target.id(), anim_scale(duration_ms, easing~)))
 }
 
 ///|
-pub fn[T] ScriptBuilder::animate_scale_range(
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale_range(
   self : ScriptBuilder[T],
-  target : Figure,
+  target : A,
   duration_ms : Int,
   from : Double,
   to : Double,
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id, anim_scale_range(duration_ms, from, to, easing~)),
+    Animate(target.id(), anim_scale_range(duration_ms, from, to, easing~)),
   )
 }
 
