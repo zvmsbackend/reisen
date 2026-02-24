@@ -18,6 +18,7 @@ fn dummy_music(id : String) -> Music {
   { id, }
 }
 
+///|
 fn dummy_galley_image(id : String) -> GalleryImage {
   { id, image_id: id, title: "", thumbnail_id: None, replay_label: None }
 }
@@ -233,6 +234,8 @@ test "effect helper emits apply effect" {
 
 ///|
 test "builder unlock cg emits instruction" {
-  let built : Script[Int] = script(builder => builder.unlock_cg(dummy_galley_image("cg_secret")))
+  let built : Script[Int] = script(builder => {
+    builder.unlock_cg(dummy_galley_image("cg_secret"))
+  })
   assert_true(built.instructions[0] is UnlockCg("cg_secret"))
 }

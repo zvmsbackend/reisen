@@ -49,6 +49,7 @@ pub fn GalleryImage::new(
   { id, image_id, title, thumbnail_id, replay_label }
 }
 
+///|
 pub fn GalleryImage::id(self : GalleryImage) -> String {
   self.id
 }

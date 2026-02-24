@@ -507,6 +507,13 @@ pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
+pub fn[T] GameRunner::clear_presentation(self : GameRunner[T]) -> Unit {
+  self.ui.clear_game_ui()
+  self.director.clear_render()
+  self.sync_canvas()
+}
+
+///|
 pub fn[T] GameRunner::complete_typewriter(self : GameRunner[T]) -> Unit {
   self.ui.complete_typewriter()
 }

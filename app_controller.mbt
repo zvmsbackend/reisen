@@ -319,7 +319,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             runner.apply_runtime_event(SfxStopped)
             (self.event_hook)(MusicStopped)
             (self.event_hook)(SfxStopped)
-            runner.clear_ui()
+            runner.clear_presentation()
             self.runner = None
             self.enter_start_menu()
             true
@@ -378,7 +378,10 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         }
         SettingsAction::StartMenu => {
           match self.runner {
-            Some(runner) => runner.apply_runtime_event(SfxStopped)
+            Some(runner) => {
+              runner.apply_runtime_event(SfxStopped)
+              runner.clear_presentation()
+            }
             None => ()
           }
           (self.event_hook)(MusicStopped)

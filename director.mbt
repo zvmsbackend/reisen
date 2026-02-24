@@ -308,6 +308,17 @@ pub fn[T] Director::render_epoch(self : Director[T]) -> String {
 }
 
 ///|
+pub fn[T] Director::clear_render(self : Director[T]) -> Unit {
+  self.render.background = None
+  self.render.figures.clear()
+  self.render.music = None
+  self.render.last_sfx = None
+  self.render.last_sfx_interrupted = false
+  self.render.animations.clear()
+  self.render.effects.clear()
+}
+
+///|
 pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
   let save : DirectorSave[T] = {
     runtime: self.runtime.save(),

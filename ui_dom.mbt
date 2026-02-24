@@ -701,14 +701,22 @@ extern "js" fn dom_clear_game_ui(root_id : String) -> Unit =
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
-  #|   const dialog = root.querySelector('[data-reisen="dialog"]');
-  #|   if (dialog) dialog.textContent = '';
-  #|   const speaker = root.querySelector('[data-reisen="speaker"]');
-  #|   if (speaker) speaker.textContent = '';
-  #|   const choices = root.querySelector('[data-reisen="choices"]');
-  #|   if (choices) choices.innerHTML = '';
-  #|   const textInput = root.querySelector('[data-reisen="text-input"]');
-  #|   if (textInput) textInput.remove();
+  #|   const remove = (selector) => {
+  #|     const node = root.querySelector(selector);
+  #|     if (node) node.remove();
+  #|   };
+  #|   remove('[data-reisen="speaker"]');
+  #|   remove('[data-reisen="dialog"]');
+  #|   remove('[data-reisen="choices"]');
+  #|   remove('[data-reisen="text-input"]');
+  #|   remove('[data-reisen="game-actions"]');
+  #|   remove('[data-reisen="intro"]');
+  #|   delete root.dataset.reisenAction;
+  #|   delete root.dataset.reisenSelectedChoice;
+  #|   delete root.dataset.reisenSubmittedInput;
+  #|   delete root.dataset.reisenTypewriterClicked;
+  #|   delete root.dataset.reisenIntroDone;
+  #|   delete root.dataset.reisenIntroLastPage;
   #| }
 
 ///|

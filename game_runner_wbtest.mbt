@@ -197,6 +197,25 @@ test "runner click advances wait click" {
 }
 
 ///|
+test "runner clear presentation resets render and syncs canvas" {
+  let calls : Array[Int] = []
+  let hook : RenderSyncHook[Int] = _ => calls.push(1)
+  let runner = GameRunner::new_with_render_sync(
+    Director::new(Runtime::new(script(_ => ()), GameState::new(0))),
+    UiDom::new("app"),
+    hook,
+  )
+
+  runner.apply_runtime_event(BackgroundShown("bg_demo"))
+  assert_eq(runner.director().background(), Some("bg_demo"))
+
+  runner.clear_presentation()
+
+  assert_eq(runner.director().background(), None)
+  assert_eq(calls.length(), 1)
+}
+
+///|
 test "wait advances with elapsed even when dialog remains" {
   let script : Script[Int] = script(builder => {
     builder.say("n", "first")

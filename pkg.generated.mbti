@@ -33,8 +33,6 @@ pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : Ea
 
 pub fn audio_dom_has_active_sfx() -> Bool
 
-pub fn cg(String, String, title? : String, thumbnail_id? : String, replay_label? : String) -> GalleryImage
-
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
 pub fn effect(String) -> Effect
@@ -149,10 +147,6 @@ pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
 
 pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
 
-pub fn register_cg(GalleryImage) -> Unit
-
-pub fn register_cg_image(String, String, title? : String, thumbnail_id? : String, replay_label? : String) -> GalleryImage
-
 pub fn register_webgl_effect_with_shaders(String, String, (WebGL, WebGLProgram, EffectDrawable, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
 
 pub fn[T] reisen_parse_text_script(String) -> Script[T] raise ScriptBuildError
@@ -218,10 +212,6 @@ pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, rende
 pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
 
 pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, AudioDom, presenter_config? : WebglPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
-
-pub fn unlock_cg(String) -> Unit
-
-pub fn unlock_cg_in(String, String) -> Unit
 
 pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
 
@@ -334,6 +324,7 @@ pub fn AudioDom::set_bgm_gain(Self, Double) -> Unit
 pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
 
 type Background
+pub fn Background::as_gallery_image(Self, String, thumbnail? : Self, replay_label? : Label, id? : String) -> GalleryImage
 pub impl AnimationTarget for Background
 
 pub struct BackgroundState {
@@ -369,6 +360,7 @@ pub fn[T] Director::background_state(Self[T]) -> BackgroundState?
 pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
+pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::effects(Self[T], String) -> Array[EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
@@ -469,6 +461,7 @@ pub impl ToJson for FigurePlacement
 pub impl @json.FromJson for FigurePlacement
 
 type GalleryImage
+pub fn GalleryImage::id(Self) -> String
 pub fn GalleryImage::new(String, String, title? : String, thumbnail_id? : String, replay_label? : String) -> Self
 pub impl Eq for GalleryImage
 pub impl Show for GalleryImage
@@ -484,6 +477,7 @@ pub impl @json.FromJson for GalleryTileView
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], RuntimeEvent) -> Unit
 pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit
+pub fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
@@ -730,7 +724,7 @@ pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
-pub fn[T] ScriptBuilder::unlock_cg(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::unlock_cg(Self[T], GalleryImage) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 pub fn[T] ScriptBuilder::wait_click(Self[T]) -> Unit
 
