@@ -7,17 +7,11 @@ import {
 }
 
 // Values
-pub fn anim_opacity(Int, easing? : Easing) -> AnimationSpec
+pub fn anim_opacity(Int, Double?, Double, easing? : Easing) -> AnimationSpec
 
-pub fn anim_opacity_range(Int, Double, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_position(Int, (Double, Double)?, (Double, Double), easing? : Easing) -> AnimationSpec
 
-pub fn anim_position(Int, easing? : Easing) -> AnimationSpec
-
-pub fn anim_position_range(Int, Double, Double, Double, Double, easing? : Easing) -> AnimationSpec
-
-pub fn anim_scale(Int, easing? : Easing) -> AnimationSpec
-
-pub fn anim_scale_range(Int, Double, Double, easing? : Easing) -> AnimationSpec
+pub fn anim_scale(Int, Double?, Double, easing? : Easing) -> AnimationSpec
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
@@ -256,6 +250,7 @@ pub fn AudioDom::set_bgm_gain(Self, Double) -> Unit
 pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
 
 type Background
+pub impl AnimationTarget for Background
 
 type Canvas
 pub fn Canvas::get_webgl2_context(Self) -> WebGL?
@@ -293,6 +288,7 @@ pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Director::take_interrupted_sfx(Self[T]) -> String?
 pub fn[T] Director::text_box_visible(Self[T]) -> Bool
 pub fn[T] Director::text_input(Self[T]) -> (String, String)?
 
@@ -319,6 +315,7 @@ pub impl ToJson for Easing
 pub impl @json.FromJson for Easing
 
 type Figure
+pub impl AnimationTarget for Figure
 
 pub struct FigurePlacement {
   pos : Position
@@ -332,6 +329,7 @@ pub impl ToJson for FigurePlacement
 pub impl @json.FromJson for FigurePlacement
 
 type GameRunner[T]
+pub fn[T] GameRunner::apply_runtime_event(Self[T], RuntimeEvent) -> Unit
 pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
@@ -422,6 +420,7 @@ pub struct RenderState {
   figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
   mut last_sfx : String?
+  mut last_sfx_interrupted : Bool
   animations : Array[(String, AnimationSpec)]
 }
 pub impl ToJson for RenderState
@@ -462,6 +461,7 @@ pub enum RuntimeEvent {
   MusicPlayed(String, Bool)
   MusicStopped
   SfxPlayed(String)
+  SfxStopped
   Animated(String, AnimationSpec)
   WaitStarted(Int)
   ScriptEnded
@@ -503,13 +503,10 @@ pub struct Script[T] {
 }
 
 type ScriptBuilder[T]
-pub fn[T] ScriptBuilder::animate(Self[T], Figure, AnimationSpec) -> Unit
-pub fn[T] ScriptBuilder::animate_opacity(Self[T], Figure, Int, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::animate_opacity_range(Self[T], Figure, Int, Double, Double, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::animate_position(Self[T], Figure, Int, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::animate_position_range(Self[T], Figure, Int, Double, Double, Double, Double, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::animate_scale(Self[T], Figure, Int, easing? : Easing) -> Unit
-pub fn[T] ScriptBuilder::animate_scale_range(Self[T], Figure, Int, Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate(Self[T], A, AnimationSpec) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : (Double, Double), (Double, Double), easing? : Easing) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, easing? : Easing) -> Unit
 pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
@@ -656,4 +653,5 @@ pub type ScriptHook[T] = (GameState[T]) -> Unit
 pub type ScriptPredicate[T] = (GameState[T]) -> Bool
 
 // Traits
+trait AnimationTarget
 

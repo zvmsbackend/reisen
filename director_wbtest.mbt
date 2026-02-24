@@ -7,7 +7,7 @@ test "director maps runtime events into ui and render state" {
     builder.scene(dummy_bg("bg_school"))
     builder.show_figure_at(dummy_figure("alice"), Left, layer=1, opacity=0.9)
     builder.play_music(dummy_music("bgm_theme"), true)
-    builder.animate_opacity(dummy_figure("alice"), 120)
+    builder.animate_opacity(dummy_figure("alice"), 120, 1.0)
     builder.menu("alice", "Where to?", [
       option("A route", a, id="a"),
       option("B route", b, id="b"),

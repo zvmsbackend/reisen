@@ -61,42 +61,42 @@ test "placement helpers produce expected placement values" {
 
 ///|
 test "animation helpers produce expected animation specs" {
-  assert_eq(anim_opacity(120), {
+  assert_eq(anim_opacity(120, None, 1.0), {
     prop: Opacity,
     duration_ms: 120,
     easing: Linear,
     from: None,
-    to: None,
+    to: Some([1.0]),
   })
-  assert_eq(anim_position(240, easing=EaseInOut), {
+  assert_eq(anim_position(240, None, (0.0, 0.0), easing=EaseInOut), {
     prop: Position,
     duration_ms: 240,
     easing: EaseInOut,
     from: None,
-    to: None,
+    to: Some([0.0, 0.0]),
   })
-  assert_eq(anim_scale(360, easing=EaseOut), {
+  assert_eq(anim_scale(360, None, 1.0, easing=EaseOut), {
     prop: Scale,
     duration_ms: 360,
     easing: EaseOut,
     from: None,
-    to: None,
+    to: Some([1.0]),
   })
-  assert_eq(anim_opacity_range(100, 0.1, 0.9), {
+  assert_eq(anim_opacity(100, Some(0.1), 0.9), {
     prop: Opacity,
     duration_ms: 100,
     easing: Linear,
     from: Some([0.1]),
     to: Some([0.9]),
   })
-  assert_eq(anim_position_range(200, -0.1, 0.0, 0.0, 0.0), {
+  assert_eq(anim_position(200, Some((-0.1, 0.0)), (0.0, 0.0)), {
     prop: Position,
     duration_ms: 200,
     easing: Linear,
     from: Some([-0.1, 0.0]),
     to: Some([0.0, 0.0]),
   })
-  assert_eq(anim_scale_range(150, 0.5, 1.0), {
+  assert_eq(anim_scale(150, Some(0.5), 1.0), {
     prop: Scale,
     duration_ms: 150,
     easing: Linear,
@@ -148,9 +148,14 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   let built : Script[Int] = script(builder => {
     builder.scene(dummy_bg("bg_school"))
     builder.show_figure_at(dummy_figure("alice"), Left, layer=2, opacity=0.7)
-    builder.animate_opacity(dummy_figure("alice"), 120)
-    builder.animate_position(dummy_figure("alice"), 180, easing=EaseInOut)
-    builder.animate_scale(dummy_figure("alice"), 240, easing=EaseOut)
+    builder.animate_opacity(dummy_figure("alice"), 120, 1.0)
+    builder.animate_position(
+      dummy_figure("alice"),
+      180,
+      (0.0, 0.0),
+      easing=EaseInOut,
+    )
+    builder.animate_scale(dummy_figure("alice"), 240, 1.0, easing=EaseOut)
     builder.narrate("done")
   })
 

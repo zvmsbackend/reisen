@@ -103,63 +103,43 @@ pub fn place_custom(
 ///|
 pub fn anim_opacity(
   duration_ms : Int,
+  from : Double?,
+  to : Double,
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Opacity, duration_ms, easing, from: None, to: None }
+  {
+    prop: Opacity,
+    duration_ms,
+    easing,
+    from: from.map(n => [n]),
+    to: Some([to]),
+  }
 }
 
 ///|
 pub fn anim_position(
   duration_ms : Int,
-  easing? : Easing = Linear,
-) -> AnimationSpec {
-  { prop: Position, duration_ms, easing, from: None, to: None }
-}
-
-///|
-pub fn anim_scale(
-  duration_ms : Int,
-  easing? : Easing = Linear,
-) -> AnimationSpec {
-  { prop: Scale, duration_ms, easing, from: None, to: None }
-}
-
-///|
-pub fn anim_opacity_range(
-  duration_ms : Int,
-  from : Double,
-  to : Double,
-  easing? : Easing = Linear,
-) -> AnimationSpec {
-  { prop: Opacity, duration_ms, easing, from: Some([from]), to: Some([to]) }
-}
-
-///|
-pub fn anim_position_range(
-  duration_ms : Int,
-  from_x : Double,
-  from_y : Double,
-  to_x : Double,
-  to_y : Double,
+  from : (Double, Double)?,
+  to : (Double, Double),
   easing? : Easing = Linear,
 ) -> AnimationSpec {
   {
     prop: Position,
     duration_ms,
     easing,
-    from: Some([from_x, from_y]),
-    to: Some([to_x, to_y]),
+    from: from.map(n => [n.0, n.1]),
+    to: Some([to.0, to.1]),
   }
 }
 
 ///|
-pub fn anim_scale_range(
+pub fn anim_scale(
   duration_ms : Int,
-  from : Double,
+  from : Double?,
   to : Double,
   easing? : Easing = Linear,
 ) -> AnimationSpec {
-  { prop: Scale, duration_ms, easing, from: Some([from]), to: Some([to]) }
+  { prop: Scale, duration_ms, easing, from: from.map(n => [n]), to: Some([to]) }
 }
 
 ///|
@@ -396,24 +376,12 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
-  easing? : Easing = Linear,
-) -> Unit {
-  self.instructions.push(
-    Animate(target.id(), anim_opacity(duration_ms, easing~)),
-  )
-}
-
-///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity_range(
-  self : ScriptBuilder[T],
-  target : A,
-  duration_ms : Int,
-  from : Double,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_opacity_range(duration_ms, from, to, easing~)),
+    Animate(target.id(), anim_opacity(duration_ms, from, to, easing~)),
   )
 }
 
@@ -422,29 +390,12 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
+  from? : (Double, Double),
+  to : (Double, Double),
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_position(duration_ms, easing~)),
-  )
-}
-
-///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position_range(
-  self : ScriptBuilder[T],
-  target : A,
-  duration_ms : Int,
-  from_x : Double,
-  from_y : Double,
-  to_x : Double,
-  to_y : Double,
-  easing? : Easing = Linear,
-) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_position_range(duration_ms, from_x, from_y, to_x, to_y, easing~),
-    ),
+    Animate(target.id(), anim_position(duration_ms, from, to, easing~)),
   )
 }
 
@@ -453,22 +404,12 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
-  easing? : Easing = Linear,
-) -> Unit {
-  self.instructions.push(Animate(target.id(), anim_scale(duration_ms, easing~)))
-}
-
-///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale_range(
-  self : ScriptBuilder[T],
-  target : A,
-  duration_ms : Int,
-  from : Double,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
 ) -> Unit {
   self.instructions.push(
-    Animate(target.id(), anim_scale_range(duration_ms, from, to, easing~)),
+    Animate(target.id(), anim_scale(duration_ms, from, to, easing~)),
   )
 }
 

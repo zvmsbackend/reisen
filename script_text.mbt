@@ -348,10 +348,15 @@ fn[T] reisen_text_script_to_builder(
             }
             let spec = match prop_lower {
               "opacity" | "alpha" | "fade" =>
-                match (from_value, to_value) {
-                  (Some(from), Some(to)) =>
-                    anim_opacity_range(duration_ms, from, to, easing=Linear)
-                  _ => anim_opacity(duration_ms, easing=Linear)
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(0.0)
+                  let to = to_value.unwrap_or(1.0)
+                  anim_opacity(duration_ms, Some(from), to, easing=Linear)
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  anim_opacity(duration_ms, None, to, easing=Linear)
+                } else {
+                  anim_opacity(duration_ms, None, 1.0, easing=Linear)
                 }
               "position" | "pos" | "move" =>
                 if parts.length() >= 7 {
@@ -367,24 +372,35 @@ fn[T] reisen_text_script_to_builder(
                   let to_y = (try? @strconv.parse_double(parts[6])).unwrap_or(
                     0.0,
                   )
-                  anim_position_range(
+                  anim_position(
                     duration_ms,
-                    from_x,
-                    from_y,
-                    to_x,
-                    to_y,
+                    Some((from_x, from_y)),
+                    (to_x, to_y),
                     easing=Linear,
                   )
+                } else if parts.length() >= 5 {
+                  let to_x = (try? @strconv.parse_double(parts[3])).unwrap_or(
+                    0.0,
+                  )
+                  let to_y = (try? @strconv.parse_double(parts[4])).unwrap_or(
+                    0.0,
+                  )
+                  anim_position(duration_ms, None, (to_x, to_y), easing=Linear)
                 } else {
-                  anim_position(duration_ms, easing=Linear)
+                  anim_position(duration_ms, None, (0.0, 0.0), easing=Linear)
                 }
               "scale" | "size" =>
-                match (from_value, to_value) {
-                  (Some(from), Some(to)) =>
-                    anim_scale_range(duration_ms, from, to, easing=Linear)
-                  _ => anim_scale(duration_ms, easing=Linear)
+                if parts.length() >= 5 {
+                  let from = from_value.unwrap_or(1.0)
+                  let to = to_value.unwrap_or(1.0)
+                  anim_scale(duration_ms, Some(from), to, easing=Linear)
+                } else if parts.length() >= 4 {
+                  let to = from_value.unwrap_or(1.0)
+                  anim_scale(duration_ms, None, to, easing=Linear)
+                } else {
+                  anim_scale(duration_ms, None, 1.0, easing=Linear)
                 }
-              _ => anim_opacity(duration_ms, easing=Linear)
+              _ => anim_opacity(duration_ms, None, 1.0, easing=Linear)
             }
             if prop_lower == "opacity" ||
               prop_lower == "alpha" ||
