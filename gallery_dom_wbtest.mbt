@@ -1,11 +1,13 @@
 ///|
 test "gallery tile views respect unlock and show_locked" {
   let ns = gensym(prefix="wb_gallery_dom")
-  let unlocked = register_cg_image(gensym(prefix="cg_unlocked"), "img_u")
-  let locked = register_cg_image(gensym(prefix="cg_locked"), "img_l")
+  let unlocked = GalleryImage::new(gensym(prefix="cg_unlocked"), "img_u", title="Unlocked")
+  let locked = GalleryImage::new(gensym(prefix="cg_locked"), "img_l", title="Locked")
+  gallery_register_image(unlocked)
+  gallery_register_image(locked)
   gallery_lock_image_in(ns, unlocked.id)
   gallery_lock_image_in(ns, locked.id)
-  unlock_cg_in(ns, unlocked.id)
+  gallery_unlock_image_in(ns, unlocked.id)
 
   let all_tiles = gallery_tile_views(ns, true)
   assert_true(all_tiles.contains(to_gallery_tile_view(ns, unlocked)))

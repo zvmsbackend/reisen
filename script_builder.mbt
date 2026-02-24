@@ -485,9 +485,9 @@ pub fn[T] ScriptBuilder::wait_click(self : ScriptBuilder[T]) -> Unit {
 ///|
 pub fn[T] ScriptBuilder::unlock_cg(
   self : ScriptBuilder[T],
-  id : String,
+  image : GalleryImage,
 ) -> Unit {
-  self.instructions.push(UnlockCg(id))
+  self.instructions.push(UnlockCg(image.id))
 }
 
 ///|
