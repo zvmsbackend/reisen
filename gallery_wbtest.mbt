@@ -22,14 +22,15 @@ test "gallery register keeps stable order and replacement" {
 test "gallery unlock and lock roundtrip by namespace" {
   let ns = gensym(prefix="wb_gallery")
   let id = gensym(prefix="unlock_target")
-  gallery_lock_image_in(ns, id)
-  assert_eq(gallery_is_image_unlocked_in(ns, id), false)
+  let entry = GalleryImage::new(id, "img_unlock", title="Unlockable")
+  gallery_lock_image_in(ns, entry)
+  assert_eq(gallery_is_image_unlocked_in(ns, entry), false)
 
-  gallery_unlock_image_in(ns, id)
-  assert_eq(gallery_is_image_unlocked_in(ns, id), true)
+  gallery_unlock_image_in(ns, entry)
+  assert_eq(gallery_is_image_unlocked_in(ns, entry), true)
 
-  gallery_lock_image_in(ns, id)
-  assert_eq(gallery_is_image_unlocked_in(ns, id), false)
+  gallery_lock_image_in(ns, entry)
+  assert_eq(gallery_is_image_unlocked_in(ns, entry), false)
 }
 
 ///|
@@ -41,10 +42,10 @@ test "gallery unlocked list reflects registered and unlocked" {
     title="List",
   )
   gallery_register_image(image)
-  gallery_lock_image_in(ns, image.id)
+  gallery_lock_image_in(ns, image)
   assert_true(!gallery_unlocked_images_in(ns).contains(image))
 
-  gallery_unlock_image_in(ns, image.id)
+  gallery_unlock_image_in(ns, image)
   assert_true(gallery_unlocked_images_in(ns).contains(image))
 }
 
@@ -59,15 +60,15 @@ test "gallery replayable list only contains unlocked replay entries" {
   let plain = GalleryImage::new(gensym(prefix="wb_gallery_plain"), "img_plain")
   gallery_register_image(replayable)
   gallery_register_image(plain)
-  gallery_lock_image_in(ns, replayable.id)
-  gallery_lock_image_in(ns, plain.id)
+  gallery_lock_image_in(ns, replayable)
+  gallery_lock_image_in(ns, plain)
 
   assert_true(gallery_replayable_images().contains(replayable))
   assert_true(!gallery_replayable_images().contains(plain))
   assert_true(!gallery_replayable_images_in(ns).contains(replayable))
 
-  gallery_unlock_image_in(ns, replayable.id)
-  gallery_unlock_image_in(ns, plain.id)
+  gallery_unlock_image_in(ns, replayable)
+  gallery_unlock_image_in(ns, plain)
   assert_true(gallery_replayable_images_in(ns).contains(replayable))
   assert_true(!gallery_replayable_images_in(ns).contains(plain))
 }
@@ -78,9 +79,9 @@ test "cg helpers register and unlock" {
   let entry = GalleryImage::new(id, "img_cg", title="CG")
   gallery_register_image(entry)
   assert_eq(gallery_image_by_id(id), Some(entry))
-  gallery_lock_image(id)
-  assert_eq(gallery_is_image_unlocked(id), false)
-  gallery_unlock_image(id)
-  assert_eq(gallery_is_image_unlocked(id), true)
-  gallery_lock_image(id)
+  gallery_lock_image(entry)
+  assert_eq(gallery_is_image_unlocked(entry), false)
+  gallery_unlock_image(entry)
+  assert_eq(gallery_is_image_unlocked(entry), true)
+  gallery_lock_image(entry)
 }

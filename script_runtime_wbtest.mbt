@@ -252,12 +252,11 @@ test "runtime say emits voice id" {
 ///|
 test "runtime unlock cg emits event and updates persistent state" {
   let cg_id = gensym(prefix="runtime_cg")
-  gallery_lock_image(cg_id)
-  let script : Script[Int] = script(builder => {
-    builder.unlock_cg(dummy_galley_image(cg_id))
-  })
+  let entry = GalleryImage::new(cg_id, "img_cg", title="CG")
+  gallery_lock_image(entry)
+  let script : Script[Int] = script(builder => builder.unlock_cg(entry))
   let runtime = Runtime::new(script, GameState::new(0))
   assert_eq(runtime.step(), CgUnlocked(cg_id))
-  assert_eq(gallery_is_image_unlocked(cg_id), true)
-  gallery_lock_image(cg_id)
+  assert_eq(gallery_is_image_unlocked(entry), true)
+  gallery_lock_image(entry)
 }

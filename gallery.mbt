@@ -41,12 +41,12 @@ fn gallery_image_unlock_key(id : String) -> String {
 ///|
 pub fn GalleryImage::new(
   id : String,
-  image_id : String,
+  image_url : String,
   title? : String = "",
-  thumbnail_id? : String,
+  thumbnail_url? : String,
   replay_label? : String,
 ) -> GalleryImage {
-  { id, image_url: image_id, title, thumbnail_url: thumbnail_id, replay_label }
+  { id, image_url, title, thumbnail_url, replay_label }
 }
 
 ///|
@@ -80,40 +80,45 @@ pub fn gallery_registered_images() -> Array[GalleryImage] {
 }
 
 ///|
-pub fn gallery_unlock_image(id : String) -> Unit {
+pub fn gallery_unlock_image(image : GalleryImage) -> Unit {
+  persistent_set_flag(gallery_image_unlock_key(image.id), true)
+}
+
+///|
+fn gallery_unlock_image_by_id(id : String) -> Unit {
   persistent_set_flag(gallery_image_unlock_key(id), true)
 }
 
 ///|
-pub fn gallery_unlock_image_in(ns : String, id : String) -> Unit {
-  persistent_set_flag_in(ns, gallery_image_unlock_key(id), true)
+pub fn gallery_unlock_image_in(ns : String, image : GalleryImage) -> Unit {
+  persistent_set_flag_in(ns, gallery_image_unlock_key(image.id), true)
 }
 
 ///|
-pub fn gallery_lock_image(id : String) -> Unit {
-  persistent_delete(gallery_image_unlock_key(id))
+pub fn gallery_lock_image(image : GalleryImage) -> Unit {
+  persistent_delete(gallery_image_unlock_key(image.id))
 }
 
 ///|
-pub fn gallery_lock_image_in(ns : String, id : String) -> Unit {
-  persistent_delete_in(ns, gallery_image_unlock_key(id))
+pub fn gallery_lock_image_in(ns : String, image : GalleryImage) -> Unit {
+  persistent_delete_in(ns, gallery_image_unlock_key(image.id))
 }
 
 ///|
-pub fn gallery_is_image_unlocked(id : String) -> Bool {
-  persistent_get_flag(gallery_image_unlock_key(id), default=false)
+pub fn gallery_is_image_unlocked(image : GalleryImage) -> Bool {
+  persistent_get_flag(gallery_image_unlock_key(image.id), default=false)
 }
 
 ///|
-pub fn gallery_is_image_unlocked_in(ns : String, id : String) -> Bool {
-  persistent_get_flag_in(ns, gallery_image_unlock_key(id), default=false)
+pub fn gallery_is_image_unlocked_in(ns : String, image : GalleryImage) -> Bool {
+  persistent_get_flag_in(ns, gallery_image_unlock_key(image.id), default=false)
 }
 
 ///|
 pub fn gallery_unlocked_images() -> Array[GalleryImage] {
   let out : Array[GalleryImage] = []
   for image in gallery_registered_images() {
-    if gallery_is_image_unlocked(image.id) {
+    if gallery_is_image_unlocked(image) {
       out.push(image)
     }
   }
@@ -124,7 +129,7 @@ pub fn gallery_unlocked_images() -> Array[GalleryImage] {
 pub fn gallery_unlocked_images_in(ns : String) -> Array[GalleryImage] {
   let out : Array[GalleryImage] = []
   for image in gallery_registered_images() {
-    if gallery_is_image_unlocked_in(ns, image.id) {
+    if gallery_is_image_unlocked_in(ns, image) {
       out.push(image)
     }
   }
