@@ -149,6 +149,8 @@ pub enum Instruction[T] {
   ShowBackgroundState(BackgroundState)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)
+  ShowDomFigure(String, FigurePlacement)
+  HideDomFigure(String)
   PlayMusic(String, Bool)
   StopMusic
   PlaySfx(String, Bool)

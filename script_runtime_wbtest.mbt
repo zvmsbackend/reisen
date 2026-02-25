@@ -260,3 +260,25 @@ test "runtime unlock cg emits event and updates persistent state" {
   assert_eq(gallery_is_image_unlocked(entry), true)
   gallery_lock_image(entry)
 }
+
+///|
+test "runtime dom figure events" {
+  let script : Script[Int] = script(builder => {
+    builder.show_dom_figure(
+      dom_figure("promo"),
+      place_right(layer=1, opacity=0.8),
+    )
+    builder.hide_dom_figure(dom_figure("#promo"))
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  match runtime.step() {
+    DomFigureShown(id, placement) => {
+      assert_eq(id, "promo")
+      assert_eq(placement.pos, Right)
+      assert_eq(placement.layer, 1)
+      assert_eq(placement.scalars.opacity, 0.8)
+    }
+    _ => fail("Expected DomFigureShown")
+  }
+  assert_eq(runtime.step(), DomFigureHidden("promo"))
+}

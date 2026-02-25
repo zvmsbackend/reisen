@@ -35,6 +35,8 @@ pub fn audio_dom_has_active_sfx() -> Bool
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
+pub fn dom_figure(String) -> DomFigure
+
 pub fn effect(String) -> Effect
 
 pub fn effect_param(String, Double) -> (String, Double)
@@ -285,7 +287,7 @@ pub impl ToJson for AnimationSpec
 pub impl @json.FromJson for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_url? : String, start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_url? : String, start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
@@ -326,7 +328,7 @@ pub fn AudioDom::set_bgm_gain(Self, Double) -> Unit
 pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
 
 type Background
-pub fn Background::as_gallery_image(Self, String, thumbnail? : Self, replay_label? : Label, id? : String) -> GalleryImage
+pub fn Background::as_gallery_image(Self, String, thumbnail? : Self, replay_label? : Label, replay_state_factory_key? : ReplayStateFactoryKey, id? : String) -> GalleryImage
 pub impl AnimationTarget for Background
 
 pub struct BackgroundState {
@@ -364,12 +366,14 @@ pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeE
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
+pub fn[T] Director::dom_figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::effects(Self[T], String) -> Array[EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::from_save(Script[T], DirectorSave[T]) -> Self[T] raise ScriptRuntimeError
 pub fn[T] Director::intro_text(Self[T]) -> String?
 pub fn[T] Director::is_waiting(Self[T]) -> Bool
+pub fn[T] Director::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
@@ -393,6 +397,9 @@ pub struct DirectorSave[T] {
 }
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
+
+type DomFigure
+pub impl AnimationTarget for DomFigure
 
 pub(all) enum Easing {
   Linear
@@ -464,7 +471,7 @@ pub impl @json.FromJson for FigurePlacement
 
 type GalleryImage
 pub fn GalleryImage::id(Self) -> String
-pub fn GalleryImage::new(String, String, title? : String, thumbnail_url? : String, replay_label? : String) -> Self
+pub fn GalleryImage::new(String, String, title? : String, thumbnail_url? : String, replay_label? : String, replay_state_factory_key? : ReplayStateFactoryKey) -> Self
 pub impl Eq for GalleryImage
 pub impl Show for GalleryImage
 pub impl ToJson for GalleryImage
@@ -483,6 +490,7 @@ pub fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
+pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
 pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> Unit) -> Self[T]
@@ -545,6 +553,8 @@ pub enum Instruction[T] {
   ShowBackgroundState(BackgroundState)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)
+  ShowDomFigure(String, FigurePlacement)
+  HideDomFigure(String)
   PlayMusic(String, Bool)
   StopMusic
   PlaySfx(String, Bool)
@@ -571,6 +581,7 @@ pub impl @json.FromJson for Position
 pub struct RenderState {
   mut background : BackgroundState?
   figures : Map[String, FigurePlacement]
+  dom_figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
@@ -580,6 +591,17 @@ pub struct RenderState {
 }
 pub impl ToJson for RenderState
 pub impl @json.FromJson for RenderState
+
+type ReplayStateFactories[T]
+pub fn[T] ReplayStateFactories::get(Self[T], ReplayStateFactoryKey) -> (() -> GameState[T])?
+pub fn[T] ReplayStateFactories::new() -> Self[T]
+pub fn[T] ReplayStateFactories::register(Self[T], () -> GameState[T], key? : String) -> ReplayStateFactoryKey
+
+type ReplayStateFactoryKey
+pub impl Eq for ReplayStateFactoryKey
+pub impl Show for ReplayStateFactoryKey
+pub impl ToJson for ReplayStateFactoryKey
+pub impl @json.FromJson for ReplayStateFactoryKey
 
 pub struct Runtime[T] {
   script : Script[T]
@@ -594,6 +616,7 @@ pub struct Runtime[T] {
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
 pub fn[T] Runtime::is_waiting(Self[T]) -> Bool
+pub fn[T] Runtime::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] Runtime::new(Script[T], GameState[T]) -> Self[T]
 pub fn[T] Runtime::save(Self[T]) -> RuntimeSave[T]
 pub fn[T : ToJson] Runtime::save_json(Self[T]) -> String
@@ -615,6 +638,8 @@ pub enum RuntimeEvent {
   BackgroundShownState(BackgroundState)
   FigureShown(String, FigurePlacement)
   FigureHidden(String)
+  DomFigureShown(String, FigurePlacement)
+  DomFigureHidden(String)
   MusicPlayed(String, Bool)
   MusicStopped
   SfxPlayed(String, Bool)
@@ -702,6 +727,7 @@ pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::effect(Self[T], A, Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
+pub fn[T] ScriptBuilder::hide_dom_figure(Self[T], DomFigure) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
@@ -722,6 +748,7 @@ pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
 pub fn[T] ScriptBuilder::scene_with_opacity_scale(Self[T], String, Double, Double) -> Unit
 pub fn[T] ScriptBuilder::scene_with_scalars(Self[T], String, ScalarState) -> Unit
 pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::show_dom_figure(Self[T], DomFigure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
@@ -771,6 +798,12 @@ pub fn UiDom::text_speed_ms_per_char(Self) -> Int
 pub fn UiDom::toggle_auto_mode(Self) -> Unit
 pub fn UiDom::toggle_skip_mode(Self) -> Unit
 pub fn UiDom::typewriter_visible_text(Self) -> StringView
+
+type UiDomFigureView
+pub impl Eq for UiDomFigureView
+pub impl Show for UiDomFigureView
+pub impl ToJson for UiDomFigureView
+pub impl @json.FromJson for UiDomFigureView
 
 type UiTextInputView
 pub impl Eq for UiTextInputView

@@ -24,6 +24,7 @@ priv struct UiState {
 pub struct RenderState {
   mut background : BackgroundState?
   figures : Map[String, FigurePlacement]
+  dom_figures : Map[String, FigurePlacement]
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
@@ -65,6 +66,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
     render: {
       background: None,
       figures: {},
+      dom_figures: {},
       music: None,
       last_sfx: None,
       last_sfx_interrupted: false,
@@ -127,6 +129,8 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     BackgroundShownState(state) => self.render.background = Some(state)
     FigureShown(id, placement) => self.render.figures.set(id, placement)
     FigureHidden(id) => self.render.figures.remove(id)
+    DomFigureShown(id, placement) => self.render.dom_figures.set(id, placement)
+    DomFigureHidden(id) => self.render.dom_figures.remove(id)
     MusicPlayed(id, should_loop) => self.render.music = Some((id, should_loop))
     MusicStopped => self.render.music = None
     SfxPlayed(id, _) => {
@@ -276,6 +280,13 @@ pub fn[T] Director::figures(self : Director[T]) -> Map[String, FigurePlacement] 
 }
 
 ///|
+pub fn[T] Director::dom_figures(
+  self : Director[T],
+) -> Map[String, FigurePlacement] {
+  self.render.dom_figures
+}
+
+///|
 pub fn[T] Director::music(self : Director[T]) -> (String, Bool)? {
   self.render.music
 }
@@ -319,6 +330,7 @@ pub fn[T] Director::render_epoch(self : Director[T]) -> String {
 pub fn[T] Director::clear_render(self : Director[T]) -> Unit {
   self.render.background = None
   self.render.figures.clear()
+  self.render.dom_figures.clear()
   self.render.music = None
   self.render.last_sfx = None
   self.render.last_sfx_interrupted = false

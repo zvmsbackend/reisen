@@ -9,6 +9,11 @@ fn dummy_figure(id : String) -> Figure {
 }
 
 ///|
+fn dummy_dom_figure(id : String) -> DomFigure {
+  dom_figure(id)
+}
+
+///|
 fn dummy_sfx(id : String) -> Sfx {
   { id, }
 }
@@ -241,6 +246,23 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
     built.instructions[5]
     is Say(speaker="", text="done", typewriter=true, append=false, voice=None),
   )
+}
+
+///|
+test "dom figure helper strips leading hash" {
+  assert_eq(dummy_dom_figure("panel").id, "panel")
+  assert_eq(dummy_dom_figure("#panel").id, "panel")
+  assert_eq(dummy_dom_figure("##panel").id, "panel")
+}
+
+///|
+test "dom figure show/hide emit expected instructions" {
+  let built : Script[Int] = script(builder => {
+    builder.show_dom_figure(dummy_dom_figure("#promo"), place_center(layer=2))
+    builder.hide_dom_figure(dummy_dom_figure("promo"))
+  })
+  assert_true(built.instructions[0] is ShowDomFigure("promo", _))
+  assert_true(built.instructions[1] is HideDomFigure("promo"))
 }
 
 ///|

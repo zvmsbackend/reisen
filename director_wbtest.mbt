@@ -173,3 +173,26 @@ test "director tracks avatar id" {
   assert_eq(director.step(), AvatarHidden)
   assert_eq(director.avatar_id(), None)
 }
+
+///|
+test "director tracks dom figure state" {
+  let script : Script[Int] = script(builder => {
+    builder.show_dom_figure(
+      dom_figure("#promo"),
+      place_left(layer=3, opacity=0.7),
+    )
+    builder.hide_dom_figure(dom_figure("promo"))
+  })
+  let director = Director::new(Runtime::new(script, GameState::new(0)))
+  assert_true(director.step() is DomFigureShown("promo", _))
+  assert_eq(
+    director.dom_figures().get("promo"),
+    Some({
+      pos: Left,
+      layer: 3,
+      scalars: { ..ScalarState::default(), opacity: 0.7 },
+    }),
+  )
+  assert_eq(director.step(), DomFigureHidden("promo"))
+  assert_eq(director.dom_figures().get("promo"), None)
+}

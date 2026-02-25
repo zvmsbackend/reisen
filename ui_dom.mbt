@@ -15,6 +15,28 @@ struct UiTextInputView {
 } derive(Show, Eq)
 
 ///|
+struct UiDomFigureView {
+  id : String
+  dom_id : String
+  left_pct : Double
+  top_pct : Double
+  anchor_x : Double
+  anchor_y : Double
+  layer : Int
+  opacity : Double
+  scale : Double
+  rotation : Double
+  blur : Double
+  brightness : Double
+  contrast : Double
+  saturation : Double
+  gamma : Double
+  color_r : Double
+  color_g : Double
+  color_b : Double
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
 struct UiViewModel {
   speaker : String
   text : String
@@ -25,6 +47,7 @@ struct UiViewModel {
   avatar_id : String?
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
+  dom_figures : Array[UiDomFigureView]
   auto_mode : Bool
   skip_mode : Bool
 } derive(Show, Eq)
@@ -634,6 +657,95 @@ extern "js" fn dom_take_submitted_text_input(
   #| }
 
 ///|
+extern "js" fn dom_render_dom_figures(
+  root_id : String,
+  figures_json : String,
+) -> Unit =
+  #| (root_id, figures_json) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   let host = root.querySelector('[data-reisen="dom-figures"]');
+  #|   if (!host) {
+  #|     host = doc.createElement('div');
+  #|     host.dataset.reisen = 'dom-figures';
+  #|     host.style.position = 'absolute';
+  #|     host.style.left = '0';
+  #|     host.style.top = '0';
+  #|     host.style.width = '100%';
+  #|     host.style.height = '100%';
+  #|     host.style.pointerEvents = 'none';
+  #|     root.appendChild(host);
+  #|   }
+  #|   const mounts = root.__reisenDomFigureMounts || (root.__reisenDomFigureMounts = new Map());
+  #|   const restore = (entry) => {
+  #|     if (!entry || !entry.el) return;
+  #|     const el = entry.el;
+  #|     const parent = entry.parent;
+  #|     const next = entry.next;
+  #|     if (parent && parent.nodeType === 1) {
+  #|       if (next && next.parentNode === parent) {
+  #|         parent.insertBefore(el, next);
+  #|       } else {
+  #|         parent.appendChild(el);
+  #|       }
+  #|     }
+  #|     if (entry.style === null || entry.style === undefined || entry.style === '') {
+  #|       el.removeAttribute('style');
+  #|     } else {
+  #|       el.setAttribute('style', entry.style);
+  #|     }
+  #|   };
+  #|   let figures = [];
+  #|   try {
+  #|     const parsed = JSON.parse(figures_json);
+  #|     if (Array.isArray(parsed)) figures = parsed;
+  #|   } catch (_) {}
+  #|   const wanted = new Set(figures.map(f => f.id));
+  #|   for (const [id, entry] of mounts.entries()) {
+  #|     if (!wanted.has(id)) {
+  #|       restore(entry);
+  #|       mounts.delete(id);
+  #|     }
+  #|   }
+  #|   for (const view of figures) {
+  #|     if (!view || !view.id || !view.dom_id) continue;
+  #|     let entry = mounts.get(view.id);
+  #|     if (!entry) {
+  #|       const el = doc.getElementById(view.dom_id);
+  #|       if (!el) continue;
+  #|       let owned = false;
+  #|       for (const existing of mounts.values()) {
+  #|         if (existing && existing.el === el) {
+  #|           owned = true;
+  #|           break;
+  #|         }
+  #|       }
+  #|       if (owned) continue;
+  #|       entry = {
+  #|         el,
+  #|         parent: el.parentNode,
+  #|         next: el.nextSibling,
+  #|         style: el.getAttribute('style'),
+  #|       };
+  #|       mounts.set(view.id, entry);
+  #|       host.appendChild(el);
+  #|     } else if (entry.el.parentNode !== host) {
+  #|       host.appendChild(entry.el);
+  #|     }
+  #|     const el = entry.el;
+  #|     el.style.position = 'absolute';
+  #|     el.style.left = `${view.left_pct}%`;
+  #|     el.style.top = `${view.top_pct}%`;
+  #|     el.style.zIndex = String(100 + (view.layer || 0));
+  #|     el.style.opacity = String(view.opacity ?? 1);
+  #|     el.style.transform = `translate(${-100 * (view.anchor_x ?? 0)}%, ${-100 * (view.anchor_y ?? 0)}%) scale(${view.scale ?? 1}) rotate(${view.rotation ?? 0}deg)`;
+  #|     el.style.filter = `blur(${view.blur ?? 0}px) brightness(${view.brightness ?? 1}) contrast(${view.contrast ?? 1}) saturate(${view.saturation ?? 1})`;
+  #|   }
+  #| }
+
+///|
 extern "js" fn dom_render_action_buttons(
   root_id : String,
   auto_mode : Bool,
@@ -701,10 +813,37 @@ extern "js" fn dom_clear_game_ui(root_id : String) -> Unit =
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
+  #|   const clearDomFigures = () => {
+  #|     const mounts = root.__reisenDomFigureMounts;
+  #|     if (mounts && mounts.forEach) {
+  #|       mounts.forEach(entry => {
+  #|         if (!entry || !entry.el) return;
+  #|         const el = entry.el;
+  #|         const parent = entry.parent;
+  #|         const next = entry.next;
+  #|         if (parent && parent.nodeType === 1) {
+  #|           if (next && next.parentNode === parent) {
+  #|             parent.insertBefore(el, next);
+  #|           } else {
+  #|             parent.appendChild(el);
+  #|           }
+  #|         }
+  #|         if (entry.style === null || entry.style === undefined || entry.style === '') {
+  #|           el.removeAttribute('style');
+  #|         } else {
+  #|           el.setAttribute('style', entry.style);
+  #|         }
+  #|       });
+  #|       mounts.clear();
+  #|     }
+  #|     const host = root.querySelector('[data-reisen="dom-figures"]');
+  #|     if (host) host.remove();
+  #|   };
   #|   const remove = (selector) => {
   #|     const node = root.querySelector(selector);
   #|     if (node) node.remove();
   #|   };
+  #|   clearDomFigures();
   #|   remove('[data-reisen="speaker"]');
   #|   remove('[data-reisen="dialog"]');
   #|   remove('[data-reisen="choices"]');
@@ -774,6 +913,35 @@ extern "js" fn dom_take_typewriter_click(root_id : String) -> Bool =
 
 ///|
 fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
+  let dom_figures : Array[UiDomFigureView] = []
+  for id, placement in director.dom_figures() {
+    let (left_pct, top_pct, anchor_x, anchor_y) = match placement.pos {
+      Left => (18.0, 50.0, 0.5, 0.5)
+      Center => (50.0, 50.0, 0.5, 0.5)
+      Right => (82.0, 50.0, 0.5, 0.5)
+      Custom(x, y) => (x * 100.0, y * 100.0, 0.0, 0.0)
+    }
+    dom_figures.push({
+      id,
+      dom_id: id,
+      left_pct,
+      top_pct,
+      anchor_x,
+      anchor_y,
+      layer: placement.layer,
+      opacity: placement.scalars.opacity,
+      scale: placement.scalars.scale,
+      rotation: placement.scalars.rotation,
+      blur: placement.scalars.blur,
+      brightness: placement.scalars.brightness,
+      contrast: placement.scalars.contrast,
+      saturation: placement.scalars.saturation,
+      gamma: placement.scalars.gamma,
+      color_r: placement.scalars.color_r,
+      color_g: placement.scalars.color_g,
+      color_b: placement.scalars.color_b,
+    })
+  }
   let (speaker, text) = match director.dialog() {
     Some(line) => (line.speaker, line.text)
     None => ("", "")
@@ -806,6 +974,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     avatar_id,
     choices,
     text_input,
+    dom_figures,
     auto_mode: ui.auto_mode,
     skip_mode: ui.skip_mode,
   }
@@ -813,6 +982,8 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
 
 ///|
 fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
+  let dom_figures_json = view.dom_figures.to_json().stringify()
+  dom_render_dom_figures(self.root_id, dom_figures_json)
   if view.intro_text is Some(text) {
     dom_render_intro(self.root_id, text)
     dom_setup_typewriter_click(self.root_id)

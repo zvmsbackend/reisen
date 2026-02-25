@@ -5,6 +5,11 @@ struct Figure {
 }
 
 ///|
+struct DomFigure {
+  id : String
+}
+
+///|
 struct Background {
   id : String
   url : String
@@ -38,6 +43,21 @@ trait AnimationTarget {
 ///|
 pub impl AnimationTarget for Figure with id(self) {
   self.id
+}
+
+///|
+pub impl AnimationTarget for DomFigure with id(self) {
+  self.id
+}
+
+///|
+fn normalize_dom_id(id : String) -> String {
+  id.trim_start(chars="#").to_string()
+}
+
+///|
+pub fn dom_figure(id : String) -> DomFigure {
+  { id: normalize_dom_id(id) }
 }
 
 ///|
@@ -671,6 +691,23 @@ pub fn[T] ScriptBuilder::hide_figure(
   figure : Figure,
 ) -> Unit {
   self.instructions.push(HideFigure(figure.id))
+}
+
+///|
+pub fn[T] ScriptBuilder::show_dom_figure(
+  self : ScriptBuilder[T],
+  figure : DomFigure,
+  placement : FigurePlacement,
+) -> Unit {
+  self.instructions.push(ShowDomFigure(figure.id, placement))
+}
+
+///|
+pub fn[T] ScriptBuilder::hide_dom_figure(
+  self : ScriptBuilder[T],
+  figure : DomFigure,
+) -> Unit {
+  self.instructions.push(HideDomFigure(figure.id))
 }
 
 ///|
