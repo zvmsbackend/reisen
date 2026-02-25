@@ -197,6 +197,51 @@ test "runner click advances wait click" {
 }
 
 ///|
+test "runner click reveals typewriter then advances on next click" {
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "hello")
+    builder.say("n", "next")
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+  )
+
+  assert_true(
+    runner.step()
+    is Said(
+      speaker="n",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+  ignore(runner.step(elapsed_ms=20))
+  assert_true(!ui.is_typewriter_done())
+
+  ui.simulate_click()
+  assert_true(
+    runner.step(elapsed_ms=0)
+    is Said(
+      speaker="n",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+  assert_true(ui.is_typewriter_done())
+
+  ui.simulate_click()
+  assert_true(
+    runner.step(elapsed_ms=0)
+    is Said(speaker="n", text="next", typewriter=true, append=false, voice=None),
+  )
+}
+
+///|
 test "runner clear presentation resets render and syncs canvas" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)
@@ -239,6 +284,17 @@ test "wait advances with elapsed even when dialog remains" {
     ),
   )
   ui.simulate_click()
+  assert_true(
+    runner.step()
+    is Said(
+      speaker="n",
+      text="first",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+  ui.simulate_click()
   assert_true(runner.step() is WaitStarted(100))
   assert_true(
     runner.step(elapsed_ms=120)
@@ -265,6 +321,17 @@ test "skip mode ignores waits" {
     ui,
   )
 
+  assert_true(
+    runner.step()
+    is Said(
+      speaker="n",
+      text="first",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+  ui.simulate_click()
   assert_true(
     runner.step()
     is Said(

@@ -427,9 +427,9 @@ pub fn[T] GameRunner::step(
   if not(is_typewriter_done) {
     if self.ui.check_typewriter_click() {
       self.ui.complete_typewriter()
-      let event = self.director.step(elapsed_ms=0)
-      (self.event_hook)(event)
-      self.apply_event_and_render(event, false, RenderMode::RenderUi)
+      self.ui.dirty_text = true
+      let event = self.current_dialog_event()
+      self.render_ui()
       return event
     } else {
       ignore(self.ui.advance_typewriter(elapsed_ms~))
