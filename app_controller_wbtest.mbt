@@ -198,3 +198,39 @@ test "app controller submit custom event only works in game" {
     None => fail("Expected runner")
   }
 }
+
+///|
+test "app controller custom event jump resumes on next step" {
+  let left = label(name="left")
+  let right = label(name="right")
+  let script : Script[Int] = script(builder => {
+    builder.wait_custom_event_jump("route", (_, payload) => {
+      if payload == "left" {
+        left
+      } else {
+        right
+      }
+    })
+    builder.label(left)
+    builder.say("n", "L")
+    builder.label(right)
+    builder.say("n", "R")
+  })
+  let app = AppController::new(script, () => GameState::new(0), "app")
+  app.enter_start_menu()
+  app.handle_menu_action(StartMenuAction::NewGame)
+  match app.runner {
+    Some(runner) => assert_eq(runner.step(), WaitCustomEventStarted("route"))
+    None => fail("Expected runner")
+  }
+
+  assert_eq(app.submit_custom_event("route", "left"), true)
+  match app.runner {
+    Some(runner) =>
+      assert_eq(
+        runner.step(),
+        Said(speaker="n", text="L", typewriter=true, append=false, voice=None),
+      )
+    None => fail("Expected runner")
+  }
+}

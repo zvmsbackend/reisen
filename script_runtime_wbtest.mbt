@@ -328,3 +328,30 @@ test "runtime save restore preserves custom event wait" {
     Said(speaker="n", text="ready", typewriter=true, append=false, voice=None),
   )
 }
+
+///|
+test "runtime custom event jump resumes at selected label on next step" {
+  let left = label(name="left")
+  let right = label(name="right")
+  let script : Script[Int] = script(builder => {
+    builder.wait_custom_event_jump("route", (_, payload) => {
+      if payload == "L" {
+        left
+      } else {
+        right
+      }
+    })
+    builder.label(left)
+    builder.say("n", "left")
+    builder.label(right)
+    builder.say("n", "right")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+
+  assert_eq(runtime.step(), WaitCustomEventStarted("route"))
+  assert_eq(runtime.submit_custom_event("route", "L"), Custom("route", "L"))
+  assert_eq(
+    runtime.step(),
+    Said(speaker="n", text="left", typewriter=true, append=false, voice=None),
+  )
+}

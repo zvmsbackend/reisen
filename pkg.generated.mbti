@@ -540,6 +540,7 @@ pub enum Instruction[T] {
   Wait(Int)
   WaitForClick
   WaitCustomEvent(String, (GameState[T], String) -> Bool)
+  WaitCustomEventJump(String, (GameState[T], String) -> Label)
   Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
   Intro(String)
   ShowTextBox
@@ -762,6 +763,7 @@ pub fn[T] ScriptBuilder::unlock_cg(Self[T], GalleryImage) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 pub fn[T] ScriptBuilder::wait_click(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::wait_custom_event(Self[T], String, (GameState[T], String) -> Bool) -> Unit
+pub fn[T] ScriptBuilder::wait_custom_event_jump(Self[T], String, (GameState[T], String) -> Label) -> Unit
 
 pub enum SettingsContext {
   FromStartMenu
@@ -885,6 +887,8 @@ pub type EffectApply = (WebGL, WebGLProgram, EffectDrawable, Array[(String, Doub
 pub type EffectParam = (String, Double)
 
 pub type EventHook = (RuntimeEvent) -> Unit
+
+pub type PayloadJumpSelector[T] = (GameState[T], String) -> Label
 
 pub type PayloadPredicate[T] = (GameState[T], String) -> Bool
 

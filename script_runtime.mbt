@@ -190,6 +190,10 @@ fn[T] Runtime::run_inst(
       self.wait_custom_name = Some(name)
       WaitCustomEventStarted(name)
     }
+    WaitCustomEventJump(name, _) => {
+      self.wait_custom_name = Some(name)
+      WaitCustomEventStarted(name)
+    }
     Say(speaker~, text~, typewriter~, append~, voice~) => {
       self.ip = self.ip + 1
       let interpolated = self.state.interpolate(text)
@@ -371,6 +375,16 @@ pub fn[T] Runtime::submit_custom_event(
               self.wait_custom_name = None
               self.ip = self.ip + 1
             }
+          WaitCustomEventJump(expected, selector) if expected == name => {
+            let selected = selector(self.state, payload)
+            match self.script.labels.get(selected.name) {
+              Some(idx) => {
+                self.wait_custom_name = None
+                self.ip = idx
+              }
+              None => ()
+            }
+          }
           _ => ()
         }
       }

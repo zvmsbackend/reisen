@@ -134,6 +134,10 @@ pub type ScriptPredicate[T] = (GameState[T]) -> Bool
 pub type PayloadPredicate[T] = (GameState[T], String) -> Bool
 
 ///|
+/// User-defined selector for custom-event waits that jump.
+pub type PayloadJumpSelector[T] = (GameState[T], String) -> Label
+
+///|
 pub enum Instruction[T] {
   Label(String)
   Jump(String)
@@ -141,6 +145,7 @@ pub enum Instruction[T] {
   Wait(Int)
   WaitForClick
   WaitCustomEvent(String, PayloadPredicate[T])
+  WaitCustomEventJump(String, PayloadJumpSelector[T])
   Say(
     speaker~ : String,
     text~ : String,

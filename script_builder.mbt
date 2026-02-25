@@ -478,6 +478,15 @@ pub fn[T] ScriptBuilder::wait_custom_event(
 }
 
 ///|
+pub fn[T] ScriptBuilder::wait_custom_event_jump(
+  self : ScriptBuilder[T],
+  name : String,
+  selector : PayloadJumpSelector[T],
+) -> Unit {
+  self.instructions.push(WaitCustomEventJump(name, selector))
+}
+
+///|
 pub fn[T] ScriptBuilder::unlock_cg(
   self : ScriptBuilder[T],
   image : GalleryImage,
