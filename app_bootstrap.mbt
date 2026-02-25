@@ -174,9 +174,7 @@ pub fn[T] start_game_webgl(
   let render_sync = match webgl_canvas(gl).to_option() {
     Some(canvas) =>
       make_pixi_render_sync_hook_from_canvas_element_with_config(
-        canvas,
-        store,
-        presenter_config,
+        canvas, store, presenter_config,
       )
     None => _ => ()
   }
@@ -202,9 +200,7 @@ pub fn[T] start_game_webgl_with_audio(
   let render_sync = match webgl_canvas(gl).to_option() {
     Some(canvas) =>
       make_pixi_render_sync_hook_from_canvas_element_with_config(
-        canvas,
-        store,
-        presenter_config,
+        canvas, store, presenter_config,
       )
     None => _ => ()
   }

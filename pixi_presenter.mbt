@@ -717,9 +717,13 @@ fn PixiPresenter::apply_effects_to_sprite(
   sprite : PixiSprite,
   effects : Array[EffectSpec],
   active_effects : Set[String],
+  phase : EffectPhase,
 ) -> Bool {
   let mut skip_base = false
   for spec in effects {
+    if spec.phase != phase {
+      continue
+    }
     let key = effect_key(target_id, spec.id)
     let signature = effect_signature(spec)
     active_effects.add(key)
@@ -772,14 +776,12 @@ fn PixiPresenter::apply_effects_to_sprite(
     } else {
       spec.params
     }
-    if spec.phase is Pre {
-      match pixi_effect_appliers.get(spec.id) {
-        Some(apply) =>
-          if apply(sprite, render_params, self.timeline_ms) {
-            skip_base = true
-          }
-        None => ()
-      }
+    match pixi_effect_appliers.get(spec.id) {
+      Some(apply) =>
+        if apply(sprite, render_params, self.timeline_ms) {
+          skip_base = true
+        }
+      None => ()
     }
   }
   skip_base
@@ -1149,18 +1151,33 @@ fn[T] PixiPresenter::sync_background(
             true,
             -1001,
           )
-          self.apply_scalar_visuals(
-            id + "#cover",
-            cover_sprite,
-            scalar_acc,
-            extra_blur=2.0,
-          )
           let effects = director.effects(id)
-          let cover_skip = self.apply_effects_to_sprite(
-            id, cover_sprite, effects, active_effects,
+          let cover_pre_skip = self.apply_effects_to_sprite(
+            id,
+            cover_sprite,
+            effects,
+            active_effects,
+            EffectPhase::Pre,
           )
-          if cover_skip {
+          if cover_pre_skip {
             cover_sprite.set_visible(false)
+          } else {
+            self.apply_scalar_visuals(
+              id + "#cover",
+              cover_sprite,
+              scalar_acc,
+              extra_blur=2.0,
+            )
+            let cover_post_skip = self.apply_effects_to_sprite(
+              id,
+              cover_sprite,
+              effects,
+              active_effects,
+              EffectPhase::Post,
+            )
+            if cover_post_skip {
+              cover_sprite.set_visible(false)
+            }
           }
           apply_sprite_transform(
             sprite,
@@ -1173,12 +1190,27 @@ fn[T] PixiPresenter::sync_background(
             true,
             -1000,
           )
-          self.apply_scalar_visuals(id, sprite, scalar_acc)
-          let base_skip = self.apply_effects_to_sprite(
-            id, sprite, effects, active_effects,
+          let base_pre_skip = self.apply_effects_to_sprite(
+            id,
+            sprite,
+            effects,
+            active_effects,
+            EffectPhase::Pre,
           )
-          if base_skip {
+          if base_pre_skip {
             sprite.set_visible(false)
+          } else {
+            self.apply_scalar_visuals(id, sprite, scalar_acc)
+            let base_post_skip = self.apply_effects_to_sprite(
+              id,
+              sprite,
+              effects,
+              active_effects,
+              EffectPhase::Post,
+            )
+            if base_post_skip {
+              sprite.set_visible(false)
+            }
           }
         }
         None => {
@@ -1370,13 +1402,28 @@ fn[T] PixiPresenter::sync_figures(
           true,
           placement.layer,
         )
-        self.apply_scalar_visuals(id, sprite, scalar_acc)
         let effects = director.effects(id)
-        let skip = self.apply_effects_to_sprite(
-          id, sprite, effects, active_effects,
+        let pre_skip = self.apply_effects_to_sprite(
+          id,
+          sprite,
+          effects,
+          active_effects,
+          EffectPhase::Pre,
         )
-        if skip {
+        if pre_skip {
           sprite.set_visible(false)
+        } else {
+          self.apply_scalar_visuals(id, sprite, scalar_acc)
+          let post_skip = self.apply_effects_to_sprite(
+            id,
+            sprite,
+            effects,
+            active_effects,
+            EffectPhase::Post,
+          )
+          if post_skip {
+            sprite.set_visible(false)
+          }
         }
         if update_placement {
           updated_figures.push((id, next_placement))

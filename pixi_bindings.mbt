@@ -88,14 +88,13 @@ pub fn pixi_new_blur_filter() -> PixiBlurFilter = "newBlurFilter"
 #module("/pixi-bridge.js")
 pub fn pixi_new_color_matrix_filter() -> PixiColorMatrixFilter = "newColorMatrixFilter"
 
+///|
 #module("/pixi-bridge.js")
 fn js_assets_load_promise(source : String) -> @js.Promise = "loadTexturePromise"
 
 ///|
 pub async fn pixi_assets_load_texture(source : String) -> PixiTexture {
-  let v = @js.Promise::wait(
-    js_assets_load_promise(source),
-  )
+  let v = @js.Promise::wait(js_assets_load_promise(source))
   v.cast()
 }
 
@@ -315,7 +314,10 @@ extern "js" fn PixiSprite::set_visible(
   #| (self, visible) => { self.visible = visible; }
 
 ///|
-extern "js" fn PixiSprite::set_tint(self : PixiSprite, tint_rgb : Int) -> Unit =
+pub extern "js" fn PixiSprite::set_tint(
+  self : PixiSprite,
+  tint_rgb : Int,
+) -> Unit =
   #| (self, tint_rgb) => { self.tint = tint_rgb; }
 
 ///|
