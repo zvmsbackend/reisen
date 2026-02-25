@@ -250,6 +250,26 @@ pub fn place_custom(
 }
 
 ///|
+fn position_to_anim_coords(pos : Position) -> (Double, Double) {
+  match pos {
+    Left => (0.05, 0.0)
+    Center => (0.30, 0.0)
+    Right => (0.55, 0.0)
+    Custom(x, y) => (x, y)
+  }
+}
+
+///|
+fn position_to_dom_anim_coords(pos : Position) -> (Double, Double) {
+  match pos {
+    Left => (0.18, 0.5)
+    Center => (0.5, 0.5)
+    Right => (0.82, 0.5)
+    Custom(x, y) => (x, y)
+  }
+}
+
+///|
 pub fn anim_opacity(
   duration_ms : Int,
   from : Double?,
@@ -271,17 +291,44 @@ pub fn anim_opacity(
 ///|
 pub fn anim_position(
   duration_ms : Int,
-  from : (Double, Double)?,
-  to : (Double, Double),
+  from : Position?,
+  to : Position,
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> AnimationSpec {
+  let to_coords = position_to_anim_coords(to)
   {
     prop: Position,
     duration_ms,
     easing,
-    from: from.map(n => [n.0, n.1]),
-    to: Some([to.0, to.1]),
+    from: from.map(pos => {
+      let (x, y) = position_to_anim_coords(pos)
+      [x, y]
+    }),
+    to: Some([to_coords.0, to_coords.1]),
+    anchor: None,
+    blocking,
+  }
+}
+
+///|
+fn anim_position_dom(
+  duration_ms : Int,
+  from : Position?,
+  to : Position,
+  easing : Easing,
+  blocking : Bool,
+) -> AnimationSpec {
+  let to_coords = position_to_dom_anim_coords(to)
+  {
+    prop: Position,
+    duration_ms,
+    easing,
+    from: from.map(pos => {
+      let (x, y) = position_to_dom_anim_coords(pos)
+      [x, y]
+    }),
+    to: Some([to_coords.0, to_coords.1]),
     anchor: None,
     blocking,
   }
@@ -833,15 +880,23 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
-  from? : (Double, Double),
-  to : (Double, Double),
+  from? : Position,
+  to : Position,
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.emit_animation(
-    target,
-    anim_position(duration_ms, from, to, easing~, blocking~),
-  )
+  match target.kind() {
+    AnimationTargetKind::Webgl =>
+      self.emit_animation(
+        target,
+        anim_position(duration_ms, from, to, easing~, blocking~),
+      )
+    AnimationTargetKind::Dom =>
+      self.emit_animation(
+        target,
+        anim_position_dom(duration_ms, from, to, easing, blocking),
+      )
+  }
 }
 
 ///|

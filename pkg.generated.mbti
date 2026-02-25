@@ -23,7 +23,7 @@ pub fn anim_gamma(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> A
 
 pub fn anim_opacity(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_position(Int, (Double, Double)?, (Double, Double), easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_position(Int, Position?, Position, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
 pub fn anim_rotation(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
@@ -731,7 +731,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(Self[T], A, Int,
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : (Double, Double), (Double, Double), easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : Position, Position, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> Unit

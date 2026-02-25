@@ -510,8 +510,8 @@ fn[T] reisen_text_script_to_builder(
                   )
                   anim_position(
                     duration_ms,
-                    Some((from_x, from_y)),
-                    (to_x, to_y),
+                    Some(Custom(from_x, from_y)),
+                    Custom(to_x, to_y),
                     easing=Linear,
                     blocking~,
                   )
@@ -525,7 +525,7 @@ fn[T] reisen_text_script_to_builder(
                   anim_position(
                     duration_ms,
                     None,
-                    (to_x, to_y),
+                    Custom(to_x, to_y),
                     easing=Linear,
                     blocking~,
                   )
@@ -533,7 +533,7 @@ fn[T] reisen_text_script_to_builder(
                   anim_position(
                     duration_ms,
                     None,
-                    (0.0, 0.0),
+                    Custom(0.0, 0.0),
                     easing=Linear,
                     blocking~,
                   )

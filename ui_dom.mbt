@@ -1506,7 +1506,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
       Left => (18.0, 50.0, 0.5, 0.5)
       Center => (50.0, 50.0, 0.5, 0.5)
       Right => (82.0, 50.0, 0.5, 0.5)
-      Custom(x, y) => (x * 100.0, y * 100.0, 0.0, 0.0)
+      Custom(x, y) => (x * 100.0, y * 100.0, 0.5, 0.5)
     }
     dom_figures.push({
       id,

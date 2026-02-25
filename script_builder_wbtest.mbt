@@ -113,7 +113,7 @@ test "animation helpers produce expected animation specs" {
     anchor: None,
     blocking: false,
   })
-  assert_eq(anim_position(240, None, (0.0, 0.0), easing=EaseInOut), {
+  assert_eq(anim_position(240, None, Custom(0.0, 0.0), easing=EaseInOut), {
     prop: Position,
     duration_ms: 240,
     easing: EaseInOut,
@@ -140,7 +140,7 @@ test "animation helpers produce expected animation specs" {
     anchor: None,
     blocking: false,
   })
-  assert_eq(anim_position(200, Some((-0.1, 0.0)), (0.0, 0.0)), {
+  assert_eq(anim_position(200, Some(Custom(-0.1, 0.0)), Custom(0.0, 0.0)), {
     prop: Position,
     duration_ms: 200,
     easing: Linear,
@@ -211,7 +211,7 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
     builder.animate_position(
       dummy_figure("alice"),
       180,
-      (0.0, 0.0),
+      Custom(0.0, 0.0),
       easing=EaseInOut,
     )
     builder.animate_scale(dummy_figure("alice"), 240, 1.0, easing=EaseOut)
