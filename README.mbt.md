@@ -253,6 +253,20 @@ fn init {
   })
   run_browser_app_loop(controller)
 }
+
+///|
+fn init_with_gallery {
+  let controller = AppController::new(
+    my_script,
+    initial_state,
+    "ui-root",
+    menu_background="assets/menu.jpg",
+    settings_background="assets/settings.jpg",
+    gallery_background="assets/gallery.jpg",
+    show_gallery_entry=true,
+  )
+  run_browser_app_loop(controller)
+}
 ```
 
 ## Script DSL Reference
