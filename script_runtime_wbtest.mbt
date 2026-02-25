@@ -264,11 +264,11 @@ test "runtime unlock cg emits event and updates persistent state" {
 ///|
 test "runtime dom figure events" {
   let script : Script[Int] = script(builder => {
-    builder.show_dom_figure(
+    builder.show_figure(
       dom_figure("promo"),
-      place_right(layer=1, opacity=0.8),
+      place_right(layer=1, scalars={ ..ScalarState::default(), opacity: 0.8 }),
     )
-    builder.hide_dom_figure(dom_figure("#promo"))
+    builder.hide_figure(dom_figure("#promo"))
   })
   let runtime = Runtime::new(script, GameState::new(0))
   match runtime.step() {

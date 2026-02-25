@@ -1,12 +1,8 @@
 ///|
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
-struct Figure {
-  id : String
-}
-
-///|
-struct DomFigure {
-  id : String
+enum Figure {
+  WebglFigure(String)
+  DomFigure(String)
 }
 
 ///|
@@ -36,7 +32,7 @@ struct Label {
 }
 
 ///|
-priv enum AnimationTargetKind {
+priv enum RenderableKind {
   Webgl
   Dom
 }
@@ -44,27 +40,23 @@ priv enum AnimationTargetKind {
 ///|
 trait AnimationTarget {
   id(Self) -> String
-  kind(Self) -> AnimationTargetKind
+  kind(Self) -> RenderableKind
 }
 
 ///|
 pub impl AnimationTarget for Figure with id(self) {
-  self.id
+  match self {
+    WebglFigure(id) => id
+    DomFigure(id) => id
+  }
 }
 
 ///|
-pub impl AnimationTarget for Figure with kind(_) {
-  AnimationTargetKind::Webgl
-}
-
-///|
-pub impl AnimationTarget for DomFigure with id(self) {
-  self.id
-}
-
-///|
-pub impl AnimationTarget for DomFigure with kind(_) {
-  AnimationTargetKind::Dom
+pub impl AnimationTarget for Figure with kind(self) {
+  match self {
+    WebglFigure(_) => Webgl
+    DomFigure(_) => Dom
+  }
 }
 
 ///|
@@ -73,8 +65,8 @@ fn normalize_dom_id(id : String) -> String {
 }
 
 ///|
-pub fn dom_figure(id : String) -> DomFigure {
-  { id: normalize_dom_id(id) }
+pub fn dom_figure(id : String) -> Figure {
+  DomFigure(normalize_dom_id(id))
 }
 
 ///|
@@ -84,107 +76,7 @@ pub impl AnimationTarget for Background with id(self) {
 
 ///|
 pub impl AnimationTarget for Background with kind(_) {
-  AnimationTargetKind::Webgl
-}
-
-///|
-pub fn effect(id : String) -> Effect {
-  { id, }
-}
-
-///|
-pub fn effect_param(name : String, value : Double) -> EffectParam {
-  (name, value)
-}
-
-///|
-pub fn effect_spec(
-  id : String,
-  params : Array[EffectParam],
-  blocking? : Bool = false,
-) -> EffectSpec {
-  {
-    id,
-    params,
-    phase: Some(Post),
-    duration_ms: None,
-    easing: Some(Linear),
-    blocking,
-  }
-}
-
-///|
-pub fn effect_spec_with_phase(
-  id : String,
-  params : Array[EffectParam],
-  phase : EffectPhase,
-  blocking? : Bool = false,
-) -> EffectSpec {
-  {
-    id,
-    params,
-    phase: Some(phase),
-    duration_ms: None,
-    easing: Some(Linear),
-    blocking,
-  }
-}
-
-///|
-pub fn effect_spec_with_duration(
-  id : String,
-  params : Array[EffectParam],
-  duration_ms : Int,
-  blocking? : Bool = false,
-) -> EffectSpec {
-  let duration = if duration_ms < 0 { 0 } else { duration_ms }
-  {
-    id,
-    params,
-    phase: Some(Post),
-    duration_ms: Some(duration),
-    easing: Some(Linear),
-    blocking,
-  }
-}
-
-///|
-pub fn effect_spec_with_phase_duration(
-  id : String,
-  params : Array[EffectParam],
-  phase : EffectPhase,
-  duration_ms : Int,
-  blocking? : Bool = false,
-) -> EffectSpec {
-  let duration = if duration_ms < 0 { 0 } else { duration_ms }
-  {
-    id,
-    params,
-    phase: Some(phase),
-    duration_ms: Some(duration),
-    easing: Some(Linear),
-    blocking,
-  }
-}
-
-///|
-pub fn effect_spec_with_timing(
-  id : String,
-  params : Array[EffectParam],
-  phase : EffectPhase,
-  duration_ms : Int,
-  easing : Easing,
-  blocking? : Bool = false,
-) -> EffectSpec {
-  let duration = if duration_ms < 0 { 0 } else { duration_ms }
-  {
-    id,
-    params,
-    phase: Some(phase),
-    duration_ms: Some(duration),
-    easing: Some(easing),
-    blocking,
-  }
+  Webgl
 }
 
 ///|
@@ -219,24 +111,27 @@ pub fn label(name? : String = gensym(prefix="label")) -> Label {
 }
 
 ///|
-pub fn place_left(layer? : Int = 0, opacity? : Double = 1.0) -> FigurePlacement {
-  { pos: Left, layer, scalars: { ..ScalarState::default(), opacity, } }
+pub fn place_left(
+  layer? : Int = 0,
+  scalars? : ScalarState = ScalarState::default(),
+) -> FigurePlacement {
+  { pos: Left, layer, scalars }
 }
 
 ///|
 pub fn place_center(
   layer? : Int = 0,
-  opacity? : Double = 1.0,
+  scalars? : ScalarState = ScalarState::default(),
 ) -> FigurePlacement {
-  { pos: Center, layer, scalars: { ..ScalarState::default(), opacity, } }
+  { pos: Center, layer, scalars }
 }
 
 ///|
 pub fn place_right(
   layer? : Int = 0,
-  opacity? : Double = 1.0,
+  scalars? : ScalarState = ScalarState::default(),
 ) -> FigurePlacement {
-  { pos: Right, layer, scalars: { ..ScalarState::default(), opacity, } }
+  { pos: Right, layer, scalars }
 }
 
 ///|
@@ -244,9 +139,9 @@ pub fn place_custom(
   x : Double,
   y : Double,
   layer? : Int = 0,
-  opacity? : Double = 1.0,
+  scalars? : ScalarState = ScalarState::default(),
 ) -> FigurePlacement {
-  { pos: Custom(x, y), layer, scalars: { ..ScalarState::default(), opacity, } }
+  { pos: Custom(x, y), layer, scalars }
 }
 
 ///|
@@ -705,28 +600,27 @@ pub fn[T] ScriptBuilder::run_code(
 pub fn[T] ScriptBuilder::scene(
   self : ScriptBuilder[T],
   bg : Background,
+  scalars? : ScalarState,
 ) -> Unit {
-  self.instructions.push(ShowBackground(bg.id))
+  match scalars {
+    Some(s) =>
+      self.instructions.push(ShowBackgroundState({ id: bg.id, scalars: s }))
+    None => self.instructions.push(ShowBackground(bg.id))
+  }
 }
 
 ///|
-pub fn[T] ScriptBuilder::scene_with_scalars(
+fn[T] ScriptBuilder::emit_show_figure(
   self : ScriptBuilder[T],
-  id : String,
-  scalars : ScalarState,
+  figure : Figure,
+  placement : FigurePlacement,
+  interactive : Bool,
 ) -> Unit {
-  self.instructions.push(ShowBackgroundState({ id, scalars }))
-}
-
-///|
-pub fn[T] ScriptBuilder::scene_with_opacity_scale(
-  self : ScriptBuilder[T],
-  id : String,
-  opacity : Double,
-  scale : Double,
-) -> Unit {
-  let scalars = { ..ScalarState::default(), opacity, scale }
-  self.instructions.push(ShowBackgroundState({ id, scalars }))
+  match figure {
+    WebglFigure(id) => self.instructions.push(ShowFigure(id, placement))
+    DomFigure(id) =>
+      self.instructions.push(ShowDomFigure(id, placement, interactive))
+  }
 }
 
 ///|
@@ -734,8 +628,9 @@ pub fn[T] ScriptBuilder::show_figure(
   self : ScriptBuilder[T],
   figure : Figure,
   placement : FigurePlacement,
+  interactive? : Bool = false,
 ) -> Unit {
-  self.instructions.push(ShowFigure(figure.id, placement))
+  self.emit_show_figure(figure, placement, interactive)
 }
 
 ///|
@@ -744,15 +639,10 @@ pub fn[T] ScriptBuilder::show_figure_at(
   figure : Figure,
   pos : Position,
   layer? : Int = 0,
-  opacity? : Double = 1.0,
+  scalars? : ScalarState = ScalarState::default(),
+  interactive? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    ShowFigure(figure.id, {
-      pos,
-      layer,
-      scalars: { ..ScalarState::default(), opacity, },
-    }),
-  )
+  self.emit_show_figure(figure, { pos, layer, scalars }, interactive)
 }
 
 ///|
@@ -760,25 +650,10 @@ pub fn[T] ScriptBuilder::hide_figure(
   self : ScriptBuilder[T],
   figure : Figure,
 ) -> Unit {
-  self.instructions.push(HideFigure(figure.id))
-}
-
-///|
-pub fn[T] ScriptBuilder::show_dom_figure(
-  self : ScriptBuilder[T],
-  figure : DomFigure,
-  placement : FigurePlacement,
-  interactive? : Bool = false,
-) -> Unit {
-  self.instructions.push(ShowDomFigure(figure.id, placement, interactive))
-}
-
-///|
-pub fn[T] ScriptBuilder::hide_dom_figure(
-  self : ScriptBuilder[T],
-  figure : DomFigure,
-) -> Unit {
-  self.instructions.push(HideDomFigure(figure.id))
+  match figure {
+    WebglFigure(id) => self.instructions.push(HideFigure(id))
+    DomFigure(id) => self.instructions.push(HideDomFigure(id))
+  }
 }
 
 ///|
@@ -805,35 +680,68 @@ pub fn[T] ScriptBuilder::play_sfx(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
+pub fn effect_spec(
+  id : String,
+  params : Array[EffectParam],
+  phase? : EffectPhase = Post,
+  duration_ms? : Int,
+  blocking? : Bool = false,
+  easing? : Easing = Linear,
+) -> EffectSpec {
+  { id, params, phase, duration_ms, easing, blocking }
+}
+
+///|
+fn[T, A : AnimationTarget] ScriptBuilder::check_effect_support(
   self : ScriptBuilder[T],
   target : A,
-  effect : Effect,
-  params : Array[EffectParam],
-  phase? : EffectPhase,
-  duration_ms? : Int,
-  easing? : Easing = Linear,
-  blocking? : Bool = false,
-) -> Unit {
+) -> Bool {
   if target.kind() is Dom {
     if self.pending_error is None {
       self.pending_error = Some(
         ScriptBuildError::EffectUnsupportedOnDomTarget(target=target.id()),
       )
     }
-    return
+    false
+  } else {
+    true
   }
-  let resolved_phase = phase.unwrap_or(Post)
-  self.instructions.push(
-    ApplyEffect(target.id(), {
-      id: effect.id,
-      params,
-      phase: Some(resolved_phase),
-      duration_ms,
-      easing: Some(easing),
-      blocking,
-    }),
-  )
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
+  self : ScriptBuilder[T],
+  target : A,
+  effect_spec : EffectSpec,
+) -> Unit {
+  if self.check_effect_support(target) {
+    self.instructions.push(ApplyEffect(target.id(), effect_spec))
+  }
+}
+
+///|
+pub fn[T, A : AnimationTarget] ScriptBuilder::effect_with(
+  self : ScriptBuilder[T],
+  target : A,
+  effect : Effect,
+  params : Array[EffectParam],
+  phase? : EffectPhase = Post,
+  duration_ms? : Int,
+  easing? : Easing = Linear,
+  blocking? : Bool = false,
+) -> Unit {
+  if self.check_effect_support(target) {
+    self.instructions.push(
+      ApplyEffect(target.id(), {
+        id: effect.id,
+        params,
+        phase,
+        duration_ms,
+        easing,
+        blocking,
+      }),
+    )
+  }
 }
 
 ///|
@@ -843,10 +751,9 @@ fn[T, A : AnimationTarget] ScriptBuilder::emit_animation(
   spec : AnimationSpec,
 ) -> Unit {
   match target.kind() {
-    AnimationTargetKind::Webgl =>
+    RenderableKind::Webgl =>
       self.instructions.push(AnimateWebgl(target.id(), spec))
-    AnimationTargetKind::Dom =>
-      self.instructions.push(AnimateDom(target.id(), spec))
+    RenderableKind::Dom => self.instructions.push(AnimateDom(target.id(), spec))
   }
 }
 
@@ -886,12 +793,12 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   blocking? : Bool = false,
 ) -> Unit {
   match target.kind() {
-    AnimationTargetKind::Webgl =>
+    RenderableKind::Webgl =>
       self.emit_animation(
         target,
         anim_position(duration_ms, from, to, easing~, blocking~),
       )
-    AnimationTargetKind::Dom =>
+    RenderableKind::Dom =>
       self.emit_animation(
         target,
         anim_position_dom(duration_ms, from, to, easing, blocking),

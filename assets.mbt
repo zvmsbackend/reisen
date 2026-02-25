@@ -138,7 +138,7 @@ pub async fn AssetStore::register_figure(
     let img = load_image(url)
     self.put_image(id, img)
   }
-  { id, }
+  WebglFigure(id)
 }
 
 ///|

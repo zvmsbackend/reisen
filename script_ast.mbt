@@ -45,7 +45,7 @@ pub struct AnimationSpec {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub struct ScalarState {
+pub(all) struct ScalarState {
   opacity : Double
   scale : Double
   rotation : Double
@@ -89,9 +89,9 @@ pub type EffectParam = (String, Double)
 pub struct EffectSpec {
   id : String
   params : Array[EffectParam]
-  phase : EffectPhase?
+  phase : EffectPhase
   duration_ms : Int?
-  easing : Easing?
+  easing : Easing
   blocking : Bool
 } derive(Show, Eq, ToJson, FromJson)
 

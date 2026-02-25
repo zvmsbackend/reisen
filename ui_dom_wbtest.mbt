@@ -65,7 +65,7 @@ test "ui view model is empty before first dialog" {
 ///|
 test "ui view model includes dom figures from director" {
   let compiled : Script[Int] = script(builder => {
-    builder.show_dom_figure(dom_figure("#promo"), place_center(layer=2))
+    builder.show_figure(dom_figure("#promo"), place_center(layer=2))
   })
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
   let ui = UiDom::new("ui-root")
@@ -85,11 +85,7 @@ test "ui view model includes dom figures from director" {
 ///|
 test "ui view model keeps interactive dom figure flag" {
   let compiled : Script[Int] = script(builder => {
-    builder.show_dom_figure(
-      dom_figure("promo"),
-      place_center(),
-      interactive=true,
-    )
+    builder.show_figure(dom_figure("promo"), place_center(), interactive=true)
   })
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
   let ui = UiDom::new("ui-root")
@@ -103,7 +99,7 @@ test "ui view model keeps interactive dom figure flag" {
 ///|
 test "ui view model applies new dom animations" {
   let compiled : Script[Int] = script(builder => {
-    builder.show_dom_figure(dom_figure("promo"), place_center())
+    builder.show_figure(dom_figure("promo"), place_center())
     builder.animate_opacity(dom_figure("promo"), 120, 0.4)
   })
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))

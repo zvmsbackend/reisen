@@ -422,9 +422,9 @@ fn[T] reisen_text_script_to_builder(
               ApplyEffect(target, {
                 id: effect_id,
                 params,
-                phase: Some(phase),
+                phase,
                 duration_ms: duration,
-                easing: Some(easing),
+                easing,
                 blocking,
               }),
             )

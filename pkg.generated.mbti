@@ -35,21 +35,9 @@ pub fn audio_dom_has_active_sfx() -> Bool
 
 pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Director[T] raise
 
-pub fn dom_figure(String) -> DomFigure
+pub fn dom_figure(String) -> Figure
 
-pub fn effect(String) -> Effect
-
-pub fn effect_param(String, Double) -> (String, Double)
-
-pub fn effect_spec(String, Array[(String, Double)], blocking? : Bool) -> EffectSpec
-
-pub fn effect_spec_with_duration(String, Array[(String, Double)], Int, blocking? : Bool) -> EffectSpec
-
-pub fn effect_spec_with_phase(String, Array[(String, Double)], EffectPhase, blocking? : Bool) -> EffectSpec
-
-pub fn effect_spec_with_phase_duration(String, Array[(String, Double)], EffectPhase, Int, blocking? : Bool) -> EffectSpec
-
-pub fn effect_spec_with_timing(String, Array[(String, Double)], EffectPhase, Int, Easing, blocking? : Bool) -> EffectSpec
+pub fn effect_spec(String, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
 
 pub fn gallery_image_by_id(String) -> GalleryImage?
 
@@ -141,13 +129,13 @@ pub fn persistent_set_text(String, String) -> Unit
 
 pub fn persistent_set_text_in(String, String, String) -> Unit
 
-pub fn place_center(layer? : Int, opacity? : Double) -> FigurePlacement
+pub fn place_center(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
-pub fn place_custom(Double, Double, layer? : Int, opacity? : Double) -> FigurePlacement
+pub fn place_custom(Double, Double, layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
-pub fn place_left(layer? : Int, opacity? : Double) -> FigurePlacement
+pub fn place_left(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
-pub fn place_right(layer? : Int, opacity? : Double) -> FigurePlacement
+pub fn place_right(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
 pub fn register_webgl_effect_with_shaders(String, String, (WebGL, WebGLProgram, EffectDrawable, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
 
@@ -400,9 +388,6 @@ pub struct DirectorSave[T] {
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
 
-type DomFigure
-pub impl AnimationTarget for DomFigure
-
 pub struct DomFigureState {
   placement : FigurePlacement
   interactive : Bool
@@ -457,9 +442,9 @@ pub impl @json.FromJson for EffectPhase
 pub struct EffectSpec {
   id : String
   params : Array[(String, Double)]
-  phase : EffectPhase?
+  phase : EffectPhase
   duration_ms : Int?
-  easing : Easing?
+  easing : Easing
   blocking : Bool
 }
 pub impl Eq for EffectSpec
@@ -697,7 +682,7 @@ pub impl Show for SaveSlotMeta
 pub impl ToJson for SaveSlotMeta
 pub impl @json.FromJson for SaveSlotMeta
 
-pub struct ScalarState {
+pub(all) struct ScalarState {
   opacity : Double
   scale : Double
   rotation : Double
@@ -739,9 +724,9 @@ pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
-pub fn[T, A : AnimationTarget] ScriptBuilder::effect(Self[T], A, Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::effect(Self[T], A, EffectSpec) -> Unit
+pub fn[T, A : AnimationTarget] ScriptBuilder::effect_with(Self[T], A, Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
-pub fn[T] ScriptBuilder::hide_dom_figure(Self[T], DomFigure) -> Unit
 pub fn[T] ScriptBuilder::hide_figure(Self[T], Figure) -> Unit
 pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
@@ -758,13 +743,10 @@ pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String) -> Unit
-pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
-pub fn[T] ScriptBuilder::scene_with_opacity_scale(Self[T], String, Double, Double) -> Unit
-pub fn[T] ScriptBuilder::scene_with_scalars(Self[T], String, ScalarState) -> Unit
+pub fn[T] ScriptBuilder::scene(Self[T], Background, scalars? : ScalarState) -> Unit
 pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::show_dom_figure(Self[T], DomFigure, FigurePlacement, interactive? : Bool) -> Unit
-pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
-pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
+pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement, interactive? : Bool) -> Unit
+pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, scalars? : ScalarState, interactive? : Bool) -> Unit
 pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::unlock_cg(Self[T], GalleryImage) -> Unit

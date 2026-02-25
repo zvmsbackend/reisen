@@ -578,20 +578,18 @@ fn effect_key(target : String, id : String) -> String {
 ///|
 fn effect_signature(spec : EffectSpec) -> String {
   let phase = match spec.phase {
-    Some(Pre) => "pre"
-    Some(Post) => "post"
-    None => "post"
+    Pre => "pre"
+    Post => "post"
   }
   let duration = match spec.duration_ms {
     Some(ms) => ms.to_string()
     None => "none"
   }
   let easing = match spec.easing {
-    Some(Linear) => "linear"
-    Some(EaseIn) => "easein"
-    Some(EaseOut) => "easeout"
-    Some(EaseInOut) => "easeinout"
-    None => "linear"
+    Linear => "linear"
+    EaseIn => "easein"
+    EaseOut => "easeout"
+    EaseInOut => "easeinout"
   }
   let params : Array[String] = []
   for entry in spec.params {
@@ -1437,7 +1435,7 @@ fn[T] WebglPresenter::sync_impl(
             self.timeline_ms,
             start_ms,
             duration,
-            spec.easing.unwrap_or(Linear),
+            spec.easing,
           )
           progress = p
           if done {
@@ -1446,24 +1444,22 @@ fn[T] WebglPresenter::sync_impl(
         }
         _ => ()
       }
-      let phase = spec.phase.unwrap_or(Post)
-      let mut render_params : Array[EffectParam] = []
-      if spec.duration_ms is Some(_) {
+      let render_params = if spec.duration_ms is Some(_) {
         let from = match self.effect_from_params.get(key) {
           Some(list) => list
           None => []
         }
         let from_map = Map::from_array(from)
-        for entry in spec.params {
+        spec.params.map(entry => {
           let (name, value) = entry
           let start = from_map.get(name).unwrap_or(value)
           let animated = start + (value - start) * progress
-          render_params.push((name, animated))
-        }
+          (name, animated)
+        })
       } else {
-        render_params = spec.params
+        spec.params
       }
-      if phase is Pre {
+      if spec.phase is Pre {
         match self.effect_pipeline(spec.id) {
           Some(pipeline) => {
             let skip = self.draw_effect_pipeline(
@@ -1500,7 +1496,7 @@ fn[T] WebglPresenter::sync_impl(
             self.timeline_ms,
             start_ms,
             duration,
-            spec.easing.unwrap_or(Linear),
+            spec.easing,
           )
           progress = p
           if done {
@@ -1509,24 +1505,22 @@ fn[T] WebglPresenter::sync_impl(
         }
         _ => ()
       }
-      let phase = spec.phase.unwrap_or(Post)
-      let mut render_params : Array[EffectParam] = []
-      if spec.duration_ms is Some(_) {
+      let render_params = if spec.duration_ms is Some(_) {
         let from = match self.effect_from_params.get(key) {
           Some(list) => list
           None => []
         }
         let from_map = Map::from_array(from)
-        for entry in spec.params {
+        spec.params.map(entry => {
           let (name, value) = entry
           let start = from_map.get(name).unwrap_or(value)
           let animated = start + (value - start) * progress
-          render_params.push((name, animated))
-        }
+          (name, animated)
+        })
       } else {
-        render_params = spec.params
+        spec.params
       }
-      if phase is Post {
+      if spec.phase is Post {
         match self.effect_pipeline(spec.id) {
           Some(pipeline) => {
             let _skip = self.draw_effect_pipeline(

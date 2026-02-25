@@ -5,7 +5,10 @@ test "director maps runtime events into ui and render state" {
   let end = label()
   let compiled : Script[Int] = script(builder => {
     builder.scene(dummy_bg("bg_school"))
-    builder.show_figure_at(dummy_figure("alice"), Left, layer=1, opacity=0.9)
+    builder.show_figure_at(dummy_figure("alice"), Left, layer=1, scalars={
+      ..ScalarState::default(),
+      opacity: 0.9,
+    })
     builder.play_music(dummy_music("bgm_theme"), true)
     builder.animate_opacity(dummy_figure("alice"), 120, 1.0)
     builder.menu("alice", "Where to?", [
@@ -177,11 +180,11 @@ test "director tracks avatar id" {
 ///|
 test "director tracks dom figure state" {
   let script : Script[Int] = script(builder => {
-    builder.show_dom_figure(
+    builder.show_figure(
       dom_figure("#promo"),
-      place_left(layer=3, opacity=0.7),
+      place_left(layer=3, scalars={ ..ScalarState::default(), opacity: 0.7 }),
     )
-    builder.hide_dom_figure(dom_figure("promo"))
+    builder.hide_figure(dom_figure("promo"))
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_true(director.step() is DomFigureShown("promo", _, false))

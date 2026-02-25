@@ -5,11 +5,11 @@ fn dummy_bg(id : String) -> Background {
 
 ///|
 fn dummy_figure(id : String) -> Figure {
-  { id, }
+  WebglFigure(id)
 }
 
 ///|
-fn dummy_dom_figure(id : String) -> DomFigure {
+fn dummy_dom_figure(id : String) -> Figure {
   dom_figure(id)
 }
 
@@ -90,16 +90,22 @@ test "placement helpers produce expected placement values" {
     layer: 2,
     scalars: ScalarState::default(),
   })
-  assert_eq(place_right(opacity=0.6), {
+  assert_eq(place_right(scalars={ ..ScalarState::default(), opacity: 0.6 }), {
     pos: Right,
     layer: 0,
     scalars: { ..ScalarState::default(), opacity: 0.6 },
   })
-  assert_eq(place_custom(0.25, 0.75, layer=3, opacity=0.5), {
-    pos: Custom(0.25, 0.75),
-    layer: 3,
-    scalars: { ..ScalarState::default(), opacity: 0.5 },
-  })
+  assert_eq(
+    place_custom(0.25, 0.75, layer=3, scalars={
+      ..ScalarState::default(),
+      opacity: 0.5,
+    }),
+    {
+      pos: Custom(0.25, 0.75),
+      layer: 3,
+      scalars: { ..ScalarState::default(), opacity: 0.5 },
+    },
+  )
 }
 
 ///|
@@ -206,7 +212,10 @@ test "menu helper emits say then choice" {
 test "scene/figure and animation shorthand helpers emit expected instructions" {
   let built : Script[Int] = script(builder => {
     builder.scene(dummy_bg("bg_school"))
-    builder.show_figure_at(dummy_figure("alice"), Left, layer=2, opacity=0.7)
+    builder.show_figure_at(dummy_figure("alice"), Left, layer=2, scalars={
+      ..ScalarState::default(),
+      opacity: 0.7,
+    })
     builder.animate_opacity(dummy_figure("alice"), 120, 1.0)
     builder.animate_position(
       dummy_figure("alice"),
@@ -256,16 +265,16 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
 
 ///|
 test "dom figure helper strips leading hash" {
-  assert_eq(dummy_dom_figure("panel").id, "panel")
-  assert_eq(dummy_dom_figure("#panel").id, "panel")
-  assert_eq(dummy_dom_figure("##panel").id, "panel")
+  assert_true(dummy_dom_figure("panel") is DomFigure("panel"))
+  assert_true(dummy_dom_figure("#panel") is DomFigure("panel"))
+  assert_true(dummy_dom_figure("##panel") is DomFigure("panel"))
 }
 
 ///|
 test "dom figure show/hide emit expected instructions" {
   let built : Script[Int] = script(builder => {
-    builder.show_dom_figure(dummy_dom_figure("#promo"), place_center(layer=2))
-    builder.hide_dom_figure(dummy_dom_figure("promo"))
+    builder.show_figure(dummy_dom_figure("#promo"), place_center(layer=2))
+    builder.hide_figure(dummy_dom_figure("promo"))
   })
   assert_true(built.instructions[0] is ShowDomFigure("promo", _, false))
   assert_true(built.instructions[1] is HideDomFigure("promo"))
@@ -274,7 +283,7 @@ test "dom figure show/hide emit expected instructions" {
 ///|
 test "dom figure show can be interactive" {
   let built : Script[Int] = script(builder => {
-    builder.show_dom_figure(
+    builder.show_figure(
       dummy_dom_figure("promo"),
       place_center(),
       interactive=true,
@@ -300,7 +309,7 @@ test "dom figure animations emit dom animation instruction" {
 ///|
 test "effect on dom figure raises build error" {
   let builder : ScriptBuilder[Int] = ScriptBuilder::new()
-  builder.effect(dummy_dom_figure("promo"), effect("glow"), [])
+  builder.effect_with(dummy_dom_figure("promo"), { id: "glow" }, [])
   let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
   assert_true(
     built is Err(ScriptBuildError::EffectUnsupportedOnDomTarget(target="promo")),
@@ -310,9 +319,9 @@ test "effect on dom figure raises build error" {
 ///|
 test "effect helper emits apply effect" {
   let built : Script[Int] = script(builder => {
-    builder.effect(dummy_figure("alice"), effect("glow"), [
-      effect_param("intensity", 0.6),
-      effect_param("radius", 8.0),
+    builder.effect_with(dummy_figure("alice"), { id: "glow" }, [
+      ("intensity", 0.6),
+      ("radius", 8.0),
     ])
   })
 
@@ -323,9 +332,9 @@ test "effect helper emits apply effect" {
       {
         id: "glow",
         params: [("intensity", 0.6), ("radius", 8.0)],
-        phase: Some(EffectPhase::Post),
+        phase: EffectPhase::Post,
         duration_ms: None,
-        easing: Some(Linear),
+        easing: Linear,
         blocking: false,
       }
     ),
