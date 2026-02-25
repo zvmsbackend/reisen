@@ -20,7 +20,14 @@ fn dummy_music(id : String) -> Music {
 
 ///|
 fn dummy_galley_image(id : String) -> GalleryImage {
-  { id, image_url: id, title: "", thumbnail_url: None, replay_label: None }
+  {
+    id,
+    image_url: id,
+    title: "",
+    thumbnail_url: None,
+    replay_label: None,
+    replay_state_factory_key: None,
+  }
 }
 
 ///|

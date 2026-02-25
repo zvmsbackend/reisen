@@ -56,3 +56,106 @@ test "app controller opens gallery when entries exist" {
   app.handle_menu_action(StartMenuAction::Gallery)
   assert_eq(app.phase(), AppPhase::Gallery)
 }
+
+///|
+test "gallery replay uses app controller state factory by default" {
+  let replay_label = gensym(prefix="replay_default")
+  let start_label = label(name=gensym(prefix="start_default"))
+  let replay_target = label(name=replay_label)
+  let script : Script[Int] = script(builder => {
+    builder.label(start_label)
+    builder.say("n", "start")
+    builder.label(replay_target)
+    builder.say("n", "{who}")
+  })
+  let image = GalleryImage::new(
+    gensym(prefix="gallery_default"),
+    "assets/cg_default.jpg",
+    replay_label~,
+  )
+  gallery_register_image(image)
+  gallery_unlock_image(image)
+  let app = AppController::new(
+    script,
+    () => {
+      let state = GameState::new(0)
+      state.set_text_var("who", "default")
+      state
+    },
+    "app",
+  )
+
+  app.start_gallery_replay(replay_label)
+  assert_eq(app.phase(), AppPhase::InGame)
+  match app.runner {
+    Some(runner) =>
+      assert_eq(
+        runner.step(),
+        Said(
+          speaker="n",
+          text="default",
+          typewriter=true,
+          append=false,
+          voice=None,
+        ),
+      )
+    None => fail("Expected runner after replay")
+  }
+}
+
+///|
+test "gallery replay uses image-specific state factory key" {
+  let replay_label = gensym(prefix="replay_custom")
+  let start_label = label(name=gensym(prefix="start_custom"))
+  let replay_target = label(name=replay_label)
+  let script : Script[Int] = script(builder => {
+    builder.label(start_label)
+    builder.say("n", "start")
+    builder.label(replay_target)
+    builder.say("n", "{who}")
+  })
+  let replay_state_factories = ReplayStateFactories::new()
+  let _custom_factory = replay_state_factories.register(
+    () => {
+      let state = GameState::new(0)
+      state.set_text_var("who", "custom")
+      state
+    },
+    key="custom_factory",
+  )
+  let image = GalleryImage::new(
+    gensym(prefix="gallery_custom"),
+    "assets/cg_custom.jpg",
+    replay_label~,
+    replay_state_factory_key="custom_factory",
+  )
+  gallery_register_image(image)
+  gallery_unlock_image(image)
+  let app = AppController::new(
+    script,
+    () => {
+      let state = GameState::new(0)
+      state.set_text_var("who", "default")
+      state
+    },
+    "app",
+    gallery_replay_state_factories=replay_state_factories,
+  )
+
+  app.start_gallery_replay(replay_label)
+  assert_eq(app.phase(), AppPhase::InGame)
+  match app.runner {
+    Some(runner) =>
+      assert_eq(
+        runner.step(),
+        Said(
+          speaker="n",
+          text="custom",
+          typewriter=true,
+          append=false,
+          voice=None,
+        ),
+      )
+    None => fail("Expected runner after replay")
+  }
+}

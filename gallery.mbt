@@ -1,5 +1,32 @@
 ///|
 /// Gallery image registration and persistent unlock state helpers.
+struct ReplayStateFactories[T](Map[String, () -> GameState[T]])
+
+///|
+pub fn[T] ReplayStateFactories::new() -> ReplayStateFactories[T] {
+  Map::new()
+}
+
+///|
+pub fn[T] ReplayStateFactories::register(
+  self : ReplayStateFactories[T],
+  factory : () -> GameState[T],
+  key? : String = gensym(prefix="replay_factory"),
+) -> ReplayStateFactoryKey {
+  self.0.set(key, factory)
+  key
+}
+
+///|
+pub fn[T] ReplayStateFactories::get(
+  self : ReplayStateFactories[T],
+  key : ReplayStateFactoryKey,
+) -> (() -> GameState[T])? {
+  self.0.get(key.0)
+}
+
+///|
+struct ReplayStateFactoryKey(String) derive(Show, Eq, ToJson, FromJson)
 
 ///|
 struct GalleryImage {
@@ -8,6 +35,7 @@ struct GalleryImage {
   title : String
   thumbnail_url : String?
   replay_label : String?
+  replay_state_factory_key : ReplayStateFactoryKey?
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -16,6 +44,7 @@ pub fn Background::as_gallery_image(
   title : String,
   thumbnail? : Background,
   replay_label? : Label,
+  replay_state_factory_key? : ReplayStateFactoryKey,
   id? : String = gensym(prefix="cg"),
 ) -> GalleryImage {
   {
@@ -24,6 +53,7 @@ pub fn Background::as_gallery_image(
     title,
     thumbnail_url: thumbnail.map(b => b.url),
     replay_label: replay_label.map(l => l.name),
+    replay_state_factory_key,
   }
 }
 
@@ -45,8 +75,16 @@ pub fn GalleryImage::new(
   title? : String = "",
   thumbnail_url? : String,
   replay_label? : String,
+  replay_state_factory_key? : ReplayStateFactoryKey,
 ) -> GalleryImage {
-  { id, image_url, title, thumbnail_url, replay_label }
+  {
+    id,
+    image_url,
+    title,
+    thumbnail_url,
+    replay_label,
+    replay_state_factory_key,
+  }
 }
 
 ///|

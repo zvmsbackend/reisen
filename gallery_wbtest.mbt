@@ -74,6 +74,19 @@ test "gallery replayable list only contains unlocked replay entries" {
 }
 
 ///|
+test "gallery image stores replay state factory key" {
+  let image = GalleryImage::new(
+    gensym(prefix="wb_gallery_factory"),
+    "img",
+    replay_state_factory_key=ReplayStateFactoryKey("factory_key"),
+  )
+  assert_eq(
+    image.replay_state_factory_key,
+    Some(ReplayStateFactoryKey("factory_key")),
+  )
+}
+
+///|
 test "cg helpers register and unlock" {
   let id = gensym(prefix="wb_cg")
   let entry = GalleryImage::new(id, "img_cg", title="CG")

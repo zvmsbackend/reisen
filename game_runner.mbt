@@ -475,6 +475,14 @@ pub fn[T] GameRunner::submit_choice(
 }
 
 ///|
+pub fn[T] GameRunner::jump_to_label(
+  self : GameRunner[T],
+  label : String,
+) -> Unit raise ScriptRuntimeError {
+  self.director.jump_to_label(label)
+}
+
+///|
 /// Advances one frame and reports whether loop should continue.
 pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool {
   let keep_running = try self.step(elapsed_ms~) catch {

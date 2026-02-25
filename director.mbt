@@ -182,6 +182,14 @@ pub fn[T] Director::choose(
 }
 
 ///|
+pub fn[T] Director::jump_to_label(
+  self : Director[T],
+  label : String,
+) -> Unit raise ScriptRuntimeError {
+  self.runtime.jump_to_label(label)
+}
+
+///|
 pub fn[T] Director::dialog(self : Director[T]) -> DialogLine? {
   self.ui.dialog
 }

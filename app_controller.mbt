@@ -28,6 +28,7 @@ struct AppController[T] {
   menu : StartMenu
   gallery_menu : GalleryMenu
   settings_menu : SettingsMenu
+  gallery_replay_state_factories : ReplayStateFactories[T]
   mut phase : AppPhase
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
@@ -52,6 +53,7 @@ pub fn[T] AppController::new(
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
+  gallery_replay_state_factories? : ReplayStateFactories[T] = ReplayStateFactories::new(),
 ) -> AppController[T] {
   let app : AppController[T] = {
     script,
@@ -86,6 +88,7 @@ pub fn[T] AppController::new(
     event_hook,
     runner: None,
     saved_director_json: None,
+    gallery_replay_state_factories,
   }
   app.menu.render_gate()
   app
@@ -130,6 +133,55 @@ fn[T] AppController::enter_start_logo(self : AppController[T]) -> Unit {
 ///|
 pub fn[T] AppController::phase(self : AppController[T]) -> AppPhase {
   self.phase
+}
+
+///|
+fn[T] AppController::replay_factory_for_image(
+  self : AppController[T],
+  image : GalleryImage,
+) -> () -> GameState[T] {
+  match image.replay_state_factory_key {
+    Some(key) =>
+      match self.gallery_replay_state_factories.get(key) {
+        Some(factory) => factory
+        None => self.new_state
+      }
+    None => self.new_state
+  }
+}
+
+///|
+fn[T] AppController::start_gallery_replay(
+  self : AppController[T],
+  replay_label : String,
+) -> Unit {
+  let target = gallery_replayable_images_in(self.save_ns)
+    .iter()
+    .find_first(image => image.replay_label == Some(replay_label))
+  match target {
+    Some(image) => {
+      let settings = settings_read_in(self.save_ns)
+      let replay_factory = self.replay_factory_for_image(image)
+      let runner = start_game(
+        self.script,
+        replay_factory(),
+        self.ui_root_id,
+        render_sync=self.render_sync,
+        event_hook=self.event_hook,
+        settings?,
+      )
+      try {
+        runner.jump_to_label(replay_label)
+        self.start_menu_music_stop()
+        self.gallery_menu.clear()
+        self.runner = Some(runner)
+        self.phase = AppPhase::InGame
+      } catch {
+        _ => self.gallery_menu.render()
+      }
+    }
+    None => self.gallery_menu.render()
+  }
 }
 
 ///|
@@ -435,10 +487,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         | GalleryAction::Close
         | GalleryAction::Prev
         | GalleryAction::Next => self.gallery_menu.render()
-        GalleryAction::Replay(label) => {
-          ignore(label)
-          self.gallery_menu.render()
-        }
+        GalleryAction::Replay(label) => self.start_gallery_replay(label)
         GalleryAction::NoAction => ()
       }
       true

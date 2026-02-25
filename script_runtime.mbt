@@ -134,7 +134,7 @@ pub fn[T : FromJson] Runtime::from_json_string(
 }
 
 ///|
-fn[T] Runtime::jump_to_label(
+pub fn[T] Runtime::jump_to_label(
   self : Runtime[T],
   label : String,
 ) -> Unit raise ScriptRuntimeError {
