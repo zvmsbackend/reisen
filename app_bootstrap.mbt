@@ -157,19 +157,29 @@ pub fn[T : FromJson] start_game_from_slot(
 }
 
 ///|
+extern "js" fn webgl_canvas(gl : WebGL) -> @js.Optional[PixiCanvas] =
+  #| (gl) => gl?.canvas ?? null
+
+///|
 pub fn[T] start_game_webgl(
   script : Script[T],
   state : GameState[T],
   ui_root_id : String,
   gl : WebGL,
   store : AssetStore,
-  presenter_config? : WebglPresenterConfig = webgl_presenter_default_config(),
+  presenter_config? : PixiPresenterConfig = pixi_presenter_default_config(),
   settings? : GameSettings,
 ) -> GameRunner[T] raise {
   validate_script_assets(script, store)
-  let render_sync = make_webgl_render_sync_hook_with_config(
-    gl, store, presenter_config,
-  )
+  let render_sync = match webgl_canvas(gl).to_option() {
+    Some(canvas) =>
+      make_pixi_render_sync_hook_from_canvas_element_with_config(
+        canvas,
+        store,
+        presenter_config,
+      )
+    None => _ => ()
+  }
   start_game(script, state, ui_root_id, render_sync~, settings?)
 }
 
@@ -181,7 +191,7 @@ pub fn[T] start_game_webgl_with_audio(
   gl : WebGL,
   store : AssetStore,
   audio : AudioDom,
-  presenter_config? : WebglPresenterConfig = webgl_presenter_default_config(),
+  presenter_config? : PixiPresenterConfig = pixi_presenter_default_config(),
   settings? : GameSettings,
 ) -> GameRunner[T] raise {
   validate_script_assets(script, store)
@@ -189,9 +199,15 @@ pub fn[T] start_game_webgl_with_audio(
     Some(s) => audio.apply_settings(s)
     None => ()
   }
-  let render_sync = make_webgl_render_sync_hook_with_config(
-    gl, store, presenter_config,
-  )
+  let render_sync = match webgl_canvas(gl).to_option() {
+    Some(canvas) =>
+      make_pixi_render_sync_hook_from_canvas_element_with_config(
+        canvas,
+        store,
+        presenter_config,
+      )
+    None => _ => ()
+  }
   start_game(
     script,
     state,

@@ -36,23 +36,6 @@ type WebGLTexture
 type WebGLUniformLocation
 
 ///|
-pub extern "js" fn window_inner_width() -> Double =
-  #| () => window.innerWidth
-
-///|
-pub extern "js" fn window_inner_height() -> Double =
-  #| () => window.innerHeight
-
-///|
-extern "js" fn get_canvas_element(id : String) -> @js.Optional[Canvas] =
-  #| (id) => document.getElementById(id)
-
-///|
-pub fn get_canvas_by_id(id : String) -> Canvas? {
-  get_canvas_element(id).to_option()
-}
-
-///|
 extern "js" fn Canvas::get_context_ffi(
   self : Canvas,
   context_id : String,

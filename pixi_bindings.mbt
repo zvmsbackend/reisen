@@ -6,6 +6,10 @@
 
 ///|
 #external
+type PixiCanvas
+
+///|
+#external
 type PixiApplication
 
 ///|
@@ -29,102 +33,70 @@ type PixiTicker
 type PixiFilter
 
 ///|
-#module("pixi.js")
-fn pixi_application_class() -> @js.Value = "Application"
+#external
+type PixiBlurFilter
 
 ///|
-#module("pixi.js")
-fn pixi_container_class() -> @js.Value = "Container"
+#external
+type PixiColorMatrixFilter
 
 ///|
-#module("pixi.js")
-fn pixi_texture_class() -> @js.Value = "Texture"
+pub extern "js" fn window_inner_width() -> Double =
+  #| () => window.innerWidth
 
 ///|
-#module("pixi.js")
-fn pixi_sprite_class() -> @js.Value = "Sprite"
+pub extern "js" fn window_inner_height() -> Double =
+  #| () => window.innerHeight
 
 ///|
-#module("pixi.js")
-fn pixi_filter_class() -> @js.Value = "Filter"
+extern "js" fn get_canvas_element(id : String) -> @js.Optional[PixiCanvas] =
+  #| (id) => document.getElementById(id)
 
 ///|
-#module("pixi.js")
-fn pixi_assets_namespace() -> @js.Value = "Assets"
+pub fn get_canvas_by_id(id : String) -> PixiCanvas? {
+  get_canvas_element(id).to_option()
+}
 
 ///|
-extern "js" fn js_new_0(ctor : @js.Value) -> @js.Value =
-  #| (ctor) => new ctor()
+#module("/pixi-bridge.js")
+pub fn pixi_new_application() -> PixiApplication = "newApplication"
 
 ///|
-extern "js" fn js_texture_from_ffi(
-  texture_class : @js.Value,
-  source : @js.Value,
-) -> PixiTexture =
-  #| (Texture, source) => Texture.from(source)
+#module("/pixi-bridge.js")
+pub fn pixi_new_container() -> PixiContainer = "newContainer"
 
 ///|
-extern "js" fn js_sprite_from_texture_ffi(
-  sprite_class : @js.Value,
-  texture : PixiTexture,
-) -> PixiSprite =
-  #| (Sprite, texture) => new Sprite(texture)
+#module("/pixi-bridge.js")
+pub fn pixi_texture_from(source : @js.Value) -> PixiTexture = "textureFrom"
 
 ///|
-extern "js" fn js_assets_load_promise(
-  assets_ns : @js.Value,
-  source : String,
-) -> @js.Promise =
-  #| (Assets, source) => Assets.load(source)
+#module("/pixi-bridge.js")
+pub fn pixi_new_sprite(texture : PixiTexture) -> PixiSprite = "spriteFrom"
 
 ///|
-extern "js" fn js_new_filter_ffi(
-  filter_class : @js.Value,
+#module("/pixi-bridge.js")
+pub fn pixi_new_filter(
   vertex_src : String,
   fragment_src : String,
-) -> PixiFilter =
-  #| (Filter, vertex_src, fragment_src) => {
-  #|   try {
-  #|     return new Filter({ vertex: vertex_src, fragment: fragment_src });
-  #|   } catch (_) {
-  #|     return new Filter(vertex_src, fragment_src);
-  #|   }
-  #| }
+) -> PixiFilter = "newFilter"
 
 ///|
-pub fn pixi_new_application() -> PixiApplication {
-  js_new_0(pixi_application_class()).cast()
-}
+#module("/pixi-bridge.js")
+pub fn pixi_new_blur_filter() -> PixiBlurFilter = "newBlurFilter"
 
 ///|
-pub fn pixi_new_container() -> PixiContainer {
-  js_new_0(pixi_container_class()).cast()
-}
+#module("/pixi-bridge.js")
+pub fn pixi_new_color_matrix_filter() -> PixiColorMatrixFilter = "newColorMatrixFilter"
 
-///|
-pub fn pixi_texture_from(source : @js.Value) -> PixiTexture {
-  js_texture_from_ffi(pixi_texture_class(), source)
-}
-
-///|
-pub fn pixi_new_sprite(texture : PixiTexture) -> PixiSprite {
-  js_sprite_from_texture_ffi(pixi_sprite_class(), texture)
-}
+#module("/pixi-bridge.js")
+fn js_assets_load_promise(source : String) -> @js.Promise = "loadTexturePromise"
 
 ///|
 pub async fn pixi_assets_load_texture(source : String) -> PixiTexture {
   let v = @js.Promise::wait(
-    js_assets_load_promise(pixi_assets_namespace(), source),
+    js_assets_load_promise(source),
   )
   v.cast()
-}
-
-///|
-pub fn pixi_new_filter(
-  vertex_src : String,
-  fragment_src : String,
-) -> PixiFilter {
-  js_new_filter_ffi(pixi_filter_class(), vertex_src, fragment_src)
 }
 
 ///|
@@ -283,6 +255,13 @@ extern "js" fn PixiSprite::set_texture(
   #| (self, texture) => { self.texture = texture; }
 
 ///|
+extern "js" fn PixiSprite::set_filters(
+  self : PixiSprite,
+  filters : Array[@js.Value],
+) -> Unit =
+  #| (self, filters) => { self.filters = filters.length > 0 ? filters : null; }
+
+///|
 extern "js" fn PixiSprite::set_anchor(
   self : PixiSprite,
   x : Double,
@@ -305,6 +284,24 @@ extern "js" fn PixiSprite::set_scale(
   y : Double,
 ) -> Unit =
   #| (self, x, y) => { self.scale.set(x, y); }
+
+///|
+extern "js" fn PixiSprite::set_size(
+  self : PixiSprite,
+  width : Double,
+  height : Double,
+) -> Unit =
+  #| (self, width, height) => {
+  #|   self.width = width;
+  #|   self.height = height;
+  #| }
+
+///|
+extern "js" fn PixiSprite::set_rotation(
+  self : PixiSprite,
+  radians : Double,
+) -> Unit =
+  #| (self, radians) => { self.rotation = radians; }
 
 ///|
 extern "js" fn PixiSprite::set_alpha(self : PixiSprite, alpha : Double) -> Unit =
@@ -338,6 +335,26 @@ extern "js" fn PixiSprite::set_z_index(
 ///|
 extern "js" fn PixiTexture::destroy(self : PixiTexture) -> Unit =
   #| (self) => { self.destroy(true); }
+
+///|
+extern "js" fn PixiTexture::width(self : PixiTexture) -> Double =
+  #| (self) => {
+  #|   const w = self.width ?? self.orig?.width ?? 0;
+  #|   return Number(w) || 0;
+  #| }
+
+///|
+extern "js" fn PixiTexture::height(self : PixiTexture) -> Double =
+  #| (self) => {
+  #|   const h = self.height ?? self.orig?.height ?? 0;
+  #|   return Number(h) || 0;
+  #| }
+
+///|
+extern "js" fn PixiTexture::update(self : PixiTexture) -> Unit =
+  #| (self) => {
+  #|   if (self.update) self.update();
+  #| }
 
 ///|
 extern "js" fn PixiTicker::add(
@@ -387,5 +404,39 @@ extern "js" fn PixiFilter::set_uniform_vec2(
   #|   const uniforms = self.resources.uniforms?.uniforms ?? self.resources.uniforms;
   #|   if (uniforms && key in uniforms) {
   #|     uniforms[key] = [x, y];
+  #|   }
+  #| }
+
+///|
+extern "js" fn PixiBlurFilter::set_strength(
+  self : PixiBlurFilter,
+  value : Double,
+) -> Unit =
+  #| (self, value) => {
+  #|   const v = Math.max(0, Number(value) || 0);
+  #|   self.blur = v;
+  #|   self.blurX = v;
+  #|   self.blurY = v;
+  #| }
+
+///|
+extern "js" fn PixiColorMatrixFilter::apply_adjustments(
+  self : PixiColorMatrixFilter,
+  brightness : Double,
+  contrast : Double,
+  saturation : Double,
+  gamma : Double,
+) -> Unit =
+  #| (self, brightness, contrast, saturation, gamma) => {
+  #|   if (self.reset) self.reset();
+  #|   if (self.brightness) self.brightness(brightness, false);
+  #|   if (self.contrast) self.contrast(contrast, false);
+  #|   if (self.saturate) self.saturate(saturation, false);
+  #|   if (self.matrix) {
+  #|     const safeGamma = gamma > 0 ? gamma : 1;
+  #|     const g = 1 / safeGamma;
+  #|     self.matrix[0] *= g;
+  #|     self.matrix[6] *= g;
+  #|     self.matrix[12] *= g;
   #|   }
   #| }
