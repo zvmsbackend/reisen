@@ -61,6 +61,7 @@ pub struct Runtime[T] {
   mut wait_for_click : Bool
   mut wait_custom_name : String?
   mut wait_video : Bool
+  mut last_say_proceed_on_done : Bool
   mut ended : Bool
 }
 
@@ -74,6 +75,7 @@ pub struct RuntimeSave[T] {
   wait_for_click : Bool
   wait_custom_name : String?
   wait_video : Bool
+  last_say_proceed_on_done : Bool
   ended : Bool
 } derive(ToJson, FromJson)
 
@@ -89,6 +91,7 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
     wait_for_click: false,
     wait_custom_name: None,
     wait_video: false,
+    last_say_proceed_on_done: false,
     ended: false,
   }
 }
@@ -106,6 +109,7 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     wait_for_click: self.wait_for_click,
     wait_custom_name: self.wait_custom_name,
     wait_video: self.wait_video,
+    last_say_proceed_on_done: self.last_say_proceed_on_done,
     ended: self.ended,
   }
 }
@@ -132,6 +136,7 @@ fn[T] Runtime::from_save(
     wait_for_click: save.wait_for_click,
     wait_custom_name: save.wait_custom_name,
     wait_video: save.wait_video,
+    last_say_proceed_on_done: save.last_say_proceed_on_done,
     ended: save.ended,
   }
 }
@@ -201,8 +206,9 @@ fn[T] Runtime::run_inst(
       self.wait_custom_name = Some(name)
       WaitCustomEventStarted(name)
     }
-    Say(speaker~, text~, typewriter~, append~, voice~) => {
+    Say(speaker~, text~, typewriter~, append~, voice~, proceed_on_done~) => {
       self.ip = self.ip + 1
+      self.last_say_proceed_on_done = proceed_on_done
       let interpolated = self.state.interpolate(text)
       let name_interpolated = self.state.interpolate(speaker)
       let voice_interpolated = match voice {
@@ -391,6 +397,11 @@ pub fn[T] Runtime::complete_video_wait(
 ) -> RuntimeEvent {
   self.wait_video = false
   VideoEnded(skipped)
+}
+
+///|
+pub fn[T] Runtime::last_say_proceed_on_done(self : Runtime[T]) -> Bool {
+  self.last_say_proceed_on_done
 }
 
 ///|

@@ -550,7 +550,7 @@ pub enum Instruction[T] {
   WaitForClick
   WaitCustomEvent(String, (GameState[T], String) -> Bool)
   WaitCustomEventJump(String, (GameState[T], String) -> Label)
-  Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
+  Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?, proceed_on_done~ : Bool)
   Intro(String)
   ShowTextBox
   HideTextBox
@@ -626,6 +626,7 @@ pub struct Runtime[T] {
   mut wait_for_click : Bool
   mut wait_custom_name : String?
   mut wait_video : Bool
+  mut last_say_proceed_on_done : Bool
   mut ended : Bool
 }
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -634,6 +635,7 @@ pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[
 pub fn[T] Runtime::is_waiting(Self[T]) -> Bool
 pub fn[T] Runtime::is_waiting_video(Self[T]) -> Bool
 pub fn[T] Runtime::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
+pub fn[T] Runtime::last_say_proceed_on_done(Self[T]) -> Bool
 pub fn[T] Runtime::new(Script[T], GameState[T]) -> Self[T]
 pub fn[T] Runtime::save(Self[T]) -> RuntimeSave[T]
 pub fn[T : ToJson] Runtime::save_json(Self[T]) -> String
@@ -686,6 +688,7 @@ pub struct RuntimeSave[T] {
   wait_for_click : Bool
   wait_custom_name : String?
   wait_video : Bool
+  last_say_proceed_on_done : Bool
   ended : Bool
 }
 pub impl[T : ToJson] ToJson for RuntimeSave[T]
@@ -762,14 +765,14 @@ pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
 pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
-pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
+pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
 pub fn[T] ScriptBuilder::play_music(Self[T], Music, Bool) -> Unit
 pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::play_video(Self[T], String, can_skip? : Bool) -> Unit
 pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
-pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
-pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String) -> Unit
+pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
+pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::scene(Self[T], Background, scalars? : ScalarState) -> Unit
 pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement, interactive? : Bool) -> Unit

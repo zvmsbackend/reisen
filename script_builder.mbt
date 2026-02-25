@@ -538,10 +538,18 @@ pub fn[T] ScriptBuilder::narrate(
   typewriter? : Bool = true,
   append? : Bool = false,
   voice? : String = "",
+  proceed_on_done? : Bool = false,
 ) -> Unit {
   let voice_id = if voice == "" { None } else { Some(voice) }
   self.instructions.push(
-    Say(speaker="", text~, typewriter~, append~, voice=voice_id),
+    Say(
+      speaker="",
+      text~,
+      typewriter~,
+      append~,
+      voice=voice_id,
+      proceed_on_done~,
+    ),
   )
 }
 
@@ -553,10 +561,11 @@ pub fn[T] ScriptBuilder::say(
   typewriter? : Bool = true,
   append? : Bool = false,
   voice? : String = "",
+  proceed_on_done? : Bool = false,
 ) -> Unit {
   let voice_id = if voice == "" { None } else { Some(voice) }
   self.instructions.push(
-    Say(speaker~, text~, typewriter~, append~, voice=voice_id),
+    Say(speaker~, text~, typewriter~, append~, voice=voice_id, proceed_on_done~),
   )
 }
 
@@ -568,11 +577,19 @@ pub fn[T] ScriptBuilder::say_many(
   typewriter? : Bool = true,
   append? : Bool = false,
   voice? : String = "",
+  proceed_on_done? : Bool = false,
 ) -> Unit {
   let voice_id = if voice == "" { None } else { Some(voice) }
   for text in texts {
     self.instructions.push(
-      Say(speaker~, text~, typewriter~, append~, voice=voice_id),
+      Say(
+        speaker~,
+        text~,
+        typewriter~,
+        append~,
+        voice=voice_id,
+        proceed_on_done~,
+      ),
     )
   }
 }
@@ -593,7 +610,14 @@ pub fn[T] ScriptBuilder::menu(
   options : Array[ChoiceOption],
 ) -> Unit {
   self.instructions.push(
-    Say(speaker~, text=prompt, typewriter=true, append=false, voice=None),
+    Say(
+      speaker~,
+      text=prompt,
+      typewriter=true,
+      append=false,
+      voice=None,
+      proceed_on_done=false,
+    ),
   )
   self.instructions.push(Choice(options))
 }

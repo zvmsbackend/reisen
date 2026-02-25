@@ -451,6 +451,15 @@ pub fn[T] GameRunner::step(
       return event
     }
   }
+  match self.director.dialog() {
+    Some(line) if line.proceed_on_done => {
+      let event = self.director.step(elapsed_ms=0)
+      (self.event_hook)(event)
+      self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
+      return event
+    }
+    _ => ()
+  }
   if !self.director.last_event_said || self.ui.check_typewriter_click() {
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)

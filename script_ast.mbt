@@ -151,7 +151,8 @@ pub enum Instruction[T] {
     text~ : String,
     typewriter~ : Bool,
     append~ : Bool,
-    voice~ : String?
+    voice~ : String?,
+    proceed_on_done~ : Bool
   )
   Intro(String)
   ShowTextBox

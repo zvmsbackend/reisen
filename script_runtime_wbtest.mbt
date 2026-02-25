@@ -159,6 +159,7 @@ test "runtime save and restore json" {
       typewriter=true,
       append=false,
       voice=None,
+      proceed_on_done=false,
     ),
   ])
   let state = GameState::new(0)

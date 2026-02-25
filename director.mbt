@@ -8,6 +8,7 @@ struct DialogLine {
   text : String
   typewriter : Bool
   append : Bool
+  proceed_on_done : Bool
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -102,6 +103,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
         text: resolved_text,
         typewriter,
         append,
+        proceed_on_done: self.runtime.last_say_proceed_on_done(),
       })
       self.ui.intro_text = None
       self.ui.choices = []

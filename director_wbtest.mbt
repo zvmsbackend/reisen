@@ -62,6 +62,7 @@ test "director maps runtime events into ui and render state" {
       text: "Where to?",
       typewriter: true,
       append: false,
+      proceed_on_done: false,
     }),
   )
 
@@ -104,7 +105,13 @@ test "director branch false path through choose" {
   )
   assert_eq(
     director.dialog(),
-    Some({ speaker: "guide", text: "R", typewriter: true, append: false }),
+    Some({
+      speaker: "guide",
+      text: "R",
+      typewriter: true,
+      append: false,
+      proceed_on_done: false,
+    }),
   )
 }
 
@@ -146,7 +153,13 @@ test "director appends dialog text" {
   )
   assert_eq(
     director.dialog(),
-    Some({ speaker: "n", text: "Hello world", typewriter: true, append: true }),
+    Some({
+      speaker: "n",
+      text: "Hello world",
+      typewriter: true,
+      append: true,
+      proceed_on_done: false,
+    }),
   )
 }
 
