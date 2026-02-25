@@ -9,6 +9,10 @@
 type Image
 
 ///|
+#external
+type Video
+
+///|
 pub impl @js.Cast for Image with into(value) {
   Some(value.cast())
 }
@@ -19,12 +23,42 @@ pub impl @js.Cast for Image with from(value) {
 }
 
 ///|
+pub impl @js.Cast for Video with into(value) {
+  Some(value.cast())
+}
+
+///|
+pub impl @js.Cast for Video with from(value) {
+  @js.Value::cast_from(value)
+}
+
+///|
 extern "js" fn load_image_promise(url : String) -> @js.Promise =
   #| (url) => new Promise((resolve, reject) => {
   #|   const img = new Image();
   #|   img.onload = () => resolve(img);
   #|   img.onerror = (e) => reject(e);
   #|   img.src = url;
+  #| })
+
+///|
+extern "js" fn load_video_promise(url : String) -> @js.Promise =
+  #| (url) => new Promise((resolve, reject) => {
+  #|   const video = document.createElement('video');
+  #|   video.preload = 'auto';
+  #|   video.muted = true;
+  #|   video.loop = true;
+  #|   video.autoplay = true;
+  #|   video.playsInline = true;
+  #|   video.crossOrigin = 'anonymous';
+  #|   const done = () => {
+  #|     const p = video.play();
+  #|     if (p && typeof p.catch === 'function') p.catch(() => {});
+  #|     resolve(video);
+  #|   };
+  #|   video.onloadeddata = done;
+  #|   video.onerror = (e) => reject(e);
+  #|   video.src = url;
   #| })
 
 ///|
@@ -61,6 +95,12 @@ pub async fn load_image(url : String) -> Image {
 }
 
 ///|
+pub async fn load_video(url : String) -> Video {
+  let v = @js.Promise::wait(load_video_promise(url))
+  v.cast()
+}
+
+///|
 pub async fn load_text(url : String) -> String {
   let v = @js.Promise::wait(fetch_text_promise(url))
   v.cast()
@@ -77,13 +117,19 @@ pub async fn load_bytes(url : String) -> Bytes {
 ///|
 struct AssetStore {
   images : Map[String, Image]
+  videos : Map[String, Video]
   texts : Map[String, String]
   bytes : Map[String, Bytes]
 }
 
 ///|
 pub fn AssetStore::new() -> AssetStore {
-  { images: Map::new(), texts: Map::new(), bytes: Map::new() }
+  {
+    images: Map::new(),
+    videos: Map::new(),
+    texts: Map::new(),
+    bytes: Map::new(),
+  }
 }
 
 ///|
@@ -98,6 +144,20 @@ pub fn AssetStore::put_image(
 ///|
 pub fn AssetStore::get_image(self : AssetStore, id : String) -> Image? {
   self.images.get(id)
+}
+
+///|
+pub fn AssetStore::put_video(
+  self : AssetStore,
+  id : String,
+  video : Video,
+) -> Unit {
+  self.videos.set(id, video)
+}
+
+///|
+pub fn AssetStore::get_video(self : AssetStore, id : String) -> Video? {
+  self.videos.get(id)
 }
 
 ///|
@@ -150,6 +210,19 @@ pub async fn AssetStore::register_background(
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
+  }
+  { id, url }
+}
+
+///|
+pub async fn AssetStore::register_background_video(
+  self : AssetStore,
+  url : String,
+  id? : String = gensym(prefix="background_video"),
+) -> Background {
+  if self.videos.get(id) is None {
+    let video = load_video(url)
+    self.put_video(id, video)
   }
   { id, url }
 }

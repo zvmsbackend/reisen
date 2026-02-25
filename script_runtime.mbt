@@ -17,6 +17,8 @@ pub enum RuntimeEvent {
   TextBoxHidden
   AvatarShown(String)
   AvatarHidden
+  VideoStarted(String, Bool)
+  VideoEnded(Bool)
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -58,6 +60,7 @@ pub struct Runtime[T] {
   mut wait_ms : Int
   mut wait_for_click : Bool
   mut wait_custom_name : String?
+  mut wait_video : Bool
   mut ended : Bool
 }
 
@@ -70,6 +73,7 @@ pub struct RuntimeSave[T] {
   wait_ms : Int
   wait_for_click : Bool
   wait_custom_name : String?
+  wait_video : Bool
   ended : Bool
 } derive(ToJson, FromJson)
 
@@ -84,6 +88,7 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
     wait_ms: 0,
     wait_for_click: false,
     wait_custom_name: None,
+    wait_video: false,
     ended: false,
   }
 }
@@ -100,6 +105,7 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     wait_ms: self.wait_ms,
     wait_for_click: self.wait_for_click,
     wait_custom_name: self.wait_custom_name,
+    wait_video: self.wait_video,
     ended: self.ended,
   }
 }
@@ -125,6 +131,7 @@ fn[T] Runtime::from_save(
     },
     wait_for_click: save.wait_for_click,
     wait_custom_name: save.wait_custom_name,
+    wait_video: save.wait_video,
     ended: save.ended,
   }
 }
@@ -231,6 +238,11 @@ fn[T] Runtime::run_inst(
       self.ip = self.ip + 1
       AvatarHidden
     }
+    PlayVideo(url, can_skip) => {
+      self.ip = self.ip + 1
+      self.wait_video = true
+      VideoStarted(url, can_skip)
+    }
     Choice(options) => {
       self.ip = self.ip + 1
       self.pending_choices = options
@@ -334,6 +346,9 @@ pub fn[T] Runtime::step(
   if self.wait_custom_name is Some(_) {
     return Noop
   }
+  if self.wait_video {
+    return Noop
+  }
   for {
     if self.ip >= self.script.instructions.length() {
       self.ended = true
@@ -350,7 +365,10 @@ pub fn[T] Runtime::step(
 
 ///|
 pub fn[T] Runtime::is_waiting(self : Runtime[T]) -> Bool {
-  self.wait_ms > 0 || self.wait_for_click || self.wait_custom_name is Some(_)
+  self.wait_ms > 0 ||
+  self.wait_for_click ||
+  self.wait_custom_name is Some(_) ||
+  self.wait_video
 }
 
 ///|
@@ -358,6 +376,21 @@ pub fn[T] Runtime::skip_wait(self : Runtime[T]) -> Unit {
   self.wait_ms = 0
   self.wait_for_click = false
   self.wait_custom_name = None
+  self.wait_video = false
+}
+
+///|
+pub fn[T] Runtime::is_waiting_video(self : Runtime[T]) -> Bool {
+  self.wait_video
+}
+
+///|
+pub fn[T] Runtime::complete_video_wait(
+  self : Runtime[T],
+  skipped : Bool,
+) -> RuntimeEvent {
+  self.wait_video = false
+  VideoEnded(skipped)
 }
 
 ///|

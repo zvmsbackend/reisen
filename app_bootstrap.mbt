@@ -16,7 +16,7 @@ pub fn[T] validate_script_image_assets(
   for inst in script.instructions {
     match inst {
       ShowBackground(id) =>
-        if store.get_image(id) is None {
+        if store.get_image(id) is None && store.get_video(id) is None {
           raise AppBootstrapError::MissingImageAsset(id~)
         }
       ShowFigure(id, _) =>

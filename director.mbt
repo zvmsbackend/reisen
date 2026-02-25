@@ -16,6 +16,7 @@ priv struct UiState {
   mut choices : Array[ChoiceOption]
   mut text_input : (String, String)?
   mut intro_text : String?
+  mut video : (String, Bool)?
   mut text_box_visible : Bool
   mut avatar_id : String?
 }
@@ -40,6 +41,7 @@ pub struct DirectorSave[T] {
   render : RenderState
   dialog : DialogLine?
   intro_text : String?
+  video : (String, Bool)?
   text_box_visible : Bool
   avatar_id : String?
 } derive(ToJson, FromJson)
@@ -61,6 +63,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       choices: [],
       text_input: None,
       intro_text: None,
+      video: None,
       text_box_visible: true,
       avatar_id: None,
     },
@@ -118,10 +121,19 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     }
     IntroShown(text) => {
       self.ui.intro_text = Some(text)
+      self.ui.video = None
       self.ui.dialog = None
       self.ui.choices = []
       self.ui.text_input = None
     }
+    VideoStarted(url, can_skip) => {
+      self.ui.video = Some((url, can_skip))
+      self.ui.intro_text = None
+      self.ui.dialog = None
+      self.ui.choices = []
+      self.ui.text_input = None
+    }
+    VideoEnded(_) => self.ui.video = None
     TextBoxShown => self.ui.text_box_visible = true
     TextBoxHidden => self.ui.text_box_visible = false
     AvatarShown(id) => self.ui.avatar_id = Some(id)
@@ -211,6 +223,11 @@ pub fn[T] Director::intro_text(self : Director[T]) -> String? {
 }
 
 ///|
+pub fn[T] Director::video(self : Director[T]) -> (String, Bool)? {
+  self.ui.video
+}
+
+///|
 pub fn[T] Director::text_box_visible(self : Director[T]) -> Bool {
   self.ui.text_box_visible
 }
@@ -243,6 +260,21 @@ pub fn[T] Director::is_waiting(self : Director[T]) -> Bool {
 ///|
 pub fn[T] Director::skip_wait(self : Director[T]) -> Unit {
   self.runtime.skip_wait()
+}
+
+///|
+pub fn[T] Director::is_waiting_video(self : Director[T]) -> Bool {
+  self.runtime.is_waiting_video()
+}
+
+///|
+pub fn[T] Director::complete_video_wait(
+  self : Director[T],
+  skipped : Bool,
+) -> RuntimeEvent {
+  let event = self.runtime.complete_video_wait(skipped)
+  self.apply_event(event)
+  event
 }
 
 ///|
@@ -371,6 +403,7 @@ pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
     render: self.render,
     dialog: self.ui.dialog,
     intro_text: self.ui.intro_text,
+    video: self.ui.video,
     text_box_visible: self.ui.text_box_visible,
     avatar_id: self.ui.avatar_id,
   }
@@ -390,6 +423,7 @@ pub fn[T] Director::from_save(
       choices: [],
       text_input: None,
       intro_text: save.intro_text,
+      video: save.video,
       text_box_visible: save.text_box_visible,
       avatar_id: save.avatar_id,
     },

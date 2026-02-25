@@ -158,6 +158,7 @@ pub enum Instruction[T] {
   HideTextBox
   ShowAvatar(String)
   HideAvatar
+  PlayVideo(String, Bool)
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode(ScriptHook[T])

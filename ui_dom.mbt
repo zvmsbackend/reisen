@@ -15,6 +15,12 @@ struct UiTextInputView {
 } derive(Show, Eq)
 
 ///|
+struct UiVideoView {
+  url : String
+  can_skip : Bool
+} derive(Show, Eq)
+
+///|
 struct UiDomFigureView {
   id : String
   dom_id : String
@@ -43,6 +49,7 @@ struct UiViewModel {
   text : String
   typewriter : Bool
   intro_text : String?
+  video : UiVideoView?
   append : Bool
   text_box_visible : Bool
   avatar_id : String?
@@ -941,6 +948,89 @@ extern "js" fn dom_render_choices(
   #| }
 
 ///|
+extern "js" fn dom_render_video(
+  root_id : String,
+  url : String,
+  can_skip : Bool,
+) -> Unit =
+  #| (root_id, url, can_skip) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   let host = root.querySelector('[data-reisen="video"]');
+  #|   if (!host) {
+  #|     host = doc.createElement('div');
+  #|     host.dataset.reisen = 'video';
+  #|     host.style.position = 'absolute';
+  #|     host.style.left = '0';
+  #|     host.style.top = '0';
+  #|     host.style.width = '100%';
+  #|     host.style.height = '100%';
+  #|     host.style.display = 'flex';
+  #|     host.style.alignItems = 'center';
+  #|     host.style.justifyContent = 'center';
+  #|     host.style.background = 'black';
+  #|     host.style.zIndex = '30';
+  #|     root.appendChild(host);
+  #|   }
+  #|   let video = host.querySelector('video[data-reisen-video="1"]');
+  #|   if (!video) {
+  #|     video = doc.createElement('video');
+  #|     video.dataset.reisenVideo = '1';
+  #|     video.style.maxWidth = '100%';
+  #|     video.style.maxHeight = '100%';
+  #|     video.style.width = '100%';
+  #|     video.style.height = '100%';
+  #|     video.style.objectFit = 'contain';
+  #|     video.autoplay = true;
+  #|     video.loop = false;
+  #|     video.playsInline = true;
+  #|     video.controls = false;
+  #|     video.onended = () => {
+  #|       root.dataset.reisenVideoAction = 'ended';
+  #|     };
+  #|     host.appendChild(video);
+  #|   }
+  #|   host.dataset.canSkip = can_skip ? '1' : '0';
+  #|   host.onclick = () => {
+  #|     if (host.dataset.canSkip === '1') {
+  #|       root.dataset.reisenVideoAction = 'skip';
+  #|     }
+  #|   };
+  #|   if (video.src !== url) {
+  #|     video.src = url;
+  #|   }
+  #|   const p = video.play();
+  #|   if (p && typeof p.catch === 'function') p.catch(() => {});
+  #| }
+
+///|
+extern "js" fn dom_take_video_action(root_id : String) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const action = root.dataset.reisenVideoAction;
+  #|   if (!action) return null;
+  #|   delete root.dataset.reisenVideoAction;
+  #|   return action;
+  #| }
+
+///|
+extern "js" fn dom_clear_video(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const host = root.querySelector('[data-reisen="video"]');
+  #|   if (host) host.remove();
+  #|   delete root.dataset.reisenVideoAction;
+  #| }
+
+///|
 extern "js" fn dom_take_selected_choice(
   root_id : String,
 ) -> @js.Nullable[String] =
@@ -1247,6 +1337,7 @@ extern "js" fn dom_clear_game_ui(root_id : String) -> Unit =
   #|   remove('[data-reisen="text-input"]');
   #|   remove('[data-reisen="game-actions"]');
   #|   remove('[data-reisen="intro"]');
+  #|   remove('[data-reisen="video"]');
   #|   delete root.dataset.reisenAction;
   #|   delete root.dataset.reisenSelectedChoice;
   #|   delete root.dataset.reisenSubmittedInput;
@@ -1272,6 +1363,7 @@ extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
   #|     if (tag === 'BUTTON') return true;
   #|     if (target.closest?.('[data-reisen="choices"]')) return true;
   #|     if (target.closest?.('[data-reisen-dom-interactive="1"]')) return true;
+  #|     if (target.closest?.('[data-reisen="video"]')) return true;
   #|     if (target.closest?.('[data-choice-id]')) return true;
   #|     return false;
   #|   };
@@ -1540,6 +1632,10 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     None => false
   }
   let intro_text = director.intro_text()
+  let video = match director.video() {
+    Some((url, can_skip)) => Some(UiVideoView::{ url, can_skip })
+    None => None
+  }
   let text_box_visible = director.text_box_visible()
   let avatar_id = director.avatar_id()
   let choices = director
@@ -1554,6 +1650,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     text,
     typewriter,
     intro_text,
+    video,
     append,
     text_box_visible,
     avatar_id,
@@ -1569,6 +1666,14 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
 fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   let dom_figures_json = view.dom_figures.to_json().stringify()
   dom_render_dom_figures(self.root_id, dom_figures_json)
+  match view.video {
+    Some(video) => {
+      dom_render_video(self.root_id, video.url, video.can_skip)
+      dom_setup_typewriter_click(self.root_id)
+      return
+    }
+    None => dom_clear_video(self.root_id)
+  }
   if view.intro_text is Some(text) {
     dom_render_intro(self.root_id, text)
     dom_setup_typewriter_click(self.root_id)
@@ -1666,6 +1771,11 @@ extern "js" fn dom_take_action(root_id : String) -> @js.Nullable[String] =
 ///|
 fn UiDom::take_action(self : UiDom) -> String? {
   dom_take_action(self.root_id).to_option()
+}
+
+///|
+fn UiDom::take_video_action(self : UiDom) -> String? {
+  dom_take_video_action(self.root_id).to_option()
 }
 
 ///|

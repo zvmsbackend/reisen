@@ -367,6 +367,33 @@ fn WebglPresenter::texture_for(
 }
 
 ///|
+fn WebglPresenter::refresh_video_texture_if_any(
+  self : WebglPresenter,
+  image_id : String,
+) -> Unit {
+  match self.store.get_video(image_id) {
+    Some(video) =>
+      match self.textures.get(image_id) {
+        Some(tex) => {
+          let gl = self.renderer.gl
+          let target = gl.constant("TEXTURE_2D")
+          gl.bind_texture(target, tex)
+          gl.tex_image_2d_source(
+            target,
+            0,
+            gl.constant("RGBA"),
+            gl.constant("RGBA"),
+            gl.constant("UNSIGNED_BYTE"),
+            @js.Value::cast_from(video),
+          )
+        }
+        None => ()
+      }
+    None => ()
+  }
+}
+
+///|
 fn figure_rect(
   pos : Position,
   viewport_w : Double,
@@ -1081,6 +1108,7 @@ fn[T] WebglPresenter::sync_impl(
       }
       self.last_background_id = Some(bg_id)
       let tex = self.texture_for(bg_id)
+      self.refresh_video_texture_if_any(bg_id)
       let (bx, by, bw, bh) = fit_background_cover(
         bg_id,
         w,

@@ -87,6 +87,8 @@ pub async fn load_image(String) -> Image
 
 pub async fn load_text(String) -> String
 
+pub async fn load_video(String) -> Video
+
 pub fn[T] make_webgl_render_sync_hook(WebGL, AssetStore) -> ((Director[T]) -> Unit) raise
 
 pub fn[T] make_webgl_render_sync_hook_from_canvas(String, AssetStore) -> ((Director[T]) -> Unit)? raise
@@ -296,11 +298,14 @@ type AssetStore
 pub fn AssetStore::get_bytes(Self, String) -> Bytes?
 pub fn AssetStore::get_image(Self, String) -> Image?
 pub fn AssetStore::get_text(Self, String) -> String?
+pub fn AssetStore::get_video(Self, String) -> Video?
 pub fn AssetStore::new() -> Self
 pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
 pub fn AssetStore::put_image(Self, String, Image) -> Unit
 pub fn AssetStore::put_text(Self, String, String) -> Unit
+pub fn AssetStore::put_video(Self, String, Video) -> Unit
 pub async fn AssetStore::register_background(Self, String, id? : String) -> Background
+pub async fn AssetStore::register_background_video(Self, String, id? : String) -> Background
 pub async fn AssetStore::register_figure(Self, String, id? : String) -> Figure
 
 type AudioCommand
@@ -355,6 +360,7 @@ pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
+pub fn[T] Director::complete_video_wait(Self[T], Bool) -> RuntimeEvent
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::dom_figures(Self[T]) -> Map[String, DomFigureState]
@@ -364,6 +370,7 @@ pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::from_save(Script[T], DirectorSave[T]) -> Self[T] raise ScriptRuntimeError
 pub fn[T] Director::intro_text(Self[T]) -> String?
 pub fn[T] Director::is_waiting(Self[T]) -> Bool
+pub fn[T] Director::is_waiting_video(Self[T]) -> Bool
 pub fn[T] Director::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
@@ -378,12 +385,14 @@ pub fn[T] Director::submit_text_input(Self[T], String) -> RuntimeEvent raise Scr
 pub fn[T] Director::take_interrupted_sfx(Self[T]) -> String?
 pub fn[T] Director::text_box_visible(Self[T]) -> Bool
 pub fn[T] Director::text_input(Self[T]) -> (String, String)?
+pub fn[T] Director::video(Self[T]) -> (String, Bool)?
 
 pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
   dialog : DialogLine?
   intro_text : String?
+  video : (String, Bool)?
   text_box_visible : Bool
   avatar_id : String?
 }
@@ -547,6 +556,7 @@ pub enum Instruction[T] {
   HideTextBox
   ShowAvatar(String)
   HideAvatar
+  PlayVideo(String, Bool)
   Choice(Array[ChoiceOption])
   InputText(String, String)
   RunCode((GameState[T]) -> Unit)
@@ -615,11 +625,14 @@ pub struct Runtime[T] {
   mut wait_ms : Int
   mut wait_for_click : Bool
   mut wait_custom_name : String?
+  mut wait_video : Bool
   mut ended : Bool
 }
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Runtime::complete_video_wait(Self[T], Bool) -> RuntimeEvent
 pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
 pub fn[T] Runtime::is_waiting(Self[T]) -> Bool
+pub fn[T] Runtime::is_waiting_video(Self[T]) -> Bool
 pub fn[T] Runtime::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] Runtime::new(Script[T], GameState[T]) -> Self[T]
 pub fn[T] Runtime::save(Self[T]) -> RuntimeSave[T]
@@ -637,6 +650,8 @@ pub enum RuntimeEvent {
   TextBoxHidden
   AvatarShown(String)
   AvatarHidden
+  VideoStarted(String, Bool)
+  VideoEnded(Bool)
   ChoicePrompt(Array[ChoiceOption])
   TextInputPrompt(String, String)
   BackgroundShown(String)
@@ -670,6 +685,7 @@ pub struct RuntimeSave[T] {
   wait_ms : Int
   wait_for_click : Bool
   wait_custom_name : String?
+  wait_video : Bool
   ended : Bool
 }
 pub impl[T : ToJson] ToJson for RuntimeSave[T]
@@ -750,6 +766,7 @@ pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : 
 pub fn[T] ScriptBuilder::new() -> Self[T]
 pub fn[T] ScriptBuilder::play_music(Self[T], Music, Bool) -> Unit
 pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx, blocking? : Bool) -> Unit
+pub fn[T] ScriptBuilder::play_video(Self[T], String, can_skip? : Bool) -> Unit
 pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String) -> Unit
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String) -> Unit
@@ -819,9 +836,16 @@ type UiTextInputView
 pub impl Eq for UiTextInputView
 pub impl Show for UiTextInputView
 
+type UiVideoView
+pub impl Eq for UiVideoView
+pub impl Show for UiVideoView
+
 type UiViewModel
 pub impl Eq for UiViewModel
 pub impl Show for UiViewModel
+
+type Video
+pub impl @js.Cast for Video
 
 type WebGL
 pub fn WebGL::active_texture(Self, Int) -> Unit

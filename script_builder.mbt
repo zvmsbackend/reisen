@@ -523,6 +523,15 @@ pub fn[T] ScriptBuilder::hide_avatar(self : ScriptBuilder[T]) -> Unit {
 }
 
 ///|
+pub fn[T] ScriptBuilder::play_video(
+  self : ScriptBuilder[T],
+  url : String,
+  can_skip? : Bool = false,
+) -> Unit {
+  self.instructions.push(PlayVideo(url, can_skip))
+}
+
+///|
 pub fn[T] ScriptBuilder::narrate(
   self : ScriptBuilder[T],
   text : String,

@@ -215,7 +215,7 @@ fn[T] GameRunner::apply_event_effects(
       }
       self.ui.mark_dirty_text()
     }
-    IntroShown(_) | ScriptEnded => {
+    IntroShown(_) | VideoStarted(_, _) | VideoEnded(_) | ScriptEnded => {
       if mark_ui_for_text {
         self.ui_dirty = true
       }
@@ -297,6 +297,18 @@ pub fn[T] GameRunner::step(
   self.ui.advance_dom_animation_timer(elapsed_ms)
   if self.ui.has_active_dom_animations() {
     self.ui_dirty = true
+  }
+  if self.director.is_waiting_video() {
+    match self.ui.take_video_action() {
+      Some(action) => {
+        let skipped = action == "skip"
+        let event = self.director.complete_video_wait(skipped)
+        (self.event_hook)(event)
+        self.apply_event_and_render(event, false, RenderMode::RenderUi)
+        return event
+      }
+      None => ()
+    }
   }
   if self.director.is_waiting() {
     if self.ui.skip_mode {

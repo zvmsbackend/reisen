@@ -191,6 +191,54 @@ fn create_texture_from_image(
 }
 
 ///|
+/// Create a texture directly from a loaded browser video asset.
+fn create_texture_from_video(
+  gl : WebGL,
+  video : Video,
+  mipmap? : Bool = false,
+) -> WebGLTexture raise RenderError {
+  match gl.create_texture() {
+    None => raise RenderError::NullObject(op="createTexture")
+    Some(tex) => {
+      let target = gl.constant("TEXTURE_2D")
+      gl.bind_texture(target, tex)
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_MIN_FILTER"),
+        gl.constant("LINEAR"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_MAG_FILTER"),
+        gl.constant("LINEAR"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_WRAP_S"),
+        gl.constant("CLAMP_TO_EDGE"),
+      )
+      gl.tex_param_i(
+        target,
+        gl.constant("TEXTURE_WRAP_T"),
+        gl.constant("CLAMP_TO_EDGE"),
+      )
+      gl.tex_image_2d_source(
+        target,
+        0,
+        gl.constant("RGBA"),
+        gl.constant("RGBA"),
+        gl.constant("UNSIGNED_BYTE"),
+        @js.Value::cast_from(video),
+      )
+      if mipmap {
+        gl.generate_mipmap(target)
+      }
+      tex
+    }
+  }
+}
+
+///|
 /// Resolve an image from `AssetStore` and create a texture from it.
 fn create_texture_from_store(
   gl : WebGL,
@@ -199,7 +247,16 @@ fn create_texture_from_store(
   mipmap? : Bool = false,
 ) -> (WebGLTexture, (Int, Int)) raise RenderError {
   match store.get_image(image_id) {
-    None => raise RenderError::MissingImage(id=image_id)
+    None =>
+      match store.get_video(image_id) {
+        None => raise RenderError::MissingImage(id=image_id)
+        Some(video) => {
+          let w = video_get_width(video)
+          let h = video_get_height(video)
+          let tex = create_texture_from_video(gl, video, mipmap~)
+          (tex, (w, h))
+        }
+      }
     Some(image) => {
       let w = image_get_width(image)
       let h = image_get_height(image)
@@ -216,3 +273,11 @@ extern "js" fn image_get_width(img : Image) -> Int =
 ///|
 extern "js" fn image_get_height(img : Image) -> Int =
   #| (img) => img.height || 0
+
+///|
+extern "js" fn video_get_width(video : Video) -> Int =
+  #| (video) => video.videoWidth || video.width || 0
+
+///|
+extern "js" fn video_get_height(video : Video) -> Int =
+  #| (video) => video.videoHeight || video.height || 0
