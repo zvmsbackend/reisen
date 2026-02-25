@@ -159,3 +159,42 @@ test "gallery replay uses image-specific state factory key" {
     None => fail("Expected runner after replay")
   }
 }
+
+///|
+test "app controller submit custom event only works in game" {
+  let script : Script[Int] = script(builder => {
+    builder.wait_custom_event("evt", (_, payload) => payload == "ok")
+    builder.say("n", "done")
+  })
+  let seen : Array[RuntimeEvent] = []
+  let app = AppController::new(script, () => GameState::new(0), "app", event_hook=event => {
+    seen.push(event)
+  })
+
+  assert_eq(app.submit_custom_event("evt", "ok"), false)
+  app.enter_start_menu()
+  app.handle_menu_action(StartMenuAction::NewGame)
+  assert_eq(app.phase(), AppPhase::InGame)
+  match app.runner {
+    Some(runner) => assert_eq(runner.step(), WaitCustomEventStarted("evt"))
+    None => fail("Expected runner")
+  }
+  assert_eq(app.submit_custom_event("evt", "no"), true)
+  assert_eq(app.submit_custom_event("evt", "ok"), true)
+  assert_eq(seen.contains(Custom("evt", "no")), true)
+  assert_eq(seen.contains(Custom("evt", "ok")), true)
+  match app.runner {
+    Some(runner) =>
+      assert_eq(
+        runner.step(),
+        Said(
+          speaker="n",
+          text="done",
+          typewriter=true,
+          append=false,
+          voice=None,
+        ),
+      )
+    None => fail("Expected runner")
+  }
+}

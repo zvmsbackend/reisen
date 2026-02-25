@@ -283,3 +283,48 @@ test "runtime dom figure events" {
   }
   assert_eq(runtime.step(), DomFigureHidden("promo"))
 }
+
+///|
+test "runtime waits for custom event until predicate matches" {
+  let script : Script[Int] = script(builder => {
+    builder.wait_custom_event("door", (_, payload) => payload == "open")
+    builder.say("n", "opened")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+
+  assert_eq(runtime.step(), WaitCustomEventStarted("door"))
+  assert_eq(runtime.step(), Noop)
+  assert_eq(
+    runtime.submit_custom_event("door", "closed"),
+    Custom("door", "closed"),
+  )
+  assert_eq(runtime.step(), Noop)
+  assert_eq(runtime.submit_custom_event("door", "open"), Custom("door", "open"))
+  assert_eq(
+    runtime.step(),
+    Said(speaker="n", text="opened", typewriter=true, append=false, voice=None),
+  )
+}
+
+///|
+test "runtime save restore preserves custom event wait" {
+  let script : Script[Int] = script(builder => {
+    builder.wait_custom_event("evt", (_, payload) => payload == "ok")
+    builder.say("n", "ready")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), WaitCustomEventStarted("evt"))
+  let save_json = runtime.save_json()
+
+  let restored_result : Result[Runtime[Int], Error] = try? Runtime::from_json_string(
+    script, save_json,
+  )
+  guard restored_result is Ok(restored) else { fail("restore failed") }
+
+  assert_eq(restored.step(), Noop)
+  assert_eq(restored.submit_custom_event("evt", "ok"), Custom("evt", "ok"))
+  assert_eq(
+    restored.step(),
+    Said(speaker="n", text="ready", typewriter=true, append=false, voice=None),
+  )
+}

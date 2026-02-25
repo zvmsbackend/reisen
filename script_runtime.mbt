@@ -35,6 +35,8 @@ pub enum RuntimeEvent {
   EffectApplied(String, EffectSpec)
   WaitStarted(Int)
   WaitForClickStarted
+  WaitCustomEventStarted(String)
+  Custom(String, String)
   ScriptEnded
 } derive(Show, Eq)
 
@@ -55,6 +57,7 @@ pub struct Runtime[T] {
   mut pending_text_input : (String, String)?
   mut wait_ms : Int
   mut wait_for_click : Bool
+  mut wait_custom_name : String?
   mut ended : Bool
 }
 
@@ -66,6 +69,7 @@ pub struct RuntimeSave[T] {
   pending_text_input : (String, String)?
   wait_ms : Int
   wait_for_click : Bool
+  wait_custom_name : String?
   ended : Bool
 } derive(ToJson, FromJson)
 
@@ -79,6 +83,7 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
     pending_text_input: None,
     wait_ms: 0,
     wait_for_click: false,
+    wait_custom_name: None,
     ended: false,
   }
 }
@@ -94,6 +99,7 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     pending_text_input: self.pending_text_input,
     wait_ms: self.wait_ms,
     wait_for_click: self.wait_for_click,
+    wait_custom_name: self.wait_custom_name,
     ended: self.ended,
   }
 }
@@ -118,6 +124,7 @@ fn[T] Runtime::from_save(
       save.wait_ms
     },
     wait_for_click: save.wait_for_click,
+    wait_custom_name: save.wait_custom_name,
     ended: save.ended,
   }
 }
@@ -178,6 +185,10 @@ fn[T] Runtime::run_inst(
       self.ip = self.ip + 1
       self.wait_for_click = true
       WaitForClickStarted
+    }
+    WaitCustomEvent(name, _) => {
+      self.wait_custom_name = Some(name)
+      WaitCustomEventStarted(name)
     }
     Say(speaker~, text~, typewriter~, append~, voice~) => {
       self.ip = self.ip + 1
@@ -316,6 +327,9 @@ pub fn[T] Runtime::step(
   if self.wait_for_click {
     return Noop
   }
+  if self.wait_custom_name is Some(_) {
+    return Noop
+  }
   for {
     if self.ip >= self.script.instructions.length() {
       self.ended = true
@@ -332,13 +346,37 @@ pub fn[T] Runtime::step(
 
 ///|
 pub fn[T] Runtime::is_waiting(self : Runtime[T]) -> Bool {
-  self.wait_ms > 0 || self.wait_for_click
+  self.wait_ms > 0 || self.wait_for_click || self.wait_custom_name is Some(_)
 }
 
 ///|
 pub fn[T] Runtime::skip_wait(self : Runtime[T]) -> Unit {
   self.wait_ms = 0
   self.wait_for_click = false
+  self.wait_custom_name = None
+}
+
+///|
+pub fn[T] Runtime::submit_custom_event(
+  self : Runtime[T],
+  name : String,
+  payload : String,
+) -> RuntimeEvent {
+  match self.wait_custom_name {
+    Some(waiting_name) if waiting_name == name =>
+      if self.ip < self.script.instructions.length() {
+        match self.script.instructions[self.ip] {
+          WaitCustomEvent(expected, predicate) if expected == name =>
+            if predicate(self.state, payload) {
+              self.wait_custom_name = None
+              self.ip = self.ip + 1
+            }
+          _ => ()
+        }
+      }
+    _ => ()
+  }
+  Custom(name, payload)
 }
 
 ///|

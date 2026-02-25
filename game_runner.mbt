@@ -487,6 +487,17 @@ pub fn[T] GameRunner::submit_choice(
 }
 
 ///|
+pub fn[T] GameRunner::submit_custom_event(
+  self : GameRunner[T],
+  name : String,
+  payload : String,
+) -> RuntimeEvent {
+  let event = self.director.submit_custom_event(name, payload)
+  (self.event_hook)(event)
+  event
+}
+
+///|
 pub fn[T] GameRunner::jump_to_label(
   self : GameRunner[T],
   label : String,

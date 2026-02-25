@@ -469,6 +469,15 @@ pub fn[T] ScriptBuilder::wait_click(self : ScriptBuilder[T]) -> Unit {
 }
 
 ///|
+pub fn[T] ScriptBuilder::wait_custom_event(
+  self : ScriptBuilder[T],
+  name : String,
+  predicate : PayloadPredicate[T],
+) -> Unit {
+  self.instructions.push(WaitCustomEvent(name, predicate))
+}
+
+///|
 pub fn[T] ScriptBuilder::unlock_cg(
   self : ScriptBuilder[T],
   image : GalleryImage,

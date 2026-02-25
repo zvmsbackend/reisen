@@ -1314,7 +1314,7 @@ fn[T] WebglPresenter::sync_impl(
           match anim.to {
             Some(value) => {
               let next_pos = if anchor_changed {
-                Custom(sx / w, sy / h)
+                Position::Custom(sx / w, sy / h)
               } else {
                 next_placement.pos
               }

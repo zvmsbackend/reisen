@@ -130,12 +130,17 @@ pub type ScriptHook[T] = (GameState[T]) -> Unit
 pub type ScriptPredicate[T] = (GameState[T]) -> Bool
 
 ///|
+/// User-defined payload predicate for custom-event waits.
+pub type PayloadPredicate[T] = (GameState[T], String) -> Bool
+
+///|
 pub enum Instruction[T] {
   Label(String)
   Jump(String)
   JumpIf(String, ScriptPredicate[T])
   Wait(Int)
   WaitForClick
+  WaitCustomEvent(String, PayloadPredicate[T])
   Say(
     speaker~ : String,
     text~ : String,

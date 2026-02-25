@@ -136,6 +136,24 @@ pub fn[T] AppController::phase(self : AppController[T]) -> AppPhase {
 }
 
 ///|
+pub fn[T] AppController::submit_custom_event(
+  self : AppController[T],
+  name : String,
+  payload : String,
+) -> Bool {
+  if self.phase != AppPhase::InGame {
+    return false
+  }
+  match self.runner {
+    Some(runner) => {
+      ignore(runner.submit_custom_event(name, payload))
+      true
+    }
+    None => false
+  }
+}
+
+///|
 fn[T] AppController::replay_factory_for_image(
   self : AppController[T],
   image : GalleryImage,

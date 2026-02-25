@@ -165,6 +165,8 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     }
     WaitStarted(_) => ()
     WaitForClickStarted => ()
+    WaitCustomEventStarted(_) => ()
+    Custom(_, _) => ()
     ScriptEnded => ()
   }
 }
@@ -249,6 +251,17 @@ pub fn[T] Director::submit_text_input(
   value : String,
 ) -> RuntimeEvent raise ScriptRuntimeError {
   let event = self.runtime.submit_text_input(value)
+  self.apply_event(event)
+  event
+}
+
+///|
+pub fn[T] Director::submit_custom_event(
+  self : Director[T],
+  name : String,
+  payload : String,
+) -> RuntimeEvent {
+  let event = self.runtime.submit_custom_event(name, payload)
   self.apply_event(event)
   event
 }

@@ -278,6 +278,7 @@ pub impl @json.FromJson for AnimationSpec
 type AppController[T]
 pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_url? : String, start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
+pub fn[T] AppController::submit_custom_event(Self[T], String, String) -> Bool
 pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
 pub enum AppPhase {
@@ -372,6 +373,7 @@ pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::set_background_state(Self[T], BackgroundState) -> Unit
 pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Director::submit_custom_event(Self[T], String, String) -> RuntimeEvent
 pub fn[T] Director::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::take_interrupted_sfx(Self[T]) -> String?
 pub fn[T] Director::text_box_visible(Self[T]) -> Bool
@@ -493,6 +495,7 @@ pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> 
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
 pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] GameRunner::submit_custom_event(Self[T], String, String) -> RuntimeEvent
 pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
 pub fn[T] GameRunner::take_pending_action(Self[T]) -> String?
@@ -536,6 +539,7 @@ pub enum Instruction[T] {
   JumpIf(String, (GameState[T]) -> Bool)
   Wait(Int)
   WaitForClick
+  WaitCustomEvent(String, (GameState[T], String) -> Bool)
   Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
   Intro(String)
   ShowTextBox
@@ -609,6 +613,7 @@ pub struct Runtime[T] {
   mut pending_text_input : (String, String)?
   mut wait_ms : Int
   mut wait_for_click : Bool
+  mut wait_custom_name : String?
   mut ended : Bool
 }
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -620,6 +625,7 @@ pub fn[T] Runtime::save(Self[T]) -> RuntimeSave[T]
 pub fn[T : ToJson] Runtime::save_json(Self[T]) -> String
 pub fn[T] Runtime::skip_wait(Self[T]) -> Unit
 pub fn[T] Runtime::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Runtime::submit_custom_event(Self[T], String, String) -> RuntimeEvent
 pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 
 pub enum RuntimeEvent {
@@ -648,6 +654,8 @@ pub enum RuntimeEvent {
   EffectApplied(String, EffectSpec)
   WaitStarted(Int)
   WaitForClickStarted
+  WaitCustomEventStarted(String)
+  Custom(String, String)
   ScriptEnded
 }
 pub impl Eq for RuntimeEvent
@@ -660,6 +668,7 @@ pub struct RuntimeSave[T] {
   pending_text_input : (String, String)?
   wait_ms : Int
   wait_for_click : Bool
+  wait_custom_name : String?
   ended : Bool
 }
 pub impl[T : ToJson] ToJson for RuntimeSave[T]
@@ -752,6 +761,7 @@ pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::unlock_cg(Self[T], GalleryImage) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 pub fn[T] ScriptBuilder::wait_click(Self[T]) -> Unit
+pub fn[T] ScriptBuilder::wait_custom_event(Self[T], String, (GameState[T], String) -> Bool) -> Unit
 
 pub enum SettingsContext {
   FromStartMenu
@@ -875,6 +885,8 @@ pub type EffectApply = (WebGL, WebGLProgram, EffectDrawable, Array[(String, Doub
 pub type EffectParam = (String, Double)
 
 pub type EventHook = (RuntimeEvent) -> Unit
+
+pub type PayloadPredicate[T] = (GameState[T], String) -> Bool
 
 pub type RenderSyncHook[T] = (Director[T]) -> Unit
 
