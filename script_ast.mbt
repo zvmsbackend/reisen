@@ -169,6 +169,7 @@ pub enum Instruction[T] {
   HideFigure(String)
   ShowDomFigure(String, FigurePlacement, Bool)
   HideDomFigure(String)
+  SetDomFigureInteractive(String, Bool)
   PlayMusic(String, Bool)
   StopMusic
   PlaySfx(String, Bool)
@@ -190,6 +191,7 @@ pub(all) suberror ScriptBuildError {
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
   EffectUnsupportedOnDomTarget(target~ : String)
+  SetInteractiveUnsupportedOnWebglTarget(target~ : String)
 }
 
 ///|

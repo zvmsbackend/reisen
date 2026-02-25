@@ -202,7 +202,8 @@ test "menu helper emits say then choice" {
       text="Pick one",
       typewriter=true,
       append=false,
-      voice=None
+      voice=None,
+      ..
     ),
   )
   assert_true(built.instructions[2] is Choice(_))
@@ -259,7 +260,7 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   )
   assert_true(
     built.instructions[5]
-    is Say(speaker="", text="done", typewriter=true, append=false, voice=None),
+    is Say(speaker="", text="done", typewriter=true, append=false, voice=None, ..),
   )
 }
 
@@ -290,6 +291,29 @@ test "dom figure show can be interactive" {
     )
   })
   assert_true(built.instructions[0] is ShowDomFigure("promo", _, true))
+}
+
+///|
+test "set_figure_interactive emits dom instruction" {
+  let built : Script[Int] = script(builder => {
+    builder.set_figure_interactive(dummy_dom_figure("promo"), true)
+    builder.set_figure_interactive(dummy_dom_figure("promo"), false)
+  })
+  assert_true(built.instructions[0] is SetDomFigureInteractive("promo", true))
+  assert_true(built.instructions[1] is SetDomFigureInteractive("promo", false))
+}
+
+///|
+test "set_figure_interactive on webgl figure raises build error" {
+  let builder : ScriptBuilder[Int] = ScriptBuilder::new()
+  builder.set_figure_interactive(dummy_figure("alice"), true)
+  let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
+  assert_true(
+    built
+    is Err(
+      ScriptBuildError::SetInteractiveUnsupportedOnWebglTarget(target="alice")
+    ),
+  )
 }
 
 ///|

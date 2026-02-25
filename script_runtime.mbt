@@ -27,6 +27,7 @@ pub enum RuntimeEvent {
   FigureHidden(String)
   DomFigureShown(String, FigurePlacement, Bool)
   DomFigureHidden(String)
+  DomFigureInteractiveSet(String, Bool)
   MusicPlayed(String, Bool)
   MusicStopped
   SfxPlayed(String, Bool)
@@ -288,6 +289,10 @@ fn[T] Runtime::run_inst(
     HideDomFigure(id) => {
       self.ip = self.ip + 1
       DomFigureHidden(id)
+    }
+    SetDomFigureInteractive(id, interactive) => {
+      self.ip = self.ip + 1
+      DomFigureInteractiveSet(id, interactive)
     }
     PlayMusic(id, should_loop) => {
       self.ip = self.ip + 1

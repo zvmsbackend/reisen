@@ -215,3 +215,23 @@ test "director tracks dom figure state" {
   assert_eq(director.step(), DomFigureHidden("promo"))
   assert_eq(director.dom_figures().get("promo"), None)
 }
+
+///|
+test "director updates dom figure interactive without placement change" {
+  let script : Script[Int] = script(builder => {
+    builder.show_figure(dom_figure("promo"), place_center(layer=2))
+    builder.set_figure_interactive(dom_figure("promo"), true)
+  })
+  let director = Director::new(Runtime::new(script, GameState::new(0)))
+  ignore(director.step())
+  let before = director.dom_figures().get("promo")
+  assert_eq(director.step(), DomFigureInteractiveSet("promo", true))
+  let after = director.dom_figures().get("promo")
+  match (before, after) {
+    (Some(b), Some(a)) => {
+      assert_eq(a.interactive, true)
+      assert_eq(a.placement, b.placement)
+    }
+    _ => fail("Expected dom figure state")
+  }
+}

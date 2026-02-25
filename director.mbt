@@ -148,6 +148,15 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     DomFigureShown(id, placement, interactive) =>
       self.render.dom_figures.set(id, { placement, interactive })
     DomFigureHidden(id) => self.render.dom_figures.remove(id)
+    DomFigureInteractiveSet(id, interactive) =>
+      match self.render.dom_figures.get(id) {
+        Some(state) =>
+          self.render.dom_figures.set(id, {
+            placement: state.placement,
+            interactive,
+          })
+        None => ()
+      }
     MusicPlayed(id, should_loop) => self.render.music = Some((id, should_loop))
     MusicStopped => self.render.music = None
     SfxPlayed(id, _) => {

@@ -708,6 +708,32 @@ pub fn[T] ScriptBuilder::hide_figure(
 }
 
 ///|
+fn[T] ScriptBuilder::set_pending_error_once(
+  self : ScriptBuilder[T],
+  err : ScriptBuildError,
+) -> Unit {
+  if self.pending_error is None {
+    self.pending_error = Some(err)
+  }
+}
+
+///|
+pub fn[T] ScriptBuilder::set_figure_interactive(
+  self : ScriptBuilder[T],
+  figure : Figure,
+  interactive : Bool,
+) -> Unit {
+  match figure {
+    DomFigure(id) =>
+      self.instructions.push(SetDomFigureInteractive(id, interactive))
+    WebglFigure(id) =>
+      self.set_pending_error_once(
+        ScriptBuildError::SetInteractiveUnsupportedOnWebglTarget(target=id),
+      )
+  }
+}
+
+///|
 pub fn[T] ScriptBuilder::play_music(
   self : ScriptBuilder[T],
   music : Music,
@@ -748,11 +774,9 @@ fn[T, A : AnimationTarget] ScriptBuilder::check_effect_support(
   target : A,
 ) -> Bool {
   if target.kind() is Dom {
-    if self.pending_error is None {
-      self.pending_error = Some(
-        ScriptBuildError::EffectUnsupportedOnDomTarget(target=target.id()),
-      )
-    }
+    self.set_pending_error_once(
+      ScriptBuildError::EffectUnsupportedOnDomTarget(target=target.id()),
+    )
     false
   } else {
     true

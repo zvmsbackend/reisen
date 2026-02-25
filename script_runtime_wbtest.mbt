@@ -286,6 +286,17 @@ test "runtime dom figure events" {
 }
 
 ///|
+test "runtime dom figure interactive update event" {
+  let script : Script[Int] = script(builder => {
+    builder.show_figure(dom_figure("promo"), place_center())
+    builder.set_figure_interactive(dom_figure("promo"), true)
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  ignore(runtime.step())
+  assert_eq(runtime.step(), DomFigureInteractiveSet("promo", true))
+}
+
+///|
 test "runtime waits for custom event until predicate matches" {
   let script : Script[Int] = script(builder => {
     builder.wait_custom_event("door", (_, payload) => payload == "open")

@@ -39,7 +39,8 @@ test "parse say without typewriter" {
       text="Hello world",
       typewriter=false,
       append=false,
-      voice=None
+      voice=None,
+      ..
     ),
   )
 }
@@ -57,7 +58,8 @@ test "parse say append" {
       text="continues",
       typewriter=true,
       append=true,
-      voice=None
+      voice=None,
+      ..
     ),
   )
 }
@@ -75,7 +77,8 @@ test "parse say with voice" {
       text="Hello",
       typewriter=true,
       append=false,
-      voice=Some("voice_line_1")
+      voice=Some("voice_line_1"),
+      ..
     ),
   )
 }
@@ -93,7 +96,8 @@ test "parse multiline say" {
       text="Line one\nLine two\nLine three",
       typewriter=true,
       append=false,
-      voice=None
+      voice=None,
+      ..
     ),
   )
 }

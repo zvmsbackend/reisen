@@ -225,7 +225,9 @@ fn[T] GameRunner::apply_event_effects(
       self.ui_dirty = true
       self.render_sync_dirty = true
     }
-    DomFigureShown(_, _, _) | DomFigureHidden(_) => self.ui_dirty = true
+    DomFigureShown(_, _, _)
+    | DomFigureHidden(_)
+    | DomFigureInteractiveSet(_, _) => self.ui_dirty = true
     AnimatedWebgl(_, spec) => {
       self.ui_dirty = true
       self.render_sync_dirty = true
