@@ -96,6 +96,51 @@ fn to_settings_view(settings : GameSettings) -> SettingsView {
 }
 
 ///|
+extern "js" fn settings_dom_install_confirm_helper() -> Unit =
+  #| () => {
+  #|   if (globalThis.__reisenOpenConfirm) return;
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   globalThis.__reisenOpenConfirm = (root, message, onConfirm) => {
+  #|     const existing = root.querySelector('[data-reisen="confirm-backdrop"]');
+  #|     if (existing) existing.remove();
+  #|     const backdrop = doc.createElement('div');
+  #|     backdrop.dataset.reisen = 'confirm-backdrop';
+  #|     const dialog = doc.createElement('div');
+  #|     dialog.dataset.reisen = 'confirm-dialog';
+  #|     const messageNode = doc.createElement('p');
+  #|     messageNode.textContent = message;
+  #|     const actions = doc.createElement('div');
+  #|     actions.dataset.reisen = 'confirm-actions';
+  #|     const cancelBtn = doc.createElement('button');
+  #|     cancelBtn.type = 'button';
+  #|     cancelBtn.textContent = 'Cancel';
+  #|     const okBtn = doc.createElement('button');
+  #|     okBtn.type = 'button';
+  #|     okBtn.textContent = 'Confirm';
+  #|     const close = () => backdrop.remove();
+  #|     cancelBtn.addEventListener('click', close);
+  #|     okBtn.addEventListener('click', () => {
+  #|       close();
+  #|       onConfirm();
+  #|     });
+  #|     backdrop.addEventListener('click', (e) => {
+  #|       if (e.target === backdrop) close();
+  #|     });
+  #|     backdrop.addEventListener('keydown', (e) => {
+  #|       if (e.key === 'Escape') close();
+  #|     });
+  #|     actions.appendChild(okBtn);
+  #|     actions.appendChild(cancelBtn);
+  #|     dialog.appendChild(messageNode);
+  #|     dialog.appendChild(actions);
+  #|     backdrop.appendChild(dialog);
+  #|     root.appendChild(backdrop);
+  #|     cancelBtn.focus();
+  #|   };
+  #| }
+
+///|
 extern "js" fn settings_dom_render(
   root_id : String,
   text_speed : Int,
@@ -107,8 +152,10 @@ extern "js" fn settings_dom_render(
   #| (root_id, text_speed, bgm_volume, sfx_volume, background, context) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
+  #|   if (globalThis.__reisenOpenConfirm == null) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
+  #|   const openConfirm = (message, onConfirm) => globalThis.__reisenOpenConfirm(root, message, onConfirm);
   #|
   #|   let menu = root.querySelector('[data-reisen="settings-menu"]');
   #|   if (!menu) {
@@ -192,7 +239,10 @@ extern "js" fn settings_dom_render(
   #|         return;
   #|       }
   #|       if (kind === 'start_menu' && context === 'midgame') {
-  #|         if (!confirm('Return to the start menu? Unsaved progress will be lost.')) return;
+  #|         openConfirm('Return to the start menu? Unsaved progress will be lost.', () => {
+  #|           root.dataset.reisenSettingsAction = kind;
+  #|         });
+  #|         return;
   #|       }
   #|       root.dataset.reisenSettingsAction = kind;
   #|     });
@@ -274,8 +324,10 @@ extern "js" fn settings_dom_render_slots(
   #| (root_id, slots, titles, previews, mode, slot_type, current_page, total_pages, max_pages, background) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
+  #|   if (globalThis.__reisenOpenConfirm == null) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
+  #|   const openConfirm = (message, onConfirm) => globalThis.__reisenOpenConfirm(root, message, onConfirm);
   #|
   #|   let menu = root.querySelector('[data-reisen="settings-menu"]');
   #|   if (!menu) {
@@ -344,15 +396,19 @@ extern "js" fn settings_dom_render_slots(
   #|     deleteBtn.dataset.reisen = 'settings-slot-delete';
   #|     deleteBtn.addEventListener('click', (e) => {
   #|       e.stopPropagation();
-  #|       if (confirm('Delete this save slot?')) {
+  #|       openConfirm('Delete this save slot?', () => {
   #|         root.dataset.reisenSettingsAction = 'delete_slot';
   #|         root.dataset.reisenSettingsActionSlot = slot;
-  #|       }
+  #|       });
   #|     });
   #|     btn.appendChild(deleteBtn);
   #|     btn.addEventListener('click', () => {
   #|       if (mode === 'save' && title_ !== 'Empty') {
-  #|         if (!confirm('Overwrite this save slot?')) return;
+  #|         openConfirm('Overwrite this save slot?', () => {
+  #|           root.dataset.reisenSettingsAction = mode;
+  #|           root.dataset.reisenSettingsActionSlot = slot;
+  #|         });
+  #|         return;
   #|       }
   #|       root.dataset.reisenSettingsAction = mode;
   #|       root.dataset.reisenSettingsActionSlot = slot;
@@ -445,6 +501,7 @@ fn filter_entries_by_type(
 
 ///|
 fn SettingsMenu::render(self : SettingsMenu) -> Unit {
+  settings_dom_install_confirm_helper()
   match self.view_mode {
     SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
       let mode_str = match self.view_mode {
@@ -539,6 +596,8 @@ extern "js" fn settings_dom_clear(root_id : String) -> Unit =
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
+  #|   const confirm = root.querySelector('[data-reisen="confirm-backdrop"]');
+  #|   if (confirm) confirm.remove();
   #|   const menu = root.querySelector('[data-reisen="settings-menu"]');
   #|   if (menu) menu.remove();
   #|   delete root.dataset.reisenSettingsAction;

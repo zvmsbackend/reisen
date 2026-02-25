@@ -601,6 +601,61 @@ html, body {
   cursor: pointer;
 }
 
+[data-reisen="confirm-backdrop"] {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.55);
+}
+
+[data-reisen="confirm-dialog"] {
+  width: min(460px, calc(100vw - 40px));
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+[data-reisen="confirm-dialog"] p {
+  margin: 0;
+  line-height: 1.5;
+  font-size: 16px;
+}
+
+[data-reisen="confirm-actions"] {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+[data-reisen="confirm-actions"] button {
+  min-width: 96px;
+  padding: 9px 14px;
+  background: var(--button-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+[data-reisen="confirm-actions"] button:hover,
+[data-reisen="confirm-actions"] button:focus-visible {
+  background: var(--button-hover);
+  border-color: var(--border-hover);
+}
+
+[data-reisen="confirm-actions"] button:last-child {
+  border-color: var(--border-hover);
+}
+
 [data-reisen-setting] {
   margin: 8px 0;
 }

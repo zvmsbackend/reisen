@@ -260,7 +260,14 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   )
   assert_true(
     built.instructions[5]
-    is Say(speaker="", text="done", typewriter=true, append=false, voice=None, ..),
+    is Say(
+      speaker="",
+      text="done",
+      typewriter=true,
+      append=false,
+      voice=None,
+      ..
+    ),
   )
 }
 
