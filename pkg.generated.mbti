@@ -131,6 +131,18 @@ pub fn persistent_set_text(String, String) -> Unit
 
 pub fn persistent_set_text_in(String, String, String) -> Unit
 
+pub async fn pixi_assets_load_texture(String) -> PixiTexture
+
+pub fn pixi_new_application() -> PixiApplication
+
+pub fn pixi_new_container() -> PixiContainer
+
+pub fn pixi_new_filter(String, String) -> PixiFilter
+
+pub fn pixi_new_sprite(PixiTexture) -> PixiSprite
+
+pub fn pixi_texture_from(@js.Value) -> PixiTexture
+
 pub fn place_center(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
 pub fn place_custom(Double, Double, layer? : Int, scalars? : ScalarState) -> FigurePlacement
@@ -234,6 +246,7 @@ pub(all) suberror ScriptBuildError {
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
   EffectUnsupportedOnDomTarget(target~ : String)
+  SetInteractiveUnsupportedOnWebglTarget(target~ : String)
 }
 
 pub suberror ScriptRuntimeError {
@@ -566,6 +579,7 @@ pub enum Instruction[T] {
   HideFigure(String)
   ShowDomFigure(String, FigurePlacement, Bool)
   HideDomFigure(String)
+  SetDomFigureInteractive(String, Bool)
   PlayMusic(String, Bool)
   StopMusic
   PlaySfx(String, Bool)
@@ -578,6 +592,19 @@ pub enum Instruction[T] {
 type Label
 
 type Music
+
+type PixiApplication
+pub async fn PixiApplication::init_with_canvas(Self, @js.Value, Int, Int, antialias? : Bool, background_alpha? : Double, resolution? : Double, auto_density? : Bool) -> Unit
+
+type PixiContainer
+
+type PixiFilter
+
+type PixiSprite
+
+type PixiTexture
+
+type PixiTicker
 
 pub(all) enum Position {
   Left
@@ -662,6 +689,7 @@ pub enum RuntimeEvent {
   FigureHidden(String)
   DomFigureShown(String, FigurePlacement, Bool)
   DomFigureHidden(String)
+  DomFigureInteractiveSet(String, Bool)
   MusicPlayed(String, Bool)
   MusicStopped
   SfxPlayed(String, Bool)
@@ -774,6 +802,7 @@ pub fn[T] ScriptBuilder::run_code(Self[T], (GameState[T]) -> Unit) -> Unit
 pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::scene(Self[T], Background, scalars? : ScalarState) -> Unit
+pub fn[T] ScriptBuilder::set_figure_interactive(Self[T], Figure, Bool) -> Unit
 pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement, interactive? : Bool) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, scalars? : ScalarState, interactive? : Bool) -> Unit
