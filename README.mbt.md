@@ -1,6 +1,6 @@
 # Reisen - Visual Novel Engine in MoonBit
 
-Reisen is a visual novel engine for MoonBit targeting the browser (DOM + WebGL).
+Reisen is a visual novel engine for MoonBit targeting the browser (DOM + PixiJS canvas rendering).
 
 ## Features
 
@@ -8,7 +8,7 @@ Reisen is a visual novel engine for MoonBit targeting the browser (DOM + WebGL).
 - Runtime events for UI, audio, rendering, and tooling hooks
 - Save/load slots and persistent settings in localStorage
 - Start menu / settings / gallery flow via `AppController`
-- WebGL presenter with animation/effect support
+- Pixi presenter with animation/effect support
 
 ## Install
 
@@ -133,23 +133,29 @@ let script_unlock : Script[Unit] = try! script(builder => {
 })
 ```
 
-## Asset Loading and WebGL Bootstrapping
+## Asset Loading and Pixi Bootstrapping
 
 ```moonbit nocheck
 ///|
-async fn init_webgl() -> Unit {
+async fn init_pixi() -> Unit {
   let store = AssetStore::new()
   let _ = store.register_background("assets/bg/temple.jpg", id="bg_temple")
   let _ = store.register_figure("assets/fg/miko.png", id="miko")
   let audio = AudioDom::new()
   store.put_bytes("door_close", load_bytes("assets/sfx/door_close.ogg"))
 
+  let render_sync = make_pixi_render_sync_hook_from_canvas(
+    "gl-canvas",
+    store,
+  )
+  .unwrap()
+
   let controller = AppController::new(
     my_script,
     initial_state,
     "ui-root",
     event_hook=audio.as_event_hook(),
-    render_sync=make_webgl_render_sync_hook_from_canvas("gl-canvas", store),
+    render_sync~,
   )
   run_browser_app_loop(controller)
 }
