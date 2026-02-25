@@ -22,9 +22,7 @@ struct Sfx {
 }
 
 ///|
-struct Effect {
-  id : String
-}
+struct Effect(String)
 
 ///|
 struct Label {
@@ -758,14 +756,14 @@ pub fn[T] ScriptBuilder::play_sfx(
 
 ///|
 pub fn effect_spec(
-  id : String,
+  effect : Effect,
   params : Array[EffectParam],
   phase? : EffectPhase = Post,
   duration_ms? : Int,
   blocking? : Bool = false,
   easing? : Easing = Linear,
 ) -> EffectSpec {
-  { id, params, phase, duration_ms, easing, blocking }
+  { id: effect.0, params, phase, duration_ms, easing, blocking }
 }
 
 ///|
@@ -808,7 +806,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect_with(
   if self.check_effect_support(target) {
     self.instructions.push(
       ApplyEffect(target.id(), {
-        id: effect.id,
+        id: effect.0,
         params,
         phase,
         duration_ms,

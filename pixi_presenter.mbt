@@ -39,12 +39,13 @@ let pixi_effect_defaults : Map[String, Array[EffectParam]] = {}
 
 ///|
 pub fn register_pixi_effect(
-  id : String,
   apply : PixiEffectApply,
   defaults? : Array[EffectParam] = [],
-) -> Unit {
+  id? : String = gensym(prefix="effect"),
+) -> Effect {
   pixi_effect_appliers.set(id, apply)
   pixi_effect_defaults.set(id, defaults)
+  id
 }
 
 ///|
@@ -148,23 +149,6 @@ fn ScalarAccumulator::from_scalar_state(
 ///|
 extern "js" fn pixi_now_ms() -> Int =
   #| () => Math.floor((globalThis.performance?.now?.() ?? Date.now()))
-
-///|
-extern "js" fn set_canvas_size(
-  canvas_id : String,
-  width : Int,
-  height : Int,
-) -> Unit =
-  #| (canvas_id, width, height) => {
-  #|   const doc = globalThis.document;
-  #|   if (!doc) return;
-  #|   const canvas = doc.getElementById(canvas_id);
-  #|   if (!canvas) return;
-  #|   canvas.width = width;
-  #|   canvas.height = height;
-  #|   canvas.style.width = width + 'px';
-  #|   canvas.style.height = height + 'px';
-  #| }
 
 ///|
 extern "js" fn set_canvas_element_size(

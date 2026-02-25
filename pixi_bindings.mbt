@@ -26,10 +26,6 @@ type PixiTexture
 
 ///|
 #external
-type PixiTicker
-
-///|
-#external
 type PixiFilter
 
 ///|
@@ -144,31 +140,12 @@ extern "js" fn PixiApplication::stage(self : PixiApplication) -> PixiContainer =
   #| (app) => app.stage
 
 ///|
-extern "js" fn PixiApplication::canvas(self : PixiApplication) -> @js.Value =
-  #| (app) => app.canvas ?? app.view
-
-///|
 extern "js" fn PixiApplication::renderer_resize(
   self : PixiApplication,
   width : Int,
   height : Int,
 ) -> Unit =
   #| (app, width, height) => app.renderer.resize(width, height)
-
-///|
-extern "js" fn PixiApplication::ticker(self : PixiApplication) -> PixiTicker =
-  #| (app) => app.ticker
-
-///|
-extern "js" fn PixiApplication::destroy(self : PixiApplication) -> Unit =
-  #| (app) => app.destroy(true)
-
-///|
-extern "js" fn PixiContainer::add_container(
-  self : PixiContainer,
-  child : PixiContainer,
-) -> Unit =
-  #| (self, child) => { self.addChild(child); }
 
 ///|
 extern "js" fn PixiContainer::add_sprite(
@@ -178,59 +155,11 @@ extern "js" fn PixiContainer::add_sprite(
   #| (self, child) => { self.addChild(child); }
 
 ///|
-extern "js" fn PixiContainer::remove_container(
-  self : PixiContainer,
-  child : PixiContainer,
-) -> Unit =
-  #| (self, child) => { self.removeChild(child); }
-
-///|
 extern "js" fn PixiContainer::remove_sprite(
   self : PixiContainer,
   child : PixiSprite,
 ) -> Unit =
   #| (self, child) => { self.removeChild(child); }
-
-///|
-extern "js" fn PixiContainer::remove_children(self : PixiContainer) -> Unit =
-  #| (self) => { self.removeChildren(); }
-
-///|
-extern "js" fn PixiContainer::set_position(
-  self : PixiContainer,
-  x : Double,
-  y : Double,
-) -> Unit =
-  #| (self, x, y) => { self.position.set(x, y); }
-
-///|
-extern "js" fn PixiContainer::set_scale(
-  self : PixiContainer,
-  x : Double,
-  y : Double,
-) -> Unit =
-  #| (self, x, y) => { self.scale.set(x, y); }
-
-///|
-extern "js" fn PixiContainer::set_alpha(
-  self : PixiContainer,
-  alpha : Double,
-) -> Unit =
-  #| (self, alpha) => { self.alpha = alpha; }
-
-///|
-extern "js" fn PixiContainer::set_visible(
-  self : PixiContainer,
-  visible : Bool,
-) -> Unit =
-  #| (self, visible) => { self.visible = visible; }
-
-///|
-extern "js" fn PixiContainer::set_z_index(
-  self : PixiContainer,
-  z_index : Int,
-) -> Unit =
-  #| (self, z_index) => { self.zIndex = z_index; }
 
 ///|
 extern "js" fn PixiContainer::set_sortable_children(
@@ -240,13 +169,6 @@ extern "js" fn PixiContainer::set_sortable_children(
   #| (self, sortable) => { self.sortableChildren = sortable; }
 
 ///|
-extern "js" fn PixiContainer::set_filters(
-  self : PixiContainer,
-  filters : Array[PixiFilter],
-) -> Unit =
-  #| (self, filters) => { self.filters = filters.length > 0 ? filters : null; }
-
-///|
 extern "js" fn PixiSprite::set_texture(
   self : PixiSprite,
   texture : PixiTexture,
@@ -254,7 +176,7 @@ extern "js" fn PixiSprite::set_texture(
   #| (self, texture) => { self.texture = texture; }
 
 ///|
-extern "js" fn PixiSprite::set_filters(
+pub extern "js" fn PixiSprite::set_filters(
   self : PixiSprite,
   filters : Array[@js.Value],
 ) -> Unit =
@@ -269,7 +191,7 @@ extern "js" fn PixiSprite::set_anchor(
   #| (self, x, y) => { self.anchor.set(x, y); }
 
 ///|
-extern "js" fn PixiSprite::set_position(
+pub extern "js" fn PixiSprite::set_position(
   self : PixiSprite,
   x : Double,
   y : Double,
@@ -277,7 +199,7 @@ extern "js" fn PixiSprite::set_position(
   #| (self, x, y) => { self.position.set(x, y); }
 
 ///|
-extern "js" fn PixiSprite::set_scale(
+pub extern "js" fn PixiSprite::set_scale(
   self : PixiSprite,
   x : Double,
   y : Double,
@@ -296,14 +218,17 @@ extern "js" fn PixiSprite::set_size(
   #| }
 
 ///|
-extern "js" fn PixiSprite::set_rotation(
+pub extern "js" fn PixiSprite::set_rotation(
   self : PixiSprite,
   radians : Double,
 ) -> Unit =
   #| (self, radians) => { self.rotation = radians; }
 
 ///|
-extern "js" fn PixiSprite::set_alpha(self : PixiSprite, alpha : Double) -> Unit =
+pub extern "js" fn PixiSprite::set_alpha(
+  self : PixiSprite,
+  alpha : Double,
+) -> Unit =
   #| (self, alpha) => { self.alpha = alpha; }
 
 ///|
@@ -321,22 +246,11 @@ pub extern "js" fn PixiSprite::set_tint(
   #| (self, tint_rgb) => { self.tint = tint_rgb; }
 
 ///|
-extern "js" fn PixiSprite::set_blend_mode(
-  self : PixiSprite,
-  blend_mode : Int,
-) -> Unit =
-  #| (self, blend_mode) => { self.blendMode = blend_mode; }
-
-///|
 extern "js" fn PixiSprite::set_z_index(
   self : PixiSprite,
   z_index : Int,
 ) -> Unit =
   #| (self, z_index) => { self.zIndex = z_index; }
-
-///|
-extern "js" fn PixiTexture::destroy(self : PixiTexture) -> Unit =
-  #| (self) => { self.destroy(true); }
 
 ///|
 extern "js" fn PixiTexture::width(self : PixiTexture) -> Double =
@@ -356,57 +270,6 @@ extern "js" fn PixiTexture::height(self : PixiTexture) -> Double =
 extern "js" fn PixiTexture::update(self : PixiTexture) -> Unit =
   #| (self) => {
   #|   if (self.update) self.update();
-  #| }
-
-///|
-extern "js" fn PixiTicker::add(
-  self : PixiTicker,
-  on_tick : (Double) -> Unit,
-) -> Unit =
-  #| (ticker, on_tick) => {
-  #|   ticker.add((tick) => {
-  #|     const dt = tick && typeof tick === 'object' && 'deltaMS' in tick
-  #|       ? tick.deltaMS
-  #|       : Number(tick) || 0;
-  #|     on_tick(dt);
-  #|   });
-  #| }
-
-///|
-extern "js" fn PixiTicker::start(self : PixiTicker) -> Unit =
-  #| (ticker) => ticker.start()
-
-///|
-extern "js" fn PixiTicker::stop(self : PixiTicker) -> Unit =
-  #| (ticker) => ticker.stop()
-
-///|
-extern "js" fn PixiFilter::set_uniform_float(
-  self : PixiFilter,
-  key : String,
-  value : Double,
-) -> Unit =
-  #| (self, key, value) => {
-  #|   if (!self.resources) return;
-  #|   const uniforms = self.resources.uniforms?.uniforms ?? self.resources.uniforms;
-  #|   if (uniforms && key in uniforms) {
-  #|     uniforms[key] = value;
-  #|   }
-  #| }
-
-///|
-extern "js" fn PixiFilter::set_uniform_vec2(
-  self : PixiFilter,
-  key : String,
-  x : Double,
-  y : Double,
-) -> Unit =
-  #| (self, key, x, y) => {
-  #|   if (!self.resources) return;
-  #|   const uniforms = self.resources.uniforms?.uniforms ?? self.resources.uniforms;
-  #|   if (uniforms && key in uniforms) {
-  #|     uniforms[key] = [x, y];
-  #|   }
   #| }
 
 ///|

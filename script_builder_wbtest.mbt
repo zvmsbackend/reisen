@@ -340,7 +340,7 @@ test "dom figure animations emit dom animation instruction" {
 ///|
 test "effect on dom figure raises build error" {
   let builder : ScriptBuilder[Int] = ScriptBuilder::new()
-  builder.effect_with(dummy_dom_figure("promo"), { id: "glow" }, [])
+  builder.effect_with(dummy_dom_figure("promo"), "glow", [])
   let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
   assert_true(
     built is Err(ScriptBuildError::EffectUnsupportedOnDomTarget(target="promo")),
@@ -350,7 +350,7 @@ test "effect on dom figure raises build error" {
 ///|
 test "effect helper emits apply effect" {
   let built : Script[Int] = script(builder => {
-    builder.effect_with(dummy_figure("alice"), { id: "glow" }, [
+    builder.effect_with(dummy_figure("alice"), "glow", [
       ("intensity", 0.6),
       ("radius", 8.0),
     ])

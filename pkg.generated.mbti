@@ -37,7 +37,7 @@ pub fn[T : @json.FromJson] director_from_save_json(Script[T], String) -> Directo
 
 pub fn dom_figure(String) -> Figure
 
-pub fn effect_spec(String, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
+pub fn effect_spec(Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
 
 pub fn gallery_image_by_id(String) -> GalleryImage?
 
@@ -157,7 +157,7 @@ pub fn place_left(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
 pub fn place_right(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
-pub fn register_pixi_effect(String, (PixiSprite, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)]) -> Unit
+pub fn register_pixi_effect((PixiSprite, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
 
 pub fn[T] reisen_parse_text_script(String) -> Script[T] raise ScriptBuildError
 
@@ -602,11 +602,14 @@ pub impl Eq for PixiPresenterConfig
 pub impl Show for PixiPresenterConfig
 
 type PixiSprite
+pub fn PixiSprite::set_alpha(Self, Double) -> Unit
+pub fn PixiSprite::set_filters(Self, Array[@js.Value]) -> Unit
+pub fn PixiSprite::set_position(Self, Double, Double) -> Unit
+pub fn PixiSprite::set_rotation(Self, Double) -> Unit
+pub fn PixiSprite::set_scale(Self, Double, Double) -> Unit
 pub fn PixiSprite::set_tint(Self, Int) -> Unit
 
 type PixiTexture
-
-type PixiTicker
 
 pub(all) enum Position {
   Left
