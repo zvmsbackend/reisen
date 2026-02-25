@@ -28,7 +28,6 @@ struct AppController[T] {
   menu : StartMenu
   gallery_menu : GalleryMenu
   settings_menu : SettingsMenu
-  show_gallery_entry : Bool
   mut phase : AppPhase
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
@@ -47,7 +46,6 @@ pub fn[T] AppController::new(
   menu_background? : String = "",
   settings_background? : String = "",
   gallery_background? : String = "",
-  show_gallery_entry? : Bool = false,
   menu_music? : Music,
   menu_music_loop? : Bool = true,
   start_logo_url? : String = "",
@@ -72,7 +70,6 @@ pub fn[T] AppController::new(
       ui_root_id,
       save_namespace~,
       background=menu_background,
-      show_gallery_entry~,
     ),
     gallery_menu: GalleryMenu::new(
       ui_root_id,
@@ -84,7 +81,6 @@ pub fn[T] AppController::new(
       save_namespace~,
       background=settings_background,
     ),
-    show_gallery_entry,
     phase: AppPhase::StartGate,
     render_sync,
     event_hook,
@@ -195,7 +191,7 @@ fn[T : FromJson] AppController::handle_menu_action(
       self.phase = AppPhase::Settings
     }
     Gallery =>
-      if self.show_gallery_entry {
+      if gallery_registered_images().length() > 0 {
         self.menu.clear()
         self.gallery_menu.render()
         self.phase = AppPhase::Gallery

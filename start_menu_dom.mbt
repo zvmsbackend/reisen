@@ -28,7 +28,6 @@ priv struct StartMenu {
   root_id : String
   save_ns : String
   background : String
-  show_gallery_entry : Bool
 }
 
 ///|
@@ -36,9 +35,8 @@ fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
   background? : String = "",
-  show_gallery_entry? : Bool = false,
 ) -> StartMenu {
-  { root_id, save_ns: save_namespace, background, show_gallery_entry }
+  { root_id, save_ns: save_namespace, background }
 }
 
 ///|
@@ -318,6 +316,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
 ///|
 fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_entries_in(self.save_ns)
+  let has_gallery = gallery_registered_images().length() > 0
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>
@@ -326,7 +325,7 @@ fn StartMenu::render(self : StartMenu) -> Unit {
         true,
         slot,
         self.background,
-        self.show_gallery_entry,
+        has_gallery,
       )
     None =>
       start_menu_dom_render(
@@ -334,7 +333,7 @@ fn StartMenu::render(self : StartMenu) -> Unit {
         false,
         "",
         self.background,
-        self.show_gallery_entry,
+        has_gallery,
       )
   }
 }

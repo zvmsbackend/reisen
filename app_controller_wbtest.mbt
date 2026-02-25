@@ -46,14 +46,12 @@ test "app controller can continue from saved slot" {
 }
 
 ///|
-test "app controller opens gallery when enabled" {
-  let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(
-    script,
-    () => GameState::new(0),
-    "app",
-    show_gallery_entry=true,
+test "app controller opens gallery when entries exist" {
+  gallery_register_image(
+    GalleryImage::new(gensym(prefix="app_gallery"), "assets/cg_dummy.jpg"),
   )
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(script, () => GameState::new(0), "app")
   app.enter_start_menu()
   app.handle_menu_action(StartMenuAction::Gallery)
   assert_eq(app.phase(), AppPhase::Gallery)
