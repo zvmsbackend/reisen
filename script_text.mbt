@@ -14,13 +14,7 @@ fn get_first_part(s : String, sep : String) -> (String, String) {
   }
   if parts.length() >= 2 {
     let first = parts[0].trim().to_string()
-    let mut rest = ""
-    for i in 1..<parts.length() {
-      if i > 1 {
-        rest = rest + sep
-      }
-      rest = rest + parts[i]
-    }
+    let rest = join_parts(parts, 1, parts.length())
     (first, rest.trim().to_string())
   } else if parts.length() == 1 {
     (parts[0].trim().to_string(), "")
@@ -35,14 +29,7 @@ fn join_parts(
   start : Int,
   end_exclusive : Int,
 ) -> String {
-  let mut out = ""
-  for i in start..<end_exclusive {
-    if i > start {
-      out = out + ", "
-    }
-    out = out + parts[i]
-  }
-  out
+  parts[start:end_exclusive].join(", ")
 }
 
 ///|
@@ -172,7 +159,7 @@ fn[T] reisen_text_script_to_builder(
         if lower == "click" || lower == "tap" {
           builder.instructions.push(WaitForClick)
         } else {
-          let ms = (try? @strconv.parse_int(args_str)).unwrap_or(0)
+          let ms = @strconv.parse_int(args_str) catch { _ => 0 }
           builder.instructions.push(Wait(ms))
         }
       }
@@ -390,7 +377,7 @@ fn[T] reisen_text_script_to_builder(
                   phase = Post
                 }
               } else if key == "duration" || key == "duration_ms" {
-                let value = (try? @strconv.parse_int(value_str)).unwrap_or(0)
+                let value = @strconv.parse_int(value_str) catch { _ => 0 }
                 let clamped = if value < 0 { 0 } else { value }
                 duration = Some(clamped)
               } else if key == "easing" {
@@ -412,9 +399,7 @@ fn[T] reisen_text_script_to_builder(
                   lower == "yes" ||
                   lower == "on"
               } else if key != "" && value_str != "" {
-                let value = (try? @strconv.parse_double(value_str)).unwrap_or(
-                  0.0,
-                )
+                let value = @strconv.parse_double(value_str) catch { _ => 0.0 }
                 params.push((key, value))
               }
             }
@@ -463,16 +448,16 @@ fn[T] reisen_text_script_to_builder(
           let duration_str = parts[2]
           if target != "" && prop != "" {
             let prop_lower = prop.to_lower()
-            let duration_ms = (try? @strconv.parse_int(duration_str)).unwrap_or(
-              500,
-            )
+            let duration_ms = @strconv.parse_int(duration_str) catch {
+              _ => 500
+            }
             let from_value = if parts.length() >= 4 {
-              Some((try? @strconv.parse_double(parts[3])).unwrap_or(0.0))
+              Some(@strconv.parse_double(parts[3]) catch { _ => 0.0 })
             } else {
               None
             }
             let to_value = if parts.length() >= 5 {
-              Some((try? @strconv.parse_double(parts[4])).unwrap_or(0.0))
+              Some(@strconv.parse_double(parts[4]) catch { _ => 0.0 })
             } else {
               None
             }
@@ -496,18 +481,14 @@ fn[T] reisen_text_script_to_builder(
                 }
               "position" | "pos" | "move" =>
                 if parts.length() >= 7 {
-                  let from_x = (try? @strconv.parse_double(parts[3])).unwrap_or(
-                    0.0,
-                  )
-                  let from_y = (try? @strconv.parse_double(parts[4])).unwrap_or(
-                    0.0,
-                  )
-                  let to_x = (try? @strconv.parse_double(parts[5])).unwrap_or(
-                    0.0,
-                  )
-                  let to_y = (try? @strconv.parse_double(parts[6])).unwrap_or(
-                    0.0,
-                  )
+                  let from_x = @strconv.parse_double(parts[3]) catch {
+                    _ => 0.0
+                  }
+                  let from_y = @strconv.parse_double(parts[4]) catch {
+                    _ => 0.0
+                  }
+                  let to_x = @strconv.parse_double(parts[5]) catch { _ => 0.0 }
+                  let to_y = @strconv.parse_double(parts[6]) catch { _ => 0.0 }
                   anim_position(
                     duration_ms,
                     Some(Custom(from_x, from_y)),
@@ -516,12 +497,8 @@ fn[T] reisen_text_script_to_builder(
                     blocking~,
                   )
                 } else if parts.length() >= 5 {
-                  let to_x = (try? @strconv.parse_double(parts[3])).unwrap_or(
-                    0.0,
-                  )
-                  let to_y = (try? @strconv.parse_double(parts[4])).unwrap_or(
-                    0.0,
-                  )
+                  let to_x = @strconv.parse_double(parts[3]) catch { _ => 0.0 }
+                  let to_y = @strconv.parse_double(parts[4]) catch { _ => 0.0 }
                   anim_position(
                     duration_ms,
                     None,
@@ -540,16 +517,14 @@ fn[T] reisen_text_script_to_builder(
                 }
               "scale" | "size" =>
                 if parts.length() >= 7 {
-                  let from = (try? @strconv.parse_double(parts[3])).unwrap_or(
-                    1.0,
-                  )
-                  let to = (try? @strconv.parse_double(parts[4])).unwrap_or(1.0)
-                  let anchor_x = (try? @strconv.parse_double(parts[5])).unwrap_or(
-                    0.5,
-                  )
-                  let anchor_y = (try? @strconv.parse_double(parts[6])).unwrap_or(
-                    0.5,
-                  )
+                  let from = @strconv.parse_double(parts[3]) catch { _ => 1.0 }
+                  let to = @strconv.parse_double(parts[4]) catch { _ => 1.0 }
+                  let anchor_x = @strconv.parse_double(parts[5]) catch {
+                    _ => 0.5
+                  }
+                  let anchor_y = @strconv.parse_double(parts[6]) catch {
+                    _ => 0.5
+                  }
                   anim_scale(
                     duration_ms,
                     Some(from),
@@ -559,13 +534,13 @@ fn[T] reisen_text_script_to_builder(
                     blocking~,
                   )
                 } else if parts.length() >= 6 {
-                  let to = (try? @strconv.parse_double(parts[3])).unwrap_or(1.0)
-                  let anchor_x = (try? @strconv.parse_double(parts[4])).unwrap_or(
-                    0.5,
-                  )
-                  let anchor_y = (try? @strconv.parse_double(parts[5])).unwrap_or(
-                    0.5,
-                  )
+                  let to = @strconv.parse_double(parts[3]) catch { _ => 1.0 }
+                  let anchor_x = @strconv.parse_double(parts[4]) catch {
+                    _ => 0.5
+                  }
+                  let anchor_y = @strconv.parse_double(parts[5]) catch {
+                    _ => 0.5
+                  }
                   anim_scale(
                     duration_ms,
                     None,

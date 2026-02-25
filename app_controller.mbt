@@ -225,28 +225,26 @@ fn[T : FromJson] AppController::handle_menu_action(
       self.menu.clear()
       self.phase = AppPhase::InGame
     }
-    Continue(slot) => {
-      let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
-        self.script,
-        slot,
-        self.ui_root_id,
-        render_sync=self.render_sync,
-        event_hook=self.event_hook,
-        save_namespace=self.save_ns,
-      )
-      match restored {
-        Ok(runner) => {
-          self.start_menu_music_stop()
-          self.runner = Some(runner)
-          self.menu.clear()
-          self.phase = AppPhase::InGame
-        }
-        Err(_) => {
+    Continue(slot) =>
+      try {
+        let runner = start_game_from_slot(
+          self.script,
+          slot,
+          self.ui_root_id,
+          render_sync=self.render_sync,
+          event_hook=self.event_hook,
+          save_namespace=self.save_ns,
+        )
+        self.start_menu_music_stop()
+        self.runner = Some(runner)
+        self.menu.clear()
+        self.phase = AppPhase::InGame
+      } catch {
+        _ => {
           self.runner = None
           self.enter_start_menu()
         }
       }
-    }
     Load => {
       self.menu.clear()
       self.settings_menu.set_context(SettingsContext::FromStartMenu)

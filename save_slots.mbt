@@ -275,7 +275,7 @@ pub fn persistent_get_int_in(
   default? : Int = 0,
 ) -> Int {
   match storage_get_item(persistent_key_in(ns, key)).to_option() {
-    Some(raw) => (try? @strconv.parse_int(raw)).unwrap_or(default)
+    Some(raw) => @strconv.parse_int(raw) catch { _ => default }
     None => default
   }
 }
