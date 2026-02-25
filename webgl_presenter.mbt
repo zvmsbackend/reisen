@@ -889,97 +889,96 @@ fn WebglPresenter::update_scalar_state(
   scalar_acc : ScalarAccumulator,
   id : String,
 ) -> (Bool, ScalarState) {
+  let mut changed = false
+  let mut next_state = init_state
   fn apply_scalar_anim_to_state(
-    state : (Bool, ScalarState),
     anim_map : Map[String, ScalarAnim],
     get_value : (ScalarState) -> Double,
     set_value : (ScalarState, Double) -> ScalarState,
     update_scalar_acc : (Double) -> Unit,
-  ) -> (Bool, ScalarState) {
+  ) -> Unit {
     match anim_map.get(id) {
       Some(anim) => {
         let (animated, done) = apply_scalar_animation(
-          get_value(state.1),
+          get_value(next_state),
           self.timeline_ms,
           anim,
         )
         update_scalar_acc(animated)
         if done {
           match anim.to {
-            Some(value) => (true, set_value(state.1, value))
-            None => state
+            Some(value) => {
+              changed = true
+              next_state = set_value(next_state, value)
+            }
+            None => ()
           }
-        } else {
-          state
         }
       }
-      None => {
-        update_scalar_acc(get_value(state.1))
-        state
-      }
+      None => update_scalar_acc(get_value(next_state))
     }
   }
-  (false, init_state)
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.opacity_anims,
     s => s.opacity,
     (s, v) => { ..s, opacity: v },
     v => scalar_acc.opacity = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.rotation_anims,
     s => s.rotation,
     (s, v) => { ..s, rotation: v },
     v => scalar_acc.rotation = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.blur_anims,
     s => s.blur,
     (s, v) => { ..s, blur: v },
     v => scalar_acc.blur = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.brightness_anims,
     s => s.brightness,
     (s, v) => { ..s, brightness: v },
     v => scalar_acc.brightness = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.contrast_anims,
     s => s.contrast,
     (s, v) => { ..s, contrast: v },
     v => scalar_acc.contrast = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.saturation_anims,
     s => s.saturation,
     (s, v) => { ..s, saturation: v },
     v => scalar_acc.saturation = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.gamma_anims,
     s => s.gamma,
     (s, v) => { ..s, gamma: v },
     v => scalar_acc.gamma = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.color_r_anims,
     s => s.color_r,
     (s, v) => { ..s, color_r: v },
     v => scalar_acc.color_r = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.color_g_anims,
     s => s.color_g,
     (s, v) => { ..s, color_g: v },
     v => scalar_acc.color_g = v,
   )
-  |> apply_scalar_anim_to_state(
+  apply_scalar_anim_to_state(
     self.color_b_anims,
     s => s.color_b,
     (s, v) => { ..s, color_b: v },
     v => scalar_acc.color_b = v,
   )
+  (changed, next_state)
 }
 
 ///|
@@ -1400,13 +1399,13 @@ fn[T] WebglPresenter::sync_impl(
   }
 
   tasks.sort_by_key(task => task.layer * 1000000 + task.order)
-  let active_effects : Array[String] = []
+  let active_effects = Set::new()
   for task in tasks {
     let mut skip_base = false
     for spec in task.effects {
       let key = effect_key(task.target_id, spec.id)
       let signature = effect_signature(spec)
-      active_effects.push(key)
+      active_effects.add(key)
       match self.effect_signatures.get(key) {
         Some(prev) =>
           if prev != signature {
@@ -1428,8 +1427,7 @@ fn[T] WebglPresenter::sync_impl(
           self.effect_from_params.set(key, defaults)
         }
       }
-      let mut progress : Double = 1.0
-      match (spec.duration_ms, self.effect_start_ms.get(key)) {
+      let progress = match (spec.duration_ms, self.effect_start_ms.get(key)) {
         (Some(duration), Some(start_ms)) => {
           let (p, done) = animation_progress(
             self.timeline_ms,
@@ -1437,18 +1435,16 @@ fn[T] WebglPresenter::sync_impl(
             duration,
             spec.easing,
           )
-          progress = p
           if done {
-            progress = 1.0
+            1.0
+          } else {
+            p
           }
         }
-        _ => ()
+        _ => 1.0
       }
       let render_params = if spec.duration_ms is Some(_) {
-        let from = match self.effect_from_params.get(key) {
-          Some(list) => list
-          None => []
-        }
+        let from = self.effect_from_params.get_or_default(key, [])
         let from_map = Map::from_array(from)
         spec.params.map(entry => {
           let (name, value) = entry
@@ -1459,21 +1455,16 @@ fn[T] WebglPresenter::sync_impl(
       } else {
         spec.params
       }
-      if spec.phase is Pre {
-        match self.effect_pipeline(spec.id) {
-          Some(pipeline) => {
-            let skip = self.draw_effect_pipeline(
-              pipeline,
-              task.item,
-              render_params,
-              w,
-              h,
-            )
-            if skip {
-              skip_base = true
-            }
-          }
-          None => ()
+      if spec.phase is Pre && self.effect_pipeline(spec.id) is Some(pipeline) {
+        let skip = self.draw_effect_pipeline(
+          pipeline,
+          task.item,
+          render_params,
+          w,
+          h,
+        )
+        if skip {
+          skip_base = true
         }
       }
     }
@@ -1486,54 +1477,6 @@ fn[T] WebglPresenter::sync_impl(
         w,
         h,
       )
-    }
-    for spec in task.effects {
-      let key = effect_key(task.target_id, spec.id)
-      let mut progress : Double = 1.0
-      match (spec.duration_ms, self.effect_start_ms.get(key)) {
-        (Some(duration), Some(start_ms)) => {
-          let (p, done) = animation_progress(
-            self.timeline_ms,
-            start_ms,
-            duration,
-            spec.easing,
-          )
-          progress = p
-          if done {
-            progress = 1.0
-          }
-        }
-        _ => ()
-      }
-      let render_params = if spec.duration_ms is Some(_) {
-        let from = match self.effect_from_params.get(key) {
-          Some(list) => list
-          None => []
-        }
-        let from_map = Map::from_array(from)
-        spec.params.map(entry => {
-          let (name, value) = entry
-          let start = from_map.get(name).unwrap_or(value)
-          let animated = start + (value - start) * progress
-          (name, animated)
-        })
-      } else {
-        spec.params
-      }
-      if spec.phase is Post {
-        match self.effect_pipeline(spec.id) {
-          Some(pipeline) => {
-            let _skip = self.draw_effect_pipeline(
-              pipeline,
-              task.item,
-              render_params,
-              w,
-              h,
-            )
-          }
-          None => ()
-        }
-      }
     }
   }
   for key in self.effect_start_ms.keys() {
