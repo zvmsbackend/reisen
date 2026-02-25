@@ -184,13 +184,16 @@ test "director tracks dom figure state" {
     builder.hide_dom_figure(dom_figure("promo"))
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
-  assert_true(director.step() is DomFigureShown("promo", _))
+  assert_true(director.step() is DomFigureShown("promo", _, false))
   assert_eq(
     director.dom_figures().get("promo"),
     Some({
-      pos: Left,
-      layer: 3,
-      scalars: { ..ScalarState::default(), opacity: 0.7 },
+      placement: {
+        pos: Left,
+        layer: 3,
+        scalars: { ..ScalarState::default(), opacity: 0.7 },
+      },
+      interactive: false,
     }),
   )
   assert_eq(director.step(), DomFigureHidden("promo"))

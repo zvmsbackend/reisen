@@ -23,7 +23,7 @@ pub enum RuntimeEvent {
   BackgroundShownState(BackgroundState)
   FigureShown(String, FigurePlacement)
   FigureHidden(String)
-  DomFigureShown(String, FigurePlacement)
+  DomFigureShown(String, FigurePlacement, Bool)
   DomFigureHidden(String)
   MusicPlayed(String, Bool)
   MusicStopped
@@ -248,9 +248,9 @@ fn[T] Runtime::run_inst(
       self.ip = self.ip + 1
       FigureHidden(id)
     }
-    ShowDomFigure(id, placement) => {
+    ShowDomFigure(id, placement, interactive) => {
       self.ip = self.ip + 1
-      DomFigureShown(id, placement)
+      DomFigureShown(id, placement, interactive)
     }
     HideDomFigure(id) => {
       self.ip = self.ip + 1

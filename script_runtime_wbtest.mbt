@@ -272,11 +272,12 @@ test "runtime dom figure events" {
   })
   let runtime = Runtime::new(script, GameState::new(0))
   match runtime.step() {
-    DomFigureShown(id, placement) => {
+    DomFigureShown(id, placement, interactive) => {
       assert_eq(id, "promo")
       assert_eq(placement.pos, Right)
       assert_eq(placement.layer, 1)
       assert_eq(placement.scalars.opacity, 0.8)
+      assert_eq(interactive, false)
     }
     _ => fail("Expected DomFigureShown")
   }

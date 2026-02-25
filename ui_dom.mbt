@@ -18,6 +18,7 @@ struct UiTextInputView {
 struct UiDomFigureView {
   id : String
   dom_id : String
+  interactive : Bool
   left_pct : Double
   top_pct : Double
   anchor_x : Double
@@ -242,7 +243,7 @@ fn[T] UiDom::pull_new_dom_animations(
     match spec.prop {
       Position => {
         let (cur_x, cur_y) = match dom_figures.get(target) {
-          Some(placement) => dom_pos_tuple(placement.pos)
+          Some(state) => dom_pos_tuple(state.placement.pos)
           None => (0.5, 0.5)
         }
         let from_x = anim_value(spec.from, 0).unwrap_or(cur_x)
@@ -261,8 +262,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Opacity => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.opacity)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.opacity)
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -276,8 +277,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Scale => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.scale)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.scale)
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -291,8 +292,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Rotation => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.rotation)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.rotation)
           None => anim_value(spec.from, 0).unwrap_or(0.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -306,8 +307,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Blur => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.blur)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.blur)
           None => anim_value(spec.from, 0).unwrap_or(0.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -321,8 +322,10 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Brightness => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.brightness)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(
+              state.placement.scalars.brightness,
+            )
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -336,8 +339,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Contrast => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.contrast)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.contrast)
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -351,8 +354,10 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Saturation => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.saturation)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(
+              state.placement.scalars.saturation,
+            )
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -366,8 +371,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       Gamma => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.gamma)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.gamma)
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -381,8 +386,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       ColorRed => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.color_r)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.color_r)
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -396,8 +401,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       ColorGreen => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.color_g)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.color_g)
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -411,8 +416,8 @@ fn[T] UiDom::pull_new_dom_animations(
       }
       ColorBlue => {
         let from = match dom_figures.get(target) {
-          Some(placement) =>
-            anim_value(spec.from, 0).unwrap_or(placement.scalars.color_b)
+          Some(state) =>
+            anim_value(spec.from, 0).unwrap_or(state.placement.scalars.color_b)
           None => anim_value(spec.from, 0).unwrap_or(1.0)
         }
         let to = anim_value(spec.to, 0).unwrap_or(from)
@@ -1035,6 +1040,15 @@ extern "js" fn dom_render_dom_figures(
   #|   const restore = (entry) => {
   #|     if (!entry || !entry.el) return;
   #|     const el = entry.el;
+  #|     if (entry.onClick) {
+  #|       el.removeEventListener('click', entry.onClick);
+  #|     }
+  #|     delete el.dataset.reisenDomInteractive;
+  #|     if (entry.tabindex === null || entry.tabindex === undefined || entry.tabindex === '') {
+  #|       el.removeAttribute('tabindex');
+  #|     } else {
+  #|       el.setAttribute('tabindex', entry.tabindex);
+  #|     }
   #|     const parent = entry.parent;
   #|     const next = entry.next;
   #|     if (parent && parent.nodeType === 1) {
@@ -1081,14 +1095,38 @@ extern "js" fn dom_render_dom_figures(
   #|         parent: el.parentNode,
   #|         next: el.nextSibling,
   #|         style: el.getAttribute('style'),
+  #|         tabindex: el.getAttribute('tabindex'),
+  #|         onClick: null,
   #|       };
+  #|       entry.onClick = () => {
+  #|         if (el.dataset.reisenDomInteractive !== '1') return;
+  #|         if (!el.hasAttribute('tabindex')) {
+  #|           el.setAttribute('tabindex', '-1');
+  #|         }
+  #|         if (typeof el.focus === 'function') {
+  #|           el.focus();
+  #|         }
+  #|       };
+  #|       el.addEventListener('click', entry.onClick);
   #|       mounts.set(view.id, entry);
   #|       host.appendChild(el);
   #|     } else if (entry.el.parentNode !== host) {
   #|       host.appendChild(entry.el);
   #|     }
   #|     const el = entry.el;
+  #|     const interactive = !!view.interactive;
+  #|     if (interactive) {
+  #|       el.dataset.reisenDomInteractive = '1';
+  #|     } else {
+  #|       delete el.dataset.reisenDomInteractive;
+  #|       if (entry.tabindex === null || entry.tabindex === undefined || entry.tabindex === '') {
+  #|         el.removeAttribute('tabindex');
+  #|       } else {
+  #|         el.setAttribute('tabindex', entry.tabindex);
+  #|       }
+  #|     }
   #|     el.style.position = 'absolute';
+  #|     el.style.pointerEvents = interactive ? 'auto' : 'none';
   #|     el.style.left = `${view.left_pct}%`;
   #|     el.style.top = `${view.top_pct}%`;
   #|     el.style.zIndex = String(100 + (view.layer || 0));
@@ -1172,6 +1210,15 @@ extern "js" fn dom_clear_game_ui(root_id : String) -> Unit =
   #|       mounts.forEach(entry => {
   #|         if (!entry || !entry.el) return;
   #|         const el = entry.el;
+  #|         if (entry.onClick) {
+  #|           el.removeEventListener('click', entry.onClick);
+  #|         }
+  #|         delete el.dataset.reisenDomInteractive;
+  #|         if (entry.tabindex === null || entry.tabindex === undefined || entry.tabindex === '') {
+  #|           el.removeAttribute('tabindex');
+  #|         } else {
+  #|           el.setAttribute('tabindex', entry.tabindex);
+  #|         }
   #|         const parent = entry.parent;
   #|         const next = entry.next;
   #|         if (parent && parent.nodeType === 1) {
@@ -1227,10 +1274,11 @@ extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
   #|     if (target.isContentEditable) return true;
   #|     if (tag === 'BUTTON') return true;
   #|     if (target.closest?.('[data-reisen="choices"]')) return true;
+  #|     if (target.closest?.('[data-reisen-dom-interactive="1"]')) return true;
   #|     if (target.closest?.('[data-choice-id]')) return true;
   #|     return false;
   #|   };
-  #|   document.addEventListener('click', (e) => {
+  #|   doc.addEventListener('click', (e) => {
   #|     if (shouldIgnore(e.target)) return;
   #|     root.dataset.reisenTypewriterClick = '1';
   #|   });
@@ -1283,8 +1331,8 @@ fn[T] UiDom::apply_active_dom_animations(
   let finished_color_g : Array[String] = []
   let finished_color_b : Array[String] = []
 
-  for id, placement in dom_figures {
-    let mut next = placement
+  for id, state in dom_figures {
+    let mut next = state.placement
     match self.dom_position_anims.get(id) {
       Some(anim) => {
         let (x, y, done) = pos_at(self.dom_timeline_ms, anim)
@@ -1406,7 +1454,7 @@ fn[T] UiDom::apply_active_dom_animations(
       }
       None => ()
     }
-    dom_figures.set(id, next)
+    dom_figures.set(id, { placement: next, interactive: state.interactive })
   }
 
   for id in finished_position {
@@ -1452,7 +1500,8 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
   ui.pull_new_dom_animations(director)
   ui.apply_active_dom_animations(director)
   let dom_figures : Array[UiDomFigureView] = []
-  for id, placement in director.dom_figures() {
+  for id, state in director.dom_figures() {
+    let placement = state.placement
     let (left_pct, top_pct, anchor_x, anchor_y) = match placement.pos {
       Left => (18.0, 50.0, 0.5, 0.5)
       Center => (50.0, 50.0, 0.5, 0.5)
@@ -1462,6 +1511,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     dom_figures.push({
       id,
       dom_id: id,
+      interactive: state.interactive,
       left_pct,
       top_pct,
       anchor_x,

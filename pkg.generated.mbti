@@ -368,7 +368,7 @@ pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, AnimationSpec)]
-pub fn[T] Director::dom_figures(Self[T]) -> Map[String, FigurePlacement]
+pub fn[T] Director::dom_figures(Self[T]) -> Map[String, DomFigureState]
 pub fn[T] Director::effects(Self[T], String) -> Array[EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
@@ -402,6 +402,15 @@ pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
 
 type DomFigure
 pub impl AnimationTarget for DomFigure
+
+pub struct DomFigureState {
+  placement : FigurePlacement
+  interactive : Bool
+}
+pub impl Eq for DomFigureState
+pub impl Show for DomFigureState
+pub impl ToJson for DomFigureState
+pub impl @json.FromJson for DomFigureState
 
 pub(all) enum Easing {
   Linear
@@ -555,7 +564,7 @@ pub enum Instruction[T] {
   ShowBackgroundState(BackgroundState)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)
-  ShowDomFigure(String, FigurePlacement)
+  ShowDomFigure(String, FigurePlacement, Bool)
   HideDomFigure(String)
   PlayMusic(String, Bool)
   StopMusic
@@ -584,7 +593,7 @@ pub impl @json.FromJson for Position
 pub struct RenderState {
   mut background : BackgroundState?
   figures : Map[String, FigurePlacement]
-  dom_figures : Map[String, FigurePlacement]
+  dom_figures : Map[String, DomFigureState]
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
@@ -642,7 +651,7 @@ pub enum RuntimeEvent {
   BackgroundShownState(BackgroundState)
   FigureShown(String, FigurePlacement)
   FigureHidden(String)
-  DomFigureShown(String, FigurePlacement)
+  DomFigureShown(String, FigurePlacement, Bool)
   DomFigureHidden(String)
   MusicPlayed(String, Bool)
   MusicStopped
@@ -753,7 +762,7 @@ pub fn[T] ScriptBuilder::scene(Self[T], Background) -> Unit
 pub fn[T] ScriptBuilder::scene_with_opacity_scale(Self[T], String, Double, Double) -> Unit
 pub fn[T] ScriptBuilder::scene_with_scalars(Self[T], String, ScalarState) -> Unit
 pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::show_dom_figure(Self[T], DomFigure, FigurePlacement) -> Unit
+pub fn[T] ScriptBuilder::show_dom_figure(Self[T], DomFigure, FigurePlacement, interactive? : Bool) -> Unit
 pub fn[T] ScriptBuilder::show_figure(Self[T], Figure, FigurePlacement) -> Unit
 pub fn[T] ScriptBuilder::show_figure_at(Self[T], Figure, Position, layer? : Int, opacity? : Double) -> Unit
 pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit

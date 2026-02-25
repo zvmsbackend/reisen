@@ -103,6 +103,12 @@ pub struct FigurePlacement {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
+pub struct DomFigureState {
+  placement : FigurePlacement
+  interactive : Bool
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
 pub struct BackgroundState {
   id : String
   scalars : ScalarState
@@ -149,7 +155,7 @@ pub enum Instruction[T] {
   ShowBackgroundState(BackgroundState)
   ShowFigure(String, FigurePlacement)
   HideFigure(String)
-  ShowDomFigure(String, FigurePlacement)
+  ShowDomFigure(String, FigurePlacement, Bool)
   HideDomFigure(String)
   PlayMusic(String, Bool)
   StopMusic

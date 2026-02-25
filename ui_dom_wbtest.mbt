@@ -75,10 +75,29 @@ test "ui view model includes dom figures from director" {
   assert_eq(view.dom_figures.length(), 1)
   assert_eq(view.dom_figures[0].id, "promo")
   assert_eq(view.dom_figures[0].dom_id, "promo")
+  assert_eq(view.dom_figures[0].interactive, false)
   assert_eq(view.dom_figures[0].left_pct, 50.0)
   assert_eq(view.dom_figures[0].top_pct, 50.0)
   assert_eq(view.dom_figures[0].anchor_x, 0.5)
   assert_eq(view.dom_figures[0].anchor_y, 0.5)
+}
+
+///|
+test "ui view model keeps interactive dom figure flag" {
+  let compiled : Script[Int] = script(builder => {
+    builder.show_dom_figure(
+      dom_figure("promo"),
+      place_center(),
+      interactive=true,
+    )
+  })
+  let director = Director::new(Runtime::new(compiled, GameState::new(0)))
+  let ui = UiDom::new("ui-root")
+
+  ignore(director.step())
+  let view = ui_view_from_director(director, ui)
+  assert_eq(view.dom_figures.length(), 1)
+  assert_eq(view.dom_figures[0].interactive, true)
 }
 
 ///|
@@ -92,6 +111,7 @@ test "ui view model applies new dom animations" {
 
   ignore(director.step())
   ignore(director.step())
+  ignore(ui_view_from_director(director, ui))
   ui.advance_dom_animation_timer(120)
   let view = ui_view_from_director(director, ui)
   assert_eq(view.dom_figures.length(), 1)

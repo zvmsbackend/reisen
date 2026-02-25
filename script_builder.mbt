@@ -721,8 +721,9 @@ pub fn[T] ScriptBuilder::show_dom_figure(
   self : ScriptBuilder[T],
   figure : DomFigure,
   placement : FigurePlacement,
+  interactive? : Bool = false,
 ) -> Unit {
-  self.instructions.push(ShowDomFigure(figure.id, placement))
+  self.instructions.push(ShowDomFigure(figure.id, placement, interactive))
 }
 
 ///|

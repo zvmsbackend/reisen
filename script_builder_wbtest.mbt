@@ -267,8 +267,20 @@ test "dom figure show/hide emit expected instructions" {
     builder.show_dom_figure(dummy_dom_figure("#promo"), place_center(layer=2))
     builder.hide_dom_figure(dummy_dom_figure("promo"))
   })
-  assert_true(built.instructions[0] is ShowDomFigure("promo", _))
+  assert_true(built.instructions[0] is ShowDomFigure("promo", _, false))
   assert_true(built.instructions[1] is HideDomFigure("promo"))
+}
+
+///|
+test "dom figure show can be interactive" {
+  let built : Script[Int] = script(builder => {
+    builder.show_dom_figure(
+      dummy_dom_figure("promo"),
+      place_center(),
+      interactive=true,
+    )
+  })
+  assert_true(built.instructions[0] is ShowDomFigure("promo", _, true))
 }
 
 ///|

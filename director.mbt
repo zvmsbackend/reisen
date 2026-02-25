@@ -24,7 +24,7 @@ priv struct UiState {
 pub struct RenderState {
   mut background : BackgroundState?
   figures : Map[String, FigurePlacement]
-  dom_figures : Map[String, FigurePlacement]
+  dom_figures : Map[String, DomFigureState]
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
@@ -131,7 +131,8 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     BackgroundShownState(state) => self.render.background = Some(state)
     FigureShown(id, placement) => self.render.figures.set(id, placement)
     FigureHidden(id) => self.render.figures.remove(id)
-    DomFigureShown(id, placement) => self.render.dom_figures.set(id, placement)
+    DomFigureShown(id, placement, interactive) =>
+      self.render.dom_figures.set(id, { placement, interactive })
     DomFigureHidden(id) => self.render.dom_figures.remove(id)
     MusicPlayed(id, should_loop) => self.render.music = Some((id, should_loop))
     MusicStopped => self.render.music = None
@@ -286,7 +287,7 @@ pub fn[T] Director::figures(self : Director[T]) -> Map[String, FigurePlacement] 
 ///|
 pub fn[T] Director::dom_figures(
   self : Director[T],
-) -> Map[String, FigurePlacement] {
+) -> Map[String, DomFigureState] {
   self.render.dom_figures
 }
 
