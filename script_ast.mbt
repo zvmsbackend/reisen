@@ -155,7 +155,8 @@ pub enum Instruction[T] {
   StopMusic
   PlaySfx(String, Bool)
   UnlockCg(String)
-  Animate(String, AnimationSpec)
+  AnimateWebgl(String, AnimationSpec)
+  AnimateDom(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
 }
 
@@ -170,6 +171,7 @@ pub(all) suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
+  EffectUnsupportedOnDomTarget(target~ : String)
 }
 
 ///|

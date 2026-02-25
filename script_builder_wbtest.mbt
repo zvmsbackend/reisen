@@ -229,18 +229,24 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   }
   assert_true(
     built.instructions[2]
-    is Animate("alice", { prop: Opacity, duration_ms: 120, easing: Linear, .. }),
+    is AnimateWebgl(
+      "alice",
+      { prop: Opacity, duration_ms: 120, easing: Linear, .. }
+    ),
   )
   assert_true(
     built.instructions[3]
-    is Animate(
+    is AnimateWebgl(
       "alice",
       { prop: Position, duration_ms: 180, easing: EaseInOut, .. }
     ),
   )
   assert_true(
     built.instructions[4]
-    is Animate("alice", { prop: Scale, duration_ms: 240, easing: EaseOut, .. }),
+    is AnimateWebgl(
+      "alice",
+      { prop: Scale, duration_ms: 240, easing: EaseOut, .. }
+    ),
   )
   assert_true(
     built.instructions[5]
@@ -263,6 +269,30 @@ test "dom figure show/hide emit expected instructions" {
   })
   assert_true(built.instructions[0] is ShowDomFigure("promo", _))
   assert_true(built.instructions[1] is HideDomFigure("promo"))
+}
+
+///|
+test "dom figure animations emit dom animation instruction" {
+  let built : Script[Int] = script(builder => {
+    builder.animate_opacity(dummy_dom_figure("promo"), 120, 1.0)
+  })
+  assert_true(
+    built.instructions[0]
+    is AnimateDom(
+      "promo",
+      { prop: Opacity, duration_ms: 120, easing: Linear, .. }
+    ),
+  )
+}
+
+///|
+test "effect on dom figure raises build error" {
+  let builder : ScriptBuilder[Int] = ScriptBuilder::new()
+  builder.effect(dummy_dom_figure("promo"), effect("glow"), [])
+  let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
+  assert_true(
+    built is Err(ScriptBuildError::EffectUnsupportedOnDomTarget(target="promo")),
+  )
 }
 
 ///|

@@ -243,6 +243,7 @@ pub(all) suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
+  EffectUnsupportedOnDomTarget(target~ : String)
 }
 
 pub suberror ScriptRuntimeError {
@@ -366,6 +367,7 @@ pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeE
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
+pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::dom_figures(Self[T]) -> Map[String, FigurePlacement]
 pub fn[T] Director::effects(Self[T], String) -> Array[EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
@@ -559,7 +561,8 @@ pub enum Instruction[T] {
   StopMusic
   PlaySfx(String, Bool)
   UnlockCg(String)
-  Animate(String, AnimationSpec)
+  AnimateWebgl(String, AnimationSpec)
+  AnimateDom(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
 }
 
@@ -585,7 +588,8 @@ pub struct RenderState {
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
-  animations : Array[(String, AnimationSpec)]
+  webgl_animations : Array[(String, AnimationSpec)]
+  dom_animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
   render_epoch : String
 }
@@ -645,7 +649,8 @@ pub enum RuntimeEvent {
   SfxPlayed(String, Bool)
   SfxStopped
   CgUnlocked(String)
-  Animated(String, AnimationSpec)
+  AnimatedWebgl(String, AnimationSpec)
+  AnimatedDom(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
   WaitStarted(Int)
   WaitForClickStarted
@@ -772,10 +777,12 @@ pub impl Show for UiChoiceView
 
 type UiDom
 pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
+pub fn UiDom::advance_dom_animation_timer(Self, Int) -> Unit
 pub fn UiDom::advance_skip_mode_timer(Self, elapsed_ms~ : Int) -> Unit
 pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
 pub fn UiDom::clear_game_ui(Self) -> Unit
 pub fn UiDom::complete_typewriter(Self) -> Unit
+pub fn UiDom::has_active_dom_animations(Self) -> Bool
 pub fn UiDom::is_skip_active(Self) -> Bool
 pub fn UiDom::is_typewriter_done(Self) -> Bool
 pub fn UiDom::mark_all_dirty(Self) -> Unit

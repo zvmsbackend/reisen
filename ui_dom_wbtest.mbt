@@ -80,3 +80,20 @@ test "ui view model includes dom figures from director" {
   assert_eq(view.dom_figures[0].anchor_x, 0.5)
   assert_eq(view.dom_figures[0].anchor_y, 0.5)
 }
+
+///|
+test "ui view model applies new dom animations" {
+  let compiled : Script[Int] = script(builder => {
+    builder.show_dom_figure(dom_figure("promo"), place_center())
+    builder.animate_opacity(dom_figure("promo"), 120, 0.4)
+  })
+  let director = Director::new(Runtime::new(compiled, GameState::new(0)))
+  let ui = UiDom::new("ui-root")
+
+  ignore(director.step())
+  ignore(director.step())
+  ui.advance_dom_animation_timer(120)
+  let view = ui_view_from_director(director, ui)
+  assert_eq(view.dom_figures.length(), 1)
+  assert_eq(view.dom_figures[0].opacity, 0.4)
+}

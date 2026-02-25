@@ -28,7 +28,8 @@ pub struct RenderState {
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
-  animations : Array[(String, AnimationSpec)]
+  webgl_animations : Array[(String, AnimationSpec)]
+  dom_animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
   render_epoch : String
 } derive(ToJson, FromJson)
@@ -70,7 +71,8 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       music: None,
       last_sfx: None,
       last_sfx_interrupted: false,
-      animations: [],
+      webgl_animations: [],
+      dom_animations: [],
       effects: {},
       render_epoch: gensym(prefix="render"),
     },
@@ -140,7 +142,9 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     SfxStopped =>
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
     CgUnlocked(_) => ()
-    Animated(target, spec) => self.render.animations.push((target, spec))
+    AnimatedWebgl(target, spec) =>
+      self.render.webgl_animations.push((target, spec))
+    AnimatedDom(target, spec) => self.render.dom_animations.push((target, spec))
     EffectApplied(target, spec) => {
       let current = self.render.effects.get(target).unwrap_or([])
       let mut replaced = false
@@ -310,7 +314,14 @@ pub fn[T] Director::take_interrupted_sfx(self : Director[T]) -> String? {
 pub fn[T] Director::animations(
   self : Director[T],
 ) -> Array[(String, AnimationSpec)] {
-  self.render.animations
+  self.render.webgl_animations
+}
+
+///|
+pub fn[T] Director::dom_animations(
+  self : Director[T],
+) -> Array[(String, AnimationSpec)] {
+  self.render.dom_animations
 }
 
 ///|
@@ -334,7 +345,8 @@ pub fn[T] Director::clear_render(self : Director[T]) -> Unit {
   self.render.music = None
   self.render.last_sfx = None
   self.render.last_sfx_interrupted = false
-  self.render.animations.clear()
+  self.render.webgl_animations.clear()
+  self.render.dom_animations.clear()
   self.render.effects.clear()
 }
 

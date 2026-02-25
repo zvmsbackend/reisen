@@ -39,7 +39,7 @@ test "director maps runtime events into ui and render state" {
   assert_eq(director.step(), MusicPlayed("bgm_theme", true))
   assert_eq(director.music(), Some(("bgm_theme", true)))
 
-  assert_true(director.step() is Animated("alice", _))
+  assert_true(director.step() is AnimatedWebgl("alice", _))
   assert_eq(director.animations().length(), 1)
 
   assert_eq(

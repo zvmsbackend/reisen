@@ -933,7 +933,7 @@ fn[T] reisen_text_script_to_builder(
               prop_lower == "blue" ||
               prop_lower == "colorblue" ||
               prop_lower == "color_b" {
-              builder.instructions.push(Animate(target, spec))
+              builder.instructions.push(AnimateWebgl(target, spec))
             }
           }
         }

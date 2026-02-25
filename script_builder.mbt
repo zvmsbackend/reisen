@@ -36,8 +36,15 @@ struct Label {
 }
 
 ///|
+priv enum AnimationTargetKind {
+  Webgl
+  Dom
+}
+
+///|
 trait AnimationTarget {
   id(Self) -> String
+  kind(Self) -> AnimationTargetKind
 }
 
 ///|
@@ -46,8 +53,18 @@ pub impl AnimationTarget for Figure with id(self) {
 }
 
 ///|
+pub impl AnimationTarget for Figure with kind(_) {
+  AnimationTargetKind::Webgl
+}
+
+///|
 pub impl AnimationTarget for DomFigure with id(self) {
   self.id
+}
+
+///|
+pub impl AnimationTarget for DomFigure with kind(_) {
+  AnimationTargetKind::Dom
 }
 
 ///|
@@ -63,6 +80,11 @@ pub fn dom_figure(id : String) -> DomFigure {
 ///|
 pub impl AnimationTarget for Background with id(self) {
   self.id
+}
+
+///|
+pub impl AnimationTarget for Background with kind(_) {
+  AnimationTargetKind::Webgl
 }
 
 ///|
@@ -168,6 +190,7 @@ pub fn effect_spec_with_timing(
 ///|
 struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
+  mut pending_error : ScriptBuildError?
 }
 
 ///|
@@ -457,7 +480,7 @@ pub fn anim_color_blue(
 
 ///|
 pub fn[T] ScriptBuilder::new() -> ScriptBuilder[T] {
-  { instructions: [] }
+  { instructions: [], pending_error: None }
 }
 
 ///|
@@ -744,6 +767,14 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
+  if target.kind() is Dom {
+    if self.pending_error is None {
+      self.pending_error = Some(
+        ScriptBuildError::EffectUnsupportedOnDomTarget(target=target.id()),
+      )
+    }
+    return
+  }
   let resolved_phase = phase.unwrap_or(Post)
   self.instructions.push(
     ApplyEffect(target.id(), {
@@ -758,12 +789,26 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
 }
 
 ///|
+fn[T, A : AnimationTarget] ScriptBuilder::emit_animation(
+  self : ScriptBuilder[T],
+  target : A,
+  spec : AnimationSpec,
+) -> Unit {
+  match target.kind() {
+    AnimationTargetKind::Webgl =>
+      self.instructions.push(AnimateWebgl(target.id(), spec))
+    AnimationTargetKind::Dom =>
+      self.instructions.push(AnimateDom(target.id(), spec))
+  }
+}
+
+///|
 pub fn[T, A : AnimationTarget] ScriptBuilder::animate(
   self : ScriptBuilder[T],
   target : A,
   spec : AnimationSpec,
 ) -> Unit {
-  self.instructions.push(Animate(target.id(), spec))
+  self.emit_animation(target, spec)
 }
 
 ///|
@@ -776,11 +821,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_opacity(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_opacity(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -794,11 +837,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_position(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_position(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -813,11 +854,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_scale(duration_ms, from, to, anchor~, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_scale(duration_ms, from, to, anchor~, easing~, blocking~),
   )
 }
 
@@ -831,11 +870,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_rotation(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_rotation(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -849,8 +886,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(target.id(), anim_blur(duration_ms, from, to, easing~, blocking~)),
+  self.emit_animation(
+    target,
+    anim_blur(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -864,11 +902,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_brightness(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_brightness(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -882,11 +918,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_contrast(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_contrast(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -900,11 +934,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_saturation(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_saturation(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -918,8 +950,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(target.id(), anim_gamma(duration_ms, from, to, easing~, blocking~)),
+  self.emit_animation(
+    target,
+    anim_gamma(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -933,11 +966,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_color_red(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_color_red(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -951,11 +982,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_color_green(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_color_green(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -969,11 +998,9 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_blue(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(
-    Animate(
-      target.id(),
-      anim_color_blue(duration_ms, from, to, easing~, blocking~),
-    ),
+  self.emit_animation(
+    target,
+    anim_color_blue(duration_ms, from, to, easing~, blocking~),
   )
 }
 
@@ -989,5 +1016,9 @@ pub fn[T] ScriptBuilder::load_text(
 pub fn[T] ScriptBuilder::build(
   self : ScriptBuilder[T],
 ) -> Script[T] raise ScriptBuildError {
+  match self.pending_error {
+    Some(err) => raise err
+    None => ()
+  }
   script_from_instructions(self.instructions)
 }

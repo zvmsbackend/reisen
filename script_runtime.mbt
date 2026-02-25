@@ -30,7 +30,8 @@ pub enum RuntimeEvent {
   SfxPlayed(String, Bool)
   SfxStopped
   CgUnlocked(String)
-  Animated(String, AnimationSpec)
+  AnimatedWebgl(String, AnimationSpec)
+  AnimatedDom(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
   WaitStarted(Int)
   WaitForClickStarted
@@ -272,9 +273,13 @@ fn[T] Runtime::run_inst(
       gallery_unlock_image_by_id(id)
       CgUnlocked(id)
     }
-    Animate(target, spec) => {
+    AnimateWebgl(target, spec) => {
       self.ip = self.ip + 1
-      Animated(target, spec)
+      AnimatedWebgl(target, spec)
+    }
+    AnimateDom(target, spec) => {
+      self.ip = self.ip + 1
+      AnimatedDom(target, spec)
     }
     ApplyEffect(target, spec) => {
       self.ip = self.ip + 1

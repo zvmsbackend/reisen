@@ -226,9 +226,16 @@ fn[T] GameRunner::apply_event_effects(
       self.render_sync_dirty = true
     }
     DomFigureShown(_, _) | DomFigureHidden(_) => self.ui_dirty = true
-    Animated(_, spec) => {
+    AnimatedWebgl(_, spec) => {
       self.ui_dirty = true
       self.render_sync_dirty = true
+      self.bump_animation_timer(spec.duration_ms)
+      if spec.blocking {
+        self.bump_blocking_timer(spec.duration_ms)
+      }
+    }
+    AnimatedDom(_, spec) => {
+      self.ui_dirty = true
       self.bump_animation_timer(spec.duration_ms)
       if spec.blocking {
         self.bump_blocking_timer(spec.duration_ms)
@@ -287,6 +294,10 @@ pub fn[T] GameRunner::step(
 ) -> RuntimeEvent raise ScriptRuntimeError {
   self.advance_animation_timer(elapsed_ms)
   self.advance_blocking_timer(elapsed_ms)
+  self.ui.advance_dom_animation_timer(elapsed_ms)
+  if self.ui.has_active_dom_animations() {
+    self.ui_dirty = true
+  }
   if self.director.is_waiting() {
     if self.ui.skip_mode {
       self.director.skip_wait()
