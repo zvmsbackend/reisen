@@ -1103,9 +1103,6 @@ extern "js" fn dom_render_dom_figures(
   #|         if (!el.hasAttribute('tabindex')) {
   #|           el.setAttribute('tabindex', '-1');
   #|         }
-  #|         if (typeof el.focus === 'function') {
-  #|           el.focus();
-  #|         }
   #|       };
   #|       el.addEventListener('click', entry.onClick);
   #|       mounts.set(view.id, entry);
