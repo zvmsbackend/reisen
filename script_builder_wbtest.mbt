@@ -35,6 +35,31 @@ test "builder duplicate label raises" {
 }
 
 ///|
+test "builder missing jump target raises" {
+  let builder : ScriptBuilder[Int] = ScriptBuilder::new()
+  builder.jump(label(name="missing"))
+
+  let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
+  assert_true(
+    built is Err(ScriptBuildError::MissingJumpTarget(target="missing")),
+  )
+}
+
+///|
+test "builder missing choice target raises" {
+  let builder : ScriptBuilder[Int] = ScriptBuilder::new()
+  builder.choice([option("A", label(name="route_a"), id="a")])
+
+  let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
+  assert_true(
+    built
+    is Err(
+      ScriptBuildError::MissingChoiceTarget(choice_id="a", target="route_a")
+    ),
+  )
+}
+
+///|
 test "option helper builds expected choice option" {
   let got = option("Go left", label(name="left_path"))
   assert_eq(got.text, "Go left")
@@ -140,12 +165,16 @@ test "branch helper emits jump_if and jump instructions" {
 
 ///|
 test "menu helper emits say then choice" {
+  let label_a = label(name="label_a")
+  let label_b = label(name="label_b")
   let built : Script[Int] = script(builder => {
     builder.label(label(name="start"))
     builder.menu("narrator", "Pick one", [
-      option("A", label(name="label_a")),
-      option("B", label(name="label_b")),
+      option("A", label_a),
+      option("B", label_b),
     ])
+    builder.label(label_a)
+    builder.label(label_b)
   })
 
   assert_true(

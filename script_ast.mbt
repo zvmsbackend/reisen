@@ -166,6 +166,8 @@ pub struct Script[T] {
 ///|
 pub(all) suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
+  MissingJumpTarget(target~ : String)
+  MissingChoiceTarget(choice_id~ : String, target~ : String)
 }
 
 ///|
@@ -188,8 +190,35 @@ fn[T] build_label_index(
 }
 
 ///|
+fn[T] validate_label_targets(
+  instructions : Array[Instruction[T]],
+  labels : Map[String, Int],
+) -> Unit raise ScriptBuildError {
+  for inst in instructions {
+    match inst {
+      Jump(target) | JumpIf(target, _) =>
+        if !labels.contains(target) {
+          raise ScriptBuildError::MissingJumpTarget(target~)
+        }
+      Choice(options) =>
+        for option in options {
+          if !labels.contains(option.jump) {
+            raise ScriptBuildError::MissingChoiceTarget(
+              choice_id=option.id,
+              target=option.jump,
+            )
+          }
+        }
+      _ => ()
+    }
+  }
+}
+
+///|
 pub fn[T] script_from_instructions(
   instructions : Array[Instruction[T]],
 ) -> Script[T] raise ScriptBuildError {
-  { instructions, labels: build_label_index(instructions) }
+  let labels = build_label_index(instructions)
+  validate_label_targets(instructions, labels)
+  { instructions, labels }
 }

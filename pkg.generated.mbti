@@ -239,6 +239,8 @@ pub impl Show for ReisenTextError
 
 pub(all) suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
+  MissingJumpTarget(target~ : String)
+  MissingChoiceTarget(choice_id~ : String, target~ : String)
 }
 
 pub suberror ScriptRuntimeError {
