@@ -412,14 +412,10 @@ fn apply_position_animation(
       }
     }
     _ => {
-      let from_x = anim.from_x.unwrap_or(0.0) * viewport_w
-      let from_y = anim.from_y.unwrap_or(0.0) * viewport_h
-      let to_x = anim.to_x.unwrap_or(0.0) * viewport_w
-      let to_y = anim.to_y.unwrap_or(0.0) * viewport_h
-      let start_x = x + from_x
-      let start_y = y + from_y
-      let end_x = x + to_x
-      let end_y = y + to_y
+      let start_x = anim.from_x.map(v => v * viewport_w).unwrap_or(x)
+      let start_y = anim.from_y.map(v => v * viewport_h).unwrap_or(y)
+      let end_x = anim.to_x.map(v => v * viewport_w).unwrap_or(x)
+      let end_y = anim.to_y.map(v => v * viewport_h).unwrap_or(y)
       let animated_x = start_x + (end_x - start_x) * p
       let animated_y = start_y + (end_y - start_y) * p
       if done {
@@ -1222,8 +1218,8 @@ fn PixiPresenter::resolve_figure_frame(
   let (x, y, w, h) = match self.scale_anims.get(id) {
     Some(anim) => {
       let (sx, sy, sw, sh, done) = apply_scale_animation(
-        aligned_x,
-        aligned_y,
+        x1,
+        y1,
         actual_w,
         actual_h,
         next_placement.scalars.scale,
