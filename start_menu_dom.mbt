@@ -213,9 +213,9 @@ extern "js" fn start_logo_dom_render(
   #|     root.appendChild(logo);
   #|   }
   #|   const ms = typeof duration_ms === 'number' ? duration_ms : 2000;
-  #|   logo.style.setProperty('--reisen-start-logo-duration', `${ms}ms`);
   #|   logo.innerHTML = '';
   #|   const img = doc.createElement('img');
+  #|   img.style.setProperty('--reisen-start-logo-duration', `${ms}ms`);
   #|   img.dataset.reisen = 'start-logo-image';
   #|   img.src = url;
   #|   logo.appendChild(img);

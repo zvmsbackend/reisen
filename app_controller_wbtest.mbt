@@ -234,3 +234,53 @@ test "app controller custom event jump resumes on next step" {
     None => fail("Expected runner")
   }
 }
+
+///|
+test "start logo sequence advances one logo per skip" {
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    script,
+    () => GameState::new(0),
+    "app",
+    start_logo_urls=["logo_a.png", "logo_b.png", "logo_c.png"],
+    start_logo_duration_ms=5000,
+  )
+
+  app.enter_start_logo()
+  assert_eq(app.phase(), AppPhase::StartLogo)
+  assert_eq(app.start_logo_index, 0)
+
+  app.advance_start_logo()
+  assert_eq(app.phase(), AppPhase::StartLogo)
+  assert_eq(app.start_logo_index, 1)
+
+  app.advance_start_logo()
+  assert_eq(app.phase(), AppPhase::StartLogo)
+  assert_eq(app.start_logo_index, 2)
+
+  app.advance_start_logo()
+  assert_eq(app.phase(), AppPhase::StartMenu)
+}
+
+///|
+test "start logo timeout advances sequence before menu" {
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    script,
+    () => GameState::new(0),
+    "app",
+    start_logo_urls=["logo_a.png", "logo_b.png"],
+    start_logo_duration_ms=100,
+  )
+
+  app.enter_start_logo()
+  assert_eq(app.phase(), AppPhase::StartLogo)
+  assert_eq(app.start_logo_index, 0)
+
+  ignore(app.tick(elapsed_ms=100))
+  assert_eq(app.phase(), AppPhase::StartLogo)
+  assert_eq(app.start_logo_index, 1)
+
+  ignore(app.tick(elapsed_ms=100))
+  assert_eq(app.phase(), AppPhase::StartMenu)
+}

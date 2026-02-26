@@ -22,9 +22,10 @@ struct AppController[T] {
   menu_music_id : String?
   menu_music_loop : Bool
   mut menu_music_playing : Bool
-  start_logo_url : String
+  start_logo_urls : Array[String]
   start_logo_duration_ms : Int
   mut start_logo_elapsed_ms : Int
+  mut start_logo_index : Int
   menu : StartMenu
   gallery_menu : GalleryMenu
   settings_menu : SettingsMenu
@@ -49,12 +50,13 @@ pub fn[T] AppController::new(
   gallery_background? : String = "",
   menu_music? : Music,
   menu_music_loop? : Bool = true,
-  start_logo_url? : String = "",
+  start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
   gallery_replay_state_factories? : ReplayStateFactories[T] = ReplayStateFactories::new(),
 ) -> AppController[T] {
+  let normalized_start_logos = start_logo_urls.filter(logo => logo != "")
   let app : AppController[T] = {
     script,
     new_state,
@@ -65,9 +67,10 @@ pub fn[T] AppController::new(
     menu_music_id: menu_music.map(music => music.0),
     menu_music_loop,
     menu_music_playing: false,
-    start_logo_url,
+    start_logo_urls: normalized_start_logos,
     start_logo_duration_ms,
     start_logo_elapsed_ms: 0,
+    start_logo_index: 0,
     menu: StartMenu::new(
       ui_root_id,
       save_namespace~,
@@ -92,6 +95,21 @@ pub fn[T] AppController::new(
   }
   app.menu.render_gate()
   app
+}
+
+///|
+fn[T] AppController::show_current_start_logo(self : AppController[T]) -> Unit {
+  if self.start_logo_index < 0 ||
+    self.start_logo_index >= self.start_logo_urls.length() {
+    self.enter_start_menu()
+    return
+  }
+  self.menu.render_logo(
+    self.start_logo_urls[self.start_logo_index],
+    self.start_logo_duration_ms,
+  )
+  self.start_logo_elapsed_ms = 0
+  self.phase = AppPhase::StartLogo
 }
 
 ///|
@@ -124,10 +142,24 @@ fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
 
 ///|
 fn[T] AppController::enter_start_logo(self : AppController[T]) -> Unit {
+  if self.start_logo_urls.is_empty() {
+    self.enter_start_menu()
+    return
+  }
   self.menu.clear_gate()
-  self.menu.render_logo(self.start_logo_url, self.start_logo_duration_ms)
-  self.start_logo_elapsed_ms = 0
-  self.phase = AppPhase::StartLogo
+  self.start_logo_index = 0
+  self.show_current_start_logo()
+}
+
+///|
+fn[T] AppController::advance_start_logo(self : AppController[T]) -> Unit {
+  let next = self.start_logo_index + 1
+  if next >= self.start_logo_urls.length() {
+    self.enter_start_menu()
+    return
+  }
+  self.start_logo_index = next
+  self.show_current_start_logo()
 }
 
 ///|
@@ -329,7 +361,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
     AppPhase::StartGate => {
       match self.menu.take_gate_action() {
         StartGateAction::Start =>
-          if self.start_logo_url == "" {
+          if self.start_logo_urls.is_empty() {
             self.enter_start_menu()
           } else {
             self.enter_start_logo()
@@ -341,10 +373,10 @@ pub fn[T : FromJson + ToJson] AppController::tick(
     AppPhase::StartLogo => {
       self.start_logo_elapsed_ms += elapsed_ms
       match self.menu.take_logo_action() {
-        StartLogoAction::Done => self.enter_start_menu()
+        StartLogoAction::Done => self.advance_start_logo()
         StartLogoAction::NoAction =>
           if self.start_logo_elapsed_ms >= self.start_logo_duration_ms {
-            self.enter_start_menu()
+            self.advance_start_logo()
           }
       }
       true
