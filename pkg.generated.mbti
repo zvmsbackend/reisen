@@ -163,9 +163,9 @@ pub fn register_pixi_effect((PixiSprite, Array[(String, Double)], Int) -> Bool, 
 
 pub fn[T] reisen_parse_text_script(String) -> Script[T] raise ScriptBuildError
 
-pub fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T]) -> Unit
+pub async fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T]) -> Unit
 
-pub fn[T] run_browser_loop(GameRunner[T]) -> Unit
+pub async fn[T] run_browser_loop(GameRunner[T]) -> Unit
 
 pub fn[T : ToJson] save_director_to_slot(Director[T], String, save_namespace? : String) -> Unit
 
@@ -301,10 +301,10 @@ pub impl ToJson for AnimationSpec
 pub impl @json.FromJson for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(() -> Script[T] raise, () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
+pub fn[T] AppController::new(async () -> Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T] AppController::submit_custom_event(Self[T], String, String) -> Bool
-pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
+pub async fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
 pub enum AppPhase {
   StartGate
@@ -998,7 +998,7 @@ pub type PixiEffectApply = (PixiSprite, Array[(String, Double)], Int) -> Bool
 
 pub type RenderSyncHook[T] = (Director[T]) -> Unit
 
-pub type ScriptFactory[T] = () -> Script[T] raise
+pub type ScriptFactory[T] = async () -> Script[T]
 
 pub type ScriptHook[T] = (GameState[T]) -> Unit
 

@@ -12,7 +12,7 @@ pub enum AppPhase {
 } derive(Show, Eq)
 
 ///|
-pub type ScriptFactory[T] = () -> Script[T] raise
+pub type ScriptFactory[T] = async () -> Script[T]
 
 ///|
 struct AppController[T] {
@@ -43,7 +43,7 @@ struct AppController[T] {
 
 ///|
 pub fn[T] AppController::new(
-  script_factory : () -> Script[T] raise,
+  script_factory : ScriptFactory[T],
   new_state : () -> GameState[T],
   ui_root_id : String,
   save_namespace? : String = "global",
@@ -103,11 +103,15 @@ pub fn[T] AppController::new(
 }
 
 ///|
-fn[T] AppController::script(self : AppController[T]) -> Script[T] {
+async fn[T] AppController::script(self : AppController[T]) -> Script[T] {
   match self.script {
     Some(script) => script
     None => {
-      let script = try! (self.script_factory)()
+      let script = (self.script_factory)() catch {
+        PixiBindingError::ResourceLoadFailed(message~) =>
+          abort("Failed to load script resources: \{message}")
+        _ => panic()
+      }
       self.script = Some(script)
       script
     }
@@ -218,7 +222,7 @@ fn[T] AppController::replay_factory_for_image(
 }
 
 ///|
-fn[T] AppController::start_gallery_replay(
+async fn[T] AppController::start_gallery_replay(
   self : AppController[T],
   replay_label : String,
 ) -> Unit {
@@ -252,7 +256,7 @@ fn[T] AppController::start_gallery_replay(
 }
 
 ///|
-fn[T : FromJson] AppController::handle_menu_action(
+async fn[T : FromJson] AppController::handle_menu_action(
   self : AppController[T],
   action : StartMenuAction,
 ) -> Unit {
@@ -370,7 +374,7 @@ fn slot_exists(existing : Array[String], slot : String) -> Bool {
 }
 
 ///|
-pub fn[T : FromJson + ToJson] AppController::tick(
+pub async fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
 ) -> Bool {

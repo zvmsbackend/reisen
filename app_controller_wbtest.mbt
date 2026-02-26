@@ -1,5 +1,5 @@
 ///|
-test "app controller enters game on new game action" {
+async test "app controller enters game on new game action" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(() => script, () => GameState::new(0), "app")
 
@@ -10,7 +10,7 @@ test "app controller enters game on new game action" {
 }
 
 ///|
-test "app controller stays in menu when loading missing slot" {
+async test "app controller stays in menu when loading missing slot" {
   save_slot_delete_in("app_test_ns_missing", "slot1")
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(() => script, () => GameState::new(0), "app")
@@ -21,7 +21,7 @@ test "app controller stays in menu when loading missing slot" {
 }
 
 ///|
-test "app controller can continue from saved slot" {
+async test "app controller can continue from saved slot" {
   save_slot_delete_in("app_test_ns_continue", "slot1")
   let script : Script[Int] = script(builder => {
     builder.say("n", "a")
@@ -46,7 +46,7 @@ test "app controller can continue from saved slot" {
 }
 
 ///|
-test "app controller opens gallery when entries exist" {
+async test "app controller opens gallery when entries exist" {
   gallery_register_image(
     GalleryImage::new(gensym(prefix="app_gallery"), "assets/cg_dummy.jpg"),
   )
@@ -58,7 +58,7 @@ test "app controller opens gallery when entries exist" {
 }
 
 ///|
-test "gallery replay uses app controller state factory by default" {
+async test "gallery replay uses app controller state factory by default" {
   let replay_label = gensym(prefix="replay_default")
   let start_label = label(name=gensym(prefix="start_default"))
   let replay_target = label(name=replay_label)
@@ -104,7 +104,7 @@ test "gallery replay uses app controller state factory by default" {
 }
 
 ///|
-test "gallery replay uses image-specific state factory key" {
+async test "gallery replay uses image-specific state factory key" {
   let replay_label = gensym(prefix="replay_custom")
   let start_label = label(name=gensym(prefix="start_custom"))
   let replay_target = label(name=replay_label)
@@ -161,7 +161,7 @@ test "gallery replay uses image-specific state factory key" {
 }
 
 ///|
-test "app controller submit custom event only works in game" {
+async test "app controller submit custom event only works in game" {
   let script : Script[Int] = script(builder => {
     builder.wait_custom_event("evt", (_, payload) => payload == "ok")
     builder.say("n", "done")
@@ -200,7 +200,7 @@ test "app controller submit custom event only works in game" {
 }
 
 ///|
-test "app controller custom event jump resumes on next step" {
+async test "app controller custom event jump resumes on next step" {
   let left = label(name="left")
   let right = label(name="right")
   let script : Script[Int] = script(builder => {
@@ -263,7 +263,7 @@ test "start logo sequence advances one logo per skip" {
 }
 
 ///|
-test "start logo timeout advances sequence before menu" {
+async test "start logo timeout advances sequence before menu" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(
     () => script,
@@ -286,7 +286,7 @@ test "start logo timeout advances sequence before menu" {
 }
 
 ///|
-test "script factory is lazy and cached" {
+async test "script factory is lazy and cached" {
   let calls = Ref::new(0)
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(

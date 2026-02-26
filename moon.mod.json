@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "deps": {
     "moonbit-community/js-ffi": "0.4.2",
-    "sennenki/abort_hook": "0.1.0"
+    "sennenki/abort_hook": "0.1.0",
+    "moonbitlang/async": "0.16.6"
   },
   "readme": "README.mbt.md",
   "repository": "https://github.com/zvmsbackend/reisen.git",

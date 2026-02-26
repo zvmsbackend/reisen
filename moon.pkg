@@ -1,6 +1,15 @@
 import {
+  "sennenki/abort_hook/lib",
   "moonbit-community/js-ffi/js",
   "moonbitlang/core/math",
   "moonbitlang/core/json",
   "moonbitlang/core/strconv",
 }
+
+import {
+  "moonbitlang/async",
+} for "wbtest"
+
+options(
+  overrides: [ "sennenki/abort_hook" ],
+)
