@@ -225,7 +225,7 @@ pub async fn AssetStore::register_live2d_figure(
   self : AssetStore,
   model_json_url : String,
   id? : String = gensym(prefix="live2d_figure"),
-) -> Live2dFigure {
+) -> Live2dFigure raise PixiBindingError {
   if self.live2d_models.get(id) is None {
     let model = pixi_load_live2d_model(model_json_url)
     self.put_live2d_model(id, model)

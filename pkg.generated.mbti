@@ -131,9 +131,9 @@ pub fn persistent_set_text(String, String) -> Unit
 
 pub fn persistent_set_text_in(String, String, String) -> Unit
 
-pub async fn pixi_assets_load_texture(String) -> PixiTexture
+pub async fn pixi_assets_load_texture(String) -> PixiTexture raise PixiBindingError
 
-pub async fn pixi_load_live2d_model(String) -> PixiLive2dModel
+pub async fn pixi_load_live2d_model(String) -> PixiLive2dModel raise PixiBindingError
 
 pub fn pixi_new_application() -> PixiApplication
 
@@ -242,6 +242,10 @@ pub suberror AppBootstrapError {
   MissingSaveSlot(slot~ : String)
 }
 
+pub suberror PixiBindingError {
+  ResourceLoadFailed(message~ : String)
+}
+
 pub suberror ReisenTextError {
 }
 pub impl Eq for ReisenTextError
@@ -328,7 +332,7 @@ pub fn AssetStore::put_video(Self, String, Video) -> Unit
 pub async fn AssetStore::register_background(Self, String, id? : String) -> Background
 pub async fn AssetStore::register_background_video(Self, String, id? : String) -> Background
 pub async fn AssetStore::register_figure(Self, String, id? : String) -> PixiFigure
-pub async fn AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure
+pub async fn AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure raise PixiBindingError
 
 type AudioCommand
 pub impl Eq for AudioCommand

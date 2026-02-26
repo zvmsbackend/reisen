@@ -93,9 +93,47 @@ pub fn pixi_new_color_matrix_filter() -> PixiColorMatrixFilter = "newColorMatrix
 fn js_load_live2d_model_promise(source : String) -> @js.Promise = "loadLive2dModel"
 
 ///|
-pub async fn pixi_load_live2d_model(source : String) -> PixiLive2dModel {
-  let v = @js.Promise::wait(js_load_live2d_model_promise(source))
-  v.cast()
+pub suberror PixiBindingError {
+  ResourceLoadFailed(message~ : String)
+}
+
+///|
+extern "js" fn load_result_ok(result : @js.Value) -> Bool =
+  #| (result) => !!(result && result.ok === true)
+
+///|
+extern "js" fn load_result_value(result : @js.Value) -> @js.Value =
+  #| (result) => result?.value
+
+///|
+extern "js" fn load_result_error(
+  result : @js.Value,
+  fallback : String,
+) -> String =
+  #| (result, fallback) => {
+  #|   const message = result && typeof result.error === 'string' ? result.error : '';
+  #|   return message || fallback;
+  #| }
+
+///|
+pub async fn pixi_load_live2d_model(
+  source : String,
+) -> PixiLive2dModel raise PixiBindingError {
+  let result = @js.Promise::wait(js_load_live2d_model_promise(source)) catch {
+    _ =>
+      raise PixiBindingError::ResourceLoadFailed(
+        message="Failed to load Live2D model: \{source}",
+      )
+  }
+  if !load_result_ok(result) {
+    raise PixiBindingError::ResourceLoadFailed(
+      message=load_result_error(
+        result,
+        "Failed to load Live2D model: \{source}",
+      ),
+    )
+  }
+  load_result_value(result).cast()
 }
 
 ///|
@@ -103,9 +141,24 @@ pub async fn pixi_load_live2d_model(source : String) -> PixiLive2dModel {
 fn js_assets_load_promise(source : String) -> @js.Promise = "loadTexturePromise"
 
 ///|
-pub async fn pixi_assets_load_texture(source : String) -> PixiTexture {
-  let v = @js.Promise::wait(js_assets_load_promise(source))
-  v.cast()
+pub async fn pixi_assets_load_texture(
+  source : String,
+) -> PixiTexture raise PixiBindingError {
+  let result = @js.Promise::wait(js_assets_load_promise(source)) catch {
+    _ =>
+      raise PixiBindingError::ResourceLoadFailed(
+        message="Failed to load Pixi texture: \{source}",
+      )
+  }
+  if !load_result_ok(result) {
+    raise PixiBindingError::ResourceLoadFailed(
+      message=load_result_error(
+        result,
+        "Failed to load Pixi texture: \{source}",
+      ),
+    )
+  }
+  load_result_value(result).cast()
 }
 
 ///|
