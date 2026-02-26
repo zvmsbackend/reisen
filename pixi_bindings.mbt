@@ -37,6 +37,10 @@ type PixiBlurFilter
 type PixiColorMatrixFilter
 
 ///|
+#external
+type PixiLive2dModel
+
+///|
 pub extern "js" fn window_inner_width() -> Double =
   #| () => window.innerWidth
 
@@ -83,6 +87,16 @@ pub fn pixi_new_blur_filter() -> PixiBlurFilter = "newBlurFilter"
 ///|
 #module("/pixi-bridge.js")
 pub fn pixi_new_color_matrix_filter() -> PixiColorMatrixFilter = "newColorMatrixFilter"
+
+///|
+#module("/pixi-bridge.js")
+fn js_load_live2d_model_promise(source : String) -> @js.Promise = "loadLive2dModel"
+
+///|
+pub async fn pixi_load_live2d_model(source : String) -> PixiLive2dModel {
+  let v = @js.Promise::wait(js_load_live2d_model_promise(source))
+  v.cast()
+}
 
 ///|
 #module("/pixi-bridge.js")
@@ -158,6 +172,20 @@ extern "js" fn PixiContainer::add_sprite(
 extern "js" fn PixiContainer::remove_sprite(
   self : PixiContainer,
   child : PixiSprite,
+) -> Unit =
+  #| (self, child) => { self.removeChild(child); }
+
+///|
+extern "js" fn PixiContainer::add_live2d(
+  self : PixiContainer,
+  child : PixiLive2dModel,
+) -> Unit =
+  #| (self, child) => { self.addChild(child); }
+
+///|
+extern "js" fn PixiContainer::remove_live2d(
+  self : PixiContainer,
+  child : PixiLive2dModel,
 ) -> Unit =
   #| (self, child) => { self.removeChild(child); }
 
@@ -251,6 +279,128 @@ extern "js" fn PixiSprite::set_z_index(
   z_index : Int,
 ) -> Unit =
   #| (self, z_index) => { self.zIndex = z_index; }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_anchor(
+  self : PixiLive2dModel,
+  x : Double,
+  y : Double,
+) -> Unit =
+  #| (self, x, y) => {
+  #|   if (self.anchor && self.anchor.set) {
+  #|     self.anchor.set(x, y);
+  #|   }
+  #| }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_position(
+  self : PixiLive2dModel,
+  x : Double,
+  y : Double,
+) -> Unit =
+  #| (self, x, y) => {
+  #|   if (self.position && self.position.set) {
+  #|     self.position.set(x, y);
+  #|   } else {
+  #|     self.x = x;
+  #|     self.y = y;
+  #|   }
+  #| }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_scale(
+  self : PixiLive2dModel,
+  x : Double,
+  y : Double,
+) -> Unit =
+  #| (self, x, y) => {
+  #|   if (self.scale && self.scale.set) {
+  #|     self.scale.set(x, y);
+  #|   }
+  #| }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_rotation(
+  self : PixiLive2dModel,
+  radians : Double,
+) -> Unit =
+  #| (self, radians) => { self.rotation = radians; }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_alpha(
+  self : PixiLive2dModel,
+  alpha : Double,
+) -> Unit =
+  #| (self, alpha) => { self.alpha = alpha; }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_visible(
+  self : PixiLive2dModel,
+  visible : Bool,
+) -> Unit =
+  #| (self, visible) => { self.visible = visible; }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_z_index(
+  self : PixiLive2dModel,
+  z_index : Int,
+) -> Unit =
+  #| (self, z_index) => { self.zIndex = z_index; }
+
+///|
+pub extern "js" fn PixiLive2dModel::focus(
+  self : PixiLive2dModel,
+  x : Double,
+  y : Double,
+  instant? : Bool = false,
+) -> Unit =
+  #| (self, x, y, instant) => {
+  #|   if (typeof self.focus === 'function') {
+  #|     self.focus(x, y, instant);
+  #|   }
+  #| }
+
+///|
+pub extern "js" fn PixiLive2dModel::destroy(self : PixiLive2dModel) -> Unit =
+  #| (self) => {
+  #|   if (typeof self.destroy === 'function') {
+  #|     self.destroy({ children: true, texture: false, baseTexture: false });
+  #|   }
+  #| }
+
+///|
+#module("/pixi-bridge.js")
+fn js_live2d_motion_promise(
+  model : PixiLive2dModel,
+  group : String,
+  index? : Int,
+) -> @js.Promise = "live2dMotion"
+
+///|
+pub async fn PixiLive2dModel::motion(
+  self : PixiLive2dModel,
+  group : String,
+  index? : Int,
+) -> Bool {
+  let v = @js.Promise::wait(js_live2d_motion_promise(self, group, index?))
+  v.cast()
+}
+
+///|
+#module("/pixi-bridge.js")
+fn js_live2d_expression_promise(
+  model : PixiLive2dModel,
+  id? : String,
+) -> @js.Promise = "live2dExpression"
+
+///|
+pub async fn PixiLive2dModel::expression(
+  self : PixiLive2dModel,
+  id? : String,
+) -> Bool {
+  let v = @js.Promise::wait(js_live2d_expression_promise(self, id?))
+  v.cast()
+}
 
 ///|
 extern "js" fn PixiTexture::width(self : PixiTexture) -> Double =

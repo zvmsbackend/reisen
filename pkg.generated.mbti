@@ -133,6 +133,8 @@ pub fn persistent_set_text_in(String, String, String) -> Unit
 
 pub async fn pixi_assets_load_texture(String) -> PixiTexture
 
+pub async fn pixi_load_live2d_model(String) -> PixiLive2dModel
+
 pub fn pixi_new_application() -> PixiApplication
 
 pub fn pixi_new_blur_filter() -> PixiBlurFilter
@@ -596,6 +598,19 @@ pub impl Figure for PixiFigure
 pub impl PixiTarget for PixiFigure
 
 type PixiFilter
+
+type PixiLive2dModel
+pub fn PixiLive2dModel::destroy(Self) -> Unit
+pub async fn PixiLive2dModel::expression(Self, id? : String) -> Bool
+pub fn PixiLive2dModel::focus(Self, Double, Double, instant? : Bool) -> Unit
+pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool
+pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
+pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_position(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_rotation(Self, Double) -> Unit
+pub fn PixiLive2dModel::set_scale(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_visible(Self, Bool) -> Unit
+pub fn PixiLive2dModel::set_z_index(Self, Int) -> Unit
 
 pub struct PixiPresenterConfig {
   antialias : Bool
