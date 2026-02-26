@@ -854,7 +854,7 @@ fn[T, A : AnimationTarget] ScriptBuilder::emit_animation(
   spec : AnimationSpec,
 ) -> Unit {
   match target.kind() {
-    Pixi => self.instructions.push(AnimateWebgl(target.id(), spec))
+    Pixi => self.instructions.push(AnimatePixi(target.id(), spec))
     Dom => self.instructions.push(AnimateDom(target.id(), spec))
   }
 }

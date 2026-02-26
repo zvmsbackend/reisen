@@ -232,7 +232,7 @@ test "parse animate range" {
   )
   assert_eq(script.instructions.length(), 1)
   match script.instructions[0] {
-    AnimateWebgl(_, spec) => {
+    AnimatePixi(_, spec) => {
       inspect(spec.prop, content="Opacity")
       assert_eq(spec.duration_ms, 400)
       assert_eq(spec.from, Some([0.2]))
@@ -287,7 +287,7 @@ test "parse blocking animation" {
   )
   assert_eq(script.instructions.length(), 1)
   match script.instructions[0] {
-    AnimateWebgl(_, spec) => assert_eq(spec.blocking, true)
+    AnimatePixi(_, spec) => assert_eq(spec.blocking, true)
     _ => fail("Expected Animate instruction")
   }
 }

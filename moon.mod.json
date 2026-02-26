@@ -12,7 +12,7 @@
   "keywords": [
     "game",
     "engine",
-    "webgl"
+    "pixi"
   ],
   "description": "A visual novel engine in MoonBit",
   "preferred-target": "js"

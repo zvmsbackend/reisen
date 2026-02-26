@@ -1,6 +1,6 @@
 ///|
 /// Director layer that maps `RuntimeEvent` to presentation-facing state.
-/// WebGL renderers can read render state while HTML UI can read dialog/choices.
+/// PIXI renderers can read render state while HTML UI can read dialog/choices.
 
 ///|
 struct DialogLine {
@@ -30,7 +30,7 @@ pub struct RenderState {
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
-  webgl_animations : Array[(String, AnimationSpec)]
+  pixi_animations : Array[(String, AnimationSpec)]
   dom_animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
   live2d_motions : Array[(String, String, Int?)]
@@ -77,7 +77,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       music: None,
       last_sfx: None,
       last_sfx_interrupted: false,
-      webgl_animations: [],
+      pixi_animations: [],
       dom_animations: [],
       effects: {},
       live2d_motions: [],
@@ -170,8 +170,8 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     SfxStopped =>
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
     CgUnlocked(_) => ()
-    AnimatedWebgl(target, spec) =>
-      self.render.webgl_animations.push((target, spec))
+    AnimatedPixi(target, spec) =>
+      self.render.pixi_animations.push((target, spec))
     AnimatedDom(target, spec) => self.render.dom_animations.push((target, spec))
     EffectApplied(target, spec) => {
       let current = self.render.effects.get(target).unwrap_or([])
@@ -379,7 +379,7 @@ pub fn[T] Director::take_interrupted_sfx(self : Director[T]) -> String? {
 pub fn[T] Director::animations(
   self : Director[T],
 ) -> Array[(String, AnimationSpec)] {
-  self.render.webgl_animations
+  self.render.pixi_animations
 }
 
 ///|
@@ -424,7 +424,7 @@ pub fn[T] Director::clear_render(self : Director[T]) -> Unit {
   self.render.music = None
   self.render.last_sfx = None
   self.render.last_sfx_interrupted = false
-  self.render.webgl_animations.clear()
+  self.render.pixi_animations.clear()
   self.render.dom_animations.clear()
   self.render.effects.clear()
   self.render.live2d_motions.clear()

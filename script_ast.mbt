@@ -174,7 +174,7 @@ pub enum Instruction[T] {
   StopMusic
   PlaySfx(String, Bool)
   UnlockCg(String)
-  AnimateWebgl(String, AnimationSpec)
+  AnimatePixi(String, AnimationSpec)
   AnimateDom(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
   PlayLive2dMotion(String, String, Int?)
@@ -193,7 +193,7 @@ pub(all) suberror ScriptBuildError {
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
   EffectUnsupportedOnDomTarget(target~ : String)
-  SetInteractiveUnsupportedOnWebglTarget(target~ : String)
+  SetInteractiveUnsupportedOnPixiTarget(target~ : String)
 }
 
 ///|

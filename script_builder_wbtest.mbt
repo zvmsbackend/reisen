@@ -239,21 +239,21 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   }
   assert_true(
     built.instructions[2]
-    is AnimateWebgl(
+    is AnimatePixi(
       "alice",
       { prop: Opacity, duration_ms: 120, easing: Linear, .. }
     ),
   )
   assert_true(
     built.instructions[3]
-    is AnimateWebgl(
+    is AnimatePixi(
       "alice",
       { prop: Position, duration_ms: 180, easing: EaseInOut, .. }
     ),
   )
   assert_true(
     built.instructions[4]
-    is AnimateWebgl(
+    is AnimatePixi(
       "alice",
       { prop: Scale, duration_ms: 240, easing: EaseOut, .. }
     ),

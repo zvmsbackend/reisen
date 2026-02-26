@@ -33,7 +33,7 @@ pub enum RuntimeEvent {
   SfxPlayed(String, Bool)
   SfxStopped
   CgUnlocked(String)
-  AnimatedWebgl(String, AnimationSpec)
+  AnimatedPixi(String, AnimationSpec)
   AnimatedDom(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
   Live2dMotionPlayed(String, String, Int?)
@@ -313,9 +313,9 @@ fn[T] Runtime::run_inst(
       gallery_unlock_image_by_id(id)
       CgUnlocked(id)
     }
-    AnimateWebgl(target, spec) => {
+    AnimatePixi(target, spec) => {
       self.ip = self.ip + 1
-      AnimatedWebgl(target, spec)
+      AnimatedPixi(target, spec)
     }
     AnimateDom(target, spec) => {
       self.ip = self.ip + 1

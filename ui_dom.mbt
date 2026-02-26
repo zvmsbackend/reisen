@@ -1,6 +1,6 @@
 ///|
 /// HTML UI bridge for dialogs and choice buttons.
-/// Figures/backgrounds stay in WebGL; this module only updates DOM nodes.
+/// Figures/backgrounds stay in PIXI; this module only updates DOM nodes.
 
 ///|
 struct UiChoiceView {

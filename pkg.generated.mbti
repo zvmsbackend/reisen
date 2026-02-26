@@ -73,12 +73,6 @@ pub fn gensym(prefix? : String) -> String
 
 pub fn get_canvas_by_id(String) -> PixiCanvas?
 
-pub fn js_float32_array(Array[Double]) -> @js.Value
-
-pub fn js_uint16_array(Array[Int]) -> @js.Value
-
-pub fn js_uint8_array(Array[Int]) -> @js.Value
-
 pub fn label(name? : String) -> Label
 
 pub async fn load_bytes(String) -> Bytes
@@ -223,10 +217,6 @@ pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, rende
 
 pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String, settings? : GameSettings) -> GameRunner[T] raise
 
-pub fn[T] start_game_webgl(Script[T], GameState[T], String, WebGL, AssetStore, presenter_config? : PixiPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
-
-pub fn[T] start_game_webgl_with_audio(Script[T], GameState[T], String, WebGL, AssetStore, AudioDom, presenter_config? : PixiPresenterConfig, settings? : GameSettings) -> GameRunner[T] raise
-
 pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
 
 pub fn[T] validate_script_audio_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
@@ -258,7 +248,7 @@ pub(all) suberror ScriptBuildError {
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
   EffectUnsupportedOnDomTarget(target~ : String)
-  SetInteractiveUnsupportedOnWebglTarget(target~ : String)
+  SetInteractiveUnsupportedOnPixiTarget(target~ : String)
 }
 
 pub suberror ScriptRuntimeError {
@@ -363,10 +353,6 @@ pub impl Eq for BackgroundState
 pub impl Show for BackgroundState
 pub impl ToJson for BackgroundState
 pub impl @json.FromJson for BackgroundState
-
-type Canvas
-pub fn Canvas::get_webgl2_context(Self) -> WebGL?
-pub fn Canvas::get_webgl_context(Self) -> WebGL?
 
 type ChoiceOption
 pub impl Eq for ChoiceOption
@@ -583,7 +569,7 @@ pub enum Instruction[T] {
   StopMusic
   PlaySfx(String, Bool)
   UnlockCg(String)
-  AnimateWebgl(String, AnimationSpec)
+  AnimatePixi(String, AnimationSpec)
   AnimateDom(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
   PlayLive2dMotion(String, String, Int?)
@@ -681,7 +667,7 @@ pub struct RenderState {
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
-  webgl_animations : Array[(String, AnimationSpec)]
+  pixi_animations : Array[(String, AnimationSpec)]
   dom_animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
   live2d_motions : Array[(String, String, Int?)]
@@ -754,7 +740,7 @@ pub enum RuntimeEvent {
   SfxPlayed(String, Bool)
   SfxStopped
   CgUnlocked(String)
-  AnimatedWebgl(String, AnimationSpec)
+  AnimatedPixi(String, AnimationSpec)
   AnimatedDom(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
   Live2dMotionPlayed(String, String, Int?)
@@ -941,57 +927,6 @@ pub impl Show for UiViewModel
 
 type Video
 pub impl @js.Cast for Video
-
-type WebGL
-pub fn WebGL::active_texture(Self, Int) -> Unit
-pub fn WebGL::attach_shader(Self, WebGLProgram, WebGLShader) -> Unit
-pub fn WebGL::bind_buffer(Self, Int, WebGLBuffer) -> Unit
-pub fn WebGL::bind_texture(Self, Int, WebGLTexture) -> Unit
-pub fn WebGL::blend_func(Self, Int, Int) -> Unit
-pub fn WebGL::buffer_data(Self, Int, @js.Value, Int) -> Unit
-pub fn WebGL::clear(Self, Int) -> Unit
-pub fn WebGL::clear_color(Self, Double, Double, Double, Double) -> Unit
-pub fn WebGL::compile_shader(Self, WebGLShader) -> Unit
-pub fn WebGL::constant(Self, String) -> Int
-pub fn WebGL::create_buffer(Self) -> WebGLBuffer?
-pub fn WebGL::create_program(Self) -> WebGLProgram?
-pub fn WebGL::create_shader(Self, Int) -> WebGLShader?
-pub fn WebGL::create_texture(Self) -> WebGLTexture?
-pub fn WebGL::draw_arrays(Self, Int, Int, Int) -> Unit
-pub fn WebGL::draw_elements(Self, Int, Int, Int, Int) -> Unit
-pub fn WebGL::enable(Self, Int) -> Unit
-pub fn WebGL::enable_vertex_attrib_array(Self, Int) -> Unit
-pub fn WebGL::generate_mipmap(Self, Int) -> Unit
-pub fn WebGL::get_attrib_location(Self, WebGLProgram, String) -> Int
-pub fn WebGL::get_program_info_log(Self, WebGLProgram) -> String
-pub fn WebGL::get_program_parameter(Self, WebGLProgram, Int) -> Bool
-pub fn WebGL::get_shader_info_log(Self, WebGLShader) -> String
-pub fn WebGL::get_shader_parameter(Self, WebGLShader, Int) -> Bool
-pub fn WebGL::get_uniform_location(Self, WebGLProgram, String) -> WebGLUniformLocation?
-pub fn WebGL::link_program(Self, WebGLProgram) -> Unit
-pub fn WebGL::shader_source(Self, WebGLShader, String) -> Unit
-pub fn WebGL::tex_image_2d(Self, Int, Int, Int, Int, Int, Int, Int, Int, @js.Value) -> Unit
-pub fn WebGL::tex_image_2d_source(Self, Int, Int, Int, Int, Int, @js.Value) -> Unit
-pub fn WebGL::tex_param_i(Self, Int, Int, Int) -> Unit
-pub fn WebGL::uniform1f(Self, WebGLUniformLocation, Double) -> Unit
-pub fn WebGL::uniform1i(Self, WebGLUniformLocation, Int) -> Unit
-pub fn WebGL::uniform2f(Self, WebGLUniformLocation, Double, Double) -> Unit
-pub fn WebGL::uniform3f(Self, WebGLUniformLocation, Double, Double, Double) -> Unit
-pub fn WebGL::uniform4f(Self, WebGLUniformLocation, Double, Double, Double, Double) -> Unit
-pub fn WebGL::uniform_matrix4(Self, WebGLUniformLocation, Bool, @js.Value) -> Unit
-pub fn WebGL::use_program(Self, WebGLProgram) -> Unit
-pub fn WebGL::vertex_attrib_pointer(Self, Int, Int, Int, Bool, Int, Int) -> Unit
-pub fn WebGL::viewport(Self, Int, Int, Int, Int) -> Unit
-
-type WebGLBuffer
-
-type WebGLProgram
-
-type WebGLShader
-
-type WebGLTexture
-
-type WebGLUniformLocation
 
 // Type aliases
 pub type EffectParam = (String, Double)
