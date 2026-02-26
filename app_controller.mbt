@@ -12,8 +12,12 @@ pub enum AppPhase {
 } derive(Show, Eq)
 
 ///|
+pub type ScriptFactory[T] = () -> Script[T] raise
+
+///|
 struct AppController[T] {
-  script : Script[T]
+  script_factory : ScriptFactory[T]
+  mut script : Script[T]?
   new_state : () -> GameState[T]
   ui_root_id : String
   save_ns : String
@@ -39,7 +43,7 @@ struct AppController[T] {
 
 ///|
 pub fn[T] AppController::new(
-  script : Script[T],
+  script_factory : () -> Script[T] raise,
   new_state : () -> GameState[T],
   ui_root_id : String,
   save_namespace? : String = "global",
@@ -58,7 +62,8 @@ pub fn[T] AppController::new(
 ) -> AppController[T] {
   let normalized_start_logos = start_logo_urls.filter(logo => logo != "")
   let app : AppController[T] = {
-    script,
+    script_factory,
+    script: None,
     new_state,
     ui_root_id,
     save_ns: save_namespace,
@@ -95,6 +100,18 @@ pub fn[T] AppController::new(
   }
   app.menu.render_gate()
   app
+}
+
+///|
+fn[T] AppController::script(self : AppController[T]) -> Script[T] {
+  match self.script {
+    Some(script) => script
+    None => {
+      let script = try! (self.script_factory)()
+      self.script = Some(script)
+      script
+    }
+  }
 }
 
 ///|
@@ -213,7 +230,7 @@ fn[T] AppController::start_gallery_replay(
       let settings = settings_read_in(self.save_ns)
       let replay_factory = self.replay_factory_for_image(image)
       let runner = start_game(
-        self.script,
+        self.script(),
         replay_factory(),
         self.ui_root_id,
         render_sync=self.render_sync,
@@ -246,7 +263,7 @@ fn[T : FromJson] AppController::handle_menu_action(
       self.start_menu_music_stop()
       self.runner = Some(
         start_game(
-          self.script,
+          self.script(),
           (self.new_state)(),
           self.ui_root_id,
           render_sync=self.render_sync,
@@ -260,7 +277,7 @@ fn[T : FromJson] AppController::handle_menu_action(
     Continue(slot) =>
       try {
         let runner = start_game_from_slot(
-          self.script,
+          self.script(),
           slot,
           self.ui_root_id,
           render_sync=self.render_sync,
@@ -433,7 +450,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
             Some(json) => {
               self.saved_director_json = None
               try {
-                let director = director_from_save_json(self.script, json)
+                let director = director_from_save_json(self.script(), json)
                 let ui = UiDom::new(self.ui_root_id)
                 let runner = GameRunner::new_with_hooks(
                   director,
@@ -462,7 +479,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
           self.start_menu_music_stop()
           self.runner = Some(
             start_game(
-              self.script,
+              self.script(),
               (self.new_state)(),
               self.ui_root_id,
               render_sync=self.render_sync,
@@ -504,7 +521,7 @@ pub fn[T : FromJson + ToJson] AppController::tick(
         SettingsAction::LoadSlot(slot) => {
           self.settings_menu.clear()
           let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
-            self.script,
+            self.script(),
             slot,
             self.ui_root_id,
             render_sync=self.render_sync,

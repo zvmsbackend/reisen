@@ -301,7 +301,7 @@ pub impl ToJson for AnimationSpec
 pub impl @json.FromJson for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
+pub fn[T] AppController::new(() -> Script[T] raise, () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T] AppController::submit_custom_event(Self[T], String, String) -> Bool
 pub fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
@@ -997,6 +997,8 @@ pub type PayloadPredicate[T] = (GameState[T], String) -> Bool
 pub type PixiEffectApply = (PixiSprite, Array[(String, Double)], Int) -> Bool
 
 pub type RenderSyncHook[T] = (Director[T]) -> Unit
+
+pub type ScriptFactory[T] = () -> Script[T] raise
 
 pub type ScriptHook[T] = (GameState[T]) -> Unit
 

@@ -2,7 +2,8 @@
   "name": "sennenki/reisen",
   "version": "0.1.0",
   "deps": {
-    "moonbit-community/js-ffi": "0.4.2"
+    "moonbit-community/js-ffi": "0.4.2",
+    "sennenki/abort_hook": "0.1.0"
   },
   "readme": "README.mbt.md",
   "repository": "https://github.com/zvmsbackend/reisen.git",

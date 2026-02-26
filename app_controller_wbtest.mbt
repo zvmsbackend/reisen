@@ -1,7 +1,7 @@
 ///|
 test "app controller enters game on new game action" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(script, () => GameState::new(0), "app")
+  let app = AppController::new(() => script, () => GameState::new(0), "app")
 
   assert_eq(app.phase(), AppPhase::StartGate)
   app.enter_start_menu()
@@ -13,7 +13,7 @@ test "app controller enters game on new game action" {
 test "app controller stays in menu when loading missing slot" {
   save_slot_delete_in("app_test_ns_missing", "slot1")
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(script, () => GameState::new(0), "app")
+  let app = AppController::new(() => script, () => GameState::new(0), "app")
   // Load from start menu now goes to settings
   app.enter_start_menu()
   app.handle_menu_action(StartMenuAction::NoAction)
@@ -35,7 +35,7 @@ test "app controller can continue from saved slot" {
   save_runner_to_slot(runner, "slot1", save_namespace="app_test_ns_continue")
 
   let app = AppController::new(
-    script,
+    () => script,
     () => GameState::new(0),
     "app",
     save_namespace="app_test_ns_continue",
@@ -51,7 +51,7 @@ test "app controller opens gallery when entries exist" {
     GalleryImage::new(gensym(prefix="app_gallery"), "assets/cg_dummy.jpg"),
   )
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(script, () => GameState::new(0), "app")
+  let app = AppController::new(() => script, () => GameState::new(0), "app")
   app.enter_start_menu()
   app.handle_menu_action(StartMenuAction::Gallery)
   assert_eq(app.phase(), AppPhase::Gallery)
@@ -76,7 +76,7 @@ test "gallery replay uses app controller state factory by default" {
   gallery_register_image(image)
   gallery_unlock_image(image)
   let app = AppController::new(
-    script,
+    () => script,
     () => {
       let state = GameState::new(0)
       state.set_text_var("who", "default")
@@ -132,7 +132,7 @@ test "gallery replay uses image-specific state factory key" {
   gallery_register_image(image)
   gallery_unlock_image(image)
   let app = AppController::new(
-    script,
+    () => script,
     () => {
       let state = GameState::new(0)
       state.set_text_var("who", "default")
@@ -167,7 +167,7 @@ test "app controller submit custom event only works in game" {
     builder.say("n", "done")
   })
   let seen : Array[RuntimeEvent] = []
-  let app = AppController::new(script, () => GameState::new(0), "app", event_hook=event => {
+  let app = AppController::new(() => script, () => GameState::new(0), "app", event_hook=event => {
     seen.push(event)
   })
 
@@ -216,7 +216,7 @@ test "app controller custom event jump resumes on next step" {
     builder.label(right)
     builder.say("n", "R")
   })
-  let app = AppController::new(script, () => GameState::new(0), "app")
+  let app = AppController::new(() => script, () => GameState::new(0), "app")
   app.enter_start_menu()
   app.handle_menu_action(StartMenuAction::NewGame)
   match app.runner {
@@ -239,7 +239,7 @@ test "app controller custom event jump resumes on next step" {
 test "start logo sequence advances one logo per skip" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(
-    script,
+    () => script,
     () => GameState::new(0),
     "app",
     start_logo_urls=["logo_a.png", "logo_b.png", "logo_c.png"],
@@ -266,7 +266,7 @@ test "start logo sequence advances one logo per skip" {
 test "start logo timeout advances sequence before menu" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(
-    script,
+    () => script,
     () => GameState::new(0),
     "app",
     start_logo_urls=["logo_a.png", "logo_b.png"],
@@ -283,4 +283,39 @@ test "start logo timeout advances sequence before menu" {
 
   ignore(app.tick(elapsed_ms=100))
   assert_eq(app.phase(), AppPhase::StartMenu)
+}
+
+///|
+test "script factory is lazy and cached" {
+  let calls = Ref::new(0)
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    () => {
+      calls.val = calls.val + 1
+      script
+    },
+    () => GameState::new(0),
+    "app",
+  )
+
+  assert_eq(calls.val, 0)
+  app.enter_start_menu()
+  app.handle_menu_action(StartMenuAction::NewGame)
+  assert_eq(app.phase(), AppPhase::InGame)
+  assert_eq(calls.val, 1)
+
+  app.runner = None
+  app.phase = AppPhase::StartMenu
+  app.handle_menu_action(StartMenuAction::NewGame)
+  assert_eq(app.phase(), AppPhase::InGame)
+  assert_eq(calls.val, 1)
+}
+
+///|
+test "start logo urls normalize by removing empty entries" {
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(() => script, () => GameState::new(0), "app", start_logo_urls=[
+    "", "logo_a.png", "", "logo_b.png", "",
+  ])
+  assert_eq(app.start_logo_urls, ["logo_a.png", "logo_b.png"])
 }
