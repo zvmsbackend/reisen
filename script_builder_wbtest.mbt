@@ -9,6 +9,11 @@ fn dummy_figure(id : String) -> PixiFigure {
 }
 
 ///|
+fn dummy_live2d_figure(id : String) -> Live2dFigure {
+  id
+}
+
+///|
 fn dummy_sfx(id : String) -> Sfx {
   id
 }
@@ -338,6 +343,23 @@ test "effect helper emits apply effect" {
       }
     ),
   )
+}
+
+///|
+test "live2d helpers emit motion and expression instructions" {
+  let built : Script[Int] = script(builder => {
+    builder.play_live2d_motion(dummy_live2d_figure("hero"), "tap_body", index=1)
+    builder.set_live2d_expression(dummy_live2d_figure("hero"), id="smile")
+    builder.set_live2d_expression(dummy_live2d_figure("hero"))
+  })
+
+  assert_true(
+    built.instructions[0] is PlayLive2dMotion("hero", "tap_body", Some(1)),
+  )
+  assert_true(
+    built.instructions[1] is SetLive2dExpression("hero", Some("smile")),
+  )
+  assert_true(built.instructions[2] is SetLive2dExpression("hero", None))
 }
 
 ///|

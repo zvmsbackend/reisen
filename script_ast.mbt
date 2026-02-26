@@ -177,6 +177,8 @@ pub enum Instruction[T] {
   AnimateWebgl(String, AnimationSpec)
   AnimateDom(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
+  PlayLive2dMotion(String, String, Int?)
+  SetLive2dExpression(String, String?)
 }
 
 ///|

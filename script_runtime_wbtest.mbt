@@ -297,6 +297,19 @@ test "runtime dom figure interactive update event" {
 }
 
 ///|
+test "runtime live2d motion and expression events" {
+  let script : Script[Int] = script(builder => {
+    builder.play_live2d_motion("hero", "tap_body", index=2)
+    builder.set_live2d_expression("hero", id="smile")
+    builder.set_live2d_expression("hero")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), Live2dMotionPlayed("hero", "tap_body", Some(2)))
+  assert_eq(runtime.step(), Live2dExpressionSet("hero", Some("smile")))
+  assert_eq(runtime.step(), Live2dExpressionSet("hero", None))
+}
+
+///|
 test "runtime waits for custom event until predicate matches" {
   let script : Script[Int] = script(builder => {
     builder.wait_custom_event("door", (_, payload) => payload == "open")

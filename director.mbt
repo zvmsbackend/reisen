@@ -33,6 +33,8 @@ pub struct RenderState {
   webgl_animations : Array[(String, AnimationSpec)]
   dom_animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
+  live2d_motions : Array[(String, String, Int?)]
+  live2d_expressions : Array[(String, String?)]
   render_epoch : String
 } derive(ToJson, FromJson)
 
@@ -78,6 +80,8 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       webgl_animations: [],
       dom_animations: [],
       effects: {},
+      live2d_motions: [],
+      live2d_expressions: [],
       render_epoch: gensym(prefix="render"),
     },
     last_event_said: false,
@@ -186,6 +190,10 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
       }
       self.render.effects.set(target, updated)
     }
+    Live2dMotionPlayed(target, group, index) =>
+      self.render.live2d_motions.push((target, group, index))
+    Live2dExpressionSet(target, id) =>
+      self.render.live2d_expressions.push((target, id))
     WaitStarted(_) => ()
     WaitForClickStarted => ()
     WaitCustomEventStarted(_) => ()
@@ -390,6 +398,20 @@ pub fn[T] Director::effects(
 }
 
 ///|
+pub fn[T] Director::live2d_motions(
+  self : Director[T],
+) -> Array[(String, String, Int?)] {
+  self.render.live2d_motions
+}
+
+///|
+pub fn[T] Director::live2d_expressions(
+  self : Director[T],
+) -> Array[(String, String?)] {
+  self.render.live2d_expressions
+}
+
+///|
 pub fn[T] Director::render_epoch(self : Director[T]) -> String {
   self.render.render_epoch
 }
@@ -405,6 +427,8 @@ pub fn[T] Director::clear_render(self : Director[T]) -> Unit {
   self.render.webgl_animations.clear()
   self.render.dom_animations.clear()
   self.render.effects.clear()
+  self.render.live2d_motions.clear()
+  self.render.live2d_expressions.clear()
 }
 
 ///|

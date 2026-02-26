@@ -415,6 +415,18 @@ pub async fn PixiLive2dModel::motion(
 }
 
 ///|
+pub extern "js" fn PixiLive2dModel::start_motion(
+  self : PixiLive2dModel,
+  group : String,
+  index : @js.Optional[Int],
+) -> Unit =
+  #| (self, group, index) => {
+  #|   if (typeof self.motion === 'function') {
+  #|     Promise.resolve(self.motion(group, index, 3)).catch((e) => {});
+  #|   }
+  #| }
+
+///|
 #module("/pixi-bridge.js")
 fn js_live2d_expression_promise(
   model : PixiLive2dModel,
@@ -429,6 +441,17 @@ pub async fn PixiLive2dModel::expression(
   let v = @js.Promise::wait(js_live2d_expression_promise(self, id?))
   v.cast()
 }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_expression(
+  self : PixiLive2dModel,
+  id : @js.Optional[String],
+) -> Unit =
+  #| (self, id) => {
+  #|   if (typeof self.expression === 'function') {
+  #|     Promise.resolve(self.expression(id)).catch(() => {});
+  #|   }
+  #| }
 
 ///|
 extern "js" fn PixiTexture::width(self : PixiTexture) -> Double =

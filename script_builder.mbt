@@ -785,6 +785,25 @@ pub fn[T] ScriptBuilder::play_sfx(
 }
 
 ///|
+pub fn[T] ScriptBuilder::play_live2d_motion(
+  self : ScriptBuilder[T],
+  figure : Live2dFigure,
+  group : String,
+  index? : Int,
+) -> Unit {
+  self.instructions.push(PlayLive2dMotion(figure.0, group, index))
+}
+
+///|
+pub fn[T] ScriptBuilder::set_live2d_expression(
+  self : ScriptBuilder[T],
+  figure : Live2dFigure,
+  id? : String,
+) -> Unit {
+  self.instructions.push(SetLive2dExpression(figure.0, id))
+}
+
+///|
 pub fn effect_spec(
   effect : Effect,
   params : Array[EffectParam],

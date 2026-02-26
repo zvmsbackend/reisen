@@ -36,6 +36,8 @@ pub enum RuntimeEvent {
   AnimatedWebgl(String, AnimationSpec)
   AnimatedDom(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
+  Live2dMotionPlayed(String, String, Int?)
+  Live2dExpressionSet(String, String?)
   WaitStarted(Int)
   WaitForClickStarted
   WaitCustomEventStarted(String)
@@ -322,6 +324,14 @@ fn[T] Runtime::run_inst(
     ApplyEffect(target, spec) => {
       self.ip = self.ip + 1
       EffectApplied(target, spec)
+    }
+    PlayLive2dMotion(target, group, index) => {
+      self.ip = self.ip + 1
+      Live2dMotionPlayed(target, group, index)
+    }
+    SetLive2dExpression(target, id) => {
+      self.ip = self.ip + 1
+      Live2dExpressionSet(target, id)
     }
   }
 }

@@ -396,6 +396,8 @@ pub fn[T] Director::is_waiting(Self[T]) -> Bool
 pub fn[T] Director::is_waiting_video(Self[T]) -> Bool
 pub fn[T] Director::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] Director::last_sfx(Self[T]) -> String?
+pub fn[T] Director::live2d_expressions(Self[T]) -> Array[(String, String?)]
+pub fn[T] Director::live2d_motions(Self[T]) -> Array[(String, String, Int?)]
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
 pub fn[T] Director::render_epoch(Self[T]) -> String
@@ -578,6 +580,8 @@ pub enum Instruction[T] {
   AnimateWebgl(String, AnimationSpec)
   AnimateDom(String, AnimationSpec)
   ApplyEffect(String, EffectSpec)
+  PlayLive2dMotion(String, String, Int?)
+  SetLive2dExpression(String, String?)
 }
 
 type Label
@@ -615,6 +619,7 @@ pub fn PixiLive2dModel::height(Self) -> Double
 pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool
 pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
 pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_expression(Self, @js.Optional[String]) -> Unit
 pub fn PixiLive2dModel::set_interactive(Self, Bool) -> Unit
 pub fn PixiLive2dModel::set_position(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_rotation(Self, Double) -> Unit
@@ -622,6 +627,7 @@ pub fn PixiLive2dModel::set_scale(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_size(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_visible(Self, Bool) -> Unit
 pub fn PixiLive2dModel::set_z_index(Self, Int) -> Unit
+pub fn PixiLive2dModel::start_motion(Self, String, @js.Optional[Int]) -> Unit
 pub fn PixiLive2dModel::width(Self) -> Double
 
 pub struct PixiPresenterConfig {
@@ -666,6 +672,8 @@ pub struct RenderState {
   webgl_animations : Array[(String, AnimationSpec)]
   dom_animations : Array[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
+  live2d_motions : Array[(String, String, Int?)]
+  live2d_expressions : Array[(String, String?)]
   render_epoch : String
 }
 pub impl ToJson for RenderState
@@ -737,6 +745,8 @@ pub enum RuntimeEvent {
   AnimatedWebgl(String, AnimationSpec)
   AnimatedDom(String, AnimationSpec)
   EffectApplied(String, EffectSpec)
+  Live2dMotionPlayed(String, String, Int?)
+  Live2dExpressionSet(String, String?)
   WaitStarted(Int)
   WaitForClickStarted
   WaitCustomEventStarted(String)
@@ -834,6 +844,7 @@ pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
+pub fn[T] ScriptBuilder::play_live2d_motion(Self[T], Live2dFigure, String, index? : Int) -> Unit
 pub fn[T] ScriptBuilder::play_music(Self[T], Music, Bool) -> Unit
 pub fn[T] ScriptBuilder::play_sfx(Self[T], Sfx, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::play_video(Self[T], String, can_skip? : Bool) -> Unit
@@ -842,6 +853,7 @@ pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append
 pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::scene(Self[T], Background, scalars? : ScalarState) -> Unit
 pub fn[T] ScriptBuilder::set_figure_interactive(Self[T], DomFigure, Bool) -> Unit
+pub fn[T] ScriptBuilder::set_live2d_expression(Self[T], Live2dFigure, id? : String) -> Unit
 pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
 pub fn[T, F : Figure] ScriptBuilder::show_figure(Self[T], F, FigurePlacement, interactive? : Bool) -> Unit
 pub fn[T, F : Figure] ScriptBuilder::show_figure_at(Self[T], F, Position, layer? : Int, scalars? : ScalarState, interactive? : Bool) -> Unit

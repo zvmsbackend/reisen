@@ -97,6 +97,8 @@ priv struct PixiPresenter {
   mut last_background_id : String?
   mut render_epoch : String?
   mut animation_cursor : Int
+  mut live2d_motion_cursor : Int
+  mut live2d_expression_cursor : Int
   mut timeline_ms : Int
   mut last_sync_ms : Int
   opacity_anims : Map[String, ScalarAnim]
@@ -553,6 +555,8 @@ fn PixiPresenter::new(
     last_background_id: None,
     render_epoch: None,
     animation_cursor: 0,
+    live2d_motion_cursor: 0,
+    live2d_expression_cursor: 0,
     timeline_ms: 0,
     last_sync_ms: 0,
     opacity_anims: {},
@@ -590,6 +594,8 @@ fn PixiPresenter::update_timeline(self : PixiPresenter) -> Unit {
 ///|
 fn PixiPresenter::reset_render_state(self : PixiPresenter) -> Unit {
   self.animation_cursor = 0
+  self.live2d_motion_cursor = 0
+  self.live2d_expression_cursor = 0
   self.timeline_ms = 0
   self.last_sync_ms = 0
   self.last_background_id = None
@@ -915,6 +921,38 @@ fn[T] PixiPresenter::pull_new_animations(
     }
   }
   self.animation_cursor = all.length()
+}
+
+///|
+fn[T] PixiPresenter::pull_new_live2d_actions(
+  self : PixiPresenter,
+  director : Director[T],
+) -> Unit {
+  let motions = director.live2d_motions()
+  for i, entry in motions {
+    if i < self.live2d_motion_cursor {
+      continue
+    }
+    let (target, group, index) = entry
+    match self.figure_live2d.get(target) {
+      Some(model) => model.start_motion(group, @js.Optional::from_option(index))
+      None => ()
+    }
+  }
+  self.live2d_motion_cursor = motions.length()
+
+  let expressions = director.live2d_expressions()
+  for i, entry in expressions {
+    if i < self.live2d_expression_cursor {
+      continue
+    }
+    let (target, id) = entry
+    match self.figure_live2d.get(target) {
+      Some(model) => model.set_expression(@js.Optional::from_option(id))
+      None => ()
+    }
+  }
+  self.live2d_expression_cursor = expressions.length()
 }
 
 ///|
@@ -1635,6 +1673,7 @@ fn[T] PixiPresenter::sync_noraise(
   self.app.renderer_resize(viewport_w.to_int(), viewport_h.to_int())
   self.sync_background(director, viewport_w, viewport_h, active_effects)
   self.sync_figures(director, viewport_w, viewport_h, active_effects)
+  self.pull_new_live2d_actions(director)
   for key in self.effect_start_ms.keys() {
     if !active_effects.contains(key) {
       self.effect_start_ms.remove(key)

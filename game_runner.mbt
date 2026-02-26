@@ -257,6 +257,14 @@ fn[T] GameRunner::apply_event_effects(
         }
       }
     }
+    Live2dMotionPlayed(_, _, _) => {
+      self.ui_dirty = true
+      self.render_sync_dirty = true
+    }
+    Live2dExpressionSet(_, _) => {
+      self.ui_dirty = true
+      self.render_sync_dirty = true
+    }
     SfxPlayed(_, blocking) => if blocking { self.blocking_wait_sfx = true }
     _ => ()
   }

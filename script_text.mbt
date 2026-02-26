@@ -308,6 +308,31 @@ fn[T] reisen_text_script_to_builder(
         if args_str != "" {
           builder.instructions.push(HideFigure(args_str))
         }
+      "motion" | "live2d_motion" => {
+        let (target, group_part) = get_first_part(args_str, ",")
+        if target != "" {
+          let (group, index_part) = get_first_part(group_part, ",")
+          if group != "" {
+            let index = if index_part.trim().to_string() == "" {
+              None
+            } else {
+              let parsed = @strconv.parse_int(index_part.trim().to_string()) catch {
+                _ => 0
+              }
+              Some(parsed)
+            }
+            builder.instructions.push(PlayLive2dMotion(target, group, index))
+          }
+        }
+      }
+      "expression" | "expr" | "live2d_expression" => {
+        let (target, expr_part) = get_first_part(args_str, ",")
+        if target != "" {
+          let expr_id = expr_part.trim().to_string()
+          let value = if expr_id == "" { None } else { Some(expr_id) }
+          builder.instructions.push(SetLive2dExpression(target, value))
+        }
+      }
       "music" | "bgm" =>
         if args_str.trim().to_string() == "stop" {
           builder.stop_music()
