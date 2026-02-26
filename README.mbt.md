@@ -12,21 +12,13 @@ Reisen is a visual novel engine for MoonBit targeting the browser (DOM + PixiJS 
 
 ## Install
 
+Clone the [template repository](https://github.com/zvmsbackend/reisen_template)
+
 ```bash
-moon add sennenki/reisen
-moon build
+npm install
+moon build --release
+npm dev
 ```
-
-## Minimal HTML
-
-```html
-<div id="game-container">
-  <canvas id="gl-canvas"></canvas>
-  <div id="ui-root"></div>
-</div>
-```
-
-Use `style.css` from this package as a base stylesheet.
 
 ## Quick Script Example
 
