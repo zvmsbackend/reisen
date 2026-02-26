@@ -624,6 +624,7 @@ pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool
 pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
 pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_expression(Self, @js.Optional[String]) -> Unit
+pub fn PixiLive2dModel::set_filters(Self, Array[@js.Value]) -> Unit
 pub fn PixiLive2dModel::set_interactive(Self, Bool) -> Unit
 pub fn PixiLive2dModel::set_position(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_rotation(Self, Double) -> Unit

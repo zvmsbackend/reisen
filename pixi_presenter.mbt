@@ -482,14 +482,6 @@ fn clamp01(v : Double) -> Double {
 }
 
 ///|
-fn rgb_multiplier_to_tint(r : Double, g : Double, b : Double) -> Int {
-  let rr = (clamp01(r) * 255.0).to_int()
-  let gg = (clamp01(g) * 255.0).to_int()
-  let bb = (clamp01(b) * 255.0).to_int()
-  (rr << 16) | (gg << 8) | bb
-}
-
-///|
 fn effect_key(target : String, id : String) -> String {
   target + "::" + id
 }
@@ -687,7 +679,7 @@ fn PixiPresenter::remove_target_animation_state(
 fn PixiPresenter::apply_scalar_visuals(
   self : PixiPresenter,
   key : String,
-  sprite : PixiSprite,
+  set_filters : (Array[@js.Value]) -> Unit,
   scalar_acc : ScalarAccumulator,
   extra_blur? : Double = 0.0,
 ) -> Unit {
@@ -699,16 +691,13 @@ fn PixiPresenter::apply_scalar_visuals(
       v
     }
   }
-  let tint = rgb_multiplier_to_tint(
-    scalar_acc.color_r,
-    scalar_acc.color_g,
-    scalar_acc.color_b,
-  )
-  sprite.set_tint(tint)
   let need_color = scalar_acc.brightness != 1.0 ||
     scalar_acc.contrast != 1.0 ||
     scalar_acc.saturation != 1.0 ||
-    scalar_acc.gamma != 1.0
+    scalar_acc.gamma != 1.0 ||
+    scalar_acc.color_r != 1.0 ||
+    scalar_acc.color_g != 1.0 ||
+    scalar_acc.color_b != 1.0
   let filters : Array[@js.Value] = []
   if blur_value > 0.0 {
     let blur_filter = match self.blur_filters.get(key) {
@@ -736,10 +725,45 @@ fn PixiPresenter::apply_scalar_visuals(
       scalar_acc.contrast,
       scalar_acc.saturation,
       scalar_acc.gamma,
+      clamp01(scalar_acc.color_r),
+      clamp01(scalar_acc.color_g),
+      clamp01(scalar_acc.color_b),
     )
     filters.push(@js.Value::cast_from(color_filter))
   }
-  sprite.set_filters(filters)
+  set_filters(filters)
+}
+
+///|
+fn PixiPresenter::apply_scalar_visuals_sprite(
+  self : PixiPresenter,
+  key : String,
+  sprite : PixiSprite,
+  scalar_acc : ScalarAccumulator,
+  extra_blur? : Double = 0.0,
+) -> Unit {
+  self.apply_scalar_visuals(
+    key,
+    filters => sprite.set_filters(filters),
+    scalar_acc,
+    extra_blur~,
+  )
+}
+
+///|
+fn PixiPresenter::apply_scalar_visuals_sprite_live2d(
+  self : PixiPresenter,
+  key : String,
+  model : PixiLive2dModel,
+  scalar_acc : ScalarAccumulator,
+  extra_blur? : Double = 0.0,
+) -> Unit {
+  self.apply_scalar_visuals(
+    key,
+    filters => model.set_filters(filters),
+    scalar_acc,
+    extra_blur~,
+  )
 }
 
 ///|
@@ -1360,7 +1384,7 @@ fn[T] PixiPresenter::sync_background(
           if cover_pre_skip {
             cover_sprite.set_visible(false)
           } else {
-            self.apply_scalar_visuals(
+            self.apply_scalar_visuals_sprite(
               id + "#cover",
               cover_sprite,
               scalar_acc,
@@ -1398,7 +1422,7 @@ fn[T] PixiPresenter::sync_background(
           if base_pre_skip {
             sprite.set_visible(false)
           } else {
-            self.apply_scalar_visuals(id, sprite, scalar_acc)
+            self.apply_scalar_visuals_sprite(id, sprite, scalar_acc)
             let base_post_skip = self.apply_effects_to_sprite(
               id,
               sprite,
@@ -1536,6 +1560,7 @@ fn[T] PixiPresenter::sync_figures(
           true,
           placement.layer,
         )
+        self.apply_scalar_visuals_sprite_live2d(id, model, scalar_acc)
         if update_placement {
           updated_figures.push((id, next_placement))
         }
@@ -1603,7 +1628,7 @@ fn[T] PixiPresenter::sync_figures(
             if pre_skip {
               sprite.set_visible(false)
             } else {
-              self.apply_scalar_visuals(id, sprite, scalar_acc)
+              self.apply_scalar_visuals_sprite(id, sprite, scalar_acc)
               let post_skip = self.apply_effects_to_sprite(
                 id,
                 sprite,

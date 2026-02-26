@@ -413,6 +413,13 @@ pub extern "js" fn PixiLive2dModel::set_visible(
   #| (self, visible) => { self.visible = visible; }
 
 ///|
+pub extern "js" fn PixiLive2dModel::set_filters(
+  self : PixiLive2dModel,
+  filters : Array[@js.Value],
+) -> Unit =
+  #| (self, filters) => { self.filters = filters.length > 0 ? filters : null; }
+
+///|
 pub extern "js" fn PixiLive2dModel::set_interactive(
   self : PixiLive2dModel,
   interactive : Bool,
@@ -545,8 +552,11 @@ extern "js" fn PixiColorMatrixFilter::apply_adjustments(
   contrast : Double,
   saturation : Double,
   gamma : Double,
+  color_r : Double,
+  color_g : Double,
+  color_b : Double,
 ) -> Unit =
-  #| (self, brightness, contrast, saturation, gamma) => {
+  #| (self, brightness, contrast, saturation, gamma, color_r, color_g, color_b) => {
   #|   if (self.reset) self.reset();
   #|   if (self.brightness) self.brightness(brightness, false);
   #|   if (self.contrast) self.contrast(contrast, false);
@@ -557,5 +567,8 @@ extern "js" fn PixiColorMatrixFilter::apply_adjustments(
   #|     self.matrix[0] *= g;
   #|     self.matrix[6] *= g;
   #|     self.matrix[12] *= g;
+  #|     self.matrix[0] *= color_r;
+  #|     self.matrix[6] *= color_g;
+  #|     self.matrix[12] *= color_b;
   #|   }
   #| }
