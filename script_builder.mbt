@@ -5,6 +5,9 @@
 struct PixiFigure(String)
 
 ///|
+struct Live2dFigure(String)
+
+///|
 struct DomFigure(String)
 
 ///|
@@ -74,6 +77,22 @@ pub impl PixiTarget for PixiFigure
 
 ///|
 pub impl Figure for PixiFigure
+
+///|
+pub impl AnimationTarget for Live2dFigure with id(self) {
+  self.0
+}
+
+///|
+pub impl AnimationTarget for Live2dFigure with kind(_) {
+  Pixi
+}
+
+///|
+pub impl PixiTarget for Live2dFigure
+
+///|
+pub impl Figure for Live2dFigure
 
 ///|
 pub impl AnimationTarget for DomFigure with id(self) {

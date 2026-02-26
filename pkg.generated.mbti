@@ -316,16 +316,19 @@ pub impl Show for AppPhase
 type AssetStore
 pub fn AssetStore::get_bytes(Self, String) -> Bytes?
 pub fn AssetStore::get_image(Self, String) -> Image?
+pub fn AssetStore::get_live2d_model(Self, String) -> PixiLive2dModel?
 pub fn AssetStore::get_text(Self, String) -> String?
 pub fn AssetStore::get_video(Self, String) -> Video?
 pub fn AssetStore::new() -> Self
 pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
 pub fn AssetStore::put_image(Self, String, Image) -> Unit
+pub fn AssetStore::put_live2d_model(Self, String, PixiLive2dModel) -> Unit
 pub fn AssetStore::put_text(Self, String, String) -> Unit
 pub fn AssetStore::put_video(Self, String, Video) -> Unit
 pub async fn AssetStore::register_background(Self, String, id? : String) -> Background
 pub async fn AssetStore::register_background_video(Self, String, id? : String) -> Background
 pub async fn AssetStore::register_figure(Self, String, id? : String) -> PixiFigure
+pub async fn AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure
 
 type AudioCommand
 pub impl Eq for AudioCommand
@@ -579,6 +582,11 @@ pub enum Instruction[T] {
 
 type Label
 
+type Live2dFigure
+pub impl AnimationTarget for Live2dFigure
+pub impl Figure for Live2dFigure
+pub impl PixiTarget for Live2dFigure
+
 type Music
 
 type PixiApplication
@@ -603,14 +611,18 @@ type PixiLive2dModel
 pub fn PixiLive2dModel::destroy(Self) -> Unit
 pub async fn PixiLive2dModel::expression(Self, id? : String) -> Bool
 pub fn PixiLive2dModel::focus(Self, Double, Double, instant? : Bool) -> Unit
+pub fn PixiLive2dModel::height(Self) -> Double
 pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool
 pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
 pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_interactive(Self, Bool) -> Unit
 pub fn PixiLive2dModel::set_position(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_rotation(Self, Double) -> Unit
 pub fn PixiLive2dModel::set_scale(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_size(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_visible(Self, Bool) -> Unit
 pub fn PixiLive2dModel::set_z_index(Self, Int) -> Unit
+pub fn PixiLive2dModel::width(Self) -> Double
 
 pub struct PixiPresenterConfig {
   antialias : Bool

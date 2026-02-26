@@ -120,6 +120,7 @@ struct AssetStore {
   videos : Map[String, Video]
   texts : Map[String, String]
   bytes : Map[String, Bytes]
+  live2d_models : Map[String, PixiLive2dModel]
 }
 
 ///|
@@ -129,6 +130,7 @@ pub fn AssetStore::new() -> AssetStore {
     videos: Map::new(),
     texts: Map::new(),
     bytes: Map::new(),
+    live2d_models: Map::new(),
   }
 }
 
@@ -189,6 +191,23 @@ pub fn AssetStore::get_bytes(self : AssetStore, id : String) -> Bytes? {
 }
 
 ///|
+pub fn AssetStore::put_live2d_model(
+  self : AssetStore,
+  id : String,
+  model : PixiLive2dModel,
+) -> Unit {
+  self.live2d_models.set(id, model)
+}
+
+///|
+pub fn AssetStore::get_live2d_model(
+  self : AssetStore,
+  id : String,
+) -> PixiLive2dModel? {
+  self.live2d_models.get(id)
+}
+
+///|
 pub async fn AssetStore::register_figure(
   self : AssetStore,
   url : String,
@@ -197,6 +216,19 @@ pub async fn AssetStore::register_figure(
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
+  }
+  id
+}
+
+///|
+pub async fn AssetStore::register_live2d_figure(
+  self : AssetStore,
+  model_json_url : String,
+  id? : String = gensym(prefix="live2d_figure"),
+) -> Live2dFigure {
+  if self.live2d_models.get(id) is None {
+    let model = pixi_load_live2d_model(model_json_url)
+    self.put_live2d_model(id, model)
   }
   id
 }

@@ -20,7 +20,7 @@ pub fn[T] validate_script_image_assets(
           raise AppBootstrapError::MissingImageAsset(id~)
         }
       ShowFigure(id, _) =>
-        if store.get_image(id) is None {
+        if store.get_image(id) is None && store.get_live2d_model(id) is None {
           raise AppBootstrapError::MissingImageAsset(id~)
         }
       _ => ()

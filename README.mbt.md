@@ -136,11 +136,7 @@ async fn init_pixi() -> Unit {
   let audio = AudioDom::new()
   store.put_bytes("door_close", load_bytes("assets/sfx/door_close.ogg"))
 
-  let render_sync = make_pixi_render_sync_hook_from_canvas(
-    "gl-canvas",
-    store,
-  )
-  .unwrap()
+  let render_sync = make_pixi_render_sync_hook_from_canvas("gl-canvas", store).unwrap()
 
   let controller = AppController::new(
     my_script,

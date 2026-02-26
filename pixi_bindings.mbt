@@ -320,6 +320,25 @@ pub extern "js" fn PixiLive2dModel::set_scale(
   #| }
 
 ///|
+pub extern "js" fn PixiLive2dModel::width(self : PixiLive2dModel) -> Double =
+  #| (self) => Number(self.width) || 0
+
+///|
+pub extern "js" fn PixiLive2dModel::height(self : PixiLive2dModel) -> Double =
+  #| (self) => Number(self.height) || 0
+
+///|
+pub extern "js" fn PixiLive2dModel::set_size(
+  self : PixiLive2dModel,
+  width : Double,
+  height : Double,
+) -> Unit =
+  #| (self, width, height) => {
+  #|   self.width = width;
+  #|   self.height = height;
+  #| }
+
+///|
 pub extern "js" fn PixiLive2dModel::set_rotation(
   self : PixiLive2dModel,
   radians : Double,
@@ -339,6 +358,15 @@ pub extern "js" fn PixiLive2dModel::set_visible(
   visible : Bool,
 ) -> Unit =
   #| (self, visible) => { self.visible = visible; }
+
+///|
+pub extern "js" fn PixiLive2dModel::set_interactive(
+  self : PixiLive2dModel,
+  interactive : Bool,
+) -> Unit =
+  #| (self, interactive) => {
+  #|   self.autoInteract = interactive;
+  #| }
 
 ///|
 pub extern "js" fn PixiLive2dModel::set_z_index(

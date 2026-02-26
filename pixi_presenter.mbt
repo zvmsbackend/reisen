@@ -87,7 +87,9 @@ priv struct PixiPresenter {
   stage : PixiContainer
   textures : Map[String, PixiTexture]
   texture_sizes : Map[String, (Double, Double)]
+  live2d_base_sizes : Map[String, (Double, Double)]
   figure_sprites : Map[String, PixiSprite]
+  figure_live2d : Map[String, PixiLive2dModel]
   mut background_sprite : PixiSprite?
   mut background_cover_sprite : PixiSprite?
   blur_filters : Map[String, PixiBlurFilter]
@@ -252,6 +254,29 @@ fn fit_figure(
       }
     }
     None => (max_w, max_h)
+  }
+}
+
+///|
+fn fit_size_to_box(
+  base_w : Double,
+  base_h : Double,
+  max_w : Double,
+  max_h : Double,
+) -> (Double, Double) {
+  if base_w <= 0.0 || base_h <= 0.0 {
+    return (max_w, max_h)
+  }
+  let ratio = base_w / base_h
+  let max_ratio = max_w / max_h
+  if ratio > max_ratio {
+    let w = max_w
+    let h = w / ratio
+    (w, h)
+  } else {
+    let h = max_h
+    let w = h * ratio
+    (w, h)
   }
 }
 
@@ -518,7 +543,9 @@ fn PixiPresenter::new(
     stage,
     textures: {},
     texture_sizes: {},
+    live2d_base_sizes: {},
     figure_sprites: {},
+    figure_live2d: {},
     background_sprite: None,
     background_cover_sprite: None,
     blur_filters: {},
@@ -583,6 +610,7 @@ fn PixiPresenter::reset_render_state(self : PixiPresenter) -> Unit {
   self.effect_from_params.clear()
   self.blur_filters.clear()
   self.color_filters.clear()
+  self.live2d_base_sizes.clear()
   match self.background_sprite {
     Some(sprite) => sprite.set_visible(false)
     None => ()
@@ -601,6 +629,20 @@ fn PixiPresenter::reset_render_state(self : PixiPresenter) -> Unit {
       None => ()
     }
     self.figure_sprites.remove(id)
+  }
+  let live2d_ids : Array[String] = []
+  for id in self.figure_live2d.keys() {
+    live2d_ids.push(id)
+  }
+  for id in live2d_ids {
+    match self.figure_live2d.get(id) {
+      Some(model) => {
+        self.stage.remove_live2d(model)
+        model.destroy()
+      }
+      None => ()
+    }
+    self.figure_live2d.remove(id)
   }
 }
 
@@ -996,6 +1038,140 @@ fn apply_sprite_transform(
 }
 
 ///|
+fn apply_live2d_transform(
+  model : PixiLive2dModel,
+  x : Double,
+  y : Double,
+  w : Double,
+  h : Double,
+  rotation : Double,
+  opacity : Double,
+  visible : Bool,
+  z_index : Int,
+) -> Unit {
+  model.set_position(x + w / 2.0, y + h / 2.0)
+  model.set_size(w, h)
+  model.set_rotation(rotation)
+  model.set_alpha(opacity)
+  model.set_visible(visible)
+  model.set_z_index(z_index)
+}
+
+///|
+fn PixiPresenter::resolve_figure_frame(
+  self : PixiPresenter,
+  id : String,
+  placement : FigurePlacement,
+  viewport_w : Double,
+  viewport_h : Double,
+  actual_w : Double,
+  actual_h : Double,
+  finished_position : Array[String],
+  finished_scale : Array[String],
+) -> (Double, Double, Double, Double, FigurePlacement, Bool, ScalarAccumulator) {
+  let (base_x, base_y, max_w, max_h) = figure_rect(
+    placement.pos,
+    viewport_w,
+    viewport_h,
+  )
+  let base_scale = placement.scalars.scale
+  let base_scaled_w = actual_w * base_scale
+  let base_scaled_h = actual_h * base_scale
+  let (aligned_x, aligned_y) = match placement.pos {
+    Center =>
+      (
+        (viewport_w - base_scaled_w) / 2.0,
+        base_y + (max_h - base_scaled_h) / 2.0,
+      )
+    Left | Right =>
+      (
+        base_x + (max_w - base_scaled_w) / 2.0,
+        base_y + (max_h - base_scaled_h) / 2.0,
+      )
+    _ => (base_x, base_y)
+  }
+
+  let mut next_placement = placement
+  let mut update_placement = false
+  let (x1, y1) = match self.position_anims.get(id) {
+    Some(anim) => {
+      let (ax, ay, done) = apply_position_animation(
+        aligned_x,
+        aligned_y,
+        self.config.position_entry_offset_ratio,
+        viewport_h,
+        viewport_w,
+        self.timeline_ms,
+        anim,
+      )
+      if done {
+        finished_position.push(id)
+        let has_custom = anim.from_x is Some(_) ||
+          anim.from_y is Some(_) ||
+          anim.to_x is Some(_) ||
+          anim.to_y is Some(_)
+        if has_custom {
+          next_placement = {
+            ..next_placement,
+            pos: Custom(ax / viewport_w, ay / viewport_h),
+          }
+          update_placement = true
+        }
+      }
+      (ax, ay)
+    }
+    None => (aligned_x, aligned_y)
+  }
+
+  let (x, y, w, h) = match self.scale_anims.get(id) {
+    Some(anim) => {
+      let (sx, sy, sw, sh, done) = apply_scale_animation(
+        aligned_x,
+        aligned_y,
+        actual_w,
+        actual_h,
+        next_placement.scalars.scale,
+        self.config.scale_entry_from,
+        self.timeline_ms,
+        anim,
+      )
+      if done {
+        finished_scale.push(id)
+        let anchor_changed = anim.anchor_x != 0.5 || anim.anchor_y != 0.5
+        match anim.to {
+          Some(value) => {
+            let next_pos = if anchor_changed {
+              Position::Custom(sx / viewport_w, sy / viewport_h)
+            } else {
+              next_placement.pos
+            }
+            next_placement = {
+              pos: next_pos,
+              layer: next_placement.layer,
+              scalars: { ..next_placement.scalars, scale: value },
+            }
+            update_placement = true
+          }
+          None => ()
+        }
+      }
+      (sx, sy, sw, sh)
+    }
+    None => (x1, y1, base_scaled_w, base_scaled_h)
+  }
+
+  let (changed, scalar_state, scalar_acc) = self.update_scalar_state(
+    next_placement.scalars,
+    id,
+  )
+  if changed {
+    next_placement = { ..next_placement, scalars: scalar_state }
+    update_placement = true
+  }
+  (x, y, w, h, next_placement, update_placement, scalar_acc)
+}
+
+///|
 fn[T] PixiPresenter::sync_background(
   self : PixiPresenter,
   director : Director[T],
@@ -1239,12 +1415,26 @@ fn[T] PixiPresenter::sync_figures(
       stale_ids.push(id)
     }
   }
+  for id in self.figure_live2d.keys() {
+    if !figures.contains(id) {
+      stale_ids.push(id)
+    }
+  }
   for id in stale_ids {
     match self.figure_sprites.get(id) {
       Some(sprite) => self.stage.remove_sprite(sprite)
       None => ()
     }
+    match self.figure_live2d.get(id) {
+      Some(model) => {
+        self.stage.remove_live2d(model)
+        model.destroy()
+      }
+      None => ()
+    }
     self.figure_sprites.remove(id)
+    self.figure_live2d.remove(id)
+    self.live2d_base_sizes.remove(id)
     self.remove_target_animation_state(id)
     self.blur_filters.remove(id)
     self.color_filters.remove(id)
@@ -1255,128 +1445,50 @@ fn[T] PixiPresenter::sync_figures(
   let finished_scale : Array[String] = []
 
   for id, placement in figures {
-    match self.texture_for(id) {
-      Some(texture) => {
-        self.refresh_video_texture_if_any(id)
-        let sprite = match self.figure_sprites.get(id) {
-          Some(sprite) => sprite
+    match self.store.get_live2d_model(id) {
+      Some(model_asset) => {
+        match self.figure_sprites.get(id) {
+          Some(sprite) => self.stage.remove_sprite(sprite)
+          None => ()
+        }
+        self.figure_sprites.remove(id)
+
+        let model = match self.figure_live2d.get(id) {
+          Some(model) => model
           None => {
-            let sprite = pixi_new_sprite(texture)
-            sprite.set_anchor(0.5, 0.5)
-            self.stage.add_sprite(sprite)
-            self.figure_sprites.set(id, sprite)
-            sprite
+            model_asset.set_anchor(0.5, 0.5)
+            model_asset.set_interactive(false)
+            self.stage.add_live2d(model_asset)
+            self.figure_live2d.set(id, model_asset)
+            model_asset
           }
         }
-        sprite.set_texture(texture)
-        let (base_x, base_y, max_w, max_h) = figure_rect(
+        let (_, _, max_w, max_h) = figure_rect(
           placement.pos,
           viewport_w,
           viewport_h,
         )
-        let (actual_w, actual_h) = fit_figure(
-          id,
-          max_w,
-          max_h,
-          self.texture_sizes,
-        )
-        let base_scale = placement.scalars.scale
-        let base_scaled_w = actual_w * base_scale
-        let base_scaled_h = actual_h * base_scale
-        let (aligned_x, aligned_y) = match placement.pos {
-          Center =>
-            (
-              (viewport_w - base_scaled_w) / 2.0,
-              base_y + (max_h - base_scaled_h) / 2.0,
-            )
-          Left | Right =>
-            (
-              base_x + (max_w - base_scaled_w) / 2.0,
-              base_y + (max_h - base_scaled_h) / 2.0,
-            )
-          _ => (base_x, base_y)
-        }
-
-        let mut next_placement = placement
-        let mut update_placement = false
-        let (x1, y1) = match self.position_anims.get(id) {
-          Some(anim) => {
-            let (ax, ay, done) = apply_position_animation(
-              aligned_x,
-              aligned_y,
-              self.config.position_entry_offset_ratio,
-              viewport_h,
-              viewport_w,
-              self.timeline_ms,
-              anim,
-            )
-            if done {
-              finished_position.push(id)
-              let has_custom = anim.from_x is Some(_) ||
-                anim.from_y is Some(_) ||
-                anim.to_x is Some(_) ||
-                anim.to_y is Some(_)
-              if has_custom {
-                next_placement = {
-                  ..next_placement,
-                  pos: Custom(ax / viewport_w, ay / viewport_h),
-                }
-                update_placement = true
-              }
+        let (base_w, base_h) = match self.live2d_base_sizes.get(id) {
+          Some(size) => size
+          None => {
+            let measured = (model.width(), model.height())
+            let normalized = if measured.0 > 0.0 && measured.1 > 0.0 {
+              measured
+            } else {
+              (1024.0, 1024.0)
             }
-            (ax, ay)
+            self.live2d_base_sizes.set(id, normalized)
+            normalized
           }
-          None => (aligned_x, aligned_y)
         }
-
-        let (x, y, w, h) = match self.scale_anims.get(id) {
-          Some(anim) => {
-            let (sx, sy, sw, sh, done) = apply_scale_animation(
-              aligned_x,
-              aligned_y,
-              actual_w,
-              actual_h,
-              next_placement.scalars.scale,
-              self.config.scale_entry_from,
-              self.timeline_ms,
-              anim,
-            )
-            if done {
-              finished_scale.push(id)
-              let anchor_changed = anim.anchor_x != 0.5 || anim.anchor_y != 0.5
-              match anim.to {
-                Some(value) => {
-                  let next_pos = if anchor_changed {
-                    Position::Custom(sx / viewport_w, sy / viewport_h)
-                  } else {
-                    next_placement.pos
-                  }
-                  next_placement = {
-                    pos: next_pos,
-                    layer: next_placement.layer,
-                    scalars: { ..next_placement.scalars, scale: value },
-                  }
-                  update_placement = true
-                }
-                None => ()
-              }
-            }
-            (sx, sy, sw, sh)
-          }
-          None => (x1, y1, base_scaled_w, base_scaled_h)
-        }
-
-        let (changed, scalar_state, scalar_acc) = self.update_scalar_state(
-          next_placement.scalars,
-          id,
+        let (actual_w, actual_h) = fit_size_to_box(base_w, base_h, max_w, max_h)
+        let (x, y, w, h, next_placement, update_placement, scalar_acc) = self.resolve_figure_frame(
+          id, placement, viewport_w, viewport_h, actual_w, actual_h, finished_position,
+          finished_scale,
         )
-        if changed {
-          next_placement = { ..next_placement, scalars: scalar_state }
-          update_placement = true
-        }
 
-        apply_sprite_transform(
-          sprite,
+        apply_live2d_transform(
+          model,
           x,
           y,
           w,
@@ -1386,37 +1498,99 @@ fn[T] PixiPresenter::sync_figures(
           true,
           placement.layer,
         )
-        let effects = director.effects(id)
-        let pre_skip = self.apply_effects_to_sprite(
-          id,
-          sprite,
-          effects,
-          active_effects,
-          EffectPhase::Pre,
-        )
-        if pre_skip {
-          sprite.set_visible(false)
-        } else {
-          self.apply_scalar_visuals(id, sprite, scalar_acc)
-          let post_skip = self.apply_effects_to_sprite(
-            id,
-            sprite,
-            effects,
-            active_effects,
-            EffectPhase::Post,
-          )
-          if post_skip {
-            sprite.set_visible(false)
-          }
-        }
         if update_placement {
           updated_figures.push((id, next_placement))
         }
       }
       None =>
-        match self.figure_sprites.get(id) {
-          Some(sprite) => sprite.set_visible(false)
-          None => ()
+        match self.texture_for(id) {
+          Some(texture) => {
+            match self.figure_live2d.get(id) {
+              Some(model) => {
+                self.stage.remove_live2d(model)
+                model.destroy()
+              }
+              None => ()
+            }
+            self.figure_live2d.remove(id)
+            self.live2d_base_sizes.remove(id)
+
+            self.refresh_video_texture_if_any(id)
+            let sprite = match self.figure_sprites.get(id) {
+              Some(sprite) => sprite
+              None => {
+                let sprite = pixi_new_sprite(texture)
+                sprite.set_anchor(0.5, 0.5)
+                self.stage.add_sprite(sprite)
+                self.figure_sprites.set(id, sprite)
+                sprite
+              }
+            }
+            sprite.set_texture(texture)
+            let (_, _, max_w, max_h) = figure_rect(
+              placement.pos,
+              viewport_w,
+              viewport_h,
+            )
+            let (actual_w, actual_h) = fit_figure(
+              id,
+              max_w,
+              max_h,
+              self.texture_sizes,
+            )
+            let (x, y, w, h, next_placement, update_placement, scalar_acc) = self.resolve_figure_frame(
+              id, placement, viewport_w, viewport_h, actual_w, actual_h, finished_position,
+              finished_scale,
+            )
+
+            apply_sprite_transform(
+              sprite,
+              x,
+              y,
+              w,
+              h,
+              scalar_acc.rotation,
+              scalar_acc.opacity,
+              true,
+              placement.layer,
+            )
+            let effects = director.effects(id)
+            let pre_skip = self.apply_effects_to_sprite(
+              id,
+              sprite,
+              effects,
+              active_effects,
+              EffectPhase::Pre,
+            )
+            if pre_skip {
+              sprite.set_visible(false)
+            } else {
+              self.apply_scalar_visuals(id, sprite, scalar_acc)
+              let post_skip = self.apply_effects_to_sprite(
+                id,
+                sprite,
+                effects,
+                active_effects,
+                EffectPhase::Post,
+              )
+              if post_skip {
+                sprite.set_visible(false)
+              }
+            }
+            if update_placement {
+              updated_figures.push((id, next_placement))
+            }
+          }
+          None => {
+            match self.figure_sprites.get(id) {
+              Some(sprite) => sprite.set_visible(false)
+              None => ()
+            }
+            match self.figure_live2d.get(id) {
+              Some(model) => model.set_visible(false)
+              None => ()
+            }
+          }
         }
     }
   }
