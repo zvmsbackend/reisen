@@ -161,6 +161,8 @@ pub fn place_right(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
 pub fn register_pixi_effect((PixiSprite, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
 
+pub fn register_pixi_effect_shared((PixiEffectTarget, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
+
 pub fn[T] reisen_parse_text_script(String) -> Script[T] raise ScriptBuildError
 
 pub async fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T]) -> Unit
@@ -608,6 +610,11 @@ type PixiColorMatrixFilter
 
 type PixiContainer
 
+pub enum PixiEffectTarget {
+  Sprite(PixiSprite)
+  Live2d(PixiLive2dModel)
+}
+
 type PixiFigure
 pub impl AnimationTarget for PixiFigure
 pub impl Figure for PixiFigure
@@ -996,6 +1003,8 @@ pub type PayloadJumpSelector[T] = (GameState[T], String) -> Label
 pub type PayloadPredicate[T] = (GameState[T], String) -> Bool
 
 pub type PixiEffectApply = (PixiSprite, Array[(String, Double)], Int) -> Bool
+
+pub type PixiSharedEffectApply = (PixiEffectTarget, Array[(String, Double)], Int) -> Bool
 
 pub type RenderSyncHook[T] = (Director[T]) -> Unit
 

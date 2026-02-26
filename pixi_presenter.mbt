@@ -35,6 +35,18 @@ pub type PixiEffectApply = (PixiSprite, Array[EffectParam], Int) -> Bool
 let pixi_effect_appliers : Map[String, PixiEffectApply] = {}
 
 ///|
+pub enum PixiEffectTarget {
+  Sprite(PixiSprite)
+  Live2d(PixiLive2dModel)
+}
+
+///|
+pub type PixiSharedEffectApply = (PixiEffectTarget, Array[EffectParam], Int) -> Bool
+
+///|
+let pixi_shared_effect_appliers : Map[String, PixiSharedEffectApply] = {}
+
+///|
 let pixi_effect_defaults : Map[String, Array[EffectParam]] = {}
 
 ///|
@@ -44,6 +56,17 @@ pub fn register_pixi_effect(
   id? : String = gensym(prefix="effect"),
 ) -> Effect {
   pixi_effect_appliers.set(id, apply)
+  pixi_effect_defaults.set(id, defaults)
+  id
+}
+
+///|
+pub fn register_pixi_effect_shared(
+  apply : PixiSharedEffectApply,
+  defaults? : Array[EffectParam] = [],
+  id? : String = gensym(prefix="effect"),
+) -> Effect {
+  pixi_shared_effect_appliers.set(id, apply)
   pixi_effect_defaults.set(id, defaults)
   id
 }
@@ -767,10 +790,10 @@ fn PixiPresenter::apply_scalar_visuals_sprite_live2d(
 }
 
 ///|
-fn PixiPresenter::apply_effects_to_sprite(
+fn PixiPresenter::apply_effects_to_target(
   self : PixiPresenter,
   target_id : String,
-  sprite : PixiSprite,
+  target : PixiEffectTarget,
   effects : Array[EffectSpec],
   active_effects : Set[String],
   phase : EffectPhase,
@@ -832,12 +855,23 @@ fn PixiPresenter::apply_effects_to_sprite(
     } else {
       spec.params
     }
-    match pixi_effect_appliers.get(spec.id) {
-      Some(apply) =>
-        if apply(sprite, render_params, self.timeline_ms) {
+    match pixi_shared_effect_appliers.get(spec.id) {
+      Some(apply_shared) =>
+        if apply_shared(target, render_params, self.timeline_ms) {
           skip_base = true
         }
-      None => ()
+      None =>
+        match target {
+          Sprite(sprite) =>
+            match pixi_effect_appliers.get(spec.id) {
+              Some(apply) =>
+                if apply(sprite, render_params, self.timeline_ms) {
+                  skip_base = true
+                }
+              None => ()
+            }
+          Live2d(_) => ()
+        }
     }
   }
   skip_base
@@ -1374,9 +1408,9 @@ fn[T] PixiPresenter::sync_background(
             -1001,
           )
           let effects = director.effects(id)
-          let cover_pre_skip = self.apply_effects_to_sprite(
+          let cover_pre_skip = self.apply_effects_to_target(
             id,
-            cover_sprite,
+            Sprite(cover_sprite),
             effects,
             active_effects,
             EffectPhase::Pre,
@@ -1390,9 +1424,9 @@ fn[T] PixiPresenter::sync_background(
               scalar_acc,
               extra_blur=2.0,
             )
-            let cover_post_skip = self.apply_effects_to_sprite(
+            let cover_post_skip = self.apply_effects_to_target(
               id,
-              cover_sprite,
+              Sprite(cover_sprite),
               effects,
               active_effects,
               EffectPhase::Post,
@@ -1412,9 +1446,9 @@ fn[T] PixiPresenter::sync_background(
             true,
             -1000,
           )
-          let base_pre_skip = self.apply_effects_to_sprite(
+          let base_pre_skip = self.apply_effects_to_target(
             id,
-            sprite,
+            Sprite(sprite),
             effects,
             active_effects,
             EffectPhase::Pre,
@@ -1423,9 +1457,9 @@ fn[T] PixiPresenter::sync_background(
             sprite.set_visible(false)
           } else {
             self.apply_scalar_visuals_sprite(id, sprite, scalar_acc)
-            let base_post_skip = self.apply_effects_to_sprite(
+            let base_post_skip = self.apply_effects_to_target(
               id,
-              sprite,
+              Sprite(sprite),
               effects,
               active_effects,
               EffectPhase::Post,
@@ -1560,7 +1594,29 @@ fn[T] PixiPresenter::sync_figures(
           true,
           placement.layer,
         )
-        self.apply_scalar_visuals_sprite_live2d(id, model, scalar_acc)
+        let effects = director.effects(id)
+        let pre_skip = self.apply_effects_to_target(
+          id,
+          Live2d(model),
+          effects,
+          active_effects,
+          EffectPhase::Pre,
+        )
+        if pre_skip {
+          model.set_visible(false)
+        } else {
+          self.apply_scalar_visuals_sprite_live2d(id, model, scalar_acc)
+          let post_skip = self.apply_effects_to_target(
+            id,
+            Live2d(model),
+            effects,
+            active_effects,
+            EffectPhase::Post,
+          )
+          if post_skip {
+            model.set_visible(false)
+          }
+        }
         if update_placement {
           updated_figures.push((id, next_placement))
         }
@@ -1618,9 +1674,9 @@ fn[T] PixiPresenter::sync_figures(
               placement.layer,
             )
             let effects = director.effects(id)
-            let pre_skip = self.apply_effects_to_sprite(
+            let pre_skip = self.apply_effects_to_target(
               id,
-              sprite,
+              Sprite(sprite),
               effects,
               active_effects,
               EffectPhase::Pre,
@@ -1629,9 +1685,9 @@ fn[T] PixiPresenter::sync_figures(
               sprite.set_visible(false)
             } else {
               self.apply_scalar_visuals_sprite(id, sprite, scalar_acc)
-              let post_skip = self.apply_effects_to_sprite(
+              let post_skip = self.apply_effects_to_target(
                 id,
-                sprite,
+                Sprite(sprite),
                 effects,
                 active_effects,
                 EffectPhase::Post,
