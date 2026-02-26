@@ -208,6 +208,36 @@ fn figure_rect(
 }
 
 ///|
+fn custom_to_canvas_pos(
+  custom_x : Double,
+  custom_y : Double,
+  viewport_w : Double,
+  viewport_h : Double,
+  rect_w : Double,
+  rect_h : Double,
+) -> (Double, Double) {
+  let free_w = if viewport_w - rect_w > 0.0 { viewport_w - rect_w } else { 0.0 }
+  let free_h = if viewport_h - rect_h > 0.0 { viewport_h - rect_h } else { 0.0 }
+  ((custom_x + 1.0) * 0.5 * free_w, (custom_y + 1.0) * 0.5 * free_h)
+}
+
+///|
+fn canvas_to_custom_pos(
+  x : Double,
+  y : Double,
+  viewport_w : Double,
+  viewport_h : Double,
+  rect_w : Double,
+  rect_h : Double,
+) -> (Double, Double) {
+  let free_w = viewport_w - rect_w
+  let free_h = viewport_h - rect_h
+  let custom_x = if free_w <= 0.0 { 0.0 } else { x / free_w * 2.0 - 1.0 }
+  let custom_y = if free_h <= 0.0 { 0.0 } else { y / free_h * 2.0 - 1.0 }
+  (custom_x, custom_y)
+}
+
+///|
 fn fit_background(
   image_id : String,
   canvas_w : Double,
@@ -1180,7 +1210,10 @@ fn PixiPresenter::resolve_figure_frame(
         base_x + (max_w - base_scaled_w) / 2.0,
         base_y + (max_h - base_scaled_h) / 2.0,
       )
-    _ => (base_x, base_y)
+    Custom(x, y) =>
+      custom_to_canvas_pos(
+        x, y, viewport_w, viewport_h, base_scaled_w, base_scaled_h,
+      )
   }
 
   let mut next_placement = placement
@@ -1203,10 +1236,10 @@ fn PixiPresenter::resolve_figure_frame(
           anim.to_x is Some(_) ||
           anim.to_y is Some(_)
         if has_custom {
-          next_placement = {
-            ..next_placement,
-            pos: Custom(ax / viewport_w, ay / viewport_h),
-          }
+          let (next_x, next_y) = canvas_to_custom_pos(
+            ax, ay, viewport_w, viewport_h, base_scaled_w, base_scaled_h,
+          )
+          next_placement = { ..next_placement, pos: Custom(next_x, next_y) }
           update_placement = true
         }
       }
@@ -1233,7 +1266,10 @@ fn PixiPresenter::resolve_figure_frame(
         match anim.to {
           Some(value) => {
             let next_pos = if anchor_changed {
-              Position::Custom(sx / viewport_w, sy / viewport_h)
+              let (next_x, next_y) = canvas_to_custom_pos(
+                sx, sy, viewport_w, viewport_h, sw, sh,
+              )
+              Position::Custom(next_x, next_y)
             } else {
               next_placement.pos
             }
