@@ -52,7 +52,7 @@ pub fn Background::as_gallery_image(
     image_url: self.url,
     title,
     thumbnail_url: thumbnail.map(b => b.url),
-    replay_label: replay_label.map(l => l.name),
+    replay_label: replay_label.map(l => l.0),
     replay_state_factory_key,
   }
 }

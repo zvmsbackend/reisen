@@ -46,7 +46,7 @@ pub fn AudioDom::register_music(
   id? : String = gensym(prefix="music"),
 ) -> Music {
   self.urls[id] = url
-  { id, }
+  id
 }
 
 ///|
@@ -56,7 +56,7 @@ pub fn AudioDom::register_sfx(
   id? : String = gensym(prefix="sfx"),
 ) -> Sfx {
   self.urls[id] = url
-  { id, }
+  id
 }
 
 ///|

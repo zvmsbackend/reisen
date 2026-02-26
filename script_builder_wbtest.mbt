@@ -4,23 +4,18 @@ fn dummy_bg(id : String) -> Background {
 }
 
 ///|
-fn dummy_figure(id : String) -> Figure {
-  WebglFigure(id)
-}
-
-///|
-fn dummy_dom_figure(id : String) -> Figure {
-  dom_figure(id)
+fn dummy_figure(id : String) -> PixiFigure {
+  id
 }
 
 ///|
 fn dummy_sfx(id : String) -> Sfx {
-  { id, }
+  id
 }
 
 ///|
 fn dummy_music(id : String) -> Music {
-  { id, }
+  id
 }
 
 ///|
@@ -273,16 +268,16 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
 
 ///|
 test "dom figure helper strips leading hash" {
-  assert_true(dummy_dom_figure("panel") is DomFigure("panel"))
-  assert_true(dummy_dom_figure("#panel") is DomFigure("panel"))
-  assert_true(dummy_dom_figure("##panel") is DomFigure("panel"))
+  assert_true(dom_figure("panel") is DomFigure("panel"))
+  assert_true(dom_figure("#panel") is DomFigure("panel"))
+  assert_true(dom_figure("##panel") is DomFigure("panel"))
 }
 
 ///|
 test "dom figure show/hide emit expected instructions" {
   let built : Script[Int] = script(builder => {
-    builder.show_figure(dummy_dom_figure("#promo"), place_center(layer=2))
-    builder.hide_figure(dummy_dom_figure("promo"))
+    builder.show_figure(dom_figure("#promo"), place_center(layer=2))
+    builder.hide_figure(dom_figure("promo"))
   })
   assert_true(built.instructions[0] is ShowDomFigure("promo", _, false))
   assert_true(built.instructions[1] is HideDomFigure("promo"))
@@ -291,11 +286,7 @@ test "dom figure show/hide emit expected instructions" {
 ///|
 test "dom figure show can be interactive" {
   let built : Script[Int] = script(builder => {
-    builder.show_figure(
-      dummy_dom_figure("promo"),
-      place_center(),
-      interactive=true,
-    )
+    builder.show_figure(dom_figure("promo"), place_center(), interactive=true)
   })
   assert_true(built.instructions[0] is ShowDomFigure("promo", _, true))
 }
@@ -303,30 +294,17 @@ test "dom figure show can be interactive" {
 ///|
 test "set_figure_interactive emits dom instruction" {
   let built : Script[Int] = script(builder => {
-    builder.set_figure_interactive(dummy_dom_figure("promo"), true)
-    builder.set_figure_interactive(dummy_dom_figure("promo"), false)
+    builder.set_figure_interactive(dom_figure("promo"), true)
+    builder.set_figure_interactive(dom_figure("promo"), false)
   })
   assert_true(built.instructions[0] is SetDomFigureInteractive("promo", true))
   assert_true(built.instructions[1] is SetDomFigureInteractive("promo", false))
 }
 
 ///|
-test "set_figure_interactive on webgl figure raises build error" {
-  let builder : ScriptBuilder[Int] = ScriptBuilder::new()
-  builder.set_figure_interactive(dummy_figure("alice"), true)
-  let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
-  assert_true(
-    built
-    is Err(
-      ScriptBuildError::SetInteractiveUnsupportedOnWebglTarget(target="alice")
-    ),
-  )
-}
-
-///|
 test "dom figure animations emit dom animation instruction" {
   let built : Script[Int] = script(builder => {
-    builder.animate_opacity(dummy_dom_figure("promo"), 120, 1.0)
+    builder.animate_opacity(dom_figure("promo"), 120, 1.0)
   })
   assert_true(
     built.instructions[0]
@@ -334,16 +312,6 @@ test "dom figure animations emit dom animation instruction" {
       "promo",
       { prop: Opacity, duration_ms: 120, easing: Linear, .. }
     ),
-  )
-}
-
-///|
-test "effect on dom figure raises build error" {
-  let builder : ScriptBuilder[Int] = ScriptBuilder::new()
-  builder.effect_with(dummy_dom_figure("promo"), "glow", [])
-  let built : Result[Script[Int], ScriptBuildError] = try? builder.build()
-  assert_true(
-    built is Err(ScriptBuildError::EffectUnsupportedOnDomTarget(target="promo")),
   )
 }
 

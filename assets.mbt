@@ -193,12 +193,12 @@ pub async fn AssetStore::register_figure(
   self : AssetStore,
   url : String,
   id? : String = gensym(prefix="figure"),
-) -> Figure {
+) -> PixiFigure {
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
   }
-  WebglFigure(id)
+  id
 }
 
 ///|

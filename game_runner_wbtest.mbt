@@ -390,7 +390,7 @@ test "runner keeps rendering during animations" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)
   let script : Script[Int] = script(builder => {
-    builder.animate_opacity(WebglFigure("hero"), 200, 1.0)
+    builder.animate_opacity(dummy_figure("hero"), 200, 1.0)
   })
   let runner = GameRunner::new_with_render_sync(
     Director::new(Runtime::new(script, GameState::new(0))),

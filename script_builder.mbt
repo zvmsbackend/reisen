@@ -1,9 +1,11 @@
 ///|
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
-enum Figure {
-  WebglFigure(String)
-  DomFigure(String)
-}
+
+///|
+struct PixiFigure(String)
+
+///|
+struct DomFigure(String)
 
 ///|
 struct Background {
@@ -12,26 +14,20 @@ struct Background {
 }
 
 ///|
-struct Music {
-  id : String
-}
+struct Music(String)
 
 ///|
-struct Sfx {
-  id : String
-}
+struct Sfx(String)
 
 ///|
 struct Effect(String)
 
 ///|
-struct Label {
-  name : String
-}
+struct Label(String)
 
 ///|
 priv enum RenderableKind {
-  Webgl
+  Pixi
   Dom
 }
 
@@ -42,30 +38,55 @@ trait AnimationTarget {
 }
 
 ///|
-pub impl AnimationTarget for Figure with id(self) {
-  match self {
-    WebglFigure(id) => id
-    DomFigure(id) => id
-  }
+#warnings("-unused_value")
+trait PixiTarget: AnimationTarget {
+  dummy(Self) -> Unit = _
 }
 
 ///|
-pub impl AnimationTarget for Figure with kind(self) {
-  match self {
-    WebglFigure(_) => Webgl
-    DomFigure(_) => Dom
-  }
+#warnings("-unused_value")
+trait Figure: AnimationTarget {
+  dummy(Self) -> Unit = _
 }
 
 ///|
-fn normalize_dom_id(id : String) -> String {
-  id.trim_start(chars="#").to_string()
+impl PixiTarget with dummy(_) {
+
 }
 
 ///|
-pub fn dom_figure(id : String) -> Figure {
-  DomFigure(normalize_dom_id(id))
+impl Figure with dummy(_) {
+
 }
+
+///|
+pub impl AnimationTarget for PixiFigure with id(self) {
+  self.0
+}
+
+///|
+pub impl AnimationTarget for PixiFigure with kind(_) {
+  Pixi
+}
+
+///|
+pub impl PixiTarget for PixiFigure
+
+///|
+pub impl Figure for PixiFigure
+
+///|
+pub impl AnimationTarget for DomFigure with id(self) {
+  self.0
+}
+
+///|
+pub impl AnimationTarget for DomFigure with kind(_) {
+  Dom
+}
+
+///|
+pub impl Figure for DomFigure
 
 ///|
 pub impl AnimationTarget for Background with id(self) {
@@ -74,13 +95,20 @@ pub impl AnimationTarget for Background with id(self) {
 
 ///|
 pub impl AnimationTarget for Background with kind(_) {
-  Webgl
+  Pixi
+}
+
+///|
+pub impl PixiTarget for Background
+
+///|
+pub fn dom_figure(id : String) -> DomFigure {
+  id.trim_start(chars="#").to_string()
 }
 
 ///|
 struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
-  mut pending_error : ScriptBuildError?
 }
 
 ///|
@@ -100,12 +128,12 @@ pub fn option(
   jump : Label,
   id? : String = gensym(prefix="choice"),
 ) -> ChoiceOption {
-  { id, text, jump: jump.name }
+  { id, text, jump: jump.0 }
 }
 
 ///|
 pub fn label(name? : String = gensym(prefix="label")) -> Label {
-  { name, }
+  name
 }
 
 ///|
@@ -420,17 +448,17 @@ pub fn anim_color_blue(
 
 ///|
 pub fn[T] ScriptBuilder::new() -> ScriptBuilder[T] {
-  { instructions: [], pending_error: None }
+  { instructions: [] }
 }
 
 ///|
 pub fn[T] ScriptBuilder::label(self : ScriptBuilder[T], label : Label) -> Unit {
-  self.instructions.push(Label(label.name))
+  self.instructions.push(Label(label.0))
 }
 
 ///|
 pub fn[T] ScriptBuilder::jump(self : ScriptBuilder[T], label : Label) -> Unit {
-  self.instructions.push(Jump(label.name))
+  self.instructions.push(Jump(label.0))
 }
 
 ///|
@@ -439,7 +467,7 @@ pub fn[T] ScriptBuilder::jump_if(
   label : Label,
   predicate : ScriptPredicate[T],
 ) -> Unit {
-  self.instructions.push(JumpIf(label.name, predicate))
+  self.instructions.push(JumpIf(label.0, predicate))
 }
 
 ///|
@@ -452,8 +480,8 @@ pub fn[T] ScriptBuilder::branch(
   else_label : Label,
   predicate : ScriptPredicate[T],
 ) -> Unit {
-  self.instructions.push(JumpIf(then_label.name, predicate))
-  self.instructions.push(Jump(else_label.name))
+  self.instructions.push(JumpIf(then_label.0, predicate))
+  self.instructions.push(Jump(else_label.0))
 }
 
 ///|
@@ -659,23 +687,23 @@ pub fn[T] ScriptBuilder::scene(
 }
 
 ///|
-fn[T] ScriptBuilder::emit_show_figure(
+fn[T, F : Figure] ScriptBuilder::emit_show_figure(
   self : ScriptBuilder[T],
-  figure : Figure,
+  figure : F,
   placement : FigurePlacement,
   interactive : Bool,
 ) -> Unit {
-  match figure {
-    WebglFigure(id) => self.instructions.push(ShowFigure(id, placement))
-    DomFigure(id) =>
-      self.instructions.push(ShowDomFigure(id, placement, interactive))
+  match figure.kind() {
+    Pixi => self.instructions.push(ShowFigure(figure.id(), placement))
+    Dom =>
+      self.instructions.push(ShowDomFigure(figure.id(), placement, interactive))
   }
 }
 
 ///|
-pub fn[T] ScriptBuilder::show_figure(
+pub fn[T, F : Figure] ScriptBuilder::show_figure(
   self : ScriptBuilder[T],
-  figure : Figure,
+  figure : F,
   placement : FigurePlacement,
   interactive? : Bool = false,
 ) -> Unit {
@@ -683,9 +711,9 @@ pub fn[T] ScriptBuilder::show_figure(
 }
 
 ///|
-pub fn[T] ScriptBuilder::show_figure_at(
+pub fn[T, F : Figure] ScriptBuilder::show_figure_at(
   self : ScriptBuilder[T],
-  figure : Figure,
+  figure : F,
   pos : Position,
   layer? : Int = 0,
   scalars? : ScalarState = ScalarState::default(),
@@ -695,40 +723,23 @@ pub fn[T] ScriptBuilder::show_figure_at(
 }
 
 ///|
-pub fn[T] ScriptBuilder::hide_figure(
+pub fn[T, F : Figure] ScriptBuilder::hide_figure(
   self : ScriptBuilder[T],
-  figure : Figure,
+  figure : F,
 ) -> Unit {
-  match figure {
-    WebglFigure(id) => self.instructions.push(HideFigure(id))
-    DomFigure(id) => self.instructions.push(HideDomFigure(id))
-  }
-}
-
-///|
-fn[T] ScriptBuilder::set_pending_error_once(
-  self : ScriptBuilder[T],
-  err : ScriptBuildError,
-) -> Unit {
-  if self.pending_error is None {
-    self.pending_error = Some(err)
+  match figure.kind() {
+    Pixi => self.instructions.push(HideFigure(figure.id()))
+    Dom => self.instructions.push(HideDomFigure(figure.id()))
   }
 }
 
 ///|
 pub fn[T] ScriptBuilder::set_figure_interactive(
   self : ScriptBuilder[T],
-  figure : Figure,
+  figure : DomFigure,
   interactive : Bool,
 ) -> Unit {
-  match figure {
-    DomFigure(id) =>
-      self.instructions.push(SetDomFigureInteractive(id, interactive))
-    WebglFigure(id) =>
-      self.set_pending_error_once(
-        ScriptBuildError::SetInteractiveUnsupportedOnWebglTarget(target=id),
-      )
-  }
+  self.instructions.push(SetDomFigureInteractive(figure.0, interactive))
 }
 
 ///|
@@ -737,7 +748,7 @@ pub fn[T] ScriptBuilder::play_music(
   music : Music,
   should_loop : Bool,
 ) -> Unit {
-  self.instructions.push(PlayMusic(music.id, should_loop))
+  self.instructions.push(PlayMusic(music.0, should_loop))
 }
 
 ///|
@@ -751,7 +762,7 @@ pub fn[T] ScriptBuilder::play_sfx(
   sfx : Sfx,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(PlaySfx(sfx.id, blocking))
+  self.instructions.push(PlaySfx(sfx.0, blocking))
 }
 
 ///|
@@ -767,33 +778,16 @@ pub fn effect_spec(
 }
 
 ///|
-fn[T, A : AnimationTarget] ScriptBuilder::check_effect_support(
-  self : ScriptBuilder[T],
-  target : A,
-) -> Bool {
-  if target.kind() is Dom {
-    self.set_pending_error_once(
-      ScriptBuildError::EffectUnsupportedOnDomTarget(target=target.id()),
-    )
-    false
-  } else {
-    true
-  }
-}
-
-///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::effect(
+pub fn[T, A : PixiTarget] ScriptBuilder::effect(
   self : ScriptBuilder[T],
   target : A,
   effect_spec : EffectSpec,
 ) -> Unit {
-  if self.check_effect_support(target) {
-    self.instructions.push(ApplyEffect(target.id(), effect_spec))
-  }
+  self.instructions.push(ApplyEffect(target.id(), effect_spec))
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::effect_with(
+pub fn[T, A : PixiTarget] ScriptBuilder::effect_with(
   self : ScriptBuilder[T],
   target : A,
   effect : Effect,
@@ -803,18 +797,16 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::effect_with(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  if self.check_effect_support(target) {
-    self.instructions.push(
-      ApplyEffect(target.id(), {
-        id: effect.0,
-        params,
-        phase,
-        duration_ms,
-        easing,
-        blocking,
-      }),
-    )
-  }
+  self.instructions.push(
+    ApplyEffect(target.id(), {
+      id: effect.0,
+      params,
+      phase,
+      duration_ms,
+      easing,
+      blocking,
+    }),
+  )
 }
 
 ///|
@@ -824,9 +816,8 @@ fn[T, A : AnimationTarget] ScriptBuilder::emit_animation(
   spec : AnimationSpec,
 ) -> Unit {
   match target.kind() {
-    RenderableKind::Webgl =>
-      self.instructions.push(AnimateWebgl(target.id(), spec))
-    RenderableKind::Dom => self.instructions.push(AnimateDom(target.id(), spec))
+    Pixi => self.instructions.push(AnimateWebgl(target.id(), spec))
+    Dom => self.instructions.push(AnimateDom(target.id(), spec))
   }
 }
 
@@ -866,12 +857,12 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   blocking? : Bool = false,
 ) -> Unit {
   match target.kind() {
-    RenderableKind::Webgl =>
+    Pixi =>
       self.emit_animation(
         target,
         anim_position(duration_ms, from, to, easing~, blocking~),
       )
-    RenderableKind::Dom =>
+    Dom =>
       self.emit_animation(
         target,
         anim_position_dom(duration_ms, from, to, easing, blocking),
@@ -1052,9 +1043,5 @@ pub fn[T] ScriptBuilder::load_text(
 pub fn[T] ScriptBuilder::build(
   self : ScriptBuilder[T],
 ) -> Script[T] raise ScriptBuildError {
-  match self.pending_error {
-    Some(err) => raise err
-    None => ()
-  }
   script_from_instructions(self.instructions)
 }

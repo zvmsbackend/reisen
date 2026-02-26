@@ -62,7 +62,7 @@ pub fn[T] AppController::new(
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
-    menu_music_id: menu_music.map(music => music.id),
+    menu_music_id: menu_music.map(music => music.0),
     menu_music_loop,
     menu_music_playing: false,
     start_logo_url,

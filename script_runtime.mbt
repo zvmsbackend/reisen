@@ -426,7 +426,7 @@ pub fn[T] Runtime::submit_custom_event(
             }
           WaitCustomEventJump(expected, selector) if expected == name => {
             let selected = selector(self.state, payload)
-            match self.script.labels.get(selected.name) {
+            match self.script.labels.get(selected.0) {
               Some(idx) => {
                 self.wait_custom_name = None
                 self.ip = idx
