@@ -31,6 +31,14 @@ pub struct SaveSlotEntry {
 } derive(Show, Eq)
 
 ///|
+pub suberror StorageValidationError {
+  InvalidSaveSlotName(slot~ : String)
+  InvalidTextSpeed(text_speed~ : Int)
+  InvalidBgmVolume(bgm_volume~ : Double)
+  InvalidSfxVolume(sfx_volume~ : Double)
+}
+
+///|
 extern "js" fn save_slot_now_ms() -> Double =
   #| () => Date.now()
 
@@ -53,6 +61,17 @@ pub fn save_slot_meta(
     title
   }
   { title: resolved_title, preview, updated_at_ms }
+}
+
+///|
+pub fn SaveSlotEntry::new(
+  slot : String,
+  meta? : SaveSlotMeta? = None,
+) -> SaveSlotEntry raise StorageValidationError {
+  if slot == "" {
+    raise StorageValidationError::InvalidSaveSlotName(slot~)
+  }
+  { slot, meta }
 }
 
 ///|
@@ -225,11 +244,29 @@ pub fn save_slot_entries() -> Array[SaveSlotEntry] {
 
 ///|
 /// Game settings persisted to localStorage.
-pub(all) struct GameSettings {
+pub struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
 } derive(Show, Eq, ToJson, FromJson)
+
+///|
+pub fn GameSettings::new(
+  text_speed : Int,
+  bgm_volume : Double,
+  sfx_volume : Double,
+) -> GameSettings raise StorageValidationError {
+  if text_speed < 10 || text_speed > 100 {
+    raise StorageValidationError::InvalidTextSpeed(text_speed~)
+  }
+  if bgm_volume < 0.0 || bgm_volume > 1.0 {
+    raise StorageValidationError::InvalidBgmVolume(bgm_volume~)
+  }
+  if sfx_volume < 0.0 || sfx_volume > 1.0 {
+    raise StorageValidationError::InvalidSfxVolume(sfx_volume~)
+  }
+  { text_speed, bgm_volume, sfx_volume }
+}
 
 ///|
 pub fn game_settings_default() -> GameSettings {
@@ -319,7 +356,19 @@ pub fn settings_write_in(ns : String, settings : GameSettings) -> Unit {
 ///|
 pub fn settings_read_in(ns : String) -> GameSettings? {
   match storage_get_item(settings_key_in(ns)).to_option() {
-    Some(raw) => Some(@json.from_json(@json.parse(raw))) catch { _ => None }
+    Some(raw) =>
+      try {
+        let decoded : GameSettings = @json.from_json(@json.parse(raw))
+        Some(
+          GameSettings::new(
+            decoded.text_speed,
+            decoded.bgm_volume,
+            decoded.sfx_volume,
+          ),
+        )
+      } catch {
+        _ => None
+      }
     None => None
   }
 }

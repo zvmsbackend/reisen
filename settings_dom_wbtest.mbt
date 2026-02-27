@@ -1,4 +1,7 @@
 ///|
+using @storage {settings_read, settings_write}
+
+///|
 test "settings default values" {
   let defaults = game_settings_default()
   assert_eq(defaults.text_speed, 50)
@@ -17,11 +20,7 @@ test "settings write read roundtrip" {
 
 ///|
 test "settings write read with custom values" {
-  let custom : GameSettings = {
-    text_speed: 80,
-    bgm_volume: 0.5,
-    sfx_volume: 0.9,
-  }
+  let custom = try! GameSettings::new(80, 0.5, 0.9)
   settings_write(custom)
   let read = settings_read()
   assert_eq(read, Some(custom))
@@ -30,16 +29,8 @@ test "settings write read with custom values" {
 
 ///|
 test "settings are isolated by namespace" {
-  let settings_a : GameSettings = {
-    text_speed: 30,
-    bgm_volume: 0.3,
-    sfx_volume: 0.3,
-  }
-  let settings_b : GameSettings = {
-    text_speed: 90,
-    bgm_volume: 0.9,
-    sfx_volume: 0.9,
-  }
+  let settings_a = try! GameSettings::new(30, 0.3, 0.3)
+  let settings_b = try! GameSettings::new(90, 0.9, 0.9)
   settings_write_in("game_a", settings_a)
   settings_write_in("game_b", settings_b)
 
@@ -50,16 +41,8 @@ test "settings are isolated by namespace" {
 
 ///|
 test "settings overwrite previous values" {
-  let first : GameSettings = {
-    text_speed: 25,
-    bgm_volume: 0.4,
-    sfx_volume: 0.5,
-  }
-  let second : GameSettings = {
-    text_speed: 75,
-    bgm_volume: 0.6,
-    sfx_volume: 0.7,
-  }
+  let first = try! GameSettings::new(25, 0.4, 0.5)
+  let second = try! GameSettings::new(75, 0.6, 0.7)
 
   settings_write(first)
   assert_eq(settings_read(), Some(first))
@@ -70,11 +53,7 @@ test "settings overwrite previous values" {
 
 ///|
 test "game_settings JSON roundtrip" {
-  let settings : GameSettings = {
-    text_speed: 60,
-    bgm_volume: 0.55,
-    sfx_volume: 0.85,
-  }
+  let settings = try! GameSettings::new(60, 0.55, 0.85)
   let json_str = settings.to_json().stringify()
   let parsed = @json.parse(json_str)
   let read : GameSettings = @json.from_json(parsed)

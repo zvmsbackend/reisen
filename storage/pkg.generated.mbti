@@ -1,0 +1,122 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/storage"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn game_settings_default() -> GameSettings
+
+pub fn persistent_delete(String) -> Unit
+
+pub fn persistent_delete_in(String, String) -> Unit
+
+pub fn persistent_get_flag(String, default? : Bool) -> Bool
+
+pub fn persistent_get_flag_in(String, String, default? : Bool) -> Bool
+
+pub fn persistent_get_int(String, default? : Int) -> Int
+
+pub fn persistent_get_int_in(String, String, default? : Int) -> Int
+
+pub fn persistent_get_text(String, default? : String) -> String
+
+pub fn persistent_get_text_in(String, String, default? : String) -> String
+
+pub fn persistent_keys() -> Array[String]
+
+pub fn persistent_keys_in(String) -> Array[String]
+
+pub fn persistent_set_flag(String, Bool) -> Unit
+
+pub fn persistent_set_flag_in(String, String, Bool) -> Unit
+
+pub fn persistent_set_int(String, Int) -> Unit
+
+pub fn persistent_set_int_in(String, String, Int) -> Unit
+
+pub fn persistent_set_text(String, String) -> Unit
+
+pub fn persistent_set_text_in(String, String, String) -> Unit
+
+pub fn save_slot_delete(String) -> Unit
+
+pub fn save_slot_delete_in(String, String) -> Unit
+
+pub fn save_slot_entries() -> Array[SaveSlotEntry]
+
+pub fn save_slot_entries_in(String) -> Array[SaveSlotEntry]
+
+pub fn save_slot_list() -> Array[String]
+
+pub fn save_slot_list_in(String) -> Array[String]
+
+pub fn save_slot_meta(String, String, updated_at_ms? : Double) -> SaveSlotMeta
+
+pub fn save_slot_read(String) -> String?
+
+pub fn save_slot_read_in(String, String) -> String?
+
+pub fn save_slot_read_meta(String) -> SaveSlotMeta?
+
+pub fn save_slot_read_meta_in(String, String) -> SaveSlotMeta?
+
+pub fn save_slot_write(String, String) -> Unit
+
+pub fn save_slot_write_in(String, String, String) -> Unit
+
+pub fn save_slot_write_meta(String, SaveSlotMeta) -> Unit
+
+pub fn save_slot_write_meta_in(String, String, SaveSlotMeta) -> Unit
+
+pub fn settings_read() -> GameSettings?
+
+pub fn settings_read_in(String) -> GameSettings?
+
+pub fn settings_write(GameSettings) -> Unit
+
+pub fn settings_write_in(String, GameSettings) -> Unit
+
+// Errors
+pub suberror StorageValidationError {
+  InvalidSaveSlotName(slot~ : String)
+  InvalidTextSpeed(text_speed~ : Int)
+  InvalidBgmVolume(bgm_volume~ : Double)
+  InvalidSfxVolume(sfx_volume~ : Double)
+}
+
+// Types and methods
+pub struct GameSettings {
+  text_speed : Int
+  bgm_volume : Double
+  sfx_volume : Double
+}
+pub fn GameSettings::new(Int, Double, Double) -> Self raise StorageValidationError
+pub impl Eq for GameSettings
+pub impl Show for GameSettings
+pub impl ToJson for GameSettings
+pub impl @json.FromJson for GameSettings
+
+pub struct SaveSlotEntry {
+  slot : String
+  meta : SaveSlotMeta?
+}
+pub fn SaveSlotEntry::new(String, meta? : SaveSlotMeta?) -> Self raise StorageValidationError
+pub impl Eq for SaveSlotEntry
+pub impl Show for SaveSlotEntry
+
+pub struct SaveSlotMeta {
+  title : String
+  preview : String
+  updated_at_ms : Double
+}
+pub impl Eq for SaveSlotMeta
+pub impl Show for SaveSlotMeta
+pub impl ToJson for SaveSlotMeta
+pub impl @json.FromJson for SaveSlotMeta
+
+// Type aliases
+
+// Traits
+

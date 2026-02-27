@@ -1,0 +1,9 @@
+import {
+  "moonbit-community/js-ffi/js",
+  "moonbitlang/core/json",
+  "moonbitlang/core/strconv",
+}
+
+options(
+  overrides: [ "sennenki/abort_hook" ],
+)

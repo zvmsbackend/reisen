@@ -1,4 +1,7 @@
 ///|
+using @storage {save_slot_delete, save_slot_read, save_slot_read_meta}
+
+///|
 async test "start_game wires runner and performs initial sync" {
   let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []

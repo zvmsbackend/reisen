@@ -60,7 +60,7 @@ test "runner apply settings updates text speed and audio gains" {
   let runner = GameRunner::new(Director::new(runtime), ui)
 
   set_dummy_bgm()
-  runner.apply_settings({ text_speed: 25, bgm_volume: 0.42, sfx_volume: 0.33 })
+  runner.apply_settings(try! GameSettings::new(25, 0.42, 0.33))
 
   assert_eq(ui.text_speed_ms_per_char(), 2000 / 25)
   let bgm = read_bgm_volume()

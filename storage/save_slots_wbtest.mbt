@@ -26,7 +26,9 @@ test "save slot metadata roundtrip and entries" {
 
   assert_eq(save_slot_read_meta("wb_meta"), Some(meta))
   let entries = save_slot_entries()
-  assert_true(entries.contains({ slot: "wb_meta", meta: Some(meta) }))
+  assert_true(
+    entries.contains(try! SaveSlotEntry::new("wb_meta", meta=Some(meta))),
+  )
 }
 
 ///|
