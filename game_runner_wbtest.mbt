@@ -13,7 +13,7 @@ extern "js" fn read_bgm_volume() -> Double =
   #| () => (globalThis.__reisenBgm?.volume ?? -1)
 
 ///|
-test "runner drives script and choice flow" {
+async test "runner drives script and choice flow" {
   let left = label()
   let right = label()
   let end = label()
@@ -74,7 +74,7 @@ test "runner apply settings updates text speed and audio gains" {
 }
 
 ///|
-test "runner stays on choice prompt until choice submitted" {
+async test "runner stays on choice prompt until choice submitted" {
   let a = label()
   let b = label()
   let compiled : Script[Int] = script(builder => {
@@ -91,7 +91,7 @@ test "runner stays on choice prompt until choice submitted" {
 }
 
 ///|
-test "runner render sync hook is called on ui sync and step" {
+async test "runner render sync hook is called on ui sync and step" {
   let compiled : Script[Int] = script(builder => {
     builder.say("narrator", "hello")
   })
@@ -119,7 +119,7 @@ test "runner render sync hook is called on ui sync and step" {
 }
 
 ///|
-test "runner tick returns false when script ends" {
+async test "runner tick returns false when script ends" {
   let compiled : Script[Int] = script(builder => {
     builder.say("narrator", "only line")
   })
@@ -136,7 +136,7 @@ test "runner tick returns false when script ends" {
 }
 
 ///|
-test "runner event hook receives emitted events" {
+async test "runner event hook receives emitted events" {
   let script : Script[Int] = script(builder => builder.say("n", "t"))
   let seen : Array[RuntimeEvent] = []
   let runner = GameRunner::new_with_hooks(
@@ -157,7 +157,7 @@ test "runner event hook receives emitted events" {
 }
 
 ///|
-test "runner click skips wait" {
+async test "runner click skips wait" {
   let script : Script[Int] = script(builder => {
     builder.wait(200)
     builder.say("n", "done")
@@ -177,7 +177,7 @@ test "runner click skips wait" {
 }
 
 ///|
-test "runner click advances wait click" {
+async test "runner click advances wait click" {
   let script : Script[Int] = script(builder => {
     builder.wait_click()
     builder.say("n", "done")
@@ -197,7 +197,7 @@ test "runner click advances wait click" {
 }
 
 ///|
-test "auto mode skips skippable wait_click after short delay" {
+async test "auto mode skips skippable wait_click after short delay" {
   let script : Script[Int] = script(builder => {
     builder.wait_click(can_skip=true)
     builder.say("n", "done")
@@ -218,7 +218,7 @@ test "auto mode skips skippable wait_click after short delay" {
 }
 
 ///|
-test "runner click reveals typewriter then advances on next click" {
+async test "runner click reveals typewriter then advances on next click" {
   let script : Script[Int] = script(builder => {
     builder.say("n", "hello")
     builder.say("n", "next")
@@ -263,7 +263,7 @@ test "runner click reveals typewriter then advances on next click" {
 }
 
 ///|
-test "runner clear presentation resets render and syncs canvas" {
+async test "runner clear presentation resets render and syncs canvas" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)
   let runner = GameRunner::new_with_render_sync(
@@ -282,7 +282,7 @@ test "runner clear presentation resets render and syncs canvas" {
 }
 
 ///|
-test "wait advances with elapsed even when dialog remains" {
+async test "wait advances with elapsed even when dialog remains" {
   let script : Script[Int] = script(builder => {
     builder.say("n", "first")
     builder.wait(100)
@@ -330,7 +330,7 @@ test "wait advances with elapsed even when dialog remains" {
 }
 
 ///|
-test "skip mode ignores waits" {
+async test "skip mode ignores waits" {
   let script : Script[Int] = script(builder => {
     builder.say("n", "first")
     builder.wait(200)
@@ -379,7 +379,7 @@ test "skip mode ignores waits" {
 }
 
 ///|
-test "intro advances when display completes" {
+async test "intro advances when display completes" {
   let script : Script[Int] = script(builder => {
     builder.intro("Prelude")
     builder.say("n", "after")
@@ -407,7 +407,7 @@ test "intro advances when display completes" {
 }
 
 ///|
-test "runner keeps rendering during animations" {
+async test "runner keeps rendering during animations" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)
   let script : Script[Int] = script(builder => {

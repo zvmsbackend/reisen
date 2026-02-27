@@ -1008,10 +1008,10 @@ fn[T] PixiPresenter::pull_new_animations(
 }
 
 ///|
-fn[T] PixiPresenter::pull_new_live2d_actions(
+async fn[T] PixiPresenter::pull_new_live2d_actions(
   self : PixiPresenter,
   director : Director[T],
-) -> Unit {
+) -> Unit noraise {
   let motions = director.live2d_motions()
   for i, entry in motions {
     if i < self.live2d_motion_cursor {
@@ -1019,7 +1019,7 @@ fn[T] PixiPresenter::pull_new_live2d_actions(
     }
     let (target, group, index) = entry
     match self.figure_live2d.get(target) {
-      Some(model) => model.start_motion(group, @js.Optional::from_option(index))
+      Some(model) => model.motion(group, index?) |> ignore
       None => ()
     }
   }
@@ -1763,10 +1763,10 @@ fn[T] PixiPresenter::sync_figures(
 }
 
 ///|
-fn[T] PixiPresenter::sync_noraise(
+async fn[T] PixiPresenter::sync_noraise(
   self : PixiPresenter,
   director : Director[T],
-) -> Unit {
+) -> Unit noraise {
   let epoch = director.render_epoch()
   match self.render_epoch {
     Some(prev) =>

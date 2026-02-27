@@ -458,10 +458,10 @@ pub extern "js" fn PixiLive2dModel::destroy(self : PixiLive2dModel) -> Unit =
 
 ///|
 #module("/pixi-bridge.js")
-fn js_live2d_motion_promise(
+extern "js" fn js_live2d_motion_promise(
   model : PixiLive2dModel,
   group : String,
-  index? : Int,
+  index : @js.Optional[Int],
 ) -> @js.Promise = "live2dMotion"
 
 ///|
@@ -469,28 +469,18 @@ pub async fn PixiLive2dModel::motion(
   self : PixiLive2dModel,
   group : String,
   index? : Int,
-) -> Bool {
-  let v = @js.Promise::wait(js_live2d_motion_promise(self, group, index?))
+) -> Bool noraise {
+  let v = try! @js.Promise::wait(
+    js_live2d_motion_promise(self, group, @js.Optional::from_option(index)),
+  )
   v.cast()
 }
 
 ///|
-pub extern "js" fn PixiLive2dModel::start_motion(
-  self : PixiLive2dModel,
-  group : String,
-  index : @js.Optional[Int],
-) -> Unit =
-  #| (self, group, index) => {
-  #|   if (typeof self.motion === 'function') {
-  #|     Promise.resolve(self.motion(group, index, 3)).catch((e) => {});
-  #|   }
-  #| }
-
-///|
 #module("/pixi-bridge.js")
-fn js_live2d_expression_promise(
+extern "js" fn js_live2d_expression_promise(
   model : PixiLive2dModel,
-  id? : String,
+  id : @js.Optional[String],
 ) -> @js.Promise = "live2dExpression"
 
 ///|
@@ -498,7 +488,9 @@ pub async fn PixiLive2dModel::expression(
   self : PixiLive2dModel,
   id? : String,
 ) -> Bool {
-  let v = @js.Promise::wait(js_live2d_expression_promise(self, id?))
+  let v = try! @js.Promise::wait(
+    js_live2d_expression_promise(self, @js.Optional::from_option(id)),
+  )
   v.cast()
 }
 

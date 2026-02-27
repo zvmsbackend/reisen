@@ -1,5 +1,5 @@
 ///|
-test "start_game wires runner and performs initial sync" {
+async test "start_game wires runner and performs initial sync" {
   let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)
@@ -21,7 +21,7 @@ test "start_game wires runner and performs initial sync" {
 }
 
 ///|
-test "start_game supports optional hooks" {
+async test "start_game supports optional hooks" {
   let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []
   let events : Array[RuntimeEvent] = []
@@ -49,7 +49,7 @@ test "start_game supports optional hooks" {
 }
 
 ///|
-test "start_game_from_save resumes script" {
+async test "start_game_from_save resumes script" {
   let script : Script[Int] = script(builder => {
     builder.say("n", "a")
     builder.say("n", "b")
@@ -69,7 +69,7 @@ test "start_game_from_save resumes script" {
 }
 
 ///|
-test "save_runner_to_slot and start_game_from_slot roundtrip" {
+async test "save_runner_to_slot and start_game_from_slot roundtrip" {
   save_slot_delete("wb_slot_roundtrip")
   let script : Script[Int] = script(builder => {
     builder.say("n", "a")
@@ -91,7 +91,7 @@ test "save_runner_to_slot and start_game_from_slot roundtrip" {
 }
 
 ///|
-test "save_runner_to_slot_with_meta writes slot metadata" {
+async test "save_runner_to_slot_with_meta writes slot metadata" {
   save_slot_delete("wb_slot_meta")
   let script : Script[Int] = script(builder => builder.say("n", "line"))
   let runner = start_game(script, GameState::new(0), "app")
@@ -114,7 +114,7 @@ test "save_runner_to_slot_with_meta writes slot metadata" {
 }
 
 ///|
-test "start_game_from_slot raises on missing slot" {
+async test "start_game_from_slot raises on missing slot" {
   save_slot_delete("wb_slot_missing")
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let result : Result[GameRunner[Int], Error] = try? start_game_from_slot(
@@ -126,7 +126,7 @@ test "start_game_from_slot raises on missing slot" {
 }
 
 ///|
-test "start_game_from_slot respects save namespace" {
+async test "start_game_from_slot respects save namespace" {
   save_slot_delete_in("game_a", "shared_slot")
   save_slot_delete_in("game_b", "shared_slot")
   let script : Script[Int] = script(builder => {

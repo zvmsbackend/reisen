@@ -58,7 +58,7 @@ pub fn[T] validate_script_assets(
 }
 
 ///|
-pub fn[T] start_game(
+pub async fn[T] start_game(
   script : Script[T],
   state : GameState[T],
   ui_root_id : String,
@@ -79,14 +79,14 @@ pub fn[T] start_game(
 }
 
 ///|
-pub fn[T : FromJson] start_game_from_save(
+pub async fn[T : FromJson] start_game_from_save(
   script : Script[T],
   save_json : String,
   ui_root_id : String,
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
   settings? : GameSettings,
-) -> GameRunner[T] raise {
+) -> GameRunner[T] {
   let director = director_from_save_json(script, save_json)
   let ui = UiDom::new(ui_root_id)
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
@@ -133,7 +133,7 @@ pub fn[T : ToJson] save_runner_to_slot_with_meta(
 }
 
 ///|
-pub fn[T : FromJson] start_game_from_slot(
+pub async fn[T : FromJson] start_game_from_slot(
   script : Script[T],
   slot : String,
   ui_root_id : String,
@@ -141,7 +141,7 @@ pub fn[T : FromJson] start_game_from_slot(
   event_hook? : EventHook = _ => (),
   save_namespace? : String = "global",
   settings? : GameSettings,
-) -> GameRunner[T] raise {
+) -> GameRunner[T] {
   match save_slot_read_in(save_namespace, slot) {
     Some(save_json) =>
       start_game_from_save(

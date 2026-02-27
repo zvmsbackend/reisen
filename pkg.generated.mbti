@@ -83,13 +83,13 @@ pub async fn load_text(String) -> String
 
 pub async fn load_video(String) -> Video
 
-pub fn[T] make_pixi_render_sync_hook_from_canvas(String, AssetStore) -> ((Director[T]) -> Unit)?
+pub fn[T] make_pixi_render_sync_hook_from_canvas(String, AssetStore) -> (async (Director[T]) -> Unit noraise)?
 
-pub fn[T] make_pixi_render_sync_hook_from_canvas_element(PixiCanvas, AssetStore) -> (Director[T]) -> Unit
+pub fn[T] make_pixi_render_sync_hook_from_canvas_element(PixiCanvas, AssetStore) -> async (Director[T]) -> Unit noraise
 
-pub fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(PixiCanvas, AssetStore, PixiPresenterConfig) -> (Director[T]) -> Unit
+pub fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(PixiCanvas, AssetStore, PixiPresenterConfig) -> async (Director[T]) -> Unit noraise
 
-pub fn[T] make_pixi_render_sync_hook_from_canvas_with_config(String, AssetStore, PixiPresenterConfig) -> ((Director[T]) -> Unit)?
+pub fn[T] make_pixi_render_sync_hook_from_canvas_with_config(String, AssetStore, PixiPresenterConfig) -> (async (Director[T]) -> Unit noraise)?
 
 pub fn option(String, Label, id? : String) -> ChoiceOption
 
@@ -211,11 +211,11 @@ pub fn settings_write(GameSettings) -> Unit
 
 pub fn settings_write_in(String, GameSettings) -> Unit
 
-pub fn[T] start_game(Script[T], GameState[T], String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, settings? : GameSettings) -> GameRunner[T]
+pub async fn[T] start_game(Script[T], GameState[T], String, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (RuntimeEvent) -> Unit, settings? : GameSettings) -> GameRunner[T]
 
-pub fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, settings? : GameSettings) -> GameRunner[T] raise
+pub async fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (RuntimeEvent) -> Unit, settings? : GameSettings) -> GameRunner[T]
 
-pub fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String, settings? : GameSettings) -> GameRunner[T] raise
+pub async fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String, settings? : GameSettings) -> GameRunner[T]
 
 pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
 
@@ -293,7 +293,7 @@ pub impl ToJson for AnimationSpec
 pub impl @json.FromJson for AnimationSpec
 
 type AppController[T]
-pub fn[T] AppController::new(async () -> Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : (Director[T]) -> Unit, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
+pub fn[T] AppController::new(async () -> Script[T], () -> GameState[T], String, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : Music, menu_music_loop? : Bool, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (RuntimeEvent) -> Unit, gallery_replay_state_factories? : ReplayStateFactories[T]) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T] AppController::submit_custom_event(Self[T], String, String) -> Bool
 pub async fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
@@ -493,22 +493,22 @@ pub impl @json.FromJson for GalleryTileView
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], RuntimeEvent) -> Unit
 pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit
-pub fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
+pub async fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
-pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, (Director[T]) -> Unit, (RuntimeEvent) -> Unit) -> Self[T]
-pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, (Director[T]) -> Unit) -> Self[T]
+pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, async (Director[T]) -> Unit noraise, (RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, async (Director[T]) -> Unit noraise) -> Self[T]
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
-pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_custom_event(Self[T], String, String) -> RuntimeEvent
-pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
+pub async fn[T] GameRunner::sync_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
 pub fn[T] GameRunner::take_pending_action(Self[T]) -> String?
-pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
+pub async fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
 pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
 
@@ -615,7 +615,7 @@ pub fn PixiLive2dModel::destroy(Self) -> Unit
 pub async fn PixiLive2dModel::expression(Self, id? : String) -> Bool
 pub fn PixiLive2dModel::focus(Self, Double, Double, instant? : Bool) -> Unit
 pub fn PixiLive2dModel::height(Self) -> Double
-pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool
+pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool noraise
 pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
 pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_expression(Self, @js.Optional[String]) -> Unit
@@ -627,7 +627,6 @@ pub fn PixiLive2dModel::set_scale(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_size(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_visible(Self, Bool) -> Unit
 pub fn PixiLive2dModel::set_z_index(Self, Int) -> Unit
-pub fn PixiLive2dModel::start_motion(Self, String, @js.Optional[Int]) -> Unit
 pub fn PixiLive2dModel::width(Self) -> Double
 
 pub struct PixiPresenterConfig {
@@ -948,7 +947,7 @@ pub type PixiEffectApply = (PixiSprite, Array[(String, Double)], Int) -> Bool
 
 pub type PixiSharedEffectApply = (PixiEffectTarget, Array[(String, Double)], Int) -> Bool
 
-pub type RenderSyncHook[T] = (Director[T]) -> Unit
+pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
 
 pub type ScriptFactory[T] = async () -> Script[T]
 

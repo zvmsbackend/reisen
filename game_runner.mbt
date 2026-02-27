@@ -2,7 +2,7 @@
 /// Game loop glue between `Director` (state machine) and `UiDom` (HTML view).
 
 ///|
-pub type RenderSyncHook[T] = (Director[T]) -> Unit
+pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
 
 ///|
 pub type EventHook = (RuntimeEvent) -> Unit
@@ -163,13 +163,13 @@ fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
-fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit {
+async fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit noraise {
   (self.render_sync)(self.director)
   self.render_sync_dirty = false
 }
 
 ///|
-fn[T] GameRunner::maybe_render_ui(self : GameRunner[T]) -> Unit {
+async fn[T] GameRunner::maybe_render_ui(self : GameRunner[T]) -> Unit noraise {
   if self.ui_dirty {
     self.render_ui()
   }
@@ -278,12 +278,12 @@ priv enum RenderMode {
 }
 
 ///|
-fn[T] GameRunner::apply_event_and_render(
+async fn[T] GameRunner::apply_event_and_render(
   self : GameRunner[T],
   event : RuntimeEvent,
   mark_ui_for_text : Bool,
   mode : RenderMode,
-) -> Unit {
+) -> Unit noraise {
   self.apply_event_effects(event, mark_ui_for_text)
   match mode {
     RenderMode::RenderUi => self.render_ui()
@@ -292,14 +292,14 @@ fn[T] GameRunner::apply_event_and_render(
 }
 
 ///|
-pub fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit {
+pub async fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit {
   self.ui.mark_all_dirty()
   self.render_ui()
   self.sync_canvas()
 }
 
 ///|
-pub fn[T] GameRunner::step(
+pub async fn[T] GameRunner::step(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
@@ -555,7 +555,10 @@ pub fn[T] GameRunner::jump_to_label(
 
 ///|
 /// Advances one frame and reports whether loop should continue.
-pub fn[T] GameRunner::tick(self : GameRunner[T], elapsed_ms? : Int = 0) -> Bool {
+pub async fn[T] GameRunner::tick(
+  self : GameRunner[T],
+  elapsed_ms? : Int = 0,
+) -> Bool {
   let keep_running = try self.step(elapsed_ms~) catch {
     _ => false
   } noraise {
@@ -586,7 +589,7 @@ pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
-pub fn[T] GameRunner::clear_presentation(self : GameRunner[T]) -> Unit {
+pub async fn[T] GameRunner::clear_presentation(self : GameRunner[T]) -> Unit {
   self.ui.clear_game_ui()
   self.director.clear_render()
   self.sync_canvas()
