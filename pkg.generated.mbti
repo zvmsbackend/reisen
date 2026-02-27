@@ -69,8 +69,6 @@ pub fn game_settings_default() -> GameSettings
 
 pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
 
-pub fn gensym(prefix? : String) -> String
-
 pub fn get_canvas_by_id(String) -> PixiCanvas?
 
 pub fn label(name? : String) -> Label
