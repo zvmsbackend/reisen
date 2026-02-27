@@ -91,6 +91,25 @@ async test "save_runner_to_slot and start_game_from_slot roundtrip" {
 }
 
 ///|
+async test "save slot payload is wrapped with version" {
+  save_slot_delete("wb_slot_payload")
+  let script : Script[Int] = script(builder => builder.say("n", "a"))
+  let runner = start_game(script, GameState::new(0), "app")
+  save_runner_to_slot(runner, "wb_slot_payload")
+
+  let raw = save_slot_read("wb_slot_payload")
+  assert_true(raw is Some(_))
+  match raw {
+    Some(s) => {
+      let payload : SaveSlotPayload = @json.from_json(@json.parse(s))
+      assert_eq(payload.version, 1)
+      assert_true(payload.director_json != "")
+    }
+    None => fail("missing payload")
+  }
+}
+
+///|
 async test "save_runner_to_slot_with_meta writes slot metadata" {
   save_slot_delete("wb_slot_meta")
   let script : Script[Int] = script(builder => builder.say("n", "line"))

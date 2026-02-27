@@ -696,6 +696,7 @@ pub struct Runtime[T] {
   state : GameState[T]
   mut ip : Int
   mut pending_choices : Array[ChoiceOption]
+  mut pending_choice_ip : Int?
   mut pending_text_input : (String, String)?
   mut wait_ms : Int
   mut wait_for_click : Bool
@@ -704,11 +705,13 @@ pub struct Runtime[T] {
   mut wait_video : Bool
   mut last_say_proceed_on_done : Bool
   mut ended : Bool
+  flow_trace : Array[ScriptFlowTrace]
 }
 pub fn[T] Runtime::can_auto_skip_wait_click(Self[T]) -> Bool
 pub fn[T] Runtime::can_skip_wait(Self[T]) -> Bool
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Runtime::complete_video_wait(Self[T], Bool) -> RuntimeEvent
+pub fn[T] Runtime::flow_trace(Self[T]) -> Array[ScriptFlowTrace]
 pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
 pub fn[T] Runtime::is_waiting(Self[T]) -> Bool
 pub fn[T] Runtime::is_waiting_video(Self[T]) -> Bool
@@ -764,6 +767,7 @@ pub struct RuntimeSave[T] {
   state : GameState[T]
   ip : Int
   pending_choices : Array[ChoiceOption]
+  pending_choice_ip : Int?
   pending_text_input : (String, String)?
   wait_ms : Int
   wait_for_click : Bool
@@ -772,6 +776,7 @@ pub struct RuntimeSave[T] {
   wait_video : Bool
   last_say_proceed_on_done : Bool
   ended : Bool
+  flow_trace : Array[ScriptFlowTrace]
 }
 pub impl[T : ToJson] ToJson for RuntimeSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for RuntimeSave[T]
@@ -792,6 +797,13 @@ pub impl Eq for SaveSlotMeta
 pub impl Show for SaveSlotMeta
 pub impl ToJson for SaveSlotMeta
 pub impl @json.FromJson for SaveSlotMeta
+
+pub struct SaveSlotPayload {
+  version : Int
+  director_json : String
+}
+pub impl ToJson for SaveSlotPayload
+pub impl @json.FromJson for SaveSlotPayload
 
 pub(all) struct ScalarState {
   opacity : Double
@@ -870,6 +882,16 @@ pub fn[T] ScriptBuilder::wait_click(Self[T], can_skip? : Bool) -> Unit
 pub fn[T] ScriptBuilder::wait_custom_event(Self[T], String, (GameState[T], String) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::wait_custom_event_jump(Self[T], String, (GameState[T], String) -> Label) -> Unit
 
+pub enum ScriptFlowTrace {
+  ChoiceResolved(ip~ : Int, choice_id~ : String)
+  JumpIfResolved(ip~ : Int, target~ : String, taken~ : Bool)
+  CustomJumpResolved(ip~ : Int, name~ : String, target~ : String)
+}
+pub impl Eq for ScriptFlowTrace
+pub impl Show for ScriptFlowTrace
+pub impl ToJson for ScriptFlowTrace
+pub impl @json.FromJson for ScriptFlowTrace
+
 pub enum SettingsContext {
   FromStartMenu
   FromMidgame
@@ -901,6 +923,7 @@ pub fn UiDom::mark_dirty_text(Self) -> Unit
 pub fn UiDom::mark_dirty_text_input(Self) -> Unit
 pub fn UiDom::mark_skip_advanced(Self) -> Unit
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
+pub fn UiDom::set_media_volume(Self, Double) -> Unit
 pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
 pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
 pub fn UiDom::set_text_speed(Self, Int) -> Unit

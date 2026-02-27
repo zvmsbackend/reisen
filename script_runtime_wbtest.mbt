@@ -396,3 +396,66 @@ test "runtime custom event jump resumes at selected label on next step" {
     Said(speaker="n", text="left", typewriter=true, append=false, voice=None),
   )
 }
+
+///|
+test "runtime records jump_if flow trace" {
+  let target = label(name="target")
+  let script : Script[Int] = script(builder => {
+    builder.jump_if(target, _ => true)
+    builder.say("n", "skip")
+    builder.label(target)
+    builder.say("n", "ok")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(
+    runtime.step(),
+    Said(speaker="n", text="ok", typewriter=true, append=false, voice=None),
+  )
+  assert_eq(runtime.flow_trace(), [
+    ScriptFlowTrace::JumpIfResolved(ip=0, target="target", taken=true),
+  ])
+}
+
+///|
+test "runtime records choice flow trace" {
+  let a = label(name="a")
+  let b = label(name="b")
+  let script : Script[Int] = script(builder => {
+    builder.choice([option("A", a, id="a"), option("B", b, id="b")])
+    builder.label(a)
+    builder.say("n", "A")
+    builder.label(b)
+    builder.say("n", "B")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_true(runtime.step() is ChoicePrompt(_))
+  ignore(runtime.choose("b"))
+  assert_eq(runtime.flow_trace(), [
+    ScriptFlowTrace::ChoiceResolved(ip=0, choice_id="b"),
+  ])
+}
+
+///|
+test "runtime records custom jump flow trace" {
+  let left = label(name="left")
+  let right = label(name="right")
+  let script : Script[Int] = script(builder => {
+    builder.wait_custom_event_jump("route", (_, payload) => {
+      if payload == "L" {
+        left
+      } else {
+        right
+      }
+    })
+    builder.label(left)
+    builder.say("n", "left")
+    builder.label(right)
+    builder.say("n", "right")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), WaitCustomEventStarted("route"))
+  assert_eq(runtime.submit_custom_event("route", "R"), Custom("route", "R"))
+  assert_eq(runtime.flow_trace(), [
+    ScriptFlowTrace::CustomJumpResolved(ip=0, name="route", target="right"),
+  ])
+}

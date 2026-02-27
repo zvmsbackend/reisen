@@ -9,6 +9,37 @@ pub suberror AppBootstrapError {
 }
 
 ///|
+pub struct SaveSlotPayload {
+  version : Int
+  director_json : String
+} derive(ToJson, FromJson)
+
+///|
+let save_slot_payload_version = 1
+
+///|
+fn encode_save_slot_payload(
+  director_json : String,
+  payload_version : Int,
+) -> String {
+  SaveSlotPayload::{ version: payload_version, director_json }
+  .to_json()
+  .stringify()
+}
+
+///|
+fn decode_save_slot_payload(raw : String, payload_version : Int) -> String {
+  let payload : SaveSlotPayload = @json.from_json(@json.parse(raw)) catch {
+    _ => return raw
+  }
+  if payload.version == payload_version {
+    payload.director_json
+  } else {
+    raw
+  }
+}
+
+///|
 pub fn[T] validate_script_image_assets(
   script : Script[T],
   store : AssetStore,
@@ -107,8 +138,13 @@ pub fn[T : ToJson] save_director_to_slot(
   director : Director[T],
   slot : String,
   save_namespace? : String = "global",
+  slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
-  save_slot_write_in(save_namespace, slot, director.save_json())
+  save_slot_write_in(
+    save_namespace,
+    slot,
+    encode_save_slot_payload(director.save_json(), slot_payload_version),
+  )
 }
 
 ///|
@@ -116,8 +152,14 @@ pub fn[T : ToJson] save_runner_to_slot(
   runner : GameRunner[T],
   slot : String,
   save_namespace? : String = "global",
+  slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
-  save_director_to_slot(runner.director(), slot, save_namespace~)
+  save_director_to_slot(
+    runner.director(),
+    slot,
+    save_namespace~,
+    slot_payload_version~,
+  )
 }
 
 ///|
@@ -127,8 +169,9 @@ pub fn[T : ToJson] save_runner_to_slot_with_meta(
   title? : String = "",
   preview? : String = "",
   save_namespace? : String = "global",
+  slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
-  save_runner_to_slot(runner, slot, save_namespace~)
+  save_runner_to_slot(runner, slot, save_namespace~, slot_payload_version~)
   save_slot_write_meta_in(save_namespace, slot, save_slot_meta(title, preview))
 }
 
@@ -141,12 +184,13 @@ pub async fn[T : FromJson] start_game_from_slot(
   event_hook? : EventHook = _ => (),
   save_namespace? : String = "global",
   settings? : GameSettings,
+  slot_payload_version? : Int = save_slot_payload_version,
 ) -> GameRunner[T] {
   match save_slot_read_in(save_namespace, slot) {
     Some(save_json) =>
       start_game_from_save(
         script,
-        save_json,
+        decode_save_slot_payload(save_json, slot_payload_version),
         ui_root_id,
         render_sync~,
         event_hook~,
