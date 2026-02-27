@@ -498,9 +498,7 @@ pub async fn[T] GameRunner::step(
     self.ui.mark_auto_advanced()
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
-    self.ui_dirty = true
-    self.ui.mark_dirty_text()
-    self.maybe_render_ui()
+    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
   let event = self.current_dialog_event()
