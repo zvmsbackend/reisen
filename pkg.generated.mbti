@@ -521,6 +521,7 @@ pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[DialogLogEntry]
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::flow_trace(Self[T]) -> Array[ScriptFlowTrace]
+pub fn[T] GameRunner::is_log_visible(Self[T]) -> Bool
 pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
 pub fn[T] GameRunner::log_build_state(Self[T]) -> LogBuildState
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
@@ -528,6 +529,7 @@ pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, async (Director[T]) -> 
 pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, async (Director[T]) -> Unit noraise) -> Self[T]
 pub fn[T] GameRunner::reconstruct_dialog_history(Self[T], Script[T], GameState[T], max_steps? : Int) -> Unit raise LogReconstructionError
 pub fn[T] GameRunner::set_log_build_state(Self[T], LogBuildState) -> Unit
+pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
 pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -537,6 +539,7 @@ pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
 pub fn[T] GameRunner::take_pending_action(Self[T]) -> String?
 pub async fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
 pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
+pub fn[T] GameRunner::toggle_log_visible(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
 
 pub(all) struct GameSettings {
@@ -948,6 +951,7 @@ pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
 pub fn UiDom::clear_game_ui(Self) -> Unit
 pub fn UiDom::complete_typewriter(Self) -> Unit
 pub fn UiDom::has_active_dom_animations(Self) -> Bool
+pub fn UiDom::is_log_visible(Self) -> Bool
 pub fn UiDom::is_skip_active(Self) -> Bool
 pub fn UiDom::is_typewriter_done(Self) -> Bool
 pub fn UiDom::mark_all_dirty(Self) -> Unit
@@ -958,6 +962,7 @@ pub fn UiDom::mark_dirty_text(Self) -> Unit
 pub fn UiDom::mark_dirty_text_input(Self) -> Unit
 pub fn UiDom::mark_skip_advanced(Self) -> Unit
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
+pub fn UiDom::set_log_visible(Self, Bool) -> Unit
 pub fn UiDom::set_media_volume(Self, Double) -> Unit
 pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
 pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
@@ -970,6 +975,7 @@ pub fn UiDom::simulate_intro_done(Self) -> Unit
 pub fn UiDom::start_typewriter(Self, String) -> Unit
 pub fn UiDom::text_speed_ms_per_char(Self) -> Int
 pub fn UiDom::toggle_auto_mode(Self) -> Unit
+pub fn UiDom::toggle_log_visible(Self) -> Unit
 pub fn UiDom::toggle_skip_mode(Self) -> Unit
 pub fn UiDom::typewriter_visible_text(Self) -> StringView
 

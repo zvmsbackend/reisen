@@ -21,6 +21,7 @@ priv enum SettingsAction {
   Back
   NewGame
   StartMenu
+  Log
   SaveSlot(String)
   LoadSlot(String)
 }
@@ -252,6 +253,7 @@ extern "js" fn settings_dom_render(
   #|   if (context === 'midgame') {
   #|     actions.appendChild(mkButton('Save', 'save'));
   #|     actions.appendChild(mkButton('Load', 'load'));
+  #|     actions.appendChild(mkButton('Log', 'log'));
   #|     actions.appendChild(mkButton('Start Menu', 'start_menu'));
   #|   } else {
   #|     actions.appendChild(mkButton('New Game', 'new_game'));
@@ -638,6 +640,10 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
         self.persist_settings()
       }
       SettingsAction::NewGame
+    }
+    Some("log") => {
+      settings_action_clear(self.root_id)
+      SettingsAction::Log
     }
     Some("back") => {
       if self.view_mode is SettingsViewMode::Settings {

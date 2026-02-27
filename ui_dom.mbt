@@ -56,9 +56,11 @@ struct UiViewModel {
   avatar_id : String?
   choices : Array[UiChoiceView]
   text_input : UiTextInputView?
+  dialog_history : Array[DialogLogEntry]
   dom_figures : Array[UiDomFigureView]
   auto_mode : Bool
   skip_mode : Bool
+  log_visible : Bool
 } derive(Show, Eq)
 
 ///|
@@ -95,6 +97,7 @@ struct UiDom {
   mut skip_mode_last_advance_ms : Int
   mut simulated_click : Bool
   mut simulated_intro_done : Bool
+  mut log_visible : Bool
   mut dirty_speaker : Bool
   mut dirty_text : Bool
   mut dirty_choices : Bool
@@ -137,6 +140,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     skip_mode_last_advance_ms: 0,
     simulated_click: false,
     simulated_intro_done: false,
+    log_visible: false,
     dirty_speaker: true,
     dirty_text: true,
     dirty_choices: true,
@@ -617,6 +621,23 @@ pub fn UiDom::is_skip_active(self : UiDom) -> Bool {
 ///|
 pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
   self.set_skip_mode(not(self.skip_mode))
+}
+
+///|
+pub fn UiDom::set_log_visible(self : UiDom, visible : Bool) -> Unit {
+  self.log_visible = visible
+  self.dirty_text = true
+  self.dirty_action_buttons = true
+}
+
+///|
+pub fn UiDom::toggle_log_visible(self : UiDom) -> Unit {
+  self.set_log_visible(not(self.log_visible))
+}
+
+///|
+pub fn UiDom::is_log_visible(self : UiDom) -> Bool {
+  self.log_visible
 }
 
 ///|
@@ -1305,8 +1326,9 @@ extern "js" fn dom_render_action_buttons(
   auto_mode : Bool,
   skip_mode : Bool,
   dialog_visible : Bool,
+  log_visible : Bool,
 ) -> Unit =
-  #| (root_id, auto_mode, skip_mode, dialog_visible) => {
+  #| (root_id, auto_mode, skip_mode, dialog_visible, log_visible) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -1325,6 +1347,7 @@ extern "js" fn dom_render_action_buttons(
   #|     { id: 'settings', label: '⚙' },
   #|     { id: 'qsave', label: 'Q.Save' },
   #|     { id: 'save', label: 'Save' },
+  #|     { id: 'log', label: log_visible ? '☑ Log' : '☐ Log', data: 'log' },
   #|     { id: 'dialog', label: dialog_visible ? '☑ Dialog' : '☐ Dialog', data: 'dialog' },
   #|     { id: 'auto', label: auto_mode ? '☑ Auto' : '☐ Auto', data: 'auto' },
   #|     { id: 'skip', label: skip_mode ? '☑ Skip' : '☐ Skip', data: 'skip' },
@@ -1337,6 +1360,9 @@ extern "js" fn dom_render_action_buttons(
   #|     if (btnInfo.data === 'auto') {
   #|       btn.dataset.reisenAction = 'auto';
   #|       btn.classList.toggle('active', auto_mode);
+  #|     } else if (btnInfo.data === 'log') {
+  #|       btn.dataset.reisenAction = 'log';
+  #|       btn.classList.toggle('active', log_visible);
   #|     } else if (btnInfo.data === 'dialog') {
   #|       btn.dataset.reisenAction = 'dialog';
   #|       btn.classList.toggle('active', dialog_visible);
@@ -1364,6 +1390,66 @@ extern "js" fn dom_clear_text_input(root_id : String) -> Unit =
   #|   if (inputContainer) {
   #|     inputContainer.remove();
   #|   }
+  #| }
+
+///|
+extern "js" fn dom_render_log(root_id : String, history_json : String) -> Unit =
+  #| (root_id, history_json) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   let panel = root.querySelector('[data-reisen="log-panel"]');
+  #|   if (!panel) {
+  #|     panel = doc.createElement('div');
+  #|     panel.dataset.reisen = 'log-panel';
+  #|     panel.style.position = 'absolute';
+  #|     panel.style.left = '5%';
+  #|     panel.style.top = '8%';
+  #|     panel.style.width = '90%';
+  #|     panel.style.height = '72%';
+  #|     panel.style.overflow = 'auto';
+  #|     panel.style.background = 'rgba(12,12,16,0.86)';
+  #|     panel.style.border = '1px solid rgba(255,255,255,0.2)';
+  #|     panel.style.borderRadius = '8px';
+  #|     panel.style.padding = '12px 14px';
+  #|     panel.style.color = '#f2f2f2';
+  #|     panel.style.zIndex = '235';
+  #|     panel.style.pointerEvents = 'auto';
+  #|     root.appendChild(panel);
+  #|   }
+  #|   panel.innerHTML = '';
+  #|   let rows = [];
+  #|   try {
+  #|     const parsed = JSON.parse(history_json);
+  #|     if (Array.isArray(parsed)) rows = parsed;
+  #|   } catch (_) {}
+  #|   for (const item of rows) {
+  #|     const row = doc.createElement('div');
+  #|     row.style.marginBottom = '10px';
+  #|     const speaker = doc.createElement('div');
+  #|     speaker.style.fontWeight = '700';
+  #|     speaker.style.opacity = '0.95';
+  #|     speaker.textContent = item?.speaker || '';
+  #|     const text = doc.createElement('div');
+  #|     text.style.opacity = '0.88';
+  #|     text.textContent = item?.text || '';
+  #|     row.appendChild(speaker);
+  #|     row.appendChild(text);
+  #|     panel.appendChild(row);
+  #|   }
+  #|   panel.scrollTop = panel.scrollHeight;
+  #| }
+
+///|
+extern "js" fn dom_clear_log(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const panel = root.querySelector('[data-reisen="log-panel"]');
+  #|   if (panel) panel.remove();
   #| }
 
 ///|
@@ -1444,6 +1530,7 @@ extern "js" fn dom_setup_typewriter_click(root_id : String) -> Unit =
   #|     if (target.isContentEditable) return true;
   #|     if (tag === 'BUTTON') return true;
   #|     if (target.closest?.('[data-reisen="choices"]')) return true;
+  #|     if (target.closest?.('[data-reisen="log-panel"]')) return true;
   #|     if (target.closest?.('[data-reisen-dom-interactive="1"]')) return true;
   #|     if (target.closest?.('[data-reisen="video"]')) return true;
   #|     if (target.closest?.('[data-choice-id]')) return true;
@@ -1739,9 +1826,11 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     avatar_id,
     choices,
     text_input,
+    dialog_history: director.dialog_history(),
     dom_figures,
     auto_mode: ui.auto_mode,
     skip_mode: ui.skip_mode,
+    log_visible: ui.log_visible,
   }
 }
 
@@ -1822,8 +1911,14 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       view.auto_mode,
       view.skip_mode,
       view.text_box_visible,
+      view.log_visible,
     )
     self.dirty_action_buttons = false
+  }
+  if view.log_visible {
+    dom_render_log(self.root_id, view.dialog_history.to_json().stringify())
+  } else {
+    dom_clear_log(self.root_id)
   }
   if self.dirty_text_input {
     match view.text_input {

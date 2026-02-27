@@ -510,6 +510,7 @@ pub async fn[T] GameRunner::step(
           self.ui_dirty = true
           self.ui.mark_dirty_text()
         }
+        "log" => self.pending_action = Some("log")
         "skip_on" => self.ui.set_skip_mode(true)
         "skip_off" => self.ui.set_skip_mode(false)
         "skip_hold_on" => self.ui.set_skip_hold(true)
@@ -759,6 +760,26 @@ pub fn[T] GameRunner::set_log_build_state(
   state : LogBuildState,
 ) -> Unit {
   self.log_build_state = state
+}
+
+///|
+pub fn[T] GameRunner::is_log_visible(self : GameRunner[T]) -> Bool {
+  self.ui.is_log_visible()
+}
+
+///|
+pub fn[T] GameRunner::set_log_visible(
+  self : GameRunner[T],
+  visible : Bool,
+) -> Unit {
+  self.ui.set_log_visible(visible)
+  self.ui_dirty = true
+}
+
+///|
+pub fn[T] GameRunner::toggle_log_visible(self : GameRunner[T]) -> Unit {
+  self.ui.toggle_log_visible()
+  self.ui_dirty = true
 }
 
 ///|

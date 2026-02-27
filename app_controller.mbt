@@ -429,6 +429,19 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
               }
+              Some("log") => {
+                if runner.log_build_state() == LogBuildState::NotBuilt {
+                  ignore(
+                    runner.reconstruct_dialog_history(
+                      self.script(),
+                      (self.new_state)(),
+                    ),
+                  ) catch {
+                    _ => ()
+                  }
+                }
+                runner.toggle_log_visible()
+              }
               _ => ()
             }
             true
@@ -508,6 +521,26 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.saved_director_json = None
           self.runner = None
           self.enter_start_menu()
+        }
+        SettingsAction::Log => {
+          self.settings_menu.clear()
+          match self.runner {
+            Some(runner) => {
+              if runner.log_build_state() == LogBuildState::NotBuilt {
+                ignore(
+                  runner.reconstruct_dialog_history(
+                    self.script(),
+                    (self.new_state)(),
+                  ),
+                ) catch {
+                  _ => ()
+                }
+              }
+              runner.set_log_visible(true)
+              self.phase = AppPhase::InGame
+            }
+            None => self.enter_start_menu()
+          }
         }
         SettingsAction::SaveSlot(slot) => {
           match self.runner {

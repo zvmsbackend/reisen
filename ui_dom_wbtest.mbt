@@ -28,9 +28,11 @@ test "ui view model reflects dialog and choices from director" {
     avatar_id: None,
     choices: [],
     text_input: None,
+    dialog_history: [{ speaker: "guide", text: "Pick one" }],
     dom_figures: [],
     auto_mode: false,
     skip_mode: false,
+    log_visible: false,
   })
 
   ignore(director.step())
@@ -60,9 +62,11 @@ test "ui view model is empty before first dialog" {
     avatar_id: None,
     choices: [],
     text_input: None,
+    dialog_history: [],
     dom_figures: [],
     auto_mode: false,
     skip_mode: false,
+    log_visible: false,
   })
 }
 
