@@ -426,3 +426,15 @@ async test "runner keeps rendering during animations" {
 
   assert_true(after > before)
 }
+
+///|
+test "runner log build state transitions" {
+  let runtime = Runtime::new(script(_ => ()), GameState::new(0))
+  let runner = GameRunner::new(Director::new(runtime), UiDom::new("app"))
+
+  assert_eq(runner.log_build_state(), LogBuildState::NotBuilt)
+  runner.set_log_build_state(LogBuildState::Building)
+  assert_eq(runner.log_build_state(), LogBuildState::Building)
+  runner.set_log_build_state(LogBuildState::Ready)
+  assert_eq(runner.log_build_state(), LogBuildState::Ready)
+}

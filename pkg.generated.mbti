@@ -163,11 +163,11 @@ pub async fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T])
 
 pub async fn[T] run_browser_loop(GameRunner[T]) -> Unit
 
-pub fn[T : ToJson] save_director_to_slot(Director[T], String, save_namespace? : String) -> Unit
+pub fn[T : ToJson] save_director_to_slot(Director[T], String, save_namespace? : String, slot_payload_version? : Int) -> Unit
 
-pub fn[T : ToJson] save_runner_to_slot(GameRunner[T], String, save_namespace? : String) -> Unit
+pub fn[T : ToJson] save_runner_to_slot(GameRunner[T], String, save_namespace? : String, slot_payload_version? : Int) -> Unit
 
-pub fn[T : ToJson] save_runner_to_slot_with_meta(GameRunner[T], String, title? : String, preview? : String, save_namespace? : String) -> Unit
+pub fn[T : ToJson] save_runner_to_slot_with_meta(GameRunner[T], String, title? : String, preview? : String, save_namespace? : String, slot_payload_version? : Int) -> Unit
 
 pub fn save_slot_delete(String) -> Unit
 
@@ -215,7 +215,7 @@ pub async fn[T] start_game(Script[T], GameState[T], String, render_sync? : async
 
 pub async fn[T : @json.FromJson] start_game_from_save(Script[T], String, String, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (RuntimeEvent) -> Unit, settings? : GameSettings) -> GameRunner[T]
 
-pub async fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String, settings? : GameSettings) -> GameRunner[T]
+pub async fn[T : @json.FromJson] start_game_from_slot(Script[T], String, String, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (RuntimeEvent) -> Unit, save_namespace? : String, settings? : GameSettings, slot_payload_version? : Int) -> GameRunner[T]
 
 pub fn[T] validate_script_assets(Script[T], AssetStore) -> Unit raise AppBootstrapError
 
@@ -366,6 +366,15 @@ pub impl Show for DialogLine
 pub impl ToJson for DialogLine
 pub impl @json.FromJson for DialogLine
 
+pub struct DialogLogEntry {
+  speaker : String
+  text : String
+}
+pub impl Eq for DialogLogEntry
+pub impl Show for DialogLogEntry
+pub impl ToJson for DialogLogEntry
+pub impl @json.FromJson for DialogLogEntry
+
 type Director[T]
 pub fn[T] Director::animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::avatar_id(Self[T]) -> String?
@@ -379,12 +388,14 @@ pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::complete_video_wait(Self[T], Bool) -> RuntimeEvent
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
+pub fn[T] Director::dialog_history(Self[T]) -> Array[DialogLogEntry]
 pub fn[T] Director::dialog_seq(Self[T]) -> Int
 pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::dom_figures(Self[T]) -> Map[String, DomFigureState]
 pub fn[T] Director::effects(Self[T], String) -> Array[EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, FigurePlacement]
+pub fn[T] Director::flow_trace(Self[T]) -> Array[ScriptFlowTrace]
 pub fn[T] Director::from_save(Script[T], DirectorSave[T]) -> Self[T] raise ScriptRuntimeError
 pub fn[T] Director::intro_text(Self[T]) -> String?
 pub fn[T] Director::is_waiting(Self[T]) -> Bool
@@ -498,11 +509,15 @@ pub fn[T] GameRunner::apply_settings(Self[T], GameSettings) -> Unit
 pub async fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
+pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[DialogLogEntry]
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
+pub fn[T] GameRunner::flow_trace(Self[T]) -> Array[ScriptFlowTrace]
 pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
+pub fn[T] GameRunner::log_build_state(Self[T]) -> LogBuildState
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
 pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, async (Director[T]) -> Unit noraise, (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, async (Director[T]) -> Unit noraise) -> Self[T]
+pub fn[T] GameRunner::set_log_build_state(Self[T], LogBuildState) -> Unit
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
 pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
@@ -586,6 +601,14 @@ type Live2dFigure
 pub impl AnimationTarget for Live2dFigure
 pub impl Figure for Live2dFigure
 pub impl PixiTarget for Live2dFigure
+
+pub enum LogBuildState {
+  NotBuilt
+  Building
+  Ready
+}
+pub impl Eq for LogBuildState
+pub impl Show for LogBuildState
 
 type Music
 

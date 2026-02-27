@@ -12,9 +12,16 @@ struct DialogLine {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
+pub struct DialogLogEntry {
+  speaker : String
+  text : String
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
 priv struct UiState {
   mut dialog : DialogLine?
   mut dialog_seq : Int
+  mut dialog_history : Array[DialogLogEntry]
   mut choices : Array[ChoiceOption]
   mut text_input : (String, String)?
   mut intro_text : String?
@@ -66,6 +73,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
     ui: {
       dialog: None,
       dialog_seq: 0,
+      dialog_history: [],
       choices: [],
       text_input: None,
       intro_text: None,
@@ -112,6 +120,23 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
         append,
         proceed_on_done: self.runtime.last_say_proceed_on_done(),
       })
+      if append && self.ui.dialog_history.length() > 0 {
+        let history_len = self.ui.dialog_history.length()
+        let merged : Array[DialogLogEntry] = []
+        for i, entry in self.ui.dialog_history {
+          if i + 1 == history_len {
+            merged.push({ speaker: resolved_speaker, text: resolved_text })
+          } else {
+            merged.push(entry)
+          }
+        }
+        self.ui.dialog_history = merged
+      } else {
+        self.ui.dialog_history.push({
+          speaker: resolved_speaker,
+          text: resolved_text,
+        })
+      }
       self.ui.dialog_seq = self.ui.dialog_seq + 1
       self.ui.intro_text = None
       self.ui.choices = []
@@ -246,6 +271,11 @@ pub fn[T] Director::dialog_seq(self : Director[T]) -> Int {
 }
 
 ///|
+pub fn[T] Director::dialog_history(self : Director[T]) -> Array[DialogLogEntry] {
+  self.ui.dialog_history
+}
+
+///|
 pub fn[T] Director::intro_text(self : Director[T]) -> String? {
   self.ui.intro_text
 }
@@ -298,6 +328,11 @@ pub fn[T] Director::can_skip_wait(self : Director[T]) -> Bool {
 ///|
 pub fn[T] Director::can_auto_skip_wait_click(self : Director[T]) -> Bool {
   self.runtime.can_auto_skip_wait_click()
+}
+
+///|
+pub fn[T] Director::flow_trace(self : Director[T]) -> Array[ScriptFlowTrace] {
+  self.runtime.flow_trace()
 }
 
 ///|
@@ -476,6 +511,7 @@ pub fn[T] Director::from_save(
     ui: {
       dialog: save.dialog,
       dialog_seq: save.dialog_seq,
+      dialog_history: [],
       choices: [],
       text_input: None,
       intro_text: save.intro_text,

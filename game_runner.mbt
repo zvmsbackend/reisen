@@ -8,6 +8,13 @@ pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
 pub type EventHook = (RuntimeEvent) -> Unit
 
 ///|
+pub enum LogBuildState {
+  NotBuilt
+  Building
+  Ready
+} derive(Show, Eq)
+
+///|
 struct GameRunner[T] {
   director : Director[T]
   ui : UiDom
@@ -20,6 +27,7 @@ struct GameRunner[T] {
   mut blocking_remaining_ms : Int
   mut blocking_wait_sfx : Bool
   mut blocking_until_click : Bool
+  mut log_build_state : LogBuildState
 }
 
 ///|
@@ -36,6 +44,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     blocking_remaining_ms: 0,
     blocking_wait_sfx: false,
     blocking_until_click: false,
+    log_build_state: NotBuilt,
   }
 }
 
@@ -57,6 +66,7 @@ pub fn[T] GameRunner::new_with_render_sync(
     blocking_remaining_ms: 0,
     blocking_wait_sfx: false,
     blocking_until_click: false,
+    log_build_state: NotBuilt,
   }
 }
 
@@ -79,6 +89,7 @@ pub fn[T] GameRunner::new_with_hooks(
     blocking_remaining_ms: 0,
     blocking_wait_sfx: false,
     blocking_until_click: false,
+    log_build_state: NotBuilt,
   }
 }
 
@@ -571,6 +582,33 @@ pub async fn[T] GameRunner::tick(
 ///|
 pub fn[T] GameRunner::director(self : GameRunner[T]) -> Director[T] {
   self.director
+}
+
+///|
+pub fn[T] GameRunner::flow_trace(
+  self : GameRunner[T],
+) -> Array[ScriptFlowTrace] {
+  self.director.flow_trace()
+}
+
+///|
+pub fn[T] GameRunner::dialog_history(
+  self : GameRunner[T],
+) -> Array[DialogLogEntry] {
+  self.director.dialog_history()
+}
+
+///|
+pub fn[T] GameRunner::log_build_state(self : GameRunner[T]) -> LogBuildState {
+  self.log_build_state
+}
+
+///|
+pub fn[T] GameRunner::set_log_build_state(
+  self : GameRunner[T],
+  state : LogBuildState,
+) -> Unit {
+  self.log_build_state = state
 }
 
 ///|
