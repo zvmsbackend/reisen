@@ -321,6 +321,16 @@ test "dom figure animations emit dom animation instruction" {
 }
 
 ///|
+test "wait_click supports can_skip option" {
+  let built : Script[Int] = script(builder => {
+    builder.wait_click()
+    builder.wait_click(can_skip=false)
+  })
+  assert_true(built.instructions[0] is WaitForClick(true))
+  assert_true(built.instructions[1] is WaitForClick(false))
+}
+
+///|
 test "effect helper emits apply effect" {
   let built : Script[Int] = script(builder => {
     builder.effect_with(dummy_figure("alice"), "glow", [

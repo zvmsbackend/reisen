@@ -322,6 +322,13 @@ pub fn[T] GameRunner::step(
     }
   }
   if self.director.is_waiting() {
+    if self.director.can_auto_skip_wait_click() {
+      self.ui.advance_auto_mode_timer(elapsed_ms~)
+      if self.ui.should_auto_skip_wait_click() {
+        self.director.skip_wait()
+        self.ui.mark_auto_advanced()
+      }
+    }
     if self.ui.skip_mode {
       self.director.skip_wait()
     } else if self.ui.check_typewriter_click() {

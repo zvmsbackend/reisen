@@ -215,7 +215,14 @@ test "parse wait" {
 test "parse wait click" {
   let script : Script[Unit] = reisen_parse_text_script("wait: click")
   assert_eq(script.instructions.length(), 1)
-  assert_true(script.instructions[0] is WaitForClick)
+  assert_true(script.instructions[0] is WaitForClick(true))
+}
+
+///|
+test "parse wait click can_skip flag" {
+  let script : Script[Unit] = reisen_parse_text_script("wait_click: false")
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is WaitForClick(false))
 }
 
 ///|

@@ -84,6 +84,7 @@ struct UiDom {
   mut typewriter_last_update_ms : Int
   mut auto_mode : Bool
   auto_mode_delay_ms : Int
+  wait_click_auto_skip_delay_ms : Int
   mut auto_mode_last_advance_ms : Int
   mut skip_mode : Bool
   mut skip_hold : Bool
@@ -123,6 +124,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     typewriter_last_update_ms: 0,
     auto_mode: false,
     auto_mode_delay_ms: 2000,
+    wait_click_auto_skip_delay_ms: 160,
     auto_mode_last_advance_ms: 0,
     skip_mode: false,
     skip_hold: false,
@@ -554,6 +556,14 @@ pub fn UiDom::should_auto_advance(self : UiDom) -> Bool {
 ///|
 pub fn UiDom::mark_auto_advanced(self : UiDom) -> Unit {
   self.auto_mode_last_advance_ms = 0
+}
+
+///|
+pub fn UiDom::should_auto_skip_wait_click(self : UiDom) -> Bool {
+  if not(self.auto_mode) {
+    return false
+  }
+  self.auto_mode_last_advance_ms >= self.wait_click_auto_skip_delay_ms
 }
 
 ///|

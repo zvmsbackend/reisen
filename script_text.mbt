@@ -43,6 +43,23 @@ fn parse_typewriter_flag(raw : String) -> Bool? {
 }
 
 ///|
+fn parse_can_skip_flag(raw : String) -> Bool? {
+  let v = raw.trim().to_lower()
+  match v {
+    "true" | "1" | "yes" | "on" | "skip" | "can_skip" => Some(true)
+    "false" | "0" | "no" | "off" | "noskip" | "no_skip" => Some(false)
+    _ =>
+      if v.has_prefix("can_skip=") {
+        parse_can_skip_flag((try! raw[9:]).to_string())
+      } else if v.has_prefix("skip=") {
+        parse_can_skip_flag((try! raw[5:]).to_string())
+      } else {
+        None
+      }
+  }
+}
+
+///|
 fn parse_voice_flag(raw : String) -> String? {
   let v = raw.trim().to_lower()
   if v.has_prefix("voice=") {
@@ -156,14 +173,27 @@ fn[T] reisen_text_script_to_builder(
       "jump" => if args_str != "" { builder.instructions.push(Jump(args_str)) }
       "wait" => {
         let lower = args_str.trim().to_lower()
-        if lower == "click" || lower == "tap" {
-          builder.instructions.push(WaitForClick)
+        if lower == "click" ||
+          lower == "tap" ||
+          lower.has_prefix("click,") ||
+          lower.has_prefix("tap,") {
+          let can_skip = if lower.has_prefix("click,") ||
+            lower.has_prefix("tap,") {
+            let (_, tail) = get_first_part(args_str, ",")
+            parse_can_skip_flag(tail).unwrap_or(true)
+          } else {
+            true
+          }
+          builder.instructions.push(WaitForClick(can_skip))
         } else {
           let ms = @strconv.parse_int(args_str) catch { _ => 0 }
           builder.instructions.push(Wait(ms))
         }
       }
-      "wait_click" | "wait_for_click" => builder.instructions.push(WaitForClick)
+      "wait_click" | "wait_for_click" =>
+        builder.instructions.push(
+          WaitForClick(parse_can_skip_flag(args_str).unwrap_or(true)),
+        )
       "unlock_cg" | "unlock_gallery" =>
         if args_str != "" {
           builder.instructions.push(UnlockCg(args_str))

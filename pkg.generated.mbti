@@ -371,6 +371,8 @@ pub fn[T] Director::animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::avatar_id(Self[T]) -> String?
 pub fn[T] Director::background(Self[T]) -> String?
 pub fn[T] Director::background_state(Self[T]) -> BackgroundState?
+pub fn[T] Director::can_auto_skip_wait_click(Self[T]) -> Bool
+pub fn[T] Director::can_skip_wait(Self[T]) -> Bool
 pub fn[T] Director::choices(Self[T]) -> Array[ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
@@ -545,7 +547,7 @@ pub enum Instruction[T] {
   Jump(String)
   JumpIf(String, (GameState[T]) -> Bool)
   Wait(Int)
-  WaitForClick
+  WaitForClick(Bool)
   WaitCustomEvent(String, (GameState[T], String) -> Bool)
   WaitCustomEventJump(String, (GameState[T], String) -> Label)
   Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?, proceed_on_done~ : Bool)
@@ -696,11 +698,14 @@ pub struct Runtime[T] {
   mut pending_text_input : (String, String)?
   mut wait_ms : Int
   mut wait_for_click : Bool
+  mut wait_for_click_can_skip : Bool
   mut wait_custom_name : String?
   mut wait_video : Bool
   mut last_say_proceed_on_done : Bool
   mut ended : Bool
 }
+pub fn[T] Runtime::can_auto_skip_wait_click(Self[T]) -> Bool
+pub fn[T] Runtime::can_skip_wait(Self[T]) -> Bool
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Runtime::complete_video_wait(Self[T], Bool) -> RuntimeEvent
 pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
@@ -761,6 +766,7 @@ pub struct RuntimeSave[T] {
   pending_text_input : (String, String)?
   wait_ms : Int
   wait_for_click : Bool
+  wait_for_click_can_skip : Bool
   wait_custom_name : String?
   wait_video : Bool
   last_say_proceed_on_done : Bool
@@ -859,7 +865,7 @@ pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::unlock_cg(Self[T], GalleryImage) -> Unit
 pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
-pub fn[T] ScriptBuilder::wait_click(Self[T]) -> Unit
+pub fn[T] ScriptBuilder::wait_click(Self[T], can_skip? : Bool) -> Unit
 pub fn[T] ScriptBuilder::wait_custom_event(Self[T], String, (GameState[T], String) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::wait_custom_event_jump(Self[T], String, (GameState[T], String) -> Label) -> Unit
 
@@ -898,6 +904,7 @@ pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
 pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
 pub fn UiDom::set_text_speed(Self, Int) -> Unit
 pub fn UiDom::should_auto_advance(Self) -> Bool
+pub fn UiDom::should_auto_skip_wait_click(Self) -> Bool
 pub fn UiDom::should_skip_advance(Self) -> Bool
 pub fn UiDom::simulate_click(Self) -> Unit
 pub fn UiDom::simulate_intro_done(Self) -> Unit

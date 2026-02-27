@@ -143,7 +143,7 @@ pub enum Instruction[T] {
   Jump(String)
   JumpIf(String, ScriptPredicate[T])
   Wait(Int)
-  WaitForClick
+  WaitForClick(Bool)
   WaitCustomEvent(String, PayloadPredicate[T])
   WaitCustomEventJump(String, PayloadJumpSelector[T])
   Say(

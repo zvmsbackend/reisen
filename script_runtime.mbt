@@ -62,6 +62,7 @@ pub struct Runtime[T] {
   mut pending_text_input : (String, String)?
   mut wait_ms : Int
   mut wait_for_click : Bool
+  mut wait_for_click_can_skip : Bool
   mut wait_custom_name : String?
   mut wait_video : Bool
   mut last_say_proceed_on_done : Bool
@@ -76,6 +77,7 @@ pub struct RuntimeSave[T] {
   pending_text_input : (String, String)?
   wait_ms : Int
   wait_for_click : Bool
+  wait_for_click_can_skip : Bool
   wait_custom_name : String?
   wait_video : Bool
   last_say_proceed_on_done : Bool
@@ -92,6 +94,7 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
     pending_text_input: None,
     wait_ms: 0,
     wait_for_click: false,
+    wait_for_click_can_skip: true,
     wait_custom_name: None,
     wait_video: false,
     last_say_proceed_on_done: false,
@@ -110,6 +113,7 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     pending_text_input: self.pending_text_input,
     wait_ms: self.wait_ms,
     wait_for_click: self.wait_for_click,
+    wait_for_click_can_skip: self.wait_for_click_can_skip,
     wait_custom_name: self.wait_custom_name,
     wait_video: self.wait_video,
     last_say_proceed_on_done: self.last_say_proceed_on_done,
@@ -137,6 +141,7 @@ fn[T] Runtime::from_save(
       save.wait_ms
     },
     wait_for_click: save.wait_for_click,
+    wait_for_click_can_skip: save.wait_for_click_can_skip,
     wait_custom_name: save.wait_custom_name,
     wait_video: save.wait_video,
     last_say_proceed_on_done: save.last_say_proceed_on_done,
@@ -196,9 +201,10 @@ fn[T] Runtime::run_inst(
       self.wait_ms = if ms < 0 { 0 } else { ms }
       WaitStarted(self.wait_ms)
     }
-    WaitForClick => {
+    WaitForClick(can_skip) => {
       self.ip = self.ip + 1
       self.wait_for_click = true
+      self.wait_for_click_can_skip = can_skip
       WaitForClickStarted
     }
     WaitCustomEvent(name, _) => {
@@ -396,8 +402,23 @@ pub fn[T] Runtime::is_waiting(self : Runtime[T]) -> Bool {
 pub fn[T] Runtime::skip_wait(self : Runtime[T]) -> Unit {
   self.wait_ms = 0
   self.wait_for_click = false
+  self.wait_for_click_can_skip = true
   self.wait_custom_name = None
   self.wait_video = false
+}
+
+///|
+pub fn[T] Runtime::can_skip_wait(self : Runtime[T]) -> Bool {
+  if self.wait_for_click {
+    self.wait_for_click_can_skip
+  } else {
+    true
+  }
+}
+
+///|
+pub fn[T] Runtime::can_auto_skip_wait_click(self : Runtime[T]) -> Bool {
+  self.wait_for_click && self.wait_for_click_can_skip
 }
 
 ///|

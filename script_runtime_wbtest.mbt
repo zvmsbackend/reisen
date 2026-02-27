@@ -233,6 +233,22 @@ test "runtime avatar events" {
 }
 
 ///|
+test "runtime wait_click can_skip controls skip_wait" {
+  let script : Script[Int] = script(builder => {
+    builder.wait_click(can_skip=false)
+    builder.say("n", "done")
+  })
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_eq(runtime.step(), WaitForClickStarted)
+  assert_true(!runtime.can_skip_wait())
+  runtime.skip_wait()
+  assert_eq(
+    runtime.step(),
+    Said(speaker="n", text="done", typewriter=true, append=false, voice=None),
+  )
+}
+
+///|
 test "runtime say emits voice id" {
   let script : Script[Int] = script(builder => {
     builder.say("n", "hello", voice="voice_1")

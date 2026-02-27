@@ -282,6 +282,16 @@ pub fn[T] Director::skip_wait(self : Director[T]) -> Unit {
 }
 
 ///|
+pub fn[T] Director::can_skip_wait(self : Director[T]) -> Bool {
+  self.runtime.can_skip_wait()
+}
+
+///|
+pub fn[T] Director::can_auto_skip_wait_click(self : Director[T]) -> Bool {
+  self.runtime.can_auto_skip_wait_click()
+}
+
+///|
 pub fn[T] Director::is_waiting_video(self : Director[T]) -> Bool {
   self.runtime.is_waiting_video()
 }
