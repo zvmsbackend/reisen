@@ -14,6 +14,7 @@ struct DialogLine {
 ///|
 priv struct UiState {
   mut dialog : DialogLine?
+  mut dialog_seq : Int
   mut choices : Array[ChoiceOption]
   mut text_input : (String, String)?
   mut intro_text : String?
@@ -43,6 +44,7 @@ pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
   dialog : DialogLine?
+  dialog_seq : Int
   intro_text : String?
   video : (String, Bool)?
   text_box_visible : Bool
@@ -63,6 +65,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
     runtime,
     ui: {
       dialog: None,
+      dialog_seq: 0,
       choices: [],
       text_input: None,
       intro_text: None,
@@ -109,6 +112,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
         append,
         proceed_on_done: self.runtime.last_say_proceed_on_done(),
       })
+      self.ui.dialog_seq = self.ui.dialog_seq + 1
       self.ui.intro_text = None
       self.ui.choices = []
       self.ui.text_input = None
@@ -234,6 +238,11 @@ pub fn[T] Director::jump_to_label(
 ///|
 pub fn[T] Director::dialog(self : Director[T]) -> DialogLine? {
   self.ui.dialog
+}
+
+///|
+pub fn[T] Director::dialog_seq(self : Director[T]) -> Int {
+  self.ui.dialog_seq
 }
 
 ///|
@@ -447,6 +456,7 @@ pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
     runtime: self.runtime.save(),
     render: self.render,
     dialog: self.ui.dialog,
+    dialog_seq: self.ui.dialog_seq,
     intro_text: self.ui.intro_text,
     video: self.ui.video,
     text_box_visible: self.ui.text_box_visible,
@@ -465,6 +475,7 @@ pub fn[T] Director::from_save(
     runtime,
     ui: {
       dialog: save.dialog,
+      dialog_seq: save.dialog_seq,
       choices: [],
       text_input: None,
       intro_text: save.intro_text,

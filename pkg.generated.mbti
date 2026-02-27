@@ -379,6 +379,7 @@ pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::complete_video_wait(Self[T], Bool) -> RuntimeEvent
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
+pub fn[T] Director::dialog_seq(Self[T]) -> Int
 pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, AnimationSpec)]
 pub fn[T] Director::dom_figures(Self[T]) -> Map[String, DomFigureState]
 pub fn[T] Director::effects(Self[T], String) -> Array[EffectSpec]
@@ -410,6 +411,7 @@ pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
   dialog : DialogLine?
+  dialog_seq : Int
   intro_text : String?
   video : (String, Bool)?
   text_box_visible : Bool

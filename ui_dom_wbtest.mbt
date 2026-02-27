@@ -19,6 +19,7 @@ test "ui view model reflects dialog and choices from director" {
   assert_eq(view1, {
     speaker: "guide",
     text: "Pick one",
+    dialog_seq: 1,
     typewriter: true,
     intro_text: None,
     video: None,
@@ -50,6 +51,7 @@ test "ui view model is empty before first dialog" {
   assert_eq(view0, {
     speaker: "",
     text: "",
+    dialog_seq: 0,
     typewriter: true,
     intro_text: None,
     video: None,

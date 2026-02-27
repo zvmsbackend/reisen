@@ -47,6 +47,7 @@ struct UiDomFigureView {
 struct UiViewModel {
   speaker : String
   text : String
+  dialog_seq : Int
   typewriter : Bool
   intro_text : String?
   video : UiVideoView?
@@ -80,6 +81,7 @@ struct UiDom {
   mut text_speed : Int
   mut typewriter_raw_text : String
   mut typewriter_text : String
+  mut last_dialog_seq : Int
   mut typewriter_visible : Int
   mut typewriter_last_update_ms : Int
   mut auto_mode : Bool
@@ -120,6 +122,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     text_speed: 50,
     typewriter_raw_text: "",
     typewriter_text: "",
+    last_dialog_seq: -1,
     typewriter_visible: 0,
     typewriter_last_update_ms: 0,
     auto_mode: false,
@@ -128,7 +131,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     auto_mode_last_advance_ms: 0,
     skip_mode: false,
     skip_hold: false,
-    skip_mode_delay_ms: 0,
+    skip_mode_delay_ms: 50,
     skip_mode_last_advance_ms: 0,
     simulated_click: false,
     simulated_intro_done: false,
@@ -1696,6 +1699,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
   {
     speaker,
     text,
+    dialog_seq: director.dialog_seq(),
     typewriter,
     intro_text,
     video,
@@ -1729,7 +1733,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   } else {
     dom_clear_intro(self.root_id)
   }
-  if view.text != self.typewriter_raw_text && view.text != "" {
+  if view.dialog_seq != self.last_dialog_seq && view.text != "" {
     if view.append &&
       view.typewriter &&
       view.text.has_prefix(self.typewriter_raw_text) {
@@ -1740,7 +1744,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
         self.typewriter_visible = prev_len
       }
       self.typewriter_last_update_ms = 0
-    } else if view.typewriter {
+    } else if view.typewriter && !self.skip_mode {
       self.start_typewriter(view.text)
     } else {
       self.typewriter_raw_text = view.text
@@ -1749,6 +1753,7 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       self.typewriter_last_update_ms = 0
     }
   }
+  self.last_dialog_seq = view.dialog_seq
   dom_setup_typewriter_click(self.root_id)
   let visible_count = if view.text == "" {
     0
