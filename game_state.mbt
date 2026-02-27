@@ -107,7 +107,7 @@ pub fn[T] GameState::interpolate(self : GameState[T], text : String) -> String {
           var_name = ""
         }
       '}' => {
-        if in_brace && var_name != "" {
+        if in_brace {
           let value = match self.texts.get(var_name) {
             Some(text) => text
             None => persistent_get_text(var_name, default="{\{var_name}}")
