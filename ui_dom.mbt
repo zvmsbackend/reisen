@@ -87,6 +87,7 @@ struct UiDom {
   mut auto_mode : Bool
   auto_mode_delay_ms : Int
   wait_click_auto_skip_delay_ms : Int
+  mut media_volume : Double
   mut auto_mode_last_advance_ms : Int
   mut skip_mode : Bool
   mut skip_hold : Bool
@@ -128,6 +129,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     auto_mode: false,
     auto_mode_delay_ms: 2000,
     wait_click_auto_skip_delay_ms: 160,
+    media_volume: 0.7,
     auto_mode_last_advance_ms: 0,
     skip_mode: false,
     skip_hold: false,
@@ -537,6 +539,17 @@ pub fn UiDom::set_auto_mode(self : UiDom, enabled : Bool) -> Unit {
   self.auto_mode = enabled
   if enabled {
     self.auto_mode_last_advance_ms = 0
+  }
+}
+
+///|
+pub fn UiDom::set_media_volume(self : UiDom, volume : Double) -> Unit {
+  self.media_volume = if volume < 0.0 {
+    0.0
+  } else if volume > 1.0 {
+    1.0
+  } else {
+    volume
   }
 }
 
@@ -989,12 +1002,21 @@ extern "js" fn dom_render_video(
   root_id : String,
   url : String,
   can_skip : Bool,
+  volume : Double,
 ) -> Unit =
-  #| (root_id, url, can_skip) => {
+  #| (root_id, url, can_skip, volume) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
+  #|   const speaker = root.querySelector('[data-reisen="speaker"]');
+  #|   if (speaker) {
+  #|     speaker.style.display = 'none';
+  #|   }
+  #|   const dialog = root.querySelector('[data-reisen="dialog"]');
+  #|   if (dialog) {
+  #|     dialog.style.display = 'none';
+  #|   }
   #|   const actions = root.querySelector('[data-reisen="game-actions"]');
   #|   if (actions) {
   #|     actions.style.display = 'none';
@@ -1042,6 +1064,7 @@ extern "js" fn dom_render_video(
   #|   if (video.src !== url) {
   #|     video.src = url;
   #|   }
+  #|   video.volume = Math.max(0, Math.min(1, Number(volume) || 0));
   #|   const p = video.play();
   #|   if (p && typeof p.catch === 'function') p.catch(() => {});
   #| }
@@ -1068,6 +1091,14 @@ extern "js" fn dom_clear_video(root_id : String) -> Unit =
   #|   if (!root) return;
   #|   const host = root.querySelector('[data-reisen="video"]');
   #|   if (host) host.remove();
+  #|   const speaker = root.querySelector('[data-reisen="speaker"]');
+  #|   if (speaker) {
+  #|     speaker.style.display = '';
+  #|   }
+  #|   const dialog = root.querySelector('[data-reisen="dialog"]');
+  #|   if (dialog) {
+  #|     dialog.style.display = '';
+  #|   }
   #|   const actions = root.querySelector('[data-reisen="game-actions"]');
   #|   if (actions) {
   #|     actions.style.display = '';
@@ -1720,7 +1751,12 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   dom_render_dom_figures(self.root_id, dom_figures_json)
   match view.video {
     Some(video) => {
-      dom_render_video(self.root_id, video.url, video.can_skip)
+      dom_render_video(
+        self.root_id,
+        video.url,
+        video.can_skip,
+        self.media_volume,
+      )
       dom_setup_typewriter_click(self.root_id)
       return
     }
