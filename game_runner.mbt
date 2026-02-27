@@ -208,6 +208,7 @@ fn[T] GameRunner::apply_event_effects(
         self.ui_dirty = true
       }
       self.ui.mark_dirty_text()
+      self.ui.mark_dirty_action_buttons()
     }
     AvatarShown(_) | AvatarHidden => {
       if mark_ui_for_text {
@@ -332,6 +333,15 @@ pub fn[T] GameRunner::step(
       match action {
         "auto" => self.ui.toggle_auto_mode()
         "skip" => self.ui.toggle_skip_mode()
+        "dialog" => {
+          if self.director.text_box_visible() {
+            self.director.apply_event(TextBoxHidden)
+          } else {
+            self.director.apply_event(TextBoxShown)
+          }
+          self.ui_dirty = true
+          self.ui.mark_dirty_text()
+        }
         "skip_on" => self.ui.set_skip_mode(true)
         "skip_off" => self.ui.set_skip_mode(false)
         "skip_hold_on" => self.ui.set_skip_hold(true)

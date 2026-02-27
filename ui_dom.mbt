@@ -644,6 +644,7 @@ extern "js" fn dom_render_speaker_text(
   #|     nameEl.dataset.reisen = 'speaker';
   #|     root.appendChild(nameEl);
   #|   }
+  #|   nameEl.style.zIndex = '220';
   #|   nameEl.textContent = speaker;
   #|
   #|   let dialog = root.querySelector('[data-reisen="dialog"]');
@@ -652,6 +653,7 @@ extern "js" fn dom_render_speaker_text(
   #|     dialog.dataset.reisen = 'dialog';
   #|     root.appendChild(dialog);
   #|   }
+  #|   dialog.style.zIndex = '210';
   #|   let dialogText = dialog.querySelector('[data-reisen="dialog-text"]');
   #|   if (!dialogText) {
   #|     dialogText = doc.createElement('div');
@@ -1216,7 +1218,7 @@ extern "js" fn dom_render_dom_figures(
   #|     el.style.pointerEvents = interactive ? 'auto' : 'none';
   #|     el.style.left = `${view.left_pct}%`;
   #|     el.style.top = `${view.top_pct}%`;
-  #|     el.style.zIndex = String(100 + (view.layer || 0));
+  #|     el.style.zIndex = String(40 + (view.layer || 0));
   #|     el.style.opacity = String(view.opacity ?? 1);
   #|     el.style.transform = `translate(${-100 * (view.anchor_x ?? 0)}%, ${-100 * (view.anchor_y ?? 0)}%) scale(${view.scale ?? 1}) rotate(${view.rotation ?? 0}deg)`;
   #|     el.style.filter = `blur(${view.blur ?? 0}px) brightness(${view.brightness ?? 1}) contrast(${view.contrast ?? 1}) saturate(${view.saturation ?? 1})`;
@@ -1228,8 +1230,9 @@ extern "js" fn dom_render_action_buttons(
   root_id : String,
   auto_mode : Bool,
   skip_mode : Bool,
+  dialog_visible : Bool,
 ) -> Unit =
-  #| (root_id, auto_mode, skip_mode) => {
+  #| (root_id, auto_mode, skip_mode, dialog_visible) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -1241,12 +1244,14 @@ extern "js" fn dom_render_action_buttons(
   #|     actions.dataset.reisen = 'game-actions';
   #|     root.appendChild(actions);
   #|   }
+  #|   actions.style.zIndex = '230';
   #|   actions.innerHTML = '';
   #|
   #|   const buttons = [
   #|     { id: 'settings', label: '⚙' },
   #|     { id: 'qsave', label: 'Q.Save' },
   #|     { id: 'save', label: 'Save' },
+  #|     { id: 'dialog', label: dialog_visible ? '☑ Dialog' : '☐ Dialog', data: 'dialog' },
   #|     { id: 'auto', label: auto_mode ? '☑ Auto' : '☐ Auto', data: 'auto' },
   #|     { id: 'skip', label: skip_mode ? '☑ Skip' : '☐ Skip', data: 'skip' },
   #|   ];
@@ -1258,6 +1263,9 @@ extern "js" fn dom_render_action_buttons(
   #|     if (btnInfo.data === 'auto') {
   #|       btn.dataset.reisenAction = 'auto';
   #|       btn.classList.toggle('active', auto_mode);
+  #|     } else if (btnInfo.data === 'dialog') {
+  #|       btn.dataset.reisenAction = 'dialog';
+  #|       btn.classList.toggle('active', dialog_visible);
   #|     } else if (btnInfo.data === 'skip') {
   #|       btn.dataset.reisenAction = 'skip';
   #|       btn.classList.toggle('active', skip_mode);
@@ -1728,7 +1736,12 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     self.dirty_choices = false
   }
   if self.dirty_action_buttons {
-    dom_render_action_buttons(self.root_id, view.auto_mode, view.skip_mode)
+    dom_render_action_buttons(
+      self.root_id,
+      view.auto_mode,
+      view.skip_mode,
+      view.text_box_visible,
+    )
     self.dirty_action_buttons = false
   }
   if self.dirty_text_input {
