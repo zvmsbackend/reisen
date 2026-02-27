@@ -234,6 +234,13 @@ pub suberror AppBootstrapError {
   MissingSaveSlot(slot~ : String)
 }
 
+pub suberror LogReconstructionError {
+  StepLimitExceeded(limit~ : Int)
+  MissingChoiceTrace(ip~ : Int)
+  MissingCustomJumpTrace(name~ : String, ip~ : Int)
+  RuntimeFailure(message~ : String)
+}
+
 pub suberror PixiBindingError {
   ResourceLoadFailed(message~ : String)
 }
@@ -407,8 +414,10 @@ pub fn[T] Director::live2d_motions(Self[T]) -> Array[(String, String, Int?)]
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(Runtime[T]) -> Self[T]
 pub fn[T] Director::render_epoch(Self[T]) -> String
+pub fn[T] Director::runtime_ip(Self[T]) -> Int
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::set_background_state(Self[T], BackgroundState) -> Unit
+pub fn[T] Director::set_dialog_history(Self[T], Array[DialogLogEntry]) -> Unit
 pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Director::submit_custom_event(Self[T], String, String) -> RuntimeEvent
@@ -517,6 +526,7 @@ pub fn[T] GameRunner::log_build_state(Self[T]) -> LogBuildState
 pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
 pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, async (Director[T]) -> Unit noraise, (RuntimeEvent) -> Unit) -> Self[T]
 pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, async (Director[T]) -> Unit noraise) -> Self[T]
+pub fn[T] GameRunner::reconstruct_dialog_history(Self[T], Script[T], GameState[T], max_steps? : Int) -> Unit raise LogReconstructionError
 pub fn[T] GameRunner::set_log_build_state(Self[T], LogBuildState) -> Unit
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
 pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
@@ -735,7 +745,9 @@ pub fn[T] Runtime::can_skip_wait(Self[T]) -> Bool
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Runtime::complete_video_wait(Self[T], Bool) -> RuntimeEvent
 pub fn[T] Runtime::flow_trace(Self[T]) -> Array[ScriptFlowTrace]
+pub fn[T] Runtime::force_custom_jump(Self[T], String, String) -> Unit raise ScriptRuntimeError
 pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
+pub fn[T] Runtime::ip(Self[T]) -> Int
 pub fn[T] Runtime::is_waiting(Self[T]) -> Bool
 pub fn[T] Runtime::is_waiting_video(Self[T]) -> Bool
 pub fn[T] Runtime::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError

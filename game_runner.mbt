@@ -15,6 +15,156 @@ pub enum LogBuildState {
 } derive(Show, Eq)
 
 ///|
+pub suberror LogReconstructionError {
+  StepLimitExceeded(limit~ : Int)
+  MissingChoiceTrace(ip~ : Int)
+  MissingCustomJumpTrace(name~ : String, ip~ : Int)
+  RuntimeFailure(message~ : String)
+}
+
+///|
+fn next_choice_trace(
+  trace : Array[ScriptFlowTrace],
+  from : Int,
+) -> (Int, Int, String)? {
+  for i, entry in trace {
+    if i < from {
+      continue
+    }
+    match entry {
+      ChoiceResolved(ip~, choice_id~) => return Some((i, ip, choice_id))
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn next_custom_jump_trace(
+  trace : Array[ScriptFlowTrace],
+  from : Int,
+  name : String,
+) -> (Int, Int, String)? {
+  for i, entry in trace {
+    if i < from {
+      continue
+    }
+    match entry {
+      CustomJumpResolved(ip~, name=entry_name, target~) =>
+        if entry_name == name {
+          return Some((i, ip, target))
+        }
+      _ => ()
+    }
+  }
+  None
+}
+
+///|
+fn append_dialog_history_from_event(
+  history : Array[DialogLogEntry],
+  event : RuntimeEvent,
+) -> Unit {
+  match event {
+    Said(speaker~, text~, append~, ..) =>
+      if append && history.length() > 0 {
+        let last_index = history.length() - 1
+        let updated : Array[DialogLogEntry] = []
+        for i, entry in history {
+          if i == last_index {
+            updated.push({ speaker: entry.speaker, text: entry.text + text })
+          } else {
+            updated.push(entry)
+          }
+        }
+        history.clear()
+        for entry in updated {
+          history.push(entry)
+        }
+      } else {
+        history.push({ speaker, text })
+      }
+    _ => ()
+  }
+}
+
+///|
+fn[T] reconstruct_dialog_history_from_trace(
+  script : Script[T],
+  initial_state : GameState[T],
+  flow_trace : Array[ScriptFlowTrace],
+  stop_ip : Int,
+  max_steps : Int,
+) -> Array[DialogLogEntry] raise LogReconstructionError {
+  let runtime = Runtime::new(script, initial_state)
+  let history : Array[DialogLogEntry] = []
+  let mut trace_cursor = 0
+  let mut steps = 0
+
+  while runtime.ip() < stop_ip {
+    steps = steps + 1
+    if steps > max_steps {
+      raise LogReconstructionError::StepLimitExceeded(limit=max_steps)
+    }
+    let event = runtime.step(elapsed_ms=0) catch {
+      _ =>
+        raise LogReconstructionError::RuntimeFailure(
+          message="runtime.step failed",
+        )
+    }
+    append_dialog_history_from_event(history, event)
+
+    match event {
+      ChoicePrompt(_) =>
+        match next_choice_trace(flow_trace, trace_cursor) {
+          Some((idx, _, choice_id)) => {
+            trace_cursor = idx + 1
+            let chosen_event = runtime.choose(choice_id) catch {
+              _ =>
+                raise LogReconstructionError::RuntimeFailure(
+                  message="runtime.choose failed",
+                )
+            }
+            append_dialog_history_from_event(history, chosen_event)
+          }
+          None =>
+            raise LogReconstructionError::MissingChoiceTrace(ip=runtime.ip())
+        }
+      WaitStarted(_) | WaitForClickStarted => runtime.skip_wait()
+      WaitCustomEventStarted(name) =>
+        match next_custom_jump_trace(flow_trace, trace_cursor, name) {
+          Some((idx, _, target)) => {
+            trace_cursor = idx + 1
+            runtime.force_custom_jump(name, target) catch {
+              _ =>
+                raise LogReconstructionError::RuntimeFailure(
+                  message="runtime.force_custom_jump failed",
+                )
+            }
+          }
+          None =>
+            raise LogReconstructionError::MissingCustomJumpTrace(
+              name~,
+              ip=runtime.ip(),
+            )
+        }
+      TextInputPrompt(_, _) =>
+        ignore(runtime.submit_text_input("")) catch {
+          _ =>
+            raise LogReconstructionError::RuntimeFailure(
+              message="runtime.submit_text_input failed",
+            )
+        }
+      VideoStarted(_, _) => ignore(runtime.complete_video_wait(false))
+      ScriptEnded => break
+      _ => ()
+    }
+  }
+
+  history
+}
+
+///|
 struct GameRunner[T] {
   director : Director[T]
   ui : UiDom
@@ -609,6 +759,30 @@ pub fn[T] GameRunner::set_log_build_state(
   state : LogBuildState,
 ) -> Unit {
   self.log_build_state = state
+}
+
+///|
+pub fn[T] GameRunner::reconstruct_dialog_history(
+  self : GameRunner[T],
+  script : Script[T],
+  initial_state : GameState[T],
+  max_steps? : Int = 200000,
+) -> Unit raise LogReconstructionError {
+  self.log_build_state = Building
+  let history = reconstruct_dialog_history_from_trace(
+    script,
+    initial_state,
+    self.director.flow_trace(),
+    self.director.runtime_ip(),
+    max_steps,
+  ) catch {
+    err => {
+      self.log_build_state = NotBuilt
+      raise err
+    }
+  }
+  self.director.set_dialog_history(history)
+  self.log_build_state = Ready
 }
 
 ///|

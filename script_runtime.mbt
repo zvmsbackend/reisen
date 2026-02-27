@@ -579,6 +579,26 @@ pub fn[T] Runtime::flow_trace(self : Runtime[T]) -> Array[ScriptFlowTrace] {
 }
 
 ///|
+pub fn[T] Runtime::ip(self : Runtime[T]) -> Int {
+  self.ip
+}
+
+///|
+pub fn[T] Runtime::force_custom_jump(
+  self : Runtime[T],
+  name : String,
+  target : String,
+) -> Unit raise ScriptRuntimeError {
+  match self.wait_custom_name {
+    Some(waiting) if waiting == name => {
+      self.wait_custom_name = None
+      self.jump_to_label(target)
+    }
+    _ => ()
+  }
+}
+
+///|
 pub fn[T] Runtime::submit_text_input(
   self : Runtime[T],
   value : String,

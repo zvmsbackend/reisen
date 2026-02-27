@@ -276,6 +276,14 @@ pub fn[T] Director::dialog_history(self : Director[T]) -> Array[DialogLogEntry] 
 }
 
 ///|
+pub fn[T] Director::set_dialog_history(
+  self : Director[T],
+  history : Array[DialogLogEntry],
+) -> Unit {
+  self.ui.dialog_history = history
+}
+
+///|
 pub fn[T] Director::intro_text(self : Director[T]) -> String? {
   self.ui.intro_text
 }
@@ -333,6 +341,11 @@ pub fn[T] Director::can_auto_skip_wait_click(self : Director[T]) -> Bool {
 ///|
 pub fn[T] Director::flow_trace(self : Director[T]) -> Array[ScriptFlowTrace] {
   self.runtime.flow_trace()
+}
+
+///|
+pub fn[T] Director::runtime_ip(self : Director[T]) -> Int {
+  self.runtime.ip()
 }
 
 ///|

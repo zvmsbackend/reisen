@@ -438,3 +438,36 @@ test "runner log build state transitions" {
   runner.set_log_build_state(LogBuildState::Ready)
   assert_eq(runner.log_build_state(), LogBuildState::Ready)
 }
+
+///|
+async test "runner reconstructs dialog history from trace" {
+  let left = label(name="left")
+  let right = label(name="right")
+  let script : Script[Int] = script(builder => {
+    builder.choice([option("L", left, id="l"), option("R", right, id="r")])
+    builder.label(left)
+    builder.say("n", "Left")
+    builder.label(right)
+    builder.say("n", "Right")
+  })
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    UiDom::new("app"),
+  )
+
+  assert_true(runner.step() is ChoicePrompt(_))
+  assert_true(
+    runner.submit_choice("r")
+    is Said(
+      speaker="n",
+      text="Right",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+
+  runner.reconstruct_dialog_history(script, GameState::new(0))
+  assert_eq(runner.log_build_state(), LogBuildState::Ready)
+  assert_eq(runner.dialog_history(), [{ speaker: "n", text: "Right" }])
+}
