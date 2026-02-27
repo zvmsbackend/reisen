@@ -970,6 +970,10 @@ extern "js" fn dom_render_video(
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
   #|   if (!root) return;
+  #|   const actions = root.querySelector('[data-reisen="game-actions"]');
+  #|   if (actions) {
+  #|     actions.style.display = 'none';
+  #|   }
   #|   let host = root.querySelector('[data-reisen="video"]');
   #|   if (!host) {
   #|     host = doc.createElement('div');
@@ -1039,6 +1043,10 @@ extern "js" fn dom_clear_video(root_id : String) -> Unit =
   #|   if (!root) return;
   #|   const host = root.querySelector('[data-reisen="video"]');
   #|   if (host) host.remove();
+  #|   const actions = root.querySelector('[data-reisen="game-actions"]');
+  #|   if (actions) {
+  #|     actions.style.display = '';
+  #|   }
   #|   delete root.dataset.reisenVideoAction;
   #| }
 

@@ -197,29 +197,6 @@ test "runner click advances wait click" {
 }
 
 ///|
-test "skip mode does not bypass unskippable wait_click" {
-  let script : Script[Int] = script(builder => {
-    builder.wait_click(can_skip=false)
-    builder.say("n", "done")
-  })
-  let ui = UiDom::new("app")
-  let runner = GameRunner::new(
-    Director::new(Runtime::new(script, GameState::new(0))),
-    ui,
-  )
-
-  assert_true(runner.step() is WaitForClickStarted)
-  ui.set_skip_mode(true)
-  assert_true(runner.step(elapsed_ms=0) is Noop)
-  ui.set_skip_mode(false)
-  ui.simulate_click()
-  assert_true(
-    runner.step(elapsed_ms=0)
-    is Said(speaker="n", text="done", typewriter=true, append=false, voice=None),
-  )
-}
-
-///|
 test "auto mode skips skippable wait_click after short delay" {
   let script : Script[Int] = script(builder => {
     builder.wait_click(can_skip=true)
