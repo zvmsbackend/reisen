@@ -61,6 +61,7 @@ struct UiViewModel {
   auto_mode : Bool
   skip_mode : Bool
   log_visible : Bool
+  log_building : Bool
 } derive(Show, Eq)
 
 ///|
@@ -98,6 +99,7 @@ struct UiDom {
   mut simulated_click : Bool
   mut simulated_intro_done : Bool
   mut log_visible : Bool
+  mut log_building : Bool
   mut dirty_speaker : Bool
   mut dirty_text : Bool
   mut dirty_choices : Bool
@@ -141,6 +143,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     simulated_click: false,
     simulated_intro_done: false,
     log_visible: false,
+    log_building: false,
     dirty_speaker: true,
     dirty_text: true,
     dirty_choices: true,
@@ -638,6 +641,17 @@ pub fn UiDom::toggle_log_visible(self : UiDom) -> Unit {
 ///|
 pub fn UiDom::is_log_visible(self : UiDom) -> Bool {
   self.log_visible
+}
+
+///|
+pub fn UiDom::set_log_building(self : UiDom, building : Bool) -> Unit {
+  self.log_building = building
+  self.dirty_text = true
+}
+
+///|
+pub fn UiDom::is_log_building(self : UiDom) -> Bool {
+  self.log_building
 }
 
 ///|
@@ -1393,8 +1407,12 @@ extern "js" fn dom_clear_text_input(root_id : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn dom_render_log(root_id : String, history_json : String) -> Unit =
-  #| (root_id, history_json) => {
+extern "js" fn dom_render_log(
+  root_id : String,
+  history_json : String,
+  building : Bool,
+) -> Unit =
+  #| (root_id, history_json, building) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -1419,6 +1437,14 @@ extern "js" fn dom_render_log(root_id : String, history_json : String) -> Unit =
   #|     root.appendChild(panel);
   #|   }
   #|   panel.innerHTML = '';
+  #|   if (building) {
+  #|     const status = doc.createElement('div');
+  #|     status.style.fontWeight = '700';
+  #|     status.style.opacity = '0.9';
+  #|     status.style.marginBottom = '12px';
+  #|     status.textContent = 'Building log...';
+  #|     panel.appendChild(status);
+  #|   }
   #|   let rows = [];
   #|   try {
   #|     const parsed = JSON.parse(history_json);
@@ -1831,6 +1857,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     auto_mode: ui.auto_mode,
     skip_mode: ui.skip_mode,
     log_visible: ui.log_visible,
+    log_building: ui.log_building,
   }
 }
 
@@ -1916,7 +1943,11 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     self.dirty_action_buttons = false
   }
   if view.log_visible {
-    dom_render_log(self.root_id, view.dialog_history.to_json().stringify())
+    dom_render_log(
+      self.root_id,
+      view.dialog_history.to_json().stringify(),
+      view.log_building,
+    )
   } else {
     dom_clear_log(self.root_id)
   }

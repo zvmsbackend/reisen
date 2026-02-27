@@ -531,6 +531,7 @@ pub fn[T] GameRunner::reconstruct_dialog_history(Self[T], Script[T], GameState[T
 pub fn[T] GameRunner::set_log_build_state(Self[T], LogBuildState) -> Unit
 pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
+pub fn[T] GameRunner::start_reconstruct_dialog_history(Self[T], Script[T], GameState[T], max_steps? : Int) -> Unit
 pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] GameRunner::submit_custom_event(Self[T], String, String) -> RuntimeEvent
@@ -951,6 +952,7 @@ pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
 pub fn UiDom::clear_game_ui(Self) -> Unit
 pub fn UiDom::complete_typewriter(Self) -> Unit
 pub fn UiDom::has_active_dom_animations(Self) -> Bool
+pub fn UiDom::is_log_building(Self) -> Bool
 pub fn UiDom::is_log_visible(Self) -> Bool
 pub fn UiDom::is_skip_active(Self) -> Bool
 pub fn UiDom::is_typewriter_done(Self) -> Bool
@@ -962,6 +964,7 @@ pub fn UiDom::mark_dirty_text(Self) -> Unit
 pub fn UiDom::mark_dirty_text_input(Self) -> Unit
 pub fn UiDom::mark_skip_advanced(Self) -> Unit
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
+pub fn UiDom::set_log_building(Self, Bool) -> Unit
 pub fn UiDom::set_log_visible(Self, Bool) -> Unit
 pub fn UiDom::set_media_volume(Self, Double) -> Unit
 pub fn UiDom::set_skip_hold(Self, Bool) -> Unit

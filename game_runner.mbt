@@ -23,6 +23,17 @@ pub suberror LogReconstructionError {
 }
 
 ///|
+priv struct LogBuildJob[T] {
+  runtime : Runtime[T]
+  flow_trace : Array[ScriptFlowTrace]
+  stop_ip : Int
+  max_steps : Int
+  mut trace_cursor : Int
+  mut steps : Int
+  history : Array[DialogLogEntry]
+}
+
+///|
 fn next_choice_trace(
   trace : Array[ScriptFlowTrace],
   from : Int,
@@ -89,82 +100,6 @@ fn append_dialog_history_from_event(
 }
 
 ///|
-fn[T] reconstruct_dialog_history_from_trace(
-  script : Script[T],
-  initial_state : GameState[T],
-  flow_trace : Array[ScriptFlowTrace],
-  stop_ip : Int,
-  max_steps : Int,
-) -> Array[DialogLogEntry] raise LogReconstructionError {
-  let runtime = Runtime::new(script, initial_state)
-  let history : Array[DialogLogEntry] = []
-  let mut trace_cursor = 0
-  let mut steps = 0
-
-  while runtime.ip() < stop_ip {
-    steps = steps + 1
-    if steps > max_steps {
-      raise LogReconstructionError::StepLimitExceeded(limit=max_steps)
-    }
-    let event = runtime.step(elapsed_ms=0) catch {
-      _ =>
-        raise LogReconstructionError::RuntimeFailure(
-          message="runtime.step failed",
-        )
-    }
-    append_dialog_history_from_event(history, event)
-
-    match event {
-      ChoicePrompt(_) =>
-        match next_choice_trace(flow_trace, trace_cursor) {
-          Some((idx, _, choice_id)) => {
-            trace_cursor = idx + 1
-            let chosen_event = runtime.choose(choice_id) catch {
-              _ =>
-                raise LogReconstructionError::RuntimeFailure(
-                  message="runtime.choose failed",
-                )
-            }
-            append_dialog_history_from_event(history, chosen_event)
-          }
-          None =>
-            raise LogReconstructionError::MissingChoiceTrace(ip=runtime.ip())
-        }
-      WaitStarted(_) | WaitForClickStarted => runtime.skip_wait()
-      WaitCustomEventStarted(name) =>
-        match next_custom_jump_trace(flow_trace, trace_cursor, name) {
-          Some((idx, _, target)) => {
-            trace_cursor = idx + 1
-            runtime.force_custom_jump(name, target) catch {
-              _ =>
-                raise LogReconstructionError::RuntimeFailure(
-                  message="runtime.force_custom_jump failed",
-                )
-            }
-          }
-          None =>
-            raise LogReconstructionError::MissingCustomJumpTrace(
-              name~,
-              ip=runtime.ip(),
-            )
-        }
-      TextInputPrompt(_, _) =>
-        ignore(runtime.submit_text_input("")) catch {
-          _ =>
-            raise LogReconstructionError::RuntimeFailure(
-              message="runtime.submit_text_input failed",
-            )
-        }
-      VideoStarted(_, _) => ignore(runtime.complete_video_wait(false))
-      ScriptEnded => break
-      _ => ()
-    }
-  }
-
-  history
-}
-
-///|
 struct GameRunner[T] {
   director : Director[T]
   ui : UiDom
@@ -178,6 +113,7 @@ struct GameRunner[T] {
   mut blocking_wait_sfx : Bool
   mut blocking_until_click : Bool
   mut log_build_state : LogBuildState
+  mut log_build_job : LogBuildJob[T]?
 }
 
 ///|
@@ -195,6 +131,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     blocking_wait_sfx: false,
     blocking_until_click: false,
     log_build_state: NotBuilt,
+    log_build_job: None,
   }
 }
 
@@ -217,6 +154,7 @@ pub fn[T] GameRunner::new_with_render_sync(
     blocking_wait_sfx: false,
     blocking_until_click: false,
     log_build_state: NotBuilt,
+    log_build_job: None,
   }
 }
 
@@ -240,6 +178,133 @@ pub fn[T] GameRunner::new_with_hooks(
     blocking_wait_sfx: false,
     blocking_until_click: false,
     log_build_state: NotBuilt,
+    log_build_job: None,
+  }
+}
+
+///|
+fn[T] GameRunner::advance_log_build_job(
+  self : GameRunner[T],
+  step_budget : Int,
+) -> Unit raise LogReconstructionError {
+  if self.log_build_state != Building {
+    return
+  }
+  let budget = if step_budget <= 0 { 1 } else { step_budget }
+  match self.log_build_job {
+    Some(job) => {
+      let mut remaining = budget
+      while remaining > 0 {
+        if job.runtime.ip() >= job.stop_ip {
+          self.director.set_dialog_history(job.history)
+          self.log_build_job = None
+          self.log_build_state = Ready
+          self.ui.set_log_building(false)
+          self.ui_dirty = true
+          return
+        }
+        job.steps = job.steps + 1
+        if job.steps > job.max_steps {
+          self.log_build_job = None
+          self.log_build_state = NotBuilt
+          self.ui.set_log_building(false)
+          raise LogReconstructionError::StepLimitExceeded(limit=job.max_steps)
+        }
+        let event = job.runtime.step(elapsed_ms=0) catch {
+          _ => {
+            self.log_build_job = None
+            self.log_build_state = NotBuilt
+            self.ui.set_log_building(false)
+            raise LogReconstructionError::RuntimeFailure(
+              message="runtime.step failed",
+            )
+          }
+        }
+        append_dialog_history_from_event(job.history, event)
+
+        match event {
+          ChoicePrompt(_) =>
+            match next_choice_trace(job.flow_trace, job.trace_cursor) {
+              Some((idx, _, choice_id)) => {
+                job.trace_cursor = idx + 1
+                let chosen_event = job.runtime.choose(choice_id) catch {
+                  _ => {
+                    self.log_build_job = None
+                    self.log_build_state = NotBuilt
+                    self.ui.set_log_building(false)
+                    raise LogReconstructionError::RuntimeFailure(
+                      message="runtime.choose failed",
+                    )
+                  }
+                }
+                append_dialog_history_from_event(job.history, chosen_event)
+              }
+              None => {
+                self.log_build_job = None
+                self.log_build_state = NotBuilt
+                self.ui.set_log_building(false)
+                raise LogReconstructionError::MissingChoiceTrace(
+                  ip=job.runtime.ip(),
+                )
+              }
+            }
+          WaitStarted(_) | WaitForClickStarted => job.runtime.skip_wait()
+          WaitCustomEventStarted(name) =>
+            match
+              next_custom_jump_trace(job.flow_trace, job.trace_cursor, name) {
+              Some((idx, _, target)) => {
+                job.trace_cursor = idx + 1
+                job.runtime.force_custom_jump(name, target) catch {
+                  _ => {
+                    self.log_build_job = None
+                    self.log_build_state = NotBuilt
+                    self.ui.set_log_building(false)
+                    raise LogReconstructionError::RuntimeFailure(
+                      message="runtime.force_custom_jump failed",
+                    )
+                  }
+                }
+              }
+              None => {
+                self.log_build_job = None
+                self.log_build_state = NotBuilt
+                self.ui.set_log_building(false)
+                raise LogReconstructionError::MissingCustomJumpTrace(
+                  name~,
+                  ip=job.runtime.ip(),
+                )
+              }
+            }
+          TextInputPrompt(_, _) =>
+            ignore(job.runtime.submit_text_input("")) catch {
+              _ => {
+                self.log_build_job = None
+                self.log_build_state = NotBuilt
+                self.ui.set_log_building(false)
+                raise LogReconstructionError::RuntimeFailure(
+                  message="runtime.submit_text_input failed",
+                )
+              }
+            }
+          VideoStarted(_, _) => ignore(job.runtime.complete_video_wait(false))
+          ScriptEnded => {
+            self.director.set_dialog_history(job.history)
+            self.log_build_job = None
+            self.log_build_state = Ready
+            self.ui.set_log_building(false)
+            self.ui_dirty = true
+            return
+          }
+          _ => ()
+        }
+
+        remaining = remaining - 1
+      }
+    }
+    None => {
+      self.log_build_state = NotBuilt
+      self.ui.set_log_building(false)
+    }
   }
 }
 
@@ -464,6 +529,9 @@ pub async fn[T] GameRunner::step(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
+  ignore(self.advance_log_build_job(256)) catch {
+    _ => ()
+  }
   self.advance_animation_timer(elapsed_ms)
   self.advance_blocking_timer(elapsed_ms)
   self.ui.advance_dom_animation_timer(elapsed_ms)
@@ -760,6 +828,10 @@ pub fn[T] GameRunner::set_log_build_state(
   state : LogBuildState,
 ) -> Unit {
   self.log_build_state = state
+  self.ui.set_log_building(state == Building)
+  if state != Building {
+    self.log_build_job = None
+  }
 }
 
 ///|
@@ -789,21 +861,34 @@ pub fn[T] GameRunner::reconstruct_dialog_history(
   initial_state : GameState[T],
   max_steps? : Int = 200000,
 ) -> Unit raise LogReconstructionError {
-  self.log_build_state = Building
-  let history = reconstruct_dialog_history_from_trace(
-    script,
-    initial_state,
-    self.director.flow_trace(),
-    self.director.runtime_ip(),
-    max_steps,
-  ) catch {
-    err => {
-      self.log_build_state = NotBuilt
-      raise err
-    }
+  self.start_reconstruct_dialog_history(script, initial_state, max_steps~)
+  while self.log_build_state == Building {
+    self.advance_log_build_job(1024)
   }
-  self.director.set_dialog_history(history)
-  self.log_build_state = Ready
+}
+
+///|
+pub fn[T] GameRunner::start_reconstruct_dialog_history(
+  self : GameRunner[T],
+  script : Script[T],
+  initial_state : GameState[T],
+  max_steps? : Int = 200000,
+) -> Unit {
+  if self.log_build_state == Building {
+    return
+  }
+  self.log_build_state = Building
+  self.ui.set_log_building(true)
+  self.ui_dirty = true
+  self.log_build_job = Some({
+    runtime: Runtime::new(script, initial_state),
+    flow_trace: self.director.flow_trace(),
+    stop_ip: self.director.runtime_ip(),
+    max_steps,
+    trace_cursor: 0,
+    steps: 0,
+    history: [],
+  })
 }
 
 ///|

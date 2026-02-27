@@ -431,14 +431,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               }
               Some("log") => {
                 if runner.log_build_state() == LogBuildState::NotBuilt {
-                  ignore(
-                    runner.reconstruct_dialog_history(
-                      self.script(),
-                      (self.new_state)(),
-                    ),
-                  ) catch {
-                    _ => ()
-                  }
+                  runner.start_reconstruct_dialog_history(
+                    self.script(),
+                    (self.new_state)(),
+                  )
                 }
                 runner.toggle_log_visible()
               }
@@ -527,14 +523,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           match self.runner {
             Some(runner) => {
               if runner.log_build_state() == LogBuildState::NotBuilt {
-                ignore(
-                  runner.reconstruct_dialog_history(
-                    self.script(),
-                    (self.new_state)(),
-                  ),
-                ) catch {
-                  _ => ()
-                }
+                runner.start_reconstruct_dialog_history(
+                  self.script(),
+                  (self.new_state)(),
+                )
               }
               runner.set_log_visible(true)
               self.phase = AppPhase::InGame
