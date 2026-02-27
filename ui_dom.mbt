@@ -128,7 +128,7 @@ fn UiDom::new(root_id : String) -> UiDom {
     auto_mode_last_advance_ms: 0,
     skip_mode: false,
     skip_hold: false,
-    skip_mode_delay_ms: 50,
+    skip_mode_delay_ms: 0,
     skip_mode_last_advance_ms: 0,
     simulated_click: false,
     simulated_intro_done: false,
@@ -672,14 +672,44 @@ extern "js" fn dom_render_speaker_text(
   #|   }
   #|   dialogText.innerHTML = '';
   #|   if (visible_count <= 0) return;
-  #|   const rubyPattern = /\[([^\]]+)\]\(([^)]+)\)/g;
-  #|   const stylePattern = /\[([^\]]+)\]\{([^}]+)\}/g;
   #|   let lastIndex = 0;
   #|   let remaining = visible_count;
-  #|   let match;
-  #|   const nextMatch = (pattern) => {
-  #|     const m = pattern.exec(text);
-  #|     return m ? { match: m, index: m.index } : null;
+  #|   const parseBracketToken = (source, start) => {
+  #|     if (source[start] !== '[') return null;
+  #|     let depth = 0;
+  #|     let endBracket = -1;
+  #|     for (let i = start; i < source.length; i++) {
+  #|       const ch = source[i];
+  #|       if (ch === '[') depth += 1;
+  #|       else if (ch === ']') {
+  #|         depth -= 1;
+  #|         if (depth === 0) {
+  #|           endBracket = i;
+  #|           break;
+  #|         }
+  #|       }
+  #|     }
+  #|     if (endBracket < 0) return null;
+  #|     const marker = source[endBracket + 1];
+  #|     const close = marker === '(' ? ')' : marker === '{' ? '}' : '';
+  #|     if (!close) return null;
+  #|     const endSuffix = source.indexOf(close, endBracket + 2);
+  #|     if (endSuffix < 0) return null;
+  #|     return {
+  #|       index: start,
+  #|       end: endSuffix + 1,
+  #|       kind: marker === '(' ? 'ruby' : 'style',
+  #|       base: source.slice(start + 1, endBracket),
+  #|       value: source.slice(endBracket + 2, endSuffix),
+  #|     };
+  #|   };
+  #|   const nextToken = (source, from) => {
+  #|     for (let i = from; i < source.length; i++) {
+  #|       if (source[i] !== '[') continue;
+  #|       const token = parseBracketToken(source, i);
+  #|       if (token) return token;
+  #|     }
+  #|     return null;
   #|   };
   #|   const appendPlain = (chunk) => {
   #|     if (!chunk) return;
@@ -690,33 +720,25 @@ extern "js" fn dom_render_speaker_text(
   #|     }
   #|   };
   #|   while (remaining > 0) {
-  #|     const rubyNext = nextMatch(rubyPattern);
-  #|     const styleNext = nextMatch(stylePattern);
-  #|     let next = rubyNext;
-  #|     let kind = 'ruby';
-  #|     if (!next || (styleNext && styleNext.index < next.index)) {
-  #|       next = styleNext;
-  #|       kind = 'style';
-  #|     }
+  #|     const next = nextToken(text, lastIndex);
   #|     if (!next) break;
-  #|     match = next.match;
-  #|     if (match.index > lastIndex) {
-  #|       appendPlain(text.slice(lastIndex, match.index));
+  #|     if (next.index > lastIndex) {
+  #|       appendPlain(text.slice(lastIndex, next.index));
   #|     }
   #|     if (remaining <= 0) break;
-  #|     const base = kind === 'ruby' ? match[1] : match[1];
+  #|     const base = next.base;
   #|     if (remaining >= base.length) {
-  #|       if (kind === 'ruby') {
+  #|       if (next.kind === 'ruby') {
   #|         const ruby = doc.createElement('ruby');
   #|         ruby.appendChild(doc.createTextNode(base));
   #|         const rt = doc.createElement('rt');
-  #|         rt.textContent = match[2];
+  #|         rt.textContent = next.value;
   #|         ruby.appendChild(rt);
   #|         dialogText.appendChild(ruby);
   #|       } else {
   #|         const span = doc.createElement('span');
   #|         span.textContent = base;
-  #|         span.setAttribute('style', match[2]);
+  #|         span.setAttribute('style', next.value);
   #|         dialogText.appendChild(span);
   #|       }
   #|       remaining -= base.length;
@@ -724,7 +746,7 @@ extern "js" fn dom_render_speaker_text(
   #|       appendPlain(base);
   #|       break;
   #|     }
-  #|     lastIndex = match.index + match[0].length;
+  #|     lastIndex = next.end;
   #|   }
   #|   if (remaining > 0 && lastIndex < text.length) {
   #|     appendPlain(text.slice(lastIndex));
