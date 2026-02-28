@@ -1,5 +1,4 @@
 import {
-  "sennenki/reisen/util",
   "sennenki/reisen/storage",
   "sennenki/reisen/state",
   "sennenki/reisen/core",
@@ -7,6 +6,7 @@ import {
   "sennenki/reisen/assets",
   "sennenki/reisen/pixi",
   "sennenki/reisen/ui",
+  "sennenki/reisen/engine",
   "sennenki/abort_hook/lib",
   "moonbit-community/js-ffi/js",
   "moonbitlang/core/math",
@@ -16,6 +16,7 @@ import {
 
 import {
   "moonbitlang/async",
+  "sennenki/reisen/util",
 } for "wbtest"
 
 options(

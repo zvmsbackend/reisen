@@ -1,8 +1,25 @@
 ///|
-using @core {label, option}
+using @assets {dom_figure}
 
 ///|
-using @assets {dom_figure}
+fn dummy_bg(id : String) -> @assets.Background {
+  @js.Object::from_iter([("id", id), ("url", "")].iter()).to_value().cast()
+}
+
+///|
+fn dummy_figure(id : String) -> @assets.PixiFigure {
+  @js.Value::cast_from(id).cast()
+}
+
+///|
+fn dummy_music(id : String) -> @assets.Music {
+  @js.Value::cast_from(id).cast()
+}
+
+///|
+fn dummy_sfx(id : String) -> @assets.Sfx {
+  @js.Value::cast_from(id).cast()
+}
 
 ///|
 fn dummy_live2d_figure(id : String) -> @assets.Live2dFigure {

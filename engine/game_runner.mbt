@@ -5,7 +5,7 @@
 pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
 
 ///|
-pub enum LogBuildState {
+pub(all) enum LogBuildState {
   NotBuilt
   Building
   Ready

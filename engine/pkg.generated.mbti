@@ -1,0 +1,155 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/engine"
+
+import {
+  "moonbitlang/core/json",
+  "sennenki/reisen/core",
+  "sennenki/reisen/state",
+  "sennenki/reisen/storage",
+  "sennenki/reisen/ui",
+}
+
+// Values
+pub fn[T : @json.FromJson] director_from_save_json(@core.Script[T], String) -> Director[T] raise
+
+// Errors
+pub suberror LogReconstructionError {
+  StepLimitExceeded(limit~ : Int)
+  MissingChoiceTrace(ip~ : Int)
+  MissingCustomJumpTrace(name~ : String, ip~ : Int)
+  RuntimeFailure(message~ : String)
+}
+
+// Types and methods
+pub(all) struct DialogLine {
+  speaker : String
+  text : String
+  typewriter : Bool
+  append : Bool
+  proceed_on_done : Bool
+}
+pub impl Eq for DialogLine
+pub impl Show for DialogLine
+pub impl ToJson for DialogLine
+pub impl @json.FromJson for DialogLine
+
+type Director[T]
+pub fn[T] Director::animations(Self[T]) -> Array[(String, @core.AnimationSpec)]
+pub fn[T] Director::avatar_id(Self[T]) -> String?
+pub fn[T] Director::background(Self[T]) -> String?
+pub fn[T] Director::background_state(Self[T]) -> @core.BackgroundState?
+pub fn[T] Director::can_auto_skip_wait_click(Self[T]) -> Bool
+pub fn[T] Director::can_skip_wait(Self[T]) -> Bool
+pub fn[T] Director::choices(Self[T]) -> Array[@core.ChoiceOption]
+pub fn[T] Director::choose(Self[T], String) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
+pub fn[T] Director::clear_dialog(Self[T]) -> Unit
+pub fn[T] Director::clear_render(Self[T]) -> Unit
+pub fn[T] Director::complete_video_wait(Self[T], Bool) -> @core.RuntimeEvent
+pub fn[T] Director::dialog(Self[T]) -> DialogLine?
+pub fn[T] Director::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
+pub fn[T] Director::dialog_seq(Self[T]) -> Int
+pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, @core.AnimationSpec)]
+pub fn[T] Director::dom_figures(Self[T]) -> Map[String, @core.DomFigureState]
+pub fn[T] Director::effects(Self[T], String) -> Array[@core.EffectSpec]
+pub fn[T] Director::figure(Self[T], String) -> @core.FigurePlacement?
+pub fn[T] Director::figures(Self[T]) -> Map[String, @core.FigurePlacement]
+pub fn[T] Director::flow_trace(Self[T]) -> Array[@core.ScriptFlowTrace]
+pub fn[T] Director::from_save(@core.Script[T], DirectorSave[T]) -> Self[T] raise @core.ScriptRuntimeError
+pub fn[T] Director::intro_text(Self[T]) -> String?
+pub fn[T] Director::is_waiting(Self[T]) -> Bool
+pub fn[T] Director::is_waiting_video(Self[T]) -> Bool
+pub fn[T] Director::jump_to_label(Self[T], String) -> Unit raise @core.ScriptRuntimeError
+pub fn[T] Director::last_sfx(Self[T]) -> String?
+pub fn[T] Director::live2d_expressions(Self[T]) -> Array[(String, String?)]
+pub fn[T] Director::live2d_motions(Self[T]) -> Array[(String, String, Int?)]
+pub fn[T] Director::music(Self[T]) -> (String, Bool)?
+pub fn[T] Director::new(@core.Runtime[T]) -> Self[T]
+pub fn[T] Director::render_epoch(Self[T]) -> String
+pub fn[T] Director::runtime_ip(Self[T]) -> Int
+pub fn[T : ToJson] Director::save_json(Self[T]) -> String
+pub fn[T] Director::set_background_state(Self[T], @core.BackgroundState) -> Unit
+pub fn[T] Director::set_dialog_history(Self[T], Array[@core.DialogLogEntry]) -> Unit
+pub fn[T] Director::skip_wait(Self[T]) -> Unit
+pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
+pub fn[T] Director::submit_custom_event(Self[T], String, String) -> @core.RuntimeEvent
+pub fn[T] Director::submit_text_input(Self[T], String) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
+pub fn[T] Director::take_interrupted_sfx(Self[T]) -> String?
+pub fn[T] Director::text_box_visible(Self[T]) -> Bool
+pub fn[T] Director::text_input(Self[T]) -> (String, String)?
+pub fn[T] Director::ui_snapshot(Self[T]) -> @core.UiSnapshot
+pub fn[T] Director::video(Self[T]) -> (String, Bool)?
+
+pub struct DirectorSave[T] {
+  runtime : @core.RuntimeSave[T]
+  render : RenderState
+  dialog : DialogLine?
+  dialog_seq : Int
+  intro_text : String?
+  video : (String, Bool)?
+  text_box_visible : Bool
+  avatar_id : String?
+}
+pub impl[T : ToJson] ToJson for DirectorSave[T]
+pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
+
+type GameRunner[T]
+pub fn[T] GameRunner::apply_runtime_event(Self[T], @core.RuntimeEvent) -> Unit
+pub fn[T] GameRunner::apply_settings(Self[T], @storage.GameSettings) -> Unit
+pub async fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
+pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
+pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
+pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
+pub fn[T] GameRunner::director(Self[T]) -> Director[T]
+pub fn[T] GameRunner::flow_trace(Self[T]) -> Array[@core.ScriptFlowTrace]
+pub fn[T] GameRunner::is_log_visible(Self[T]) -> Bool
+pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise @core.ScriptRuntimeError
+pub fn[T] GameRunner::log_build_state(Self[T]) -> LogBuildState
+pub fn[T] GameRunner::new(Director[T], @ui.UiDom) -> Self[T]
+pub fn[T] GameRunner::new_with_hooks(Director[T], @ui.UiDom, async (Director[T]) -> Unit noraise, (@core.RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] GameRunner::new_with_render_sync(Director[T], @ui.UiDom, async (Director[T]) -> Unit noraise) -> Self[T]
+pub fn[T] GameRunner::reconstruct_dialog_history(Self[T], @core.Script[T], @state.GameState[T], max_steps? : Int) -> Unit raise LogReconstructionError
+pub fn[T] GameRunner::set_log_build_state(Self[T], LogBuildState) -> Unit
+pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
+pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
+pub fn[T] GameRunner::start_reconstruct_dialog_history(Self[T], @core.Script[T], @state.GameState[T], max_steps? : Int) -> Unit
+pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
+pub fn[T] GameRunner::submit_choice(Self[T], String) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
+pub fn[T] GameRunner::submit_custom_event(Self[T], String, String) -> @core.RuntimeEvent
+pub async fn[T] GameRunner::sync_ui(Self[T]) -> Unit
+pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
+pub fn[T] GameRunner::take_pending_action(Self[T]) -> String?
+pub async fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
+pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
+pub fn[T] GameRunner::toggle_log_visible(Self[T]) -> Unit
+pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
+
+pub(all) enum LogBuildState {
+  NotBuilt
+  Building
+  Ready
+}
+pub impl Eq for LogBuildState
+pub impl Show for LogBuildState
+
+pub struct RenderState {
+  mut background : @core.BackgroundState?
+  figures : Map[String, @core.FigurePlacement]
+  dom_figures : Map[String, @core.DomFigureState]
+  mut music : (String, Bool)?
+  mut last_sfx : String?
+  mut last_sfx_interrupted : Bool
+  pixi_animations : Array[(String, @core.AnimationSpec)]
+  dom_animations : Array[(String, @core.AnimationSpec)]
+  effects : Map[String, Array[@core.EffectSpec]]
+  live2d_motions : Array[(String, String, Int?)]
+  live2d_expressions : Array[(String, String?)]
+  render_epoch : String
+}
+pub impl ToJson for RenderState
+pub impl @json.FromJson for RenderState
+
+// Type aliases
+pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
+
+// Traits
+

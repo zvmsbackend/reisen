@@ -1,4 +1,7 @@
 ///|
+using @core {label, option, script}
+
+///|
 extern "js" fn read_sfx_gain() -> Double =
   #| () => globalThis.__reisenSfxGain ?? -1
 

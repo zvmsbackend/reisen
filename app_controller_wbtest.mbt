@@ -1,4 +1,10 @@
 ///|
+using @util {gensym}
+
+///|
+using @core {label, type RuntimeEvent}
+
+///|
 async test "app controller enters game on new game action" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(() => script, () => GameState::new(0), "app")

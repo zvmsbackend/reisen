@@ -3,7 +3,7 @@
 /// PIXI renderers can read render state while HTML UI can read dialog/choices.
 
 ///|
-struct DialogLine {
+pub(all) struct DialogLine {
   speaker : String
   text : String
   typewriter : Bool
