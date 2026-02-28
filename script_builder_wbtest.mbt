@@ -1,38 +1,31 @@
 ///|
 fn dummy_bg(id : String) -> Background {
-  { id, url: "" }
+  Background::new(id, "")
 }
 
 ///|
 fn dummy_figure(id : String) -> PixiFigure {
-  id
+  PixiFigure::new(id)
 }
 
 ///|
 fn dummy_live2d_figure(id : String) -> Live2dFigure {
-  id
+  Live2dFigure::new(id)
 }
 
 ///|
 fn dummy_sfx(id : String) -> Sfx {
-  id
+  Sfx::new(id)
 }
 
 ///|
 fn dummy_music(id : String) -> Music {
-  id
+  Music::new(id)
 }
 
 ///|
 fn dummy_galley_image(id : String) -> GalleryImage {
-  {
-    id,
-    image_url: id,
-    title: "",
-    thumbnail_url: None,
-    replay_label: None,
-    replay_state_factory_key: None,
-  }
+  GalleryImage::new(id, id)
 }
 
 ///|

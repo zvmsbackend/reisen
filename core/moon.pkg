@@ -1,0 +1,8 @@
+import {
+  "sennenki/reisen/storage",
+  "moonbitlang/core/json",
+}
+
+options(
+  overrides: [ "sennenki/abort_hook" ],
+)

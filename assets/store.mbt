@@ -1,36 +1,13 @@
 ///|
 /// Asset loading helpers for the browser target.
-///
-/// This module provides async loaders for images, text, and bytes,
-/// plus a simple in-memory asset store.
 
 ///|
 #external
-type Image
+pub type Image
 
 ///|
 #external
-type Video
-
-///|
-pub impl @js.Cast for Image with into(value) {
-  Some(value.cast())
-}
-
-///|
-pub impl @js.Cast for Image with from(value) {
-  @js.Value::cast_from(value)
-}
-
-///|
-pub impl @js.Cast for Video with into(value) {
-  Some(value.cast())
-}
-
-///|
-pub impl @js.Cast for Video with from(value) {
-  @js.Value::cast_from(value)
-}
+pub type Video
 
 ///|
 extern "js" fn load_image_promise(url : String) -> @js.Promise =
@@ -115,12 +92,61 @@ pub async fn load_bytes(url : String) -> Bytes {
 }
 
 ///|
-struct AssetStore {
+pub suberror AssetStoreError {
+  ResourceLoadFailed(message~ : String)
+}
+
+///|
+#module("/pixi-bridge.js")
+fn js_load_live2d_model_promise(source : String) -> @js.Promise = "loadLive2dModel"
+
+///|
+extern "js" fn load_result_ok(result : @js.Value) -> Bool =
+  #| (result) => !!(result && result.ok === true)
+
+///|
+extern "js" fn load_result_value(result : @js.Value) -> @js.Value =
+  #| (result) => result?.value
+
+///|
+extern "js" fn load_result_error(
+  result : @js.Value,
+  fallback : String,
+) -> String =
+  #| (result, fallback) => {
+  #|   const message = result && typeof result.error === 'string' ? result.error : '';
+  #|   return message || fallback;
+  #| }
+
+///|
+pub async fn load_live2d_model(
+  source : String,
+) -> @js.Value raise AssetStoreError {
+  let result = @js.Promise::wait(js_load_live2d_model_promise(source)) catch {
+    _ =>
+      raise AssetStoreError::ResourceLoadFailed(
+        message="Failed to load Live2D model: \{source}",
+      )
+  }
+  if !load_result_ok(result) {
+    raise AssetStoreError::ResourceLoadFailed(
+      message=load_result_error(
+        result,
+        "Failed to load Live2D model: \{source}",
+      ),
+    )
+  }
+  load_result_value(result)
+}
+
+///|
+pub struct AssetStore {
   images : Map[String, Image]
   videos : Map[String, Video]
   texts : Map[String, String]
   bytes : Map[String, Bytes]
-  live2d_models : Map[String, PixiLive2dModel]
+  audios : Map[String, String]
+  live2d_models : Map[String, @js.Value]
 }
 
 ///|
@@ -130,6 +156,7 @@ pub fn AssetStore::new() -> AssetStore {
     videos: Map::new(),
     texts: Map::new(),
     bytes: Map::new(),
+    audios: Map::new(),
     live2d_models: Map::new(),
   }
 }
@@ -191,10 +218,44 @@ pub fn AssetStore::get_bytes(self : AssetStore, id : String) -> Bytes? {
 }
 
 ///|
+pub fn AssetStore::put_audio_url(
+  self : AssetStore,
+  id : String,
+  url : String,
+) -> Unit {
+  self.audios.set(id, url)
+}
+
+///|
+pub fn AssetStore::get_audio_url(self : AssetStore, id : String) -> String? {
+  self.audios.get(id)
+}
+
+///|
+pub fn AssetStore::register_music(
+  self : AssetStore,
+  url : String,
+  id? : String = @util.gensym(prefix="music"),
+) -> Music {
+  self.put_audio_url(id, url)
+  Music::new(id)
+}
+
+///|
+pub fn AssetStore::register_sfx(
+  self : AssetStore,
+  url : String,
+  id? : String = @util.gensym(prefix="sfx"),
+) -> Sfx {
+  self.put_audio_url(id, url)
+  Sfx::new(id)
+}
+
+///|
 pub fn AssetStore::put_live2d_model(
   self : AssetStore,
   id : String,
-  model : PixiLive2dModel,
+  model : @js.Value,
 ) -> Unit {
   self.live2d_models.set(id, model)
 }
@@ -203,7 +264,7 @@ pub fn AssetStore::put_live2d_model(
 pub fn AssetStore::get_live2d_model(
   self : AssetStore,
   id : String,
-) -> PixiLive2dModel? {
+) -> @js.Value? {
   self.live2d_models.get(id)
 }
 
@@ -211,50 +272,50 @@ pub fn AssetStore::get_live2d_model(
 pub async fn AssetStore::register_figure(
   self : AssetStore,
   url : String,
-  id? : String = gensym(prefix="figure"),
+  id? : String = @util.gensym(prefix="figure"),
 ) -> PixiFigure {
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
   }
-  id
+  PixiFigure::new(id)
 }
 
 ///|
 pub async fn AssetStore::register_live2d_figure(
   self : AssetStore,
   model_json_url : String,
-  id? : String = gensym(prefix="live2d_figure"),
-) -> Live2dFigure raise PixiBindingError {
+  id? : String = @util.gensym(prefix="live2d_figure"),
+) -> Live2dFigure raise AssetStoreError {
   if self.live2d_models.get(id) is None {
-    let model = pixi_load_live2d_model(model_json_url)
+    let model = load_live2d_model(model_json_url)
     self.put_live2d_model(id, model)
   }
-  id
+  Live2dFigure::new(id)
 }
 
 ///|
 pub async fn AssetStore::register_background(
   self : AssetStore,
   url : String,
-  id? : String = gensym(prefix="background"),
+  id? : String = @util.gensym(prefix="background"),
 ) -> Background {
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
   }
-  { id, url }
+  Background::new(id, url)
 }
 
 ///|
 pub async fn AssetStore::register_background_video(
   self : AssetStore,
   url : String,
-  id? : String = gensym(prefix="background_video"),
+  id? : String = @util.gensym(prefix="background_video"),
 ) -> Background {
   if self.videos.get(id) is None {
     let video = load_video(url)
     self.put_video(id, video)
   }
-  { id, url }
+  Background::new(id, url)
 }

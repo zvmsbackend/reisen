@@ -270,12 +270,12 @@ test "runtime say emits voice id" {
 test "runtime unlock cg emits event and updates persistent state" {
   let cg_id = gensym(prefix="runtime_cg")
   let entry = GalleryImage::new(cg_id, "img_cg", title="CG")
-  gallery_lock_image(entry)
+  @gallery.lock_image(entry)
   let script : Script[Int] = script(builder => builder.unlock_cg(entry))
   let runtime = Runtime::new(script, GameState::new(0))
   assert_eq(runtime.step(), CgUnlocked(cg_id))
-  assert_eq(gallery_is_image_unlocked(entry), true)
-  gallery_lock_image(entry)
+  assert_eq(@gallery.is_image_unlocked(entry), true)
+  @gallery.lock_image(entry)
 }
 
 ///|
@@ -315,9 +315,10 @@ test "runtime dom figure interactive update event" {
 ///|
 test "runtime live2d motion and expression events" {
   let script : Script[Int] = script(builder => {
-    builder.play_live2d_motion("hero", "tap_body", index=2)
-    builder.set_live2d_expression("hero", id="smile")
-    builder.set_live2d_expression("hero")
+    let hero = Live2dFigure::new("hero")
+    builder.play_live2d_motion(hero, "tap_body", index=2)
+    builder.set_live2d_expression(hero, id="smile")
+    builder.set_live2d_expression(hero)
   })
   let runtime = Runtime::new(script, GameState::new(0))
   assert_eq(runtime.step(), Live2dMotionPlayed("hero", "tap_body", Some(2)))

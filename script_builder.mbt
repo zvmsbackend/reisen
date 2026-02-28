@@ -2,128 +2,10 @@
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
 
 ///|
-struct PixiFigure(String)
-
-///|
-struct Live2dFigure(String)
-
-///|
-struct DomFigure(String)
-
-///|
-struct Background {
-  id : String
-  url : String
-}
-
-///|
-struct Music(String)
-
-///|
-struct Sfx(String)
-
-///|
 struct Effect(String)
 
 ///|
 struct Label(String)
-
-///|
-priv enum RenderableKind {
-  Pixi
-  Dom
-}
-
-///|
-trait AnimationTarget {
-  id(Self) -> String
-  kind(Self) -> RenderableKind
-}
-
-///|
-#warnings("-unused_value")
-trait PixiTarget: AnimationTarget {
-  dummy(Self) -> Unit = _
-}
-
-///|
-#warnings("-unused_value")
-trait Figure: AnimationTarget {
-  dummy(Self) -> Unit = _
-}
-
-///|
-impl PixiTarget with dummy(_) {
-
-}
-
-///|
-impl Figure with dummy(_) {
-
-}
-
-///|
-pub impl AnimationTarget for PixiFigure with id(self) {
-  self.0
-}
-
-///|
-pub impl AnimationTarget for PixiFigure with kind(_) {
-  Pixi
-}
-
-///|
-pub impl PixiTarget for PixiFigure
-
-///|
-pub impl Figure for PixiFigure
-
-///|
-pub impl AnimationTarget for Live2dFigure with id(self) {
-  self.0
-}
-
-///|
-pub impl AnimationTarget for Live2dFigure with kind(_) {
-  Pixi
-}
-
-///|
-pub impl PixiTarget for Live2dFigure
-
-///|
-pub impl Figure for Live2dFigure
-
-///|
-pub impl AnimationTarget for DomFigure with id(self) {
-  self.0
-}
-
-///|
-pub impl AnimationTarget for DomFigure with kind(_) {
-  Dom
-}
-
-///|
-pub impl Figure for DomFigure
-
-///|
-pub impl AnimationTarget for Background with id(self) {
-  self.id
-}
-
-///|
-pub impl AnimationTarget for Background with kind(_) {
-  Pixi
-}
-
-///|
-pub impl PixiTarget for Background
-
-///|
-pub fn dom_figure(id : String) -> DomFigure {
-  id.trim_start(chars="#").to_string()
-}
 
 ///|
 struct ScriptBuilder[T] {
@@ -709,21 +591,21 @@ pub fn[T] ScriptBuilder::scene(
 }
 
 ///|
-fn[T, F : Figure] ScriptBuilder::emit_show_figure(
+fn[T, F : @assets.Figure] ScriptBuilder::emit_show_figure(
   self : ScriptBuilder[T],
   figure : F,
   placement : FigurePlacement,
   interactive : Bool,
 ) -> Unit {
   match figure.kind() {
-    Pixi => self.instructions.push(ShowFigure(figure.id(), placement))
-    Dom =>
+    @assets.Pixi => self.instructions.push(ShowFigure(figure.id(), placement))
+    @assets.Dom =>
       self.instructions.push(ShowDomFigure(figure.id(), placement, interactive))
   }
 }
 
 ///|
-pub fn[T, F : Figure] ScriptBuilder::show_figure(
+pub fn[T, F : @assets.Figure] ScriptBuilder::show_figure(
   self : ScriptBuilder[T],
   figure : F,
   placement : FigurePlacement,
@@ -733,7 +615,7 @@ pub fn[T, F : Figure] ScriptBuilder::show_figure(
 }
 
 ///|
-pub fn[T, F : Figure] ScriptBuilder::show_figure_at(
+pub fn[T, F : @assets.Figure] ScriptBuilder::show_figure_at(
   self : ScriptBuilder[T],
   figure : F,
   pos : Position,
@@ -745,13 +627,13 @@ pub fn[T, F : Figure] ScriptBuilder::show_figure_at(
 }
 
 ///|
-pub fn[T, F : Figure] ScriptBuilder::hide_figure(
+pub fn[T, F : @assets.Figure] ScriptBuilder::hide_figure(
   self : ScriptBuilder[T],
   figure : F,
 ) -> Unit {
   match figure.kind() {
-    Pixi => self.instructions.push(HideFigure(figure.id()))
-    Dom => self.instructions.push(HideDomFigure(figure.id()))
+    @assets.Pixi => self.instructions.push(HideFigure(figure.id()))
+    @assets.Dom => self.instructions.push(HideDomFigure(figure.id()))
   }
 }
 
@@ -761,7 +643,7 @@ pub fn[T] ScriptBuilder::set_figure_interactive(
   figure : DomFigure,
   interactive : Bool,
 ) -> Unit {
-  self.instructions.push(SetDomFigureInteractive(figure.0, interactive))
+  self.instructions.push(SetDomFigureInteractive(figure.id(), interactive))
 }
 
 ///|
@@ -770,7 +652,7 @@ pub fn[T] ScriptBuilder::play_music(
   music : Music,
   should_loop : Bool,
 ) -> Unit {
-  self.instructions.push(PlayMusic(music.0, should_loop))
+  self.instructions.push(PlayMusic(music.id(), should_loop))
 }
 
 ///|
@@ -784,7 +666,7 @@ pub fn[T] ScriptBuilder::play_sfx(
   sfx : Sfx,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(PlaySfx(sfx.0, blocking))
+  self.instructions.push(PlaySfx(sfx.id(), blocking))
 }
 
 ///|
@@ -794,7 +676,7 @@ pub fn[T] ScriptBuilder::play_live2d_motion(
   group : String,
   index? : Int,
 ) -> Unit {
-  self.instructions.push(PlayLive2dMotion(figure.0, group, index))
+  self.instructions.push(PlayLive2dMotion(figure.id(), group, index))
 }
 
 ///|
@@ -803,7 +685,7 @@ pub fn[T] ScriptBuilder::set_live2d_expression(
   figure : Live2dFigure,
   id? : String,
 ) -> Unit {
-  self.instructions.push(SetLive2dExpression(figure.0, id))
+  self.instructions.push(SetLive2dExpression(figure.id(), id))
 }
 
 ///|
@@ -819,7 +701,7 @@ pub fn effect_spec(
 }
 
 ///|
-pub fn[T, A : PixiTarget] ScriptBuilder::effect(
+pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect(
   self : ScriptBuilder[T],
   target : A,
   effect_spec : EffectSpec,
@@ -828,7 +710,7 @@ pub fn[T, A : PixiTarget] ScriptBuilder::effect(
 }
 
 ///|
-pub fn[T, A : PixiTarget] ScriptBuilder::effect_with(
+pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect_with(
   self : ScriptBuilder[T],
   target : A,
   effect : Effect,
@@ -851,19 +733,19 @@ pub fn[T, A : PixiTarget] ScriptBuilder::effect_with(
 }
 
 ///|
-fn[T, A : AnimationTarget] ScriptBuilder::emit_animation(
+fn[T, A : @assets.AnimationTarget] ScriptBuilder::emit_animation(
   self : ScriptBuilder[T],
   target : A,
   spec : AnimationSpec,
 ) -> Unit {
   match target.kind() {
-    Pixi => self.instructions.push(AnimatePixi(target.id(), spec))
-    Dom => self.instructions.push(AnimateDom(target.id(), spec))
+    @assets.Pixi => self.instructions.push(AnimatePixi(target.id(), spec))
+    @assets.Dom => self.instructions.push(AnimateDom(target.id(), spec))
   }
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate(
   self : ScriptBuilder[T],
   target : A,
   spec : AnimationSpec,
@@ -872,7 +754,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_opacity(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -888,7 +770,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_opacity(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_position(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -898,12 +780,12 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
   blocking? : Bool = false,
 ) -> Unit {
   match target.kind() {
-    Pixi =>
+    @assets.Pixi =>
       self.emit_animation(
         target,
         anim_position(duration_ms, from, to, easing~, blocking~),
       )
-    Dom =>
+    @assets.Dom =>
       self.emit_animation(
         target,
         anim_position_dom(duration_ms, from, to, easing, blocking),
@@ -912,7 +794,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_position(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_scale(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -929,7 +811,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_scale(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_rotation(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -945,7 +827,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_rotation(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_blur(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -961,7 +843,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_blur(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_brightness(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -977,7 +859,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_brightness(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_contrast(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -993,7 +875,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_contrast(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_saturation(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -1009,7 +891,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_saturation(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_gamma(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -1025,7 +907,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_gamma(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_red(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -1041,7 +923,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_red(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_green(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,
@@ -1057,7 +939,7 @@ pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_green(
 }
 
 ///|
-pub fn[T, A : AnimationTarget] ScriptBuilder::animate_color_blue(
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_blue(
   self : ScriptBuilder[T],
   target : A,
   duration_ms : Int,

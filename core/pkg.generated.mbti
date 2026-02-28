@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/core"
+
+import {
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
+
+// Errors
+
+// Types and methods
+pub struct GameState[T] {
+  mut user_data : T
+  flags : Map[String, Bool]
+  ints : Map[String, Int]
+  texts : Map[String, String]
+}
+pub fn[T] GameState::flag(Self[T], String) -> Bool
+pub fn[T] GameState::get_user_data(Self[T]) -> T
+pub fn[T] GameState::int_var(Self[T], String, default_value? : Int) -> Int
+pub fn[T] GameState::interpolate(Self[T], String) -> String
+pub fn[T] GameState::new(T) -> Self[T]
+pub fn[T] GameState::set_flag(Self[T], String, Bool) -> Unit
+pub fn[T] GameState::set_int_var(Self[T], String, Int) -> Unit
+pub fn[T] GameState::set_text_var(Self[T], String, String) -> Unit
+pub fn[T] GameState::set_user_data(Self[T], T) -> Unit
+pub fn[T] GameState::text_var(Self[T], String, default_value? : String) -> String
+pub fn[T : ToJson] GameState::to_json_string(Self[T]) -> String
+pub impl[T : Eq] Eq for GameState[T]
+pub impl[T : Show] Show for GameState[T]
+pub impl[T : ToJson] ToJson for GameState[T]
+pub impl[T : @json.FromJson] @json.FromJson for GameState[T]
+
+// Type aliases
+
+// Traits
+

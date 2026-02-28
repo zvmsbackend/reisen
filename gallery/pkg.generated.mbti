@@ -1,0 +1,75 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/gallery"
+
+import {
+  "moonbitlang/core/json",
+  "sennenki/reisen/core",
+}
+
+// Values
+pub fn image_by_id(String) -> GalleryImage?
+
+pub fn is_image_unlocked(GalleryImage) -> Bool
+
+pub fn is_image_unlocked_in(String, GalleryImage) -> Bool
+
+pub fn lock_image(GalleryImage) -> Unit
+
+pub fn lock_image_in(String, GalleryImage) -> Unit
+
+pub fn register_image(GalleryImage) -> Unit
+
+pub fn registered_images() -> Array[GalleryImage]
+
+pub fn replayable_images() -> Array[GalleryImage]
+
+pub fn replayable_images_in(String) -> Array[GalleryImage]
+
+pub fn unlock_image(GalleryImage) -> Unit
+
+pub fn unlock_image_by_id(String) -> Unit
+
+pub fn unlock_image_in(String, GalleryImage) -> Unit
+
+pub fn unlocked_images() -> Array[GalleryImage]
+
+pub fn unlocked_images_in(String) -> Array[GalleryImage]
+
+// Errors
+
+// Types and methods
+pub struct GalleryImage {
+  id : String
+  image_url : String
+  title : String
+  thumbnail_url : String?
+  replay_label : String?
+  replay_state_factory_key : ReplayStateFactoryKey?
+}
+pub fn GalleryImage::id(Self) -> String
+pub fn GalleryImage::new(String, String, title? : String, thumbnail_url? : String, replay_label? : String, replay_state_factory_key? : ReplayStateFactoryKey) -> Self
+pub impl Eq for GalleryImage
+pub impl Show for GalleryImage
+pub impl ToJson for GalleryImage
+pub impl @json.FromJson for GalleryImage
+
+pub struct ReplayStateFactories[T](Map[String, () -> @core.GameState[T]])
+pub fn[T] ReplayStateFactories::get(Self[T], ReplayStateFactoryKey) -> (() -> @core.GameState[T])?
+#deprecated
+pub fn[T] ReplayStateFactories::inner(Self[T]) -> Map[String, () -> @core.GameState[T]]
+pub fn[T] ReplayStateFactories::new() -> Self[T]
+pub fn[T] ReplayStateFactories::register(Self[T], () -> @core.GameState[T], key? : String) -> ReplayStateFactoryKey
+
+pub struct ReplayStateFactoryKey(String)
+#deprecated
+pub fn ReplayStateFactoryKey::inner(Self) -> String
+pub fn ReplayStateFactoryKey::new(String) -> Self
+pub impl Eq for ReplayStateFactoryKey
+pub impl Show for ReplayStateFactoryKey
+pub impl ToJson for ReplayStateFactoryKey
+pub impl @json.FromJson for ReplayStateFactoryKey
+
+// Type aliases
+
+// Traits
+

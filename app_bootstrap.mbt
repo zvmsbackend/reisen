@@ -67,11 +67,11 @@ pub fn[T] validate_script_audio_assets(
   for inst in script.instructions {
     match inst {
       PlayMusic(id, _) =>
-        if store.get_bytes(id) is None {
+        if store.get_audio_url(id) is None {
           raise AppBootstrapError::MissingAudioAsset(id~)
         }
       PlaySfx(id, _) =>
-        if store.get_bytes(id) is None {
+        if store.get_audio_url(id) is None {
           raise AppBootstrapError::MissingAudioAsset(id~)
         }
       _ => ()

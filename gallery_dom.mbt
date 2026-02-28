@@ -48,7 +48,7 @@ fn to_gallery_tile_view(ns : String, image : GalleryImage) -> GalleryTileView {
     image_id: image.image_url,
     thumbnail_id: image.thumbnail_url,
     title: image.title,
-    unlocked: gallery_is_image_unlocked_in(ns, image),
+    unlocked: @gallery.is_image_unlocked_in(ns, image),
     replay_label: image.replay_label,
   }
 }
@@ -59,7 +59,7 @@ fn gallery_tile_views(
   show_locked : Bool,
 ) -> Array[GalleryTileView] {
   let out : Array[GalleryTileView] = []
-  for image in gallery_registered_images() {
+  for image in @gallery.registered_images() {
     let tile = to_gallery_tile_view(ns, image)
     if tile.unlocked || show_locked {
       out.push(tile)

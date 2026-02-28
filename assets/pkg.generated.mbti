@@ -1,0 +1,152 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/assets"
+
+import {
+  "moonbit-community/js-ffi/js",
+  "moonbitlang/core/json",
+}
+
+// Values
+pub fn dom_figure(String) -> DomFigure
+
+pub async fn load_bytes(String) -> Bytes
+
+pub async fn load_image(String) -> Image
+
+pub async fn load_live2d_model(String) -> @js.Value raise AssetStoreError
+
+pub async fn load_text(String) -> String
+
+pub async fn load_video(String) -> Video
+
+// Errors
+pub suberror AssetStoreError {
+  ResourceLoadFailed(message~ : String)
+}
+
+// Types and methods
+pub struct AssetStore {
+  images : Map[String, Image]
+  videos : Map[String, Video]
+  texts : Map[String, String]
+  bytes : Map[String, Bytes]
+  audios : Map[String, String]
+  live2d_models : Map[String, @js.Value]
+}
+pub fn AssetStore::get_audio_url(Self, String) -> String?
+pub fn AssetStore::get_bytes(Self, String) -> Bytes?
+pub fn AssetStore::get_image(Self, String) -> Image?
+pub fn AssetStore::get_live2d_model(Self, String) -> @js.Value?
+pub fn AssetStore::get_text(Self, String) -> String?
+pub fn AssetStore::get_video(Self, String) -> Video?
+pub fn AssetStore::new() -> Self
+pub fn AssetStore::put_audio_url(Self, String, String) -> Unit
+pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
+pub fn AssetStore::put_image(Self, String, Image) -> Unit
+pub fn AssetStore::put_live2d_model(Self, String, @js.Value) -> Unit
+pub fn AssetStore::put_text(Self, String, String) -> Unit
+pub fn AssetStore::put_video(Self, String, Video) -> Unit
+pub async fn AssetStore::register_background(Self, String, id? : String) -> Background
+pub async fn AssetStore::register_background_video(Self, String, id? : String) -> Background
+pub async fn AssetStore::register_figure(Self, String, id? : String) -> PixiFigure
+pub async fn AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure raise AssetStoreError
+pub fn AssetStore::register_music(Self, String, id? : String) -> Music
+pub fn AssetStore::register_sfx(Self, String, id? : String) -> Sfx
+
+pub struct Background {
+  id : String
+  url : String
+}
+pub fn Background::new(String, String) -> Self
+pub impl Eq for Background
+pub impl Show for Background
+pub impl ToJson for Background
+pub impl @json.FromJson for Background
+pub impl AnimationTarget for Background
+pub impl PixiTarget for Background
+
+pub struct DomFigure(String)
+pub fn DomFigure::id(Self) -> String
+#deprecated
+pub fn DomFigure::inner(Self) -> String
+pub fn DomFigure::new(String) -> Self
+pub impl Eq for DomFigure
+pub impl Show for DomFigure
+pub impl ToJson for DomFigure
+pub impl @json.FromJson for DomFigure
+pub impl AnimationTarget for DomFigure
+pub impl Figure for DomFigure
+
+#external
+pub type Image
+
+pub struct Live2dFigure(String)
+pub fn Live2dFigure::id(Self) -> String
+#deprecated
+pub fn Live2dFigure::inner(Self) -> String
+pub fn Live2dFigure::new(String) -> Self
+pub impl Eq for Live2dFigure
+pub impl Show for Live2dFigure
+pub impl ToJson for Live2dFigure
+pub impl @json.FromJson for Live2dFigure
+pub impl AnimationTarget for Live2dFigure
+pub impl Figure for Live2dFigure
+pub impl PixiTarget for Live2dFigure
+
+pub struct Music(String)
+pub fn Music::id(Self) -> String
+#deprecated
+pub fn Music::inner(Self) -> String
+pub fn Music::new(String) -> Self
+pub impl Eq for Music
+pub impl Show for Music
+pub impl ToJson for Music
+pub impl @json.FromJson for Music
+
+pub struct PixiFigure(String)
+pub fn PixiFigure::id(Self) -> String
+#deprecated
+pub fn PixiFigure::inner(Self) -> String
+pub fn PixiFigure::new(String) -> Self
+pub impl Eq for PixiFigure
+pub impl Show for PixiFigure
+pub impl ToJson for PixiFigure
+pub impl @json.FromJson for PixiFigure
+pub impl AnimationTarget for PixiFigure
+pub impl Figure for PixiFigure
+pub impl PixiTarget for PixiFigure
+
+pub enum RenderableKind {
+  Pixi
+  Dom
+}
+
+pub struct Sfx(String)
+pub fn Sfx::id(Self) -> String
+#deprecated
+pub fn Sfx::inner(Self) -> String
+pub fn Sfx::new(String) -> Self
+pub impl Eq for Sfx
+pub impl Show for Sfx
+pub impl ToJson for Sfx
+pub impl @json.FromJson for Sfx
+
+#external
+pub type Video
+
+// Type aliases
+
+// Traits
+pub trait AnimationTarget {
+  id(Self) -> String
+  kind(Self) -> RenderableKind
+}
+
+pub trait Figure : AnimationTarget {
+  dummy(Self) -> Unit
+}
+
+pub trait PixiTarget : AnimationTarget {
+  dummy(Self) -> Unit
+}
+

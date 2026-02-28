@@ -223,8 +223,8 @@ test "validate_script_audio_assets succeeds when audio ids exist" {
     builder.play_sfx(dummy_sfx("click"))
   })
   let store = AssetStore::new()
-  store.put_bytes("bgm_theme", Bytes::from_array([1, 2, 3]))
-  store.put_bytes("click", Bytes::from_array([4, 5]))
+  store.put_audio_url("bgm_theme", "bgm://theme")
+  store.put_audio_url("click", "sfx://click")
 
   let result : Result[Unit, AppBootstrapError] = try? validate_script_audio_assets(
     script, store,

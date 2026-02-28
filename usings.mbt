@@ -23,3 +23,31 @@ using @storage {
   settings_read_in,
   settings_write_in,
 }
+
+///|
+using @core {type GameState, game_state_from_json_string}
+
+///|
+using @gallery {
+  type GalleryImage,
+  type ReplayStateFactories,
+  type ReplayStateFactoryKey,
+}
+
+///|
+using @assets {
+  type AssetStore,
+  type Background,
+  type DomFigure,
+  type Image,
+  type Live2dFigure,
+  type Music,
+  type PixiFigure,
+  type Sfx,
+  type Video,
+  dom_figure,
+  load_bytes,
+  load_image,
+  load_text,
+  load_video,
+}

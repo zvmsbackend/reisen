@@ -240,8 +240,9 @@ test "director updates dom figure interactive without placement change" {
 ///|
 test "director tracks live2d motion and expression events" {
   let script : Script[Int] = script(builder => {
-    builder.play_live2d_motion("hero", "tap_body", index=1)
-    builder.set_live2d_expression("hero", id="smile")
+    let hero = Live2dFigure::new("hero")
+    builder.play_live2d_motion(hero, "tap_body", index=1)
+    builder.set_live2d_expression(hero, id="smile")
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_eq(director.step(), Live2dMotionPlayed("hero", "tap_body", Some(1)))

@@ -1,3 +1,1 @@
-options(
-  overrides: [ "sennenki/abort_hook" ],
-)
+

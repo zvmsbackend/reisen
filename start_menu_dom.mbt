@@ -316,7 +316,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
 ///|
 fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_entries_in(self.save_ns)
-  let has_gallery = gallery_registered_images().length() > 0
+  let has_gallery = @gallery.registered_images().length() > 0
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>

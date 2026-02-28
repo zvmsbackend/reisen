@@ -30,9 +30,8 @@ test "audio command mapping from runtime event" {
 }
 
 ///|
-test "audio dom register and hook are callable" {
-  let audio = AudioDom::new()
-  let _bgm = audio.register_music("/bgm.ogg")
+test "audio dom resolver and hook are callable" {
+  let audio = AudioDom::new(_ => None)
   let hook = audio.as_event_hook()
 
   // Avoid hard dependency on browser Audio constructor in tests.

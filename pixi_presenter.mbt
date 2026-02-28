@@ -1575,6 +1575,7 @@ fn[T] PixiPresenter::sync_figures(
   for id, placement in figures {
     match self.store.get_live2d_model(id) {
       Some(model_asset) => {
+        let model_asset : PixiLive2dModel = model_asset.cast()
         match self.figure_sprites.get(id) {
           Some(sprite) => self.stage.remove_sprite(sprite)
           None => ()

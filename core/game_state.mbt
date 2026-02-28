@@ -3,7 +3,7 @@
 /// `user_data` carries game-specific state defined by the game author.
 
 ///|
-struct GameState[T] {
+pub struct GameState[T] {
   mut user_data : T
   flags : Map[String, Bool]
   ints : Map[String, Int]
@@ -110,7 +110,8 @@ pub fn[T] GameState::interpolate(self : GameState[T], text : String) -> String {
         if in_brace {
           let value = match self.texts.get(var_name) {
             Some(text) => text
-            None => persistent_get_text(var_name, default="{\{var_name}}")
+            None =>
+              @storage.persistent_get_text(var_name, default="{\{var_name}}")
           }
           result.write_string(value)
         } else {
@@ -134,7 +135,6 @@ pub fn[T] GameState::interpolate(self : GameState[T], text : String) -> String {
     }
   }
 
-  // Handle unclosed brace
   if in_brace {
     result.write_string("{" + var_name)
   }

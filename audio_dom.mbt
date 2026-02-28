@@ -31,32 +31,17 @@ fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
 
 ///|
 struct AudioDom {
-  urls : Map[String, String]
+  resolve_url : (String) -> String?
 }
 
 ///|
-pub fn AudioDom::new() -> AudioDom {
-  { urls: {} }
+pub fn AudioDom::new(resolve_url : (String) -> String?) -> AudioDom {
+  { resolve_url, }
 }
 
 ///|
-pub fn AudioDom::register_music(
-  self : AudioDom,
-  url : String,
-  id? : String = gensym(prefix="music"),
-) -> Music {
-  self.urls[id] = url
-  id
-}
-
-///|
-pub fn AudioDom::register_sfx(
-  self : AudioDom,
-  url : String,
-  id? : String = gensym(prefix="sfx"),
-) -> Sfx {
-  self.urls[id] = url
-  id
+pub fn AudioDom::new_with_store(store : AssetStore) -> AudioDom {
+  AudioDom::new(id => store.get_audio_url(id))
 }
 
 ///|
@@ -160,13 +145,13 @@ extern "js" fn audio_dom_has_active_sfx_impl() -> Bool =
 pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
   match audio_command_from_event(event) {
     AudioCommand::PlayMusic(id, should_loop) =>
-      match self.urls.get(id) {
+      match (self.resolve_url)(id) {
         Some(url) => audio_dom_play_music(url, should_loop)
         None => ()
       }
     AudioCommand::StopMusic => audio_dom_stop_music()
     AudioCommand::PlaySfx(id) =>
-      match self.urls.get(id) {
+      match (self.resolve_url)(id) {
         Some(url) => audio_dom_play_sfx(url)
         None => ()
       }

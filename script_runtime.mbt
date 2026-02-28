@@ -383,7 +383,7 @@ fn[T] Runtime::run_inst(
     }
     UnlockCg(id) => {
       self.ip = self.ip + 1
-      gallery_unlock_image_by_id(id)
+      @gallery.unlock_image_by_id(id)
       CgUnlocked(id)
     }
     AnimatePixi(target, spec) => {

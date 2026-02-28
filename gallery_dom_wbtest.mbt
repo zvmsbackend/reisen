@@ -11,11 +11,11 @@ test "gallery tile views respect unlock and show_locked" {
     "img_l",
     title="Locked",
   )
-  gallery_register_image(unlocked)
-  gallery_register_image(locked)
-  gallery_lock_image_in(ns, unlocked)
-  gallery_lock_image_in(ns, locked)
-  gallery_unlock_image_in(ns, unlocked)
+  @gallery.register_image(unlocked)
+  @gallery.register_image(locked)
+  @gallery.lock_image_in(ns, unlocked)
+  @gallery.lock_image_in(ns, locked)
+  @gallery.unlock_image_in(ns, unlocked)
 
   let all_tiles = gallery_tile_views(ns, true)
   assert_true(all_tiles.contains(to_gallery_tile_view(ns, unlocked)))
@@ -25,8 +25,8 @@ test "gallery tile views respect unlock and show_locked" {
   assert_true(unlocked_only.contains(to_gallery_tile_view(ns, unlocked)))
   assert_true(!unlocked_only.contains(to_gallery_tile_view(ns, locked)))
 
-  gallery_lock_image_in(ns, unlocked)
-  gallery_lock_image_in(ns, locked)
+  @gallery.lock_image_in(ns, unlocked)
+  @gallery.lock_image_in(ns, locked)
 }
 
 ///|

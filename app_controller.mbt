@@ -226,7 +226,7 @@ async fn[T] AppController::start_gallery_replay(
   self : AppController[T],
   replay_label : String,
 ) -> Unit {
-  let target = gallery_replayable_images_in(self.save_ns)
+  let target = @gallery.replayable_images_in(self.save_ns)
     .iter()
     .find_first(image => image.replay_label == Some(replay_label))
   match target {
@@ -312,7 +312,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
       self.phase = AppPhase::Settings
     }
     Gallery =>
-      if gallery_registered_images().length() > 0 {
+      if @gallery.registered_images().length() > 0 {
         self.menu.clear()
         self.gallery_menu.render()
         self.phase = AppPhase::Gallery
