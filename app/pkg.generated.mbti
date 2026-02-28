@@ -28,8 +28,6 @@ pub async fn[T : @json.FromJson] start_game_from_save(@core.Script[T], String, S
 
 pub async fn[T : @json.FromJson] start_game_from_slot(@core.Script[T], String, String, render_sync? : async (@engine.Director[T]) -> Unit noraise, event_hook? : (@core.RuntimeEvent) -> Unit, save_namespace? : String, settings? : @storage.GameSettings, slot_payload_version? : Int) -> @engine.GameRunner[T]
 
-pub fn[T] validate_script_assets(@core.Script[T], @assets.AssetStore) -> Unit raise AppBootstrapError
-
 // Errors
 pub suberror AppBootstrapError {
   MissingImageAsset(id~ : String)
