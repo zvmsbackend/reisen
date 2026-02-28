@@ -1,0 +1,7 @@
+import {
+  "sennenki/reisen/assets",
+  "sennenki/reisen/core",
+  "sennenki/reisen/pixi",
+  "sennenki/reisen/engine",
+  "moonbit-community/js-ffi/js",
+}

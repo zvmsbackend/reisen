@@ -10,17 +10,7 @@ using @storage {
 }
 
 ///|
-using @core {
-  type EventHook,
-  type EffectSpec,
-  type FigurePlacement,
-  type Runtime,
-  type Script,
-  type ScalarState,
-  type Position,
-  type Easing,
-  type EffectPhase,
-}
+using @core {type EventHook, type Runtime, type Script}
 
 ///|
 using @state {type GameState}
@@ -32,24 +22,7 @@ using @gallery {type GalleryImage, type ReplayStateFactories}
 using @assets {type AssetStore, type Music}
 
 ///|
-using @pixi {
-  type PixiApplication,
-  type PixiBindingError,
-  type PixiBlurFilter,
-  type PixiCanvas,
-  type PixiColorMatrixFilter,
-  type PixiContainer,
-  type PixiEffectTarget,
-  type PixiLive2dModel,
-  type PixiSprite,
-  type PixiTexture,
-  type EffectParam,
-  get_canvas_by_id,
-  pixi_apply_effect_to_target,
-  pixi_effect_defaults_for,
-  window_inner_height,
-  window_inner_width,
-}
+using @pixi {type PixiBindingError}
 
 ///|
 using @ui {
