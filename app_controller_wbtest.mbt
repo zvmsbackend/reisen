@@ -47,9 +47,7 @@ async test "app controller can continue from saved slot" {
 
 ///|
 async test "app controller opens gallery when entries exist" {
-  @gallery.register_image(
-    GalleryImage::new(gensym(prefix="app_gallery"), "assets/cg_dummy.jpg"),
-  )
+  @gallery.register_image(GalleryImage::new("assets/cg_dummy.jpg"))
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(() => script, () => GameState::new(0), "app")
   app.enter_start_menu()
@@ -68,11 +66,7 @@ async test "gallery replay uses app controller state factory by default" {
     builder.label(replay_target)
     builder.say("n", "{who}")
   })
-  let image = GalleryImage::new(
-    gensym(prefix="gallery_default"),
-    "assets/cg_default.jpg",
-    replay_label~,
-  )
+  let image = GalleryImage::new("assets/cg_default.jpg", replay_label~)
   @gallery.register_image(image)
   @gallery.unlock_image(image)
   let app = AppController::new(
@@ -124,7 +118,6 @@ async test "gallery replay uses image-specific state factory key" {
     key="custom_factory",
   )
   let image = GalleryImage::new(
-    gensym(prefix="gallery_custom"),
     "assets/cg_custom.jpg",
     replay_label~,
     replay_state_factory_key=@gallery.ReplayStateFactoryKey::new(

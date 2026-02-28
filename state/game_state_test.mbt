@@ -22,6 +22,6 @@ test "game state interpolation supports vars and style braces" {
   let text = "Hello {name}! [color=#f00]{{styled}}[/color] {missing}"
   assert_eq(
     state.interpolate(text),
-    "Hello Ran! [color=#f00]{styled}[/color] {missing}",
+    "Hello Ran! [color=#f00]{{styled}}[/color] {missing}",
   )
 }

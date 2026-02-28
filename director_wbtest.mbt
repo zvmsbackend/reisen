@@ -1,8 +1,13 @@
 ///|
-using @core {label}
+using @core {label, option}
 
 ///|
 using @assets {dom_figure}
+
+///|
+fn dummy_live2d_figure(id : String) -> @assets.Live2dFigure {
+  @js.Value::cast_from(id).cast()
+}
 
 ///|
 test "director maps runtime events into ui and render state" {
@@ -202,7 +207,10 @@ test "director tracks dom figure state" {
   let script : Script[Int] = script(builder => {
     builder.show_figure(
       dom_figure("#promo"),
-      place_left(layer=3, scalars={ ..ScalarState::default(), opacity: 0.7 }),
+      @core.place_left(layer=3, scalars={
+        ..ScalarState::default(),
+        opacity: 0.7,
+      }),
     )
     builder.hide_figure(dom_figure("promo"))
   })
@@ -226,7 +234,7 @@ test "director tracks dom figure state" {
 ///|
 test "director updates dom figure interactive without placement change" {
   let script : Script[Int] = script(builder => {
-    builder.show_figure(dom_figure("promo"), place_center(layer=2))
+    builder.show_figure(dom_figure("promo"), @core.place_center(layer=2))
     builder.set_figure_interactive(dom_figure("promo"), true)
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
@@ -246,7 +254,7 @@ test "director updates dom figure interactive without placement change" {
 ///|
 test "director tracks live2d motion and expression events" {
   let script : Script[Int] = script(builder => {
-    let hero = Live2dFigure::new("hero")
+    let hero = dummy_live2d_figure("hero")
     builder.play_live2d_motion(hero, "tap_body", index=1)
     builder.set_live2d_expression(hero, id="smile")
   })

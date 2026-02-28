@@ -2,6 +2,29 @@
 using @storage {save_slot_delete, save_slot_read, save_slot_read_meta}
 
 ///|
+using @core {script}
+
+///|
+fn dummy_bg(id : String) -> @assets.Background {
+  @js.Value::cast_from(id).cast()
+}
+
+///|
+fn dummy_figure(id : String) -> @assets.PixiFigure {
+  @js.Value::cast_from(id).cast()
+}
+
+///|
+fn dummy_music(id : String) -> @assets.Music {
+  @js.Value::cast_from(id).cast()
+}
+
+///|
+fn dummy_sfx(id : String) -> @assets.Sfx {
+  @js.Value::cast_from(id).cast()
+}
+
+///|
 async test "start_game wires runner and performs initial sync" {
   let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []

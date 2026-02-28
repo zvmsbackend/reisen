@@ -56,8 +56,8 @@ fn gallery_image_unlock_key(id : String) -> String {
 
 ///|
 pub fn GalleryImage::new(
-  id : String,
   image_url : String,
+  id? : String = @util.gensym(prefix="gallery_image"),
   title? : String = "",
   thumbnail_url? : String,
   replay_label? : String,
@@ -71,11 +71,6 @@ pub fn GalleryImage::new(
     replay_label,
     replay_state_factory_key,
   }
-}
-
-///|
-pub fn GalleryImage::id(self : GalleryImage) -> String {
-  self.id
 }
 
 ///|

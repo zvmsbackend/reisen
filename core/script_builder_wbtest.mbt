@@ -1,31 +1,29 @@
 ///|
+using @assets {dom_figure}
+
+///|
+fn dummy_effect(id : String) -> Effect {
+  @js.Value::cast_from(id).cast()
+}
+
+///|
 fn dummy_bg(id : String) -> Background {
-  Background::new(id, "")
+  @js.Object::from_iter([("id", id), ("url", "")].iter()).to_value().cast()
 }
 
 ///|
 fn dummy_figure(id : String) -> @assets.PixiFigure {
-  @assets.PixiFigure::new(id)
+  @js.Value::cast_from(id).cast()
 }
 
 ///|
 fn dummy_live2d_figure(id : String) -> Live2dFigure {
-  Live2dFigure::new(id)
-}
-
-///|
-fn dummy_sfx(id : String) -> Sfx {
-  Sfx::new(id)
-}
-
-///|
-fn dummy_music(id : String) -> Music {
-  Music::new(id)
+  @js.Value::cast_from(id).cast()
 }
 
 ///|
 fn dummy_galley_image(id : String) -> GalleryImage {
-  GalleryImage::new(id, id)
+  GalleryImage::new(id~, "")
 }
 
 ///|
@@ -326,7 +324,7 @@ test "wait_click supports can_skip option" {
 ///|
 test "effect helper emits apply effect" {
   let built : Script[Int] = script(builder => {
-    builder.effect_with(dummy_figure("alice"), "glow", [
+    builder.effect_with(dummy_figure("alice"), dummy_effect("glow"), [
       ("intensity", 0.6),
       ("radius", 8.0),
     ])

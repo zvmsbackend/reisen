@@ -3,11 +3,14 @@ using @util {gensym}
 
 ///|
 test "gallery register keeps stable order and replacement" {
-  let id_a = gensym(prefix="wb_gallery_a")
-  let id_b = gensym(prefix="wb_gallery_b")
-  let a = GalleryImage::new(id_a, "img_a", title="A", replay_label="scene_a")
-  let b = GalleryImage::new(id_b, "img_b", title="B")
-  let a2 = GalleryImage::new(id_a, "img_a_new", title="A2")
+  let a = GalleryImage::new(
+    id="id_a",
+    "img_a",
+    title="A",
+    replay_label="scene_a",
+  )
+  let b = GalleryImage::new("img_b", title="B")
+  let a2 = GalleryImage::new("img_a_new", title="A2")
 
   register_image(a)
   register_image(b)
@@ -15,7 +18,7 @@ test "gallery register keeps stable order and replacement" {
 
   let registered = registered_images()
   assert_true(registered.length() >= 2)
-  assert_eq(registered[registered.length() - 2].id, id_a)
+  assert_eq(registered[registered.length() - 2].id, "id_a")
   assert_eq(registered[registered.length() - 2].image_url, "img_a_new")
   assert_eq(registered[registered.length() - 2].replay_label, None)
   assert_eq(registered[registered.length() - 1], b)
@@ -24,8 +27,7 @@ test "gallery register keeps stable order and replacement" {
 ///|
 test "gallery unlock and lock roundtrip by namespace" {
   let ns = gensym(prefix="wb_gallery")
-  let id = gensym(prefix="unlock_target")
-  let entry = GalleryImage::new(id, "img_unlock", title="Unlockable")
+  let entry = GalleryImage::new("img_unlock", title="Unlockable")
   lock_image_in(ns, entry)
   assert_eq(is_image_unlocked_in(ns, entry), false)
 
@@ -39,11 +41,7 @@ test "gallery unlock and lock roundtrip by namespace" {
 ///|
 test "gallery unlocked list reflects registered and unlocked" {
   let ns = gensym(prefix="wb_gallery_list")
-  let image = GalleryImage::new(
-    gensym(prefix="wb_gallery_list_img"),
-    "img_list",
-    title="List",
-  )
+  let image = GalleryImage::new("img_list", title="List")
   register_image(image)
   lock_image_in(ns, image)
   assert_true(!unlocked_images_in(ns).contains(image))
@@ -56,11 +54,10 @@ test "gallery unlocked list reflects registered and unlocked" {
 test "gallery replayable list only contains unlocked replay entries" {
   let ns = gensym(prefix="wb_gallery_replay")
   let replayable = GalleryImage::new(
-    gensym(prefix="wb_gallery_replayable"),
     "img_replayable",
     replay_label="scene_replayable",
   )
-  let plain = GalleryImage::new(gensym(prefix="wb_gallery_plain"), "img_plain")
+  let plain = GalleryImage::new("img_plain")
   register_image(replayable)
   register_image(plain)
   lock_image_in(ns, replayable)
@@ -79,7 +76,6 @@ test "gallery replayable list only contains unlocked replay entries" {
 ///|
 test "gallery image stores replay state factory key" {
   let image = GalleryImage::new(
-    gensym(prefix="wb_gallery_factory"),
     "img",
     replay_state_factory_key=ReplayStateFactoryKey::new("factory_key"),
   )
@@ -92,7 +88,7 @@ test "gallery image stores replay state factory key" {
 ///|
 test "cg helpers register and unlock" {
   let id = gensym(prefix="wb_cg")
-  let entry = GalleryImage::new(id, "img_cg", title="CG")
+  let entry = GalleryImage::new(id~, "img_cg", title="CG")
   register_image(entry)
   assert_eq(image_by_id(id), Some(entry))
   lock_image(entry)

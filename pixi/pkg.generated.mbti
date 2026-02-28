@@ -1,0 +1,126 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/pixi"
+
+import {
+  "moonbit-community/js-ffi/js",
+}
+
+// Values
+pub async fn assets_load_texture(String) -> PixiTexture raise PixiBindingError
+
+pub fn get_canvas_by_id(String) -> PixiCanvas?
+
+pub fn get_canvas_element(String) -> @js.Optional[PixiCanvas]
+
+pub fn pixi_apply_effect_to_target(PixiEffectTarget, String, Array[(String, Double)], Int) -> Bool
+
+pub fn pixi_effect_defaults_for(String, Array[(String, Double)]) -> Array[(String, Double)]
+
+pub fn register_pixi_effect((PixiSprite, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
+
+pub fn register_pixi_effect_shared((PixiEffectTarget, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
+
+pub fn window_inner_height() -> Double
+
+pub fn window_inner_width() -> Double
+
+// Errors
+pub suberror PixiBindingError {
+  ResourceLoadFailed(message~ : String)
+}
+
+// Types and methods
+pub struct Effect(String)
+#deprecated
+pub fn Effect::inner(Self) -> String
+
+#external
+pub type PixiApplication
+pub async fn PixiApplication::init_with_canvas(Self, PixiCanvas, Int, Int, antialias? : Bool, background_alpha? : Double, resolution? : Double, auto_density? : Bool) -> Unit
+pub fn PixiApplication::new() -> Self
+pub fn PixiApplication::renderer_resize(Self, Int, Int) -> Unit
+pub fn PixiApplication::stage(Self) -> PixiContainer
+
+#external
+pub type PixiBlurFilter
+pub fn PixiBlurFilter::new() -> Self
+pub fn PixiBlurFilter::set_strength(Self, Double) -> Unit
+
+#external
+pub type PixiCanvas
+
+#external
+pub type PixiColorMatrixFilter
+pub fn PixiColorMatrixFilter::apply_adjustments(Self, Double, Double, Double, Double, Double, Double, Double) -> Unit
+pub fn PixiColorMatrixFilter::new() -> Self
+
+#external
+pub type PixiContainer
+pub fn PixiContainer::add_live2d(Self, PixiLive2dModel) -> Unit
+pub fn PixiContainer::add_sprite(Self, PixiSprite) -> Unit
+pub fn PixiContainer::new() -> Self
+pub fn PixiContainer::remove_live2d(Self, PixiLive2dModel) -> Unit
+pub fn PixiContainer::remove_sprite(Self, PixiSprite) -> Unit
+pub fn PixiContainer::set_sortable_children(Self, Bool) -> Unit
+
+pub(all) enum PixiEffectTarget {
+  Sprite(PixiSprite)
+  Live2d(PixiLive2dModel)
+}
+
+#external
+pub type PixiFilter
+pub fn PixiFilter::new(String, String) -> Self
+
+#external
+pub type PixiLive2dModel
+pub fn PixiLive2dModel::destroy(Self) -> Unit
+pub async fn PixiLive2dModel::expression(Self, id? : String) -> Bool
+pub fn PixiLive2dModel::focus(Self, Double, Double, instant? : Bool) -> Unit
+pub fn PixiLive2dModel::height(Self) -> Double
+pub async fn PixiLive2dModel::load(String) -> Self raise PixiBindingError
+pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool noraise
+pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
+pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_expression(Self, @js.Optional[String]) -> Unit
+pub fn PixiLive2dModel::set_filters(Self, Array[@js.Value]) -> Unit
+pub fn PixiLive2dModel::set_interactive(Self, Bool) -> Unit
+pub fn PixiLive2dModel::set_position(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_rotation(Self, Double) -> Unit
+pub fn PixiLive2dModel::set_scale(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_size(Self, Double, Double) -> Unit
+pub fn PixiLive2dModel::set_visible(Self, Bool) -> Unit
+pub fn PixiLive2dModel::set_z_index(Self, Int) -> Unit
+pub fn PixiLive2dModel::width(Self) -> Double
+
+#external
+pub type PixiSprite
+pub fn PixiSprite::new(PixiTexture) -> Self
+pub fn PixiSprite::set_alpha(Self, Double) -> Unit
+pub fn PixiSprite::set_anchor(Self, Double, Double) -> Unit
+pub fn PixiSprite::set_filters(Self, Array[@js.Value]) -> Unit
+pub fn PixiSprite::set_position(Self, Double, Double) -> Unit
+pub fn PixiSprite::set_rotation(Self, Double) -> Unit
+pub fn PixiSprite::set_scale(Self, Double, Double) -> Unit
+pub fn PixiSprite::set_size(Self, Double, Double) -> Unit
+pub fn PixiSprite::set_texture(Self, PixiTexture) -> Unit
+pub fn PixiSprite::set_tint(Self, Int) -> Unit
+pub fn PixiSprite::set_visible(Self, Bool) -> Unit
+pub fn PixiSprite::set_z_index(Self, Int) -> Unit
+
+#external
+pub type PixiTexture
+pub fn PixiTexture::height(Self) -> Double
+pub fn PixiTexture::new(@js.Value) -> Self
+pub fn PixiTexture::update(Self) -> Unit
+pub fn PixiTexture::width(Self) -> Double
+
+// Type aliases
+pub type EffectParam = (String, Double)
+
+pub type PixiEffectApply = (PixiSprite, Array[(String, Double)], Int) -> Bool
+
+pub type PixiSharedEffectApply = (PixiEffectTarget, Array[(String, Double)], Int) -> Bool
+
+// Traits
+

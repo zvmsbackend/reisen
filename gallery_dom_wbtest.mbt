@@ -1,16 +1,8 @@
 ///|
 test "gallery tile views respect unlock and show_locked" {
   let ns = gensym(prefix="wb_gallery_dom")
-  let unlocked = GalleryImage::new(
-    gensym(prefix="cg_unlocked"),
-    "img_u",
-    title="Unlocked",
-  )
-  let locked = GalleryImage::new(
-    gensym(prefix="cg_locked"),
-    "img_l",
-    title="Locked",
-  )
+  let unlocked = GalleryImage::new("img_u", title="Unlocked")
+  let locked = GalleryImage::new("img_l", title="Locked")
   @gallery.register_image(unlocked)
   @gallery.register_image(locked)
   @gallery.lock_image_in(ns, unlocked)

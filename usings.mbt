@@ -23,27 +23,18 @@ using @core {
   type BackgroundState,
   type ChoiceOption,
   type DomFigureState,
-  type EffectParam,
   type EffectSpec,
   type FigurePlacement,
-  type Instruction,
   type Runtime,
   type RuntimeEvent,
   type RuntimeSave,
   type Script,
   type ScriptFlowTrace,
-  type ScriptHook,
-  type ScriptPredicate,
   type ScalarState,
-  type PayloadPredicate,
-  type PayloadJumpSelector,
-  type ScriptBuildError,
   type ScriptRuntimeError,
   type Position,
   type Easing,
   type EffectPhase,
-  type Label,
-  script_from_instructions,
 }
 
 ///|
@@ -53,11 +44,24 @@ using @state {type GameState}
 using @gallery {type GalleryImage, type ReplayStateFactories}
 
 ///|
-using @assets {
-  type AssetStore,
-  type Background,
-  type DomFigure,
-  type Live2dFigure,
-  type Music,
-  type Sfx,
+using @assets {type AssetStore, type Music}
+
+///|
+using @pixi {
+  type PixiApplication,
+  type PixiBindingError,
+  type PixiBlurFilter,
+  type PixiCanvas,
+  type PixiColorMatrixFilter,
+  type PixiContainer,
+  type PixiEffectTarget,
+  type PixiLive2dModel,
+  type PixiSprite,
+  type PixiTexture,
+  type EffectParam,
+  get_canvas_by_id,
+  pixi_apply_effect_to_target,
+  pixi_effect_defaults_for,
+  window_inner_height,
+  window_inner_width,
 }

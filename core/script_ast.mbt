@@ -91,9 +91,6 @@ pub(all) enum EffectPhase {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub type EffectParam = (String, Double)
-
-///|
 pub(all) struct EffectSpec {
   id : String
   params : Array[EffectParam]

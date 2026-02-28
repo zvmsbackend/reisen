@@ -4,7 +4,7 @@
 /// Supports: label, jump, wait, wait_click, unlock_cg, narrate, say, scene, show, hide, music, sfx, animate, choice
 
 ///|
-pub suberror ReisenTextError {} derive(Show, Eq)
+pub suberror ReisenTextError derive(Show, Eq)
 
 ///|
 fn get_first_part(s : String, sep : String) -> (String, String) {

@@ -1,5 +1,6 @@
 ///|
 /// Asset loading helpers for the browser target.
+using @pixi {type PixiLive2dModel}
 
 ///|
 #external
@@ -8,9 +9,6 @@ pub type Image
 ///|
 #external
 pub type Video
-
-#external
-pub type Live2dModel
 
 ///|
 extern "js" fn load_image_promise(url : String) -> @js.Promise =
@@ -124,7 +122,7 @@ extern "js" fn load_result_error(
 ///|
 pub async fn load_live2d_model(
   source : String,
-) -> Live2dModel raise AssetStoreError {
+) -> PixiLive2dModel raise AssetStoreError {
   let result = @js.Promise::wait(js_load_live2d_model_promise(source)) catch {
     _ =>
       raise AssetStoreError::ResourceLoadFailed(
@@ -149,7 +147,7 @@ pub struct AssetStore {
   texts : Map[String, String]
   bytes : Map[String, Bytes]
   audios : Map[String, String]
-  live2d_models : Map[String, Live2dModel]
+  live2d_models : Map[String, PixiLive2dModel]
 }
 
 ///|
@@ -241,7 +239,7 @@ pub fn AssetStore::register_music(
   id? : String = @util.gensym(prefix="music"),
 ) -> Music {
   self.put_audio_url(id, url)
-  Music::new(id)
+  id
 }
 
 ///|
@@ -251,14 +249,14 @@ pub fn AssetStore::register_sfx(
   id? : String = @util.gensym(prefix="sfx"),
 ) -> Sfx {
   self.put_audio_url(id, url)
-  Sfx::new(id)
+  id
 }
 
 ///|
 pub fn AssetStore::put_live2d_model(
   self : AssetStore,
   id : String,
-  model : Live2dModel,
+  model : PixiLive2dModel,
 ) -> Unit {
   self.live2d_models.set(id, model)
 }
@@ -267,7 +265,7 @@ pub fn AssetStore::put_live2d_model(
 pub fn AssetStore::get_live2d_model(
   self : AssetStore,
   id : String,
-) -> Live2dModel? {
+) -> PixiLive2dModel? {
   self.live2d_models.get(id)
 }
 
@@ -281,7 +279,7 @@ pub async fn AssetStore::register_figure(
     let img = load_image(url)
     self.put_image(id, img)
   }
-  PixiFigure::new(id)
+  id
 }
 
 ///|
@@ -294,7 +292,7 @@ pub async fn AssetStore::register_live2d_figure(
     let model = load_live2d_model(model_json_url)
     self.put_live2d_model(id, model)
   }
-  Live2dFigure::new(id)
+  id
 }
 
 ///|
@@ -307,7 +305,7 @@ pub async fn AssetStore::register_background(
     let img = load_image(url)
     self.put_image(id, img)
   }
-  Background::new(id, url)
+  { id, url }
 }
 
 ///|
@@ -320,5 +318,5 @@ pub async fn AssetStore::register_background_video(
     let video = load_video(url)
     self.put_video(id, video)
   }
-  Background::new(id, url)
+  { id, url }
 }

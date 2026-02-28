@@ -29,49 +29,6 @@ pub fn pixi_presenter_default_config() -> PixiPresenterConfig {
 }
 
 ///|
-pub type PixiEffectApply = (PixiSprite, Array[EffectParam], Int) -> Bool
-
-///|
-let pixi_effect_appliers : Map[String, PixiEffectApply] = {}
-
-///|
-pub enum PixiEffectTarget {
-  Sprite(PixiSprite)
-  Live2d(PixiLive2dModel)
-}
-
-///|
-pub type PixiSharedEffectApply = (PixiEffectTarget, Array[EffectParam], Int) -> Bool
-
-///|
-let pixi_shared_effect_appliers : Map[String, PixiSharedEffectApply] = {}
-
-///|
-let pixi_effect_defaults : Map[String, Array[EffectParam]] = {}
-
-///|
-pub fn register_pixi_effect(
-  apply : PixiEffectApply,
-  defaults? : Array[EffectParam] = [],
-  id? : String = gensym(prefix="effect"),
-) -> Effect {
-  pixi_effect_appliers.set(id, apply)
-  pixi_effect_defaults.set(id, defaults)
-  id
-}
-
-///|
-pub fn register_pixi_effect_shared(
-  apply : PixiSharedEffectApply,
-  defaults? : Array[EffectParam] = [],
-  id? : String = gensym(prefix="effect"),
-) -> Effect {
-  pixi_shared_effect_appliers.set(id, apply)
-  pixi_effect_defaults.set(id, defaults)
-  id
-}
-
-///|
 priv struct ScalarAnim {
   start_ms : Int
   duration_ms : Int
@@ -560,22 +517,20 @@ fn effect_signature(spec : EffectSpec) -> String {
 }
 
 ///|
-fn PixiPresenter::new(
+async fn PixiPresenter::new(
   canvas : PixiCanvas,
   store : AssetStore,
   config : PixiPresenterConfig,
 ) -> PixiPresenter {
-  let app = pixi_new_application()
-  ignore(
-    app.init_with_canvas_promise(
-      @js.Value::cast_from(canvas),
-      window_inner_width().to_int(),
-      window_inner_height().to_int(),
-      config.antialias,
-      config.background_alpha,
-      config.resolution,
-      config.auto_density,
-    ),
+  let app = PixiApplication::new()
+  app.init_with_canvas(
+    canvas,
+    window_inner_width().to_int(),
+    window_inner_height().to_int(),
+    antialias=config.antialias,
+    background_alpha=config.background_alpha,
+    resolution=config.resolution,
+    auto_density=config.auto_density,
   )
   let stage = app.stage()
   stage.set_sortable_children(true)
@@ -752,7 +707,7 @@ fn PixiPresenter::apply_scalar_visuals(
     let blur_filter = match self.blur_filters.get(key) {
       Some(filter) => filter
       None => {
-        let filter = pixi_new_blur_filter()
+        let filter = PixiBlurFilter::new()
         self.blur_filters.set(key, filter)
         filter
       }
@@ -764,7 +719,7 @@ fn PixiPresenter::apply_scalar_visuals(
     let color_filter = match self.color_filters.get(key) {
       Some(filter) => filter
       None => {
-        let filter = pixi_new_color_matrix_filter()
+        let filter = PixiColorMatrixFilter::new()
         self.color_filters.set(key, filter)
         filter
       }
@@ -837,19 +792,13 @@ fn PixiPresenter::apply_effects_to_target(
         if prev != signature {
           self.effect_signatures.set(key, signature)
           self.effect_start_ms.set(key, self.timeline_ms)
-          let defaults = match pixi_effect_defaults.get(spec.id) {
-            Some(list) if list.length() > 0 => list
-            _ => spec.params
-          }
+          let defaults = pixi_effect_defaults_for(spec.id, spec.params)
           self.effect_from_params.set(key, defaults)
         }
       None => {
         self.effect_signatures.set(key, signature)
         self.effect_start_ms.set(key, self.timeline_ms)
-        let defaults = match pixi_effect_defaults.get(spec.id) {
-          Some(list) if list.length() > 0 => list
-          _ => spec.params
-        }
+        let defaults = pixi_effect_defaults_for(spec.id, spec.params)
         self.effect_from_params.set(key, defaults)
       }
     }
@@ -881,23 +830,13 @@ fn PixiPresenter::apply_effects_to_target(
     } else {
       spec.params
     }
-    match pixi_shared_effect_appliers.get(spec.id) {
-      Some(apply_shared) =>
-        if apply_shared(target, render_params, self.timeline_ms) {
-          skip_base = true
-        }
-      None =>
-        match target {
-          Sprite(sprite) =>
-            match pixi_effect_appliers.get(spec.id) {
-              Some(apply) =>
-                if apply(sprite, render_params, self.timeline_ms) {
-                  skip_base = true
-                }
-              None => ()
-            }
-          Live2d(_) => ()
-        }
+    if pixi_apply_effect_to_target(
+        target,
+        spec.id,
+        render_params,
+        self.timeline_ms,
+      ) {
+      skip_base = true
     }
   }
   skip_base
@@ -912,10 +851,10 @@ fn PixiPresenter::texture_for(
     Some(texture) => Some(texture)
     None => {
       let maybe_texture = match self.store.get_image(id) {
-        Some(image) => Some(pixi_texture_from(@js.Value::cast_from(image)))
+        Some(image) => Some(PixiTexture::new(@js.Value::cast_from(image)))
         None =>
           match self.store.get_video(id) {
-            Some(video) => Some(pixi_texture_from(@js.Value::cast_from(video)))
+            Some(video) => Some(PixiTexture::new(@js.Value::cast_from(video)))
             None => None
           }
       }
@@ -1321,7 +1260,7 @@ fn[T] PixiPresenter::sync_background(
           let cover_sprite = match self.background_cover_sprite {
             Some(sprite) => sprite
             None => {
-              let sprite = pixi_new_sprite(texture)
+              let sprite = PixiSprite::new(texture)
               sprite.set_anchor(0.5, 0.5)
               self.stage.add_sprite(sprite)
               self.background_cover_sprite = Some(sprite)
@@ -1331,7 +1270,7 @@ fn[T] PixiPresenter::sync_background(
           let sprite = match self.background_sprite {
             Some(sprite) => sprite
             None => {
-              let sprite = pixi_new_sprite(texture)
+              let sprite = PixiSprite::new(texture)
               sprite.set_anchor(0.5, 0.5)
               self.stage.add_sprite(sprite)
               self.background_sprite = Some(sprite)
@@ -1575,7 +1514,7 @@ fn[T] PixiPresenter::sync_figures(
   for id, placement in figures {
     match self.store.get_live2d_model(id) {
       Some(model_asset) => {
-        let model_asset : PixiLive2dModel = model_asset.cast()
+        let model_asset = model_asset
         match self.figure_sprites.get(id) {
           Some(sprite) => self.stage.remove_sprite(sprite)
           None => ()
@@ -1671,7 +1610,7 @@ fn[T] PixiPresenter::sync_figures(
             let sprite = match self.figure_sprites.get(id) {
               Some(sprite) => sprite
               None => {
-                let sprite = pixi_new_sprite(texture)
+                let sprite = PixiSprite::new(texture)
                 sprite.set_anchor(0.5, 0.5)
                 self.stage.add_sprite(sprite)
                 self.figure_sprites.set(id, sprite)
@@ -1805,7 +1744,7 @@ fn[T] PixiPresenter::as_render_sync_hook(
 }
 
 ///|
-pub fn[T] make_pixi_render_sync_hook_from_canvas(
+pub async fn[T] make_pixi_render_sync_hook_from_canvas(
   canvas_id : String,
   store : AssetStore,
 ) -> RenderSyncHook[T]? {
@@ -1817,7 +1756,7 @@ pub fn[T] make_pixi_render_sync_hook_from_canvas(
 }
 
 ///|
-pub fn[T] make_pixi_render_sync_hook_from_canvas_with_config(
+pub async fn[T] make_pixi_render_sync_hook_from_canvas_with_config(
   canvas_id : String,
   store : AssetStore,
   config : PixiPresenterConfig,
@@ -1835,7 +1774,7 @@ pub fn[T] make_pixi_render_sync_hook_from_canvas_with_config(
 }
 
 ///|
-pub fn[T] make_pixi_render_sync_hook_from_canvas_element(
+pub async fn[T] make_pixi_render_sync_hook_from_canvas_element(
   canvas : PixiCanvas,
   store : AssetStore,
 ) -> RenderSyncHook[T] {
@@ -1847,7 +1786,7 @@ pub fn[T] make_pixi_render_sync_hook_from_canvas_element(
 }
 
 ///|
-pub fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(
+pub async fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(
   canvas : PixiCanvas,
   store : AssetStore,
   config : PixiPresenterConfig,

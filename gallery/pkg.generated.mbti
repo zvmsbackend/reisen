@@ -46,8 +46,7 @@ pub struct GalleryImage {
   replay_label : String?
   replay_state_factory_key : ReplayStateFactoryKey?
 }
-pub fn GalleryImage::id(Self) -> String
-pub fn GalleryImage::new(String, String, title? : String, thumbnail_url? : String, replay_label? : String, replay_state_factory_key? : ReplayStateFactoryKey) -> Self
+pub fn GalleryImage::new(String, id? : String, title? : String, thumbnail_url? : String, replay_label? : String, replay_state_factory_key? : ReplayStateFactoryKey) -> Self
 pub impl Eq for GalleryImage
 pub impl Show for GalleryImage
 pub impl ToJson for GalleryImage

@@ -2,91 +2,29 @@
 package "sennenki/reisen"
 
 import {
-  "moonbit-community/js-ffi/js",
   "moonbitlang/core/json",
   "sennenki/reisen/assets",
   "sennenki/reisen/core",
   "sennenki/reisen/gallery",
+  "sennenki/reisen/pixi",
   "sennenki/reisen/state",
   "sennenki/reisen/storage",
 }
 
 // Values
-pub fn anim_blur(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_brightness(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_color_blue(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_color_green(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_color_red(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_contrast(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_gamma(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_opacity(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_position(Int, @core.Position?, @core.Position, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_rotation(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_saturation(Int, Double?, Double, easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
-pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : @core.Easing, blocking? : Bool) -> @core.AnimationSpec
-
 pub fn audio_dom_has_active_sfx() -> Bool
 
 pub fn[T : @json.FromJson] director_from_save_json(@core.Script[T], String) -> Director[T] raise
 
-pub fn effect_spec(Effect, Array[(String, Double)], phase? : @core.EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : @core.Easing) -> @core.EffectSpec
+pub async fn[T] make_pixi_render_sync_hook_from_canvas(String, @assets.AssetStore) -> (async (Director[T]) -> Unit noraise)?
 
-pub fn get_canvas_by_id(String) -> PixiCanvas?
+pub async fn[T] make_pixi_render_sync_hook_from_canvas_element(@pixi.PixiCanvas, @assets.AssetStore) -> (async (Director[T]) -> Unit noraise)
 
-pub fn[T] make_pixi_render_sync_hook_from_canvas(String, @assets.AssetStore) -> (async (Director[T]) -> Unit noraise)?
+pub async fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(@pixi.PixiCanvas, @assets.AssetStore, PixiPresenterConfig) -> (async (Director[T]) -> Unit noraise)
 
-pub fn[T] make_pixi_render_sync_hook_from_canvas_element(PixiCanvas, @assets.AssetStore) -> async (Director[T]) -> Unit noraise
-
-pub fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(PixiCanvas, @assets.AssetStore, PixiPresenterConfig) -> async (Director[T]) -> Unit noraise
-
-pub fn[T] make_pixi_render_sync_hook_from_canvas_with_config(String, @assets.AssetStore, PixiPresenterConfig) -> (async (Director[T]) -> Unit noraise)?
-
-pub fn option(String, @core.Label, id? : String) -> @core.ChoiceOption
-
-pub async fn pixi_assets_load_texture(String) -> PixiTexture raise PixiBindingError
-
-pub async fn pixi_load_live2d_model(String) -> PixiLive2dModel raise PixiBindingError
-
-pub fn pixi_new_application() -> PixiApplication
-
-pub fn pixi_new_blur_filter() -> PixiBlurFilter
-
-pub fn pixi_new_color_matrix_filter() -> PixiColorMatrixFilter
-
-pub fn pixi_new_container() -> PixiContainer
-
-pub fn pixi_new_filter(String, String) -> PixiFilter
-
-pub fn pixi_new_sprite(PixiTexture) -> PixiSprite
+pub async fn[T] make_pixi_render_sync_hook_from_canvas_with_config(String, @assets.AssetStore, PixiPresenterConfig) -> (async (Director[T]) -> Unit noraise)?
 
 pub fn pixi_presenter_default_config() -> PixiPresenterConfig
-
-pub fn pixi_texture_from(@js.Value) -> PixiTexture
-
-pub fn place_center(layer? : Int, scalars? : @core.ScalarState) -> @core.FigurePlacement
-
-pub fn place_custom(Double, Double, layer? : Int, scalars? : @core.ScalarState) -> @core.FigurePlacement
-
-pub fn place_left(layer? : Int, scalars? : @core.ScalarState) -> @core.FigurePlacement
-
-pub fn place_right(layer? : Int, scalars? : @core.ScalarState) -> @core.FigurePlacement
-
-pub fn register_pixi_effect((PixiSprite, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
-
-pub fn register_pixi_effect_shared((PixiEffectTarget, Array[(String, Double)], Int) -> Bool, defaults? : Array[(String, Double)], id? : String) -> Effect
-
-pub fn[T] reisen_parse_text_script(String) -> @core.Script[T] raise @core.ScriptBuildError
 
 pub async fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T]) -> Unit
 
@@ -97,8 +35,6 @@ pub fn[T : ToJson] save_director_to_slot(Director[T], String, save_namespace? : 
 pub fn[T : ToJson] save_runner_to_slot(GameRunner[T], String, save_namespace? : String, slot_payload_version? : Int) -> Unit
 
 pub fn[T : ToJson] save_runner_to_slot_with_meta(GameRunner[T], String, title? : String, preview? : String, save_namespace? : String, slot_payload_version? : Int) -> Unit
-
-pub fn[T] script((ScriptBuilder[T]) -> Unit) -> @core.Script[T] raise @core.ScriptBuildError
 
 pub async fn[T] start_game(@core.Script[T], @state.GameState[T], String, render_sync? : async (Director[T]) -> Unit noraise, event_hook? : (@core.RuntimeEvent) -> Unit, settings? : @storage.GameSettings) -> GameRunner[T]
 
@@ -111,10 +47,6 @@ pub fn[T] validate_script_assets(@core.Script[T], @assets.AssetStore) -> Unit ra
 pub fn[T] validate_script_audio_assets(@core.Script[T], @assets.AssetStore) -> Unit raise AppBootstrapError
 
 pub fn[T] validate_script_image_assets(@core.Script[T], @assets.AssetStore) -> Unit raise AppBootstrapError
-
-pub fn window_inner_height() -> Double
-
-pub fn window_inner_width() -> Double
 
 // Errors
 pub suberror AppBootstrapError {
@@ -129,15 +61,6 @@ pub suberror LogReconstructionError {
   MissingCustomJumpTrace(name~ : String, ip~ : Int)
   RuntimeFailure(message~ : String)
 }
-
-pub suberror PixiBindingError {
-  ResourceLoadFailed(message~ : String)
-}
-
-pub suberror ReisenTextError {
-}
-pub impl Eq for ReisenTextError
-pub impl Show for ReisenTextError
 
 // Types and methods
 type AppController[T]
@@ -243,8 +166,6 @@ pub struct DirectorSave[T] {
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
 
-type Effect
-
 type GalleryTileView
 pub impl Eq for GalleryTileView
 pub impl Show for GalleryTileView
@@ -290,43 +211,6 @@ pub enum LogBuildState {
 pub impl Eq for LogBuildState
 pub impl Show for LogBuildState
 
-type PixiApplication
-pub async fn PixiApplication::init_with_canvas(Self, @js.Value, Int, Int, antialias? : Bool, background_alpha? : Double, resolution? : Double, auto_density? : Bool) -> Unit
-
-type PixiBlurFilter
-
-type PixiCanvas
-
-type PixiColorMatrixFilter
-
-type PixiContainer
-
-pub enum PixiEffectTarget {
-  Sprite(PixiSprite)
-  Live2d(PixiLive2dModel)
-}
-
-type PixiFilter
-
-type PixiLive2dModel
-pub fn PixiLive2dModel::destroy(Self) -> Unit
-pub async fn PixiLive2dModel::expression(Self, id? : String) -> Bool
-pub fn PixiLive2dModel::focus(Self, Double, Double, instant? : Bool) -> Unit
-pub fn PixiLive2dModel::height(Self) -> Double
-pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool noraise
-pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
-pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
-pub fn PixiLive2dModel::set_expression(Self, @js.Optional[String]) -> Unit
-pub fn PixiLive2dModel::set_filters(Self, Array[@js.Value]) -> Unit
-pub fn PixiLive2dModel::set_interactive(Self, Bool) -> Unit
-pub fn PixiLive2dModel::set_position(Self, Double, Double) -> Unit
-pub fn PixiLive2dModel::set_rotation(Self, Double) -> Unit
-pub fn PixiLive2dModel::set_scale(Self, Double, Double) -> Unit
-pub fn PixiLive2dModel::set_size(Self, Double, Double) -> Unit
-pub fn PixiLive2dModel::set_visible(Self, Bool) -> Unit
-pub fn PixiLive2dModel::set_z_index(Self, Int) -> Unit
-pub fn PixiLive2dModel::width(Self) -> Double
-
 pub struct PixiPresenterConfig {
   antialias : Bool
   background_alpha : Double
@@ -337,16 +221,6 @@ pub struct PixiPresenterConfig {
 }
 pub impl Eq for PixiPresenterConfig
 pub impl Show for PixiPresenterConfig
-
-type PixiSprite
-pub fn PixiSprite::set_alpha(Self, Double) -> Unit
-pub fn PixiSprite::set_filters(Self, Array[@js.Value]) -> Unit
-pub fn PixiSprite::set_position(Self, Double, Double) -> Unit
-pub fn PixiSprite::set_rotation(Self, Double) -> Unit
-pub fn PixiSprite::set_scale(Self, Double, Double) -> Unit
-pub fn PixiSprite::set_tint(Self, Int) -> Unit
-
-type PixiTexture
 
 pub struct RenderState {
   mut background : @core.BackgroundState?
@@ -371,59 +245,6 @@ pub struct SaveSlotPayload {
 }
 pub impl ToJson for SaveSlotPayload
 pub impl @json.FromJson for SaveSlotPayload
-
-type ScriptBuilder[T]
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate(Self[T], A, @core.AnimationSpec) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_blur(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_brightness(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_blue(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_green(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_red(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_contrast(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_gamma(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : @core.Position, @core.Position, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_saturation(Self[T], A, Int, from? : Double, Double, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, anchor? : (Double, Double), easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
-pub fn[T] ScriptBuilder::branch(Self[T], @core.Label, @core.Label, (@state.GameState[T]) -> Bool) -> Unit
-pub fn[T] ScriptBuilder::build(Self[T]) -> @core.Script[T] raise @core.ScriptBuildError
-pub fn[T] ScriptBuilder::choice(Self[T], Array[@core.ChoiceOption]) -> Unit
-pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect(Self[T], A, @core.EffectSpec) -> Unit
-pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect_with(Self[T], A, Effect, Array[(String, Double)], phase? : @core.EffectPhase, duration_ms? : Int, easing? : @core.Easing, blocking? : Bool) -> Unit
-pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
-pub fn[T, F : @assets.Figure] ScriptBuilder::hide_figure(Self[T], F) -> Unit
-pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
-pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
-pub fn[T] ScriptBuilder::intro(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::jump(Self[T], @core.Label) -> Unit
-pub fn[T] ScriptBuilder::jump_if(Self[T], @core.Label, (@state.GameState[T]) -> Bool) -> Unit
-pub fn[T] ScriptBuilder::label(Self[T], @core.Label) -> Unit
-pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit
-pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[@core.ChoiceOption]) -> Unit
-pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
-pub fn[T] ScriptBuilder::new() -> Self[T]
-pub fn[T] ScriptBuilder::play_live2d_motion(Self[T], @assets.Live2dFigure, String, index? : Int) -> Unit
-pub fn[T] ScriptBuilder::play_music(Self[T], @assets.Music, Bool) -> Unit
-pub fn[T] ScriptBuilder::play_sfx(Self[T], @assets.Sfx, blocking? : Bool) -> Unit
-pub fn[T] ScriptBuilder::play_video(Self[T], String, can_skip? : Bool) -> Unit
-pub fn[T] ScriptBuilder::run_code(Self[T], (@state.GameState[T]) -> Unit) -> Unit
-pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
-pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
-pub fn[T] ScriptBuilder::scene(Self[T], @assets.Background, scalars? : @core.ScalarState) -> Unit
-pub fn[T] ScriptBuilder::set_figure_interactive(Self[T], @assets.DomFigure, Bool) -> Unit
-pub fn[T] ScriptBuilder::set_live2d_expression(Self[T], @assets.Live2dFigure, id? : String) -> Unit
-pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
-pub fn[T, F : @assets.Figure] ScriptBuilder::show_figure(Self[T], F, @core.FigurePlacement, interactive? : Bool) -> Unit
-pub fn[T, F : @assets.Figure] ScriptBuilder::show_figure_at(Self[T], F, @core.Position, layer? : Int, scalars? : @core.ScalarState, interactive? : Bool) -> Unit
-pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
-pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
-pub fn[T] ScriptBuilder::unlock_cg(Self[T], @gallery.GalleryImage) -> Unit
-pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
-pub fn[T] ScriptBuilder::wait_click(Self[T], can_skip? : Bool) -> Unit
-pub fn[T] ScriptBuilder::wait_custom_event(Self[T], String, (@state.GameState[T], String) -> Bool) -> Unit
-pub fn[T] ScriptBuilder::wait_custom_event_jump(Self[T], String, (@state.GameState[T], String) -> @core.Label) -> Unit
 
 pub enum SettingsContext {
   FromStartMenu
@@ -494,10 +315,6 @@ pub impl Show for UiViewModel
 
 // Type aliases
 pub type EventHook = (@core.RuntimeEvent) -> Unit
-
-pub type PixiEffectApply = (PixiSprite, Array[(String, Double)], Int) -> Bool
-
-pub type PixiSharedEffectApply = (PixiEffectTarget, Array[(String, Double)], Int) -> Bool
 
 pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
 

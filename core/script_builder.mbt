@@ -1,8 +1,6 @@
 ///|
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
-
-///|
-struct Effect(String)
+using @pixi {type Effect}
 
 ///|
 struct ScriptBuilder[T] {
@@ -644,7 +642,7 @@ pub fn[T] ScriptBuilder::play_music(
   music : Music,
   should_loop : Bool,
 ) -> Unit {
-  self.instructions.push(PlayMusic(music.id(), should_loop))
+  self.instructions.push(PlayMusic(music.0, should_loop))
 }
 
 ///|
@@ -658,7 +656,7 @@ pub fn[T] ScriptBuilder::play_sfx(
   sfx : Sfx,
   blocking? : Bool = false,
 ) -> Unit {
-  self.instructions.push(PlaySfx(sfx.id(), blocking))
+  self.instructions.push(PlaySfx(sfx.0, blocking))
 }
 
 ///|
@@ -668,7 +666,7 @@ pub fn[T] ScriptBuilder::play_live2d_motion(
   group : String,
   index? : Int,
 ) -> Unit {
-  self.instructions.push(PlayLive2dMotion(figure.id(), group, index))
+  self.instructions.push(PlayLive2dMotion(figure.0, group, index))
 }
 
 ///|

@@ -3,15 +3,62 @@ package "sennenki/reisen/core"
 
 import {
   "moonbitlang/core/json",
+  "sennenki/reisen/assets",
+  "sennenki/reisen/gallery",
+  "sennenki/reisen/pixi",
   "sennenki/reisen/state",
 }
 
 // Values
+pub fn anim_blur(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_brightness(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_color_blue(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_color_green(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_color_red(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_contrast(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_gamma(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_opacity(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_position(Int, Position?, Position, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_rotation(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_saturation(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn effect_spec(@pixi.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
+
 pub fn label(name? : String) -> Label
+
+pub fn option(String, Label, id? : String) -> ChoiceOption
+
+pub fn place_center(layer? : Int, scalars? : ScalarState) -> FigurePlacement
+
+pub fn place_custom(Double, Double, layer? : Int, scalars? : ScalarState) -> FigurePlacement
+
+pub fn place_left(layer? : Int, scalars? : ScalarState) -> FigurePlacement
+
+pub fn place_right(layer? : Int, scalars? : ScalarState) -> FigurePlacement
+
+pub fn[T] reisen_parse_text_script(String) -> Script[T] raise ScriptBuildError
+
+pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
 // Errors
+pub suberror ReisenTextError
+pub impl Eq for ReisenTextError
+pub impl Show for ReisenTextError
+
 pub suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
   MissingJumpTarget(target~ : String)
@@ -299,6 +346,59 @@ pub struct Script[T] {
   labels : Map[String, Int]
 }
 
+type ScriptBuilder[T]
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate(Self[T], A, AnimationSpec) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_blur(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_brightness(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_blue(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_green(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_red(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_contrast(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_gamma(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : Position, Position, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_saturation(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_scale(Self[T], A, Int, from? : Double, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T] ScriptBuilder::apply(Self[T], (Self[T]) -> Unit) -> Unit
+pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (@state.GameState[T]) -> Bool) -> Unit
+pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
+pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
+pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect(Self[T], A, EffectSpec) -> Unit
+pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect_with(Self[T], A, @pixi.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
+pub fn[T, F : @assets.Figure] ScriptBuilder::hide_figure(Self[T], F) -> Unit
+pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
+pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
+pub fn[T] ScriptBuilder::intro(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::jump(Self[T], Label) -> Unit
+pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (@state.GameState[T]) -> Bool) -> Unit
+pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
+pub fn[T] ScriptBuilder::load_text(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
+pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
+pub fn[T] ScriptBuilder::new() -> Self[T]
+pub fn[T] ScriptBuilder::play_live2d_motion(Self[T], @assets.Live2dFigure, String, index? : Int) -> Unit
+pub fn[T] ScriptBuilder::play_music(Self[T], @assets.Music, Bool) -> Unit
+pub fn[T] ScriptBuilder::play_sfx(Self[T], @assets.Sfx, blocking? : Bool) -> Unit
+pub fn[T] ScriptBuilder::play_video(Self[T], String, can_skip? : Bool) -> Unit
+pub fn[T] ScriptBuilder::run_code(Self[T], (@state.GameState[T]) -> Unit) -> Unit
+pub fn[T] ScriptBuilder::say(Self[T], String, String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
+pub fn[T] ScriptBuilder::say_many(Self[T], String, Array[String], typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
+pub fn[T] ScriptBuilder::scene(Self[T], @assets.Background, scalars? : ScalarState) -> Unit
+pub fn[T] ScriptBuilder::set_figure_interactive(Self[T], @assets.DomFigure, Bool) -> Unit
+pub fn[T] ScriptBuilder::set_live2d_expression(Self[T], @assets.Live2dFigure, id? : String) -> Unit
+pub fn[T] ScriptBuilder::show_avatar(Self[T], String) -> Unit
+pub fn[T, F : @assets.Figure] ScriptBuilder::show_figure(Self[T], F, FigurePlacement, interactive? : Bool) -> Unit
+pub fn[T, F : @assets.Figure] ScriptBuilder::show_figure_at(Self[T], F, Position, layer? : Int, scalars? : ScalarState, interactive? : Bool) -> Unit
+pub fn[T] ScriptBuilder::show_text_box(Self[T]) -> Unit
+pub fn[T] ScriptBuilder::stop_music(Self[T]) -> Unit
+pub fn[T] ScriptBuilder::unlock_cg(Self[T], @gallery.GalleryImage) -> Unit
+pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
+pub fn[T] ScriptBuilder::wait_click(Self[T], can_skip? : Bool) -> Unit
+pub fn[T] ScriptBuilder::wait_custom_event(Self[T], String, (@state.GameState[T], String) -> Bool) -> Unit
+pub fn[T] ScriptBuilder::wait_custom_event_jump(Self[T], String, (@state.GameState[T], String) -> Label) -> Unit
+
 pub enum ScriptFlowTrace {
   ChoiceResolved(ip~ : Int, choice_id~ : String)
   JumpIfResolved(ip~ : Int, target~ : String, taken~ : Bool)
@@ -310,8 +410,6 @@ pub impl ToJson for ScriptFlowTrace
 pub impl @json.FromJson for ScriptFlowTrace
 
 // Type aliases
-pub type EffectParam = (String, Double)
-
 pub type PayloadJumpSelector[T] = (@state.GameState[T], String) -> Label
 
 pub type PayloadPredicate[T] = (@state.GameState[T], String) -> Bool

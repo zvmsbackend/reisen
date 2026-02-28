@@ -5,6 +5,7 @@ import {
   "sennenki/reisen/core",
   "sennenki/reisen/gallery",
   "sennenki/reisen/assets",
+  "sennenki/reisen/pixi",
   "sennenki/abort_hook/lib",
   "moonbit-community/js-ffi/js",
   "moonbitlang/core/math",

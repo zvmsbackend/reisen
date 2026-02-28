@@ -6,39 +6,39 @@
 
 ///|
 #external
-type PixiCanvas
+pub type PixiCanvas
 
 ///|
 #external
-type PixiApplication
+pub type PixiApplication
 
 ///|
 #external
-type PixiContainer
+pub type PixiContainer
 
 ///|
 #external
-type PixiSprite
+pub type PixiSprite
 
 ///|
 #external
-type PixiTexture
+pub type PixiTexture
 
 ///|
 #external
-type PixiFilter
+pub type PixiFilter
 
 ///|
 #external
-type PixiBlurFilter
+pub type PixiBlurFilter
 
 ///|
 #external
-type PixiColorMatrixFilter
+pub type PixiColorMatrixFilter
 
 ///|
 #external
-type PixiLive2dModel
+pub type PixiLive2dModel
 
 ///|
 pub extern "js" fn window_inner_width() -> Double =
@@ -49,7 +49,7 @@ pub extern "js" fn window_inner_height() -> Double =
   #| () => window.innerHeight
 
 ///|
-extern "js" fn get_canvas_element(id : String) -> @js.Optional[PixiCanvas] =
+pub extern "js" fn get_canvas_element(id : String) -> @js.Optional[PixiCanvas] =
   #| (id) => document.getElementById(id)
 
 ///|
@@ -59,34 +59,34 @@ pub fn get_canvas_by_id(id : String) -> PixiCanvas? {
 
 ///|
 #module("/pixi-bridge.js")
-pub fn pixi_new_application() -> PixiApplication = "newApplication"
+pub fn PixiApplication::new() -> PixiApplication = "newApplication"
 
 ///|
 #module("/pixi-bridge.js")
-pub fn pixi_new_container() -> PixiContainer = "newContainer"
+pub fn PixiContainer::new() -> PixiContainer = "newContainer"
 
 ///|
 #module("/pixi-bridge.js")
-pub fn pixi_texture_from(source : @js.Value) -> PixiTexture = "textureFrom"
+pub fn PixiTexture::new(source : @js.Value) -> PixiTexture = "textureFrom"
 
 ///|
 #module("/pixi-bridge.js")
-pub fn pixi_new_sprite(texture : PixiTexture) -> PixiSprite = "spriteFrom"
+pub fn PixiSprite::new(texture : PixiTexture) -> PixiSprite = "spriteFrom"
 
 ///|
 #module("/pixi-bridge.js")
-pub fn pixi_new_filter(
+pub fn PixiFilter::new(
   vertex_src : String,
   fragment_src : String,
 ) -> PixiFilter = "newFilter"
 
 ///|
 #module("/pixi-bridge.js")
-pub fn pixi_new_blur_filter() -> PixiBlurFilter = "newBlurFilter"
+pub fn PixiBlurFilter::new() -> PixiBlurFilter = "newBlurFilter"
 
 ///|
 #module("/pixi-bridge.js")
-pub fn pixi_new_color_matrix_filter() -> PixiColorMatrixFilter = "newColorMatrixFilter"
+pub fn PixiColorMatrixFilter::new() -> PixiColorMatrixFilter = "newColorMatrixFilter"
 
 ///|
 #module("/pixi-bridge.js")
@@ -116,7 +116,7 @@ extern "js" fn load_result_error(
   #| }
 
 ///|
-pub async fn pixi_load_live2d_model(
+pub async fn PixiLive2dModel::load(
   source : String,
 ) -> PixiLive2dModel raise PixiBindingError {
   let result = @js.Promise::wait(js_load_live2d_model_promise(source)) catch {
@@ -141,7 +141,7 @@ pub async fn pixi_load_live2d_model(
 fn js_assets_load_promise(source : String) -> @js.Promise = "loadTexturePromise"
 
 ///|
-pub async fn pixi_assets_load_texture(
+pub async fn assets_load_texture(
   source : String,
 ) -> PixiTexture raise PixiBindingError {
   let result = @js.Promise::wait(js_assets_load_promise(source)) catch {
@@ -164,7 +164,7 @@ pub async fn pixi_assets_load_texture(
 ///|
 extern "js" fn PixiApplication::init_with_canvas_promise(
   self : PixiApplication,
-  canvas : @js.Value,
+  canvas : PixiCanvas,
   width : Int,
   height : Int,
   antialias : Bool,
@@ -186,7 +186,7 @@ extern "js" fn PixiApplication::init_with_canvas_promise(
 ///|
 pub async fn PixiApplication::init_with_canvas(
   self : PixiApplication,
-  canvas : @js.Value,
+  canvas : PixiCanvas,
   width : Int,
   height : Int,
   antialias? : Bool = true,
@@ -203,11 +203,13 @@ pub async fn PixiApplication::init_with_canvas(
 }
 
 ///|
-extern "js" fn PixiApplication::stage(self : PixiApplication) -> PixiContainer =
+pub extern "js" fn PixiApplication::stage(
+  self : PixiApplication,
+) -> PixiContainer =
   #| (app) => app.stage
 
 ///|
-extern "js" fn PixiApplication::renderer_resize(
+pub extern "js" fn PixiApplication::renderer_resize(
   self : PixiApplication,
   width : Int,
   height : Int,
@@ -215,42 +217,42 @@ extern "js" fn PixiApplication::renderer_resize(
   #| (app, width, height) => app.renderer.resize(width, height)
 
 ///|
-extern "js" fn PixiContainer::add_sprite(
+pub extern "js" fn PixiContainer::add_sprite(
   self : PixiContainer,
   child : PixiSprite,
 ) -> Unit =
   #| (self, child) => { self.addChild(child); }
 
 ///|
-extern "js" fn PixiContainer::remove_sprite(
+pub extern "js" fn PixiContainer::remove_sprite(
   self : PixiContainer,
   child : PixiSprite,
 ) -> Unit =
   #| (self, child) => { self.removeChild(child); }
 
 ///|
-extern "js" fn PixiContainer::add_live2d(
+pub extern "js" fn PixiContainer::add_live2d(
   self : PixiContainer,
   child : PixiLive2dModel,
 ) -> Unit =
   #| (self, child) => { self.addChild(child); }
 
 ///|
-extern "js" fn PixiContainer::remove_live2d(
+pub extern "js" fn PixiContainer::remove_live2d(
   self : PixiContainer,
   child : PixiLive2dModel,
 ) -> Unit =
   #| (self, child) => { self.removeChild(child); }
 
 ///|
-extern "js" fn PixiContainer::set_sortable_children(
+pub extern "js" fn PixiContainer::set_sortable_children(
   self : PixiContainer,
   sortable : Bool,
 ) -> Unit =
   #| (self, sortable) => { self.sortableChildren = sortable; }
 
 ///|
-extern "js" fn PixiSprite::set_texture(
+pub extern "js" fn PixiSprite::set_texture(
   self : PixiSprite,
   texture : PixiTexture,
 ) -> Unit =
@@ -264,7 +266,7 @@ pub extern "js" fn PixiSprite::set_filters(
   #| (self, filters) => { self.filters = filters.length > 0 ? filters : null; }
 
 ///|
-extern "js" fn PixiSprite::set_anchor(
+pub extern "js" fn PixiSprite::set_anchor(
   self : PixiSprite,
   x : Double,
   y : Double,
@@ -288,7 +290,7 @@ pub extern "js" fn PixiSprite::set_scale(
   #| (self, x, y) => { self.scale.set(x, y); }
 
 ///|
-extern "js" fn PixiSprite::set_size(
+pub extern "js" fn PixiSprite::set_size(
   self : PixiSprite,
   width : Double,
   height : Double,
@@ -313,7 +315,7 @@ pub extern "js" fn PixiSprite::set_alpha(
   #| (self, alpha) => { self.alpha = alpha; }
 
 ///|
-extern "js" fn PixiSprite::set_visible(
+pub extern "js" fn PixiSprite::set_visible(
   self : PixiSprite,
   visible : Bool,
 ) -> Unit =
@@ -327,7 +329,7 @@ pub extern "js" fn PixiSprite::set_tint(
   #| (self, tint_rgb) => { self.tint = tint_rgb; }
 
 ///|
-extern "js" fn PixiSprite::set_z_index(
+pub extern "js" fn PixiSprite::set_z_index(
   self : PixiSprite,
   z_index : Int,
 ) -> Unit =
@@ -506,27 +508,27 @@ pub extern "js" fn PixiLive2dModel::set_expression(
   #| }
 
 ///|
-extern "js" fn PixiTexture::width(self : PixiTexture) -> Double =
+pub extern "js" fn PixiTexture::width(self : PixiTexture) -> Double =
   #| (self) => {
   #|   const w = self.width ?? self.orig?.width ?? 0;
   #|   return Number(w) || 0;
   #| }
 
 ///|
-extern "js" fn PixiTexture::height(self : PixiTexture) -> Double =
+pub extern "js" fn PixiTexture::height(self : PixiTexture) -> Double =
   #| (self) => {
   #|   const h = self.height ?? self.orig?.height ?? 0;
   #|   return Number(h) || 0;
   #| }
 
 ///|
-extern "js" fn PixiTexture::update(self : PixiTexture) -> Unit =
+pub extern "js" fn PixiTexture::update(self : PixiTexture) -> Unit =
   #| (self) => {
   #|   if (self.update) self.update();
   #| }
 
 ///|
-extern "js" fn PixiBlurFilter::set_strength(
+pub extern "js" fn PixiBlurFilter::set_strength(
   self : PixiBlurFilter,
   value : Double,
 ) -> Unit =
@@ -538,7 +540,7 @@ extern "js" fn PixiBlurFilter::set_strength(
   #| }
 
 ///|
-extern "js" fn PixiColorMatrixFilter::apply_adjustments(
+pub extern "js" fn PixiColorMatrixFilter::apply_adjustments(
   self : PixiColorMatrixFilter,
   brightness : Double,
   contrast : Double,

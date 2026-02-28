@@ -1,6 +1,4 @@
 import {
   "moonbit-community/js-ffi/js",
   "sennenki/reisen/util",
-  "sennenki/reisen/pixi",
-  "moonbitlang/core/json",
 }
