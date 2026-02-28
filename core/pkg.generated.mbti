@@ -3,37 +3,322 @@ package "sennenki/reisen/core"
 
 import {
   "moonbitlang/core/json",
+  "sennenki/reisen/state",
 }
 
 // Values
-pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] raise
+pub fn label(name? : String) -> Label
+
+pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
 // Errors
+pub suberror ScriptBuildError {
+  DuplicateLabel(name~ : String)
+  MissingJumpTarget(target~ : String)
+  MissingChoiceTarget(choice_id~ : String, target~ : String)
+}
+
+pub suberror ScriptRuntimeError {
+  LabelNotFound(label~ : String)
+  ChoiceNotActive
+  ChoiceNotFound(id~ : String)
+  InvalidInstructionPointer(ip~ : Int)
+}
 
 // Types and methods
-pub struct GameState[T] {
-  mut user_data : T
-  flags : Map[String, Bool]
-  ints : Map[String, Int]
-  texts : Map[String, String]
+pub(all) enum AnimProp {
+  Opacity
+  Position
+  Scale
+  Rotation
+  Blur
+  Brightness
+  Contrast
+  Saturation
+  Gamma
+  ColorRed
+  ColorGreen
+  ColorBlue
 }
-pub fn[T] GameState::flag(Self[T], String) -> Bool
-pub fn[T] GameState::get_user_data(Self[T]) -> T
-pub fn[T] GameState::int_var(Self[T], String, default_value? : Int) -> Int
-pub fn[T] GameState::interpolate(Self[T], String) -> String
-pub fn[T] GameState::new(T) -> Self[T]
-pub fn[T] GameState::set_flag(Self[T], String, Bool) -> Unit
-pub fn[T] GameState::set_int_var(Self[T], String, Int) -> Unit
-pub fn[T] GameState::set_text_var(Self[T], String, String) -> Unit
-pub fn[T] GameState::set_user_data(Self[T], T) -> Unit
-pub fn[T] GameState::text_var(Self[T], String, default_value? : String) -> String
-pub fn[T : ToJson] GameState::to_json_string(Self[T]) -> String
-pub impl[T : Eq] Eq for GameState[T]
-pub impl[T : Show] Show for GameState[T]
-pub impl[T : ToJson] ToJson for GameState[T]
-pub impl[T : @json.FromJson] @json.FromJson for GameState[T]
+pub impl Eq for AnimProp
+pub impl Show for AnimProp
+pub impl ToJson for AnimProp
+pub impl @json.FromJson for AnimProp
+
+pub(all) struct AnimationSpec {
+  prop : AnimProp
+  duration_ms : Int
+  easing : Easing
+  from : Array[Double]?
+  to : Array[Double]?
+  anchor : Array[Double]?
+  blocking : Bool
+}
+pub impl Eq for AnimationSpec
+pub impl Show for AnimationSpec
+pub impl ToJson for AnimationSpec
+pub impl @json.FromJson for AnimationSpec
+
+pub(all) struct BackgroundState {
+  id : String
+  scalars : ScalarState
+}
+pub impl Eq for BackgroundState
+pub impl Show for BackgroundState
+pub impl ToJson for BackgroundState
+pub impl @json.FromJson for BackgroundState
+
+pub struct ChoiceOption {
+  id : String
+  text : String
+  jump : String
+}
+pub fn ChoiceOption::new(String, Label, String) -> Self
+pub impl Eq for ChoiceOption
+pub impl Show for ChoiceOption
+pub impl ToJson for ChoiceOption
+pub impl @json.FromJson for ChoiceOption
+
+pub(all) struct DomFigureState {
+  placement : FigurePlacement
+  interactive : Bool
+}
+pub impl Eq for DomFigureState
+pub impl Show for DomFigureState
+pub impl ToJson for DomFigureState
+pub impl @json.FromJson for DomFigureState
+
+pub(all) enum Easing {
+  Linear
+  EaseIn
+  EaseOut
+  EaseInOut
+}
+pub impl Eq for Easing
+pub impl Show for Easing
+pub impl ToJson for Easing
+pub impl @json.FromJson for Easing
+
+pub(all) enum EffectPhase {
+  Pre
+  Post
+}
+pub impl Eq for EffectPhase
+pub impl Show for EffectPhase
+pub impl ToJson for EffectPhase
+pub impl @json.FromJson for EffectPhase
+
+pub(all) struct EffectSpec {
+  id : String
+  params : Array[(String, Double)]
+  phase : EffectPhase
+  duration_ms : Int?
+  easing : Easing
+  blocking : Bool
+}
+pub impl Eq for EffectSpec
+pub impl Show for EffectSpec
+pub impl ToJson for EffectSpec
+pub impl @json.FromJson for EffectSpec
+
+pub(all) struct FigurePlacement {
+  pos : Position
+  layer : Int
+  scalars : ScalarState
+}
+pub impl Eq for FigurePlacement
+pub impl Show for FigurePlacement
+pub impl ToJson for FigurePlacement
+pub impl @json.FromJson for FigurePlacement
+
+pub(all) enum Instruction[T] {
+  Label(String)
+  Jump(String)
+  JumpIf(String, (@state.GameState[T]) -> Bool)
+  Wait(Int)
+  WaitForClick(Bool)
+  WaitCustomEvent(String, (@state.GameState[T], String) -> Bool)
+  WaitCustomEventJump(String, (@state.GameState[T], String) -> Label)
+  Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?, proceed_on_done~ : Bool)
+  Intro(String)
+  ShowTextBox
+  HideTextBox
+  ShowAvatar(String)
+  HideAvatar
+  PlayVideo(String, Bool)
+  Choice(Array[ChoiceOption])
+  InputText(String, String)
+  RunCode((@state.GameState[T]) -> Unit)
+  ShowBackground(String)
+  ShowBackgroundState(BackgroundState)
+  ShowFigure(String, FigurePlacement)
+  HideFigure(String)
+  ShowDomFigure(String, FigurePlacement, Bool)
+  HideDomFigure(String)
+  SetDomFigureInteractive(String, Bool)
+  PlayMusic(String, Bool)
+  StopMusic
+  PlaySfx(String, Bool)
+  UnlockCg(String)
+  AnimatePixi(String, AnimationSpec)
+  AnimateDom(String, AnimationSpec)
+  ApplyEffect(String, EffectSpec)
+  PlayLive2dMotion(String, String, Int?)
+  SetLive2dExpression(String, String?)
+}
+
+pub struct Label(String)
+#deprecated
+pub fn Label::inner(Self) -> String
+
+pub(all) enum Position {
+  Left
+  Center
+  Right
+  Custom(Double, Double)
+}
+pub impl Eq for Position
+pub impl Show for Position
+pub impl ToJson for Position
+pub impl @json.FromJson for Position
+
+pub struct Runtime[T] {
+  script : Script[T]
+  state : @state.GameState[T]
+  mut ip : Int
+  mut pending_choices : Array[ChoiceOption]
+  mut pending_choice_ip : Int?
+  mut pending_text_input : (String, String)?
+  mut wait_ms : Int
+  mut wait_for_click : Bool
+  mut wait_for_click_can_skip : Bool
+  mut wait_custom_name : String?
+  mut wait_video : Bool
+  mut last_say_proceed_on_done : Bool
+  mut ended : Bool
+  flow_trace : Array[ScriptFlowTrace]
+}
+pub fn[T] Runtime::can_auto_skip_wait_click(Self[T]) -> Bool
+pub fn[T] Runtime::can_skip_wait(Self[T]) -> Bool
+pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Runtime::complete_video_wait(Self[T], Bool) -> RuntimeEvent
+pub fn[T] Runtime::flow_trace(Self[T]) -> Array[ScriptFlowTrace]
+pub fn[T] Runtime::force_custom_jump(Self[T], String, String) -> Unit raise ScriptRuntimeError
+pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
+pub fn[T] Runtime::from_save(Script[T], RuntimeSave[T]) -> Self[T] raise ScriptRuntimeError
+pub fn[T] Runtime::ip(Self[T]) -> Int
+pub fn[T] Runtime::is_waiting(Self[T]) -> Bool
+pub fn[T] Runtime::is_waiting_video(Self[T]) -> Bool
+pub fn[T] Runtime::jump_to_label(Self[T], String) -> Unit raise ScriptRuntimeError
+pub fn[T] Runtime::last_say_proceed_on_done(Self[T]) -> Bool
+pub fn[T] Runtime::new(Script[T], @state.GameState[T]) -> Self[T]
+pub fn[T] Runtime::save(Self[T]) -> RuntimeSave[T]
+pub fn[T : ToJson] Runtime::save_json(Self[T]) -> String
+pub fn[T] Runtime::skip_wait(Self[T]) -> Unit
+pub fn[T] Runtime::step(Self[T], elapsed_ms? : Int) -> RuntimeEvent raise ScriptRuntimeError
+pub fn[T] Runtime::submit_custom_event(Self[T], String, String) -> RuntimeEvent
+pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
+
+pub(all) enum RuntimeEvent {
+  Noop
+  Said(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
+  IntroShown(String)
+  TextBoxShown
+  TextBoxHidden
+  AvatarShown(String)
+  AvatarHidden
+  VideoStarted(String, Bool)
+  VideoEnded(Bool)
+  ChoicePrompt(Array[ChoiceOption])
+  TextInputPrompt(String, String)
+  BackgroundShown(String)
+  BackgroundShownState(BackgroundState)
+  FigureShown(String, FigurePlacement)
+  FigureHidden(String)
+  DomFigureShown(String, FigurePlacement, Bool)
+  DomFigureHidden(String)
+  DomFigureInteractiveSet(String, Bool)
+  MusicPlayed(String, Bool)
+  MusicStopped
+  SfxPlayed(String, Bool)
+  SfxStopped
+  CgUnlocked(String)
+  AnimatedPixi(String, AnimationSpec)
+  AnimatedDom(String, AnimationSpec)
+  EffectApplied(String, EffectSpec)
+  Live2dMotionPlayed(String, String, Int?)
+  Live2dExpressionSet(String, String?)
+  WaitStarted(Int)
+  WaitForClickStarted
+  WaitCustomEventStarted(String)
+  Custom(String, String)
+  ScriptEnded
+}
+pub impl Eq for RuntimeEvent
+pub impl Show for RuntimeEvent
+
+pub struct RuntimeSave[T] {
+  state : @state.GameState[T]
+  ip : Int
+  pending_choices : Array[ChoiceOption]
+  pending_choice_ip : Int?
+  pending_text_input : (String, String)?
+  wait_ms : Int
+  wait_for_click : Bool
+  wait_for_click_can_skip : Bool
+  wait_custom_name : String?
+  wait_video : Bool
+  last_say_proceed_on_done : Bool
+  ended : Bool
+  flow_trace : Array[ScriptFlowTrace]
+}
+pub impl[T : ToJson] ToJson for RuntimeSave[T]
+pub impl[T : @json.FromJson] @json.FromJson for RuntimeSave[T]
+
+pub(all) struct ScalarState {
+  opacity : Double
+  scale : Double
+  rotation : Double
+  blur : Double
+  brightness : Double
+  contrast : Double
+  saturation : Double
+  gamma : Double
+  color_r : Double
+  color_g : Double
+  color_b : Double
+}
+pub impl Default for ScalarState
+pub impl Eq for ScalarState
+pub impl Show for ScalarState
+pub impl ToJson for ScalarState
+pub impl @json.FromJson for ScalarState
+
+pub struct Script[T] {
+  instructions : Array[Instruction[T]]
+  labels : Map[String, Int]
+}
+
+pub enum ScriptFlowTrace {
+  ChoiceResolved(ip~ : Int, choice_id~ : String)
+  JumpIfResolved(ip~ : Int, target~ : String, taken~ : Bool)
+  CustomJumpResolved(ip~ : Int, name~ : String, target~ : String)
+}
+pub impl Eq for ScriptFlowTrace
+pub impl Show for ScriptFlowTrace
+pub impl ToJson for ScriptFlowTrace
+pub impl @json.FromJson for ScriptFlowTrace
 
 // Type aliases
+pub type EffectParam = (String, Double)
+
+pub type PayloadJumpSelector[T] = (@state.GameState[T], String) -> Label
+
+pub type PayloadPredicate[T] = (@state.GameState[T], String) -> Bool
+
+pub type ScriptHook[T] = (@state.GameState[T]) -> Unit
+
+pub type ScriptPredicate[T] = (@state.GameState[T]) -> Bool
 
 // Traits
 

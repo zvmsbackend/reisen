@@ -3,7 +3,7 @@ package "sennenki/reisen/gallery"
 
 import {
   "moonbitlang/core/json",
-  "sennenki/reisen/core",
+  "sennenki/reisen/state",
 }
 
 // Values
@@ -53,12 +53,12 @@ pub impl Show for GalleryImage
 pub impl ToJson for GalleryImage
 pub impl @json.FromJson for GalleryImage
 
-pub struct ReplayStateFactories[T](Map[String, () -> @core.GameState[T]])
-pub fn[T] ReplayStateFactories::get(Self[T], ReplayStateFactoryKey) -> (() -> @core.GameState[T])?
+pub struct ReplayStateFactories[T](Map[String, () -> @state.GameState[T]])
+pub fn[T] ReplayStateFactories::get(Self[T], ReplayStateFactoryKey) -> (() -> @state.GameState[T])?
 #deprecated
-pub fn[T] ReplayStateFactories::inner(Self[T]) -> Map[String, () -> @core.GameState[T]]
+pub fn[T] ReplayStateFactories::inner(Self[T]) -> Map[String, () -> @state.GameState[T]]
 pub fn[T] ReplayStateFactories::new() -> Self[T]
-pub fn[T] ReplayStateFactories::register(Self[T], () -> @core.GameState[T], key? : String) -> ReplayStateFactoryKey
+pub fn[T] ReplayStateFactories::register(Self[T], () -> @state.GameState[T], key? : String) -> ReplayStateFactoryKey
 
 pub struct ReplayStateFactoryKey(String)
 #deprecated
