@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "sennenki/reisen"
+package "sennenki/reisen/app"
 
 import {
   "moonbitlang/core/json",

@@ -18,7 +18,3 @@ import {
   "moonbitlang/async",
   "sennenki/reisen/util",
 } for "wbtest"
-
-options(
-  overrides: [ "sennenki/abort_hook" ],
-)
