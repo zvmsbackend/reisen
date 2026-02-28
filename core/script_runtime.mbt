@@ -383,7 +383,6 @@ fn[T] Runtime::run_inst(
     }
     UnlockCg(id) => {
       self.ip = self.ip + 1
-      @storage.persistent_set_flag("gallery.image." + id, true)
       CgUnlocked(id)
     }
     AnimatePixi(target, spec) => {

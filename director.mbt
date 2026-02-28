@@ -198,7 +198,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     }
     SfxStopped =>
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
-    CgUnlocked(_) => ()
+    CgUnlocked(id) => @gallery.unlock_image_by_id(id)
     AnimatedPixi(target, spec) =>
       self.render.pixi_animations.push((target, spec))
     AnimatedDom(target, spec) => self.render.dom_animations.push((target, spec))
