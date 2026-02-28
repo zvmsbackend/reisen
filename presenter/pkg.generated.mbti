@@ -16,9 +16,13 @@ pub async fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(@pixi
 
 pub async fn[T] make_pixi_render_sync_hook_from_canvas_with_config(String, @assets.AssetStore, PixiPresenterConfig) -> (async (@engine.Director[T]) -> Unit noraise)?
 
-pub fn pixi_presenter_default_config() -> PixiPresenterConfig
-
 // Errors
+pub suberror PixiPresenterConfigError {
+  BackgroundAlphaOutOfRange(value~ : Double)
+  InvalidResolution(value~ : Double)
+  NegativePositionEntryOffsetRatio(value~ : Double)
+  NegativeScaleEntryFrom(value~ : Double)
+}
 
 // Types and methods
 pub struct PixiPresenterConfig {
@@ -29,6 +33,8 @@ pub struct PixiPresenterConfig {
   position_entry_offset_ratio : Double
   scale_entry_from : Double
 }
+pub fn PixiPresenterConfig::new(antialias? : Bool, background_alpha? : Double, resolution? : Double, auto_density? : Bool, position_entry_offset_ratio? : Double, scale_entry_from? : Double) -> Self raise PixiPresenterConfigError
+pub impl Default for PixiPresenterConfig
 pub impl Eq for PixiPresenterConfig
 pub impl Show for PixiPresenterConfig
 

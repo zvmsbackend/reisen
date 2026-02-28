@@ -17,15 +17,53 @@ pub struct PixiPresenterConfig {
 } derive(Show, Eq)
 
 ///|
-pub fn pixi_presenter_default_config() -> PixiPresenterConfig {
-  {
-    antialias: true,
-    background_alpha: 0.0,
-    resolution: 1.0,
-    auto_density: true,
-    position_entry_offset_ratio: 0.04,
-    scale_entry_from: 0.0,
+pub suberror PixiPresenterConfigError {
+  BackgroundAlphaOutOfRange(value~ : Double)
+  InvalidResolution(value~ : Double)
+  NegativePositionEntryOffsetRatio(value~ : Double)
+  NegativeScaleEntryFrom(value~ : Double)
+}
+
+///|
+pub fn PixiPresenterConfig::new(
+  antialias? : Bool = true,
+  background_alpha? : Double = 0.0,
+  resolution? : Double = 1.0,
+  auto_density? : Bool = true,
+  position_entry_offset_ratio? : Double = 0.04,
+  scale_entry_from? : Double = 0.0,
+) -> PixiPresenterConfig raise PixiPresenterConfigError {
+  if background_alpha < 0.0 || background_alpha > 1.0 {
+    raise PixiPresenterConfigError::BackgroundAlphaOutOfRange(
+      value=background_alpha,
+    )
   }
+  if resolution <= 0.0 {
+    raise PixiPresenterConfigError::InvalidResolution(value=resolution)
+  }
+  if position_entry_offset_ratio < 0.0 {
+    raise PixiPresenterConfigError::NegativePositionEntryOffsetRatio(
+      value=position_entry_offset_ratio,
+    )
+  }
+  if scale_entry_from < 0.0 {
+    raise PixiPresenterConfigError::NegativeScaleEntryFrom(
+      value=scale_entry_from,
+    )
+  }
+  {
+    antialias,
+    background_alpha,
+    resolution,
+    auto_density,
+    position_entry_offset_ratio,
+    scale_entry_from,
+  }
+}
+
+///|
+pub impl Default for PixiPresenterConfig with default() {
+  try! PixiPresenterConfig::new()
 }
 
 ///|
@@ -1751,7 +1789,7 @@ pub async fn[T] make_pixi_render_sync_hook_from_canvas(
   make_pixi_render_sync_hook_from_canvas_with_config(
     canvas_id,
     store,
-    pixi_presenter_default_config(),
+    PixiPresenterConfig::default(),
   )
 }
 
@@ -1781,7 +1819,7 @@ pub async fn[T] make_pixi_render_sync_hook_from_canvas_element(
   make_pixi_render_sync_hook_from_canvas_element_with_config(
     canvas,
     store,
-    pixi_presenter_default_config(),
+    PixiPresenterConfig::default(),
   )
 }
 

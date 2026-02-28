@@ -5,9 +5,17 @@ using @util {gensym}
 using @core {label, type RuntimeEvent}
 
 ///|
+let dummy_assets : AssetStore = AssetStore::new()
+
+///|
 async test "app controller enters game on new game action" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(() => script, () => GameState::new(0), "app")
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+  )
 
   assert_eq(app.phase(), AppPhase::StartGate)
   app.enter_start_menu()
@@ -19,7 +27,12 @@ async test "app controller enters game on new game action" {
 async test "app controller stays in menu when loading missing slot" {
   save_slot_delete_in("app_test_ns_missing", "slot1")
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(() => script, () => GameState::new(0), "app")
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+  )
   // Load from start menu now goes to settings
   app.enter_start_menu()
   app.handle_menu_action(NoAction)
@@ -45,6 +58,7 @@ async test "app controller can continue from saved slot" {
     () => GameState::new(0),
     "app",
     save_namespace="app_test_ns_continue",
+    dummy_assets,
   )
   app.enter_start_menu()
   app.handle_menu_action(Continue("slot1"))
@@ -55,7 +69,12 @@ async test "app controller can continue from saved slot" {
 async test "app controller opens gallery when entries exist" {
   @gallery.register_image(GalleryImage::new("assets/cg_dummy.jpg"))
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(() => script, () => GameState::new(0), "app")
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+  )
   app.enter_start_menu()
   app.handle_menu_action(Gallery)
   assert_eq(app.phase(), AppPhase::Gallery)
@@ -83,6 +102,7 @@ async test "gallery replay uses app controller state factory by default" {
       state
     },
     "app",
+    dummy_assets,
   )
 
   app.start_gallery_replay(replay_label)
@@ -140,6 +160,7 @@ async test "gallery replay uses image-specific state factory key" {
       state
     },
     "app",
+    dummy_assets,
     gallery_replay_state_factories=replay_state_factories,
   )
 
@@ -168,9 +189,13 @@ async test "app controller submit custom event only works in game" {
     builder.say("n", "done")
   })
   let seen : Array[RuntimeEvent] = []
-  let app = AppController::new(() => script, () => GameState::new(0), "app", event_hook=event => {
-    seen.push(event)
-  })
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+    event_hook=event => seen.push(event),
+  )
 
   assert_eq(app.submit_custom_event("evt", "ok"), false)
   app.enter_start_menu()
@@ -217,7 +242,12 @@ async test "app controller custom event jump resumes on next step" {
     builder.label(right)
     builder.say("n", "R")
   })
-  let app = AppController::new(() => script, () => GameState::new(0), "app")
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+  )
   app.enter_start_menu()
   app.handle_menu_action(NewGame)
   match app.runner {
@@ -243,6 +273,7 @@ test "start logo sequence advances one logo per skip" {
     () => script,
     () => GameState::new(0),
     "app",
+    dummy_assets,
     start_logo_urls=["logo_a.png", "logo_b.png", "logo_c.png"],
     start_logo_duration_ms=5000,
   )
@@ -270,6 +301,7 @@ async test "start logo timeout advances sequence before menu" {
     () => script,
     () => GameState::new(0),
     "app",
+    dummy_assets,
     start_logo_urls=["logo_a.png", "logo_b.png"],
     start_logo_duration_ms=100,
   )
@@ -297,6 +329,7 @@ async test "script factory is lazy and cached" {
     },
     () => GameState::new(0),
     "app",
+    dummy_assets,
   )
 
   assert_eq(calls.val, 0)
@@ -315,8 +348,12 @@ async test "script factory is lazy and cached" {
 ///|
 test "start logo urls normalize by removing empty entries" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
-  let app = AppController::new(() => script, () => GameState::new(0), "app", start_logo_urls=[
-    "", "logo_a.png", "", "logo_b.png", "",
-  ])
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+    start_logo_urls=["", "logo_a.png", "", "logo_b.png", ""],
+  )
   assert_eq(app.start_logo_urls, ["logo_a.png", "logo_b.png"])
 }

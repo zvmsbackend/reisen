@@ -39,6 +39,7 @@ struct AppController[T] {
   event_hook : EventHook
   mut runner : GameRunner[T]?
   mut saved_director_json : String?
+  assets : AssetStore
 }
 
 ///|
@@ -46,6 +47,7 @@ pub fn[T] AppController::new(
   script_factory : ScriptFactory[T],
   new_state : () -> GameState[T],
   ui_root_id : String,
+  assets : AssetStore,
   save_namespace? : String = "global",
   autosave_slot? : String = "autosave",
   autosave_title? : String = "",
@@ -97,6 +99,7 @@ pub fn[T] AppController::new(
     runner: None,
     saved_director_json: None,
     gallery_replay_state_factories,
+    assets,
   }
   app.start_menu.render_gate()
   app
@@ -111,6 +114,14 @@ async fn[T] AppController::script(self : AppController[T]) -> Script[T] {
         PixiBindingError::ResourceLoadFailed(message~) =>
           abort("Failed to load script resources: \{message}")
         _ => panic()
+      }
+      validate_script_assets(script, self.assets) catch {
+        MissingImageAsset(id~) =>
+          abort("Script references missing image asset: \{id}")
+        MissingAudioAsset(id~) =>
+          abort("Script references missing audio asset: \{id}")
+        MissingSaveSlot(slot~) =>
+          abort("Script references missing save slot: \{slot}")
       }
       self.script = Some(script)
       script

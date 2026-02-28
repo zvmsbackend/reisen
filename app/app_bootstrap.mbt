@@ -9,7 +9,7 @@ pub suberror AppBootstrapError {
 }
 
 ///|
-pub struct SaveSlotPayload {
+struct SaveSlotPayload {
   version : Int
   director_json : String
 } derive(ToJson, FromJson)
@@ -40,7 +40,7 @@ fn decode_save_slot_payload(raw : String, payload_version : Int) -> String {
 }
 
 ///|
-pub fn[T] validate_script_image_assets(
+fn[T] validate_script_image_assets(
   script : Script[T],
   store : AssetStore,
 ) -> Unit raise AppBootstrapError {
@@ -60,7 +60,7 @@ pub fn[T] validate_script_image_assets(
 }
 
 ///|
-pub fn[T] validate_script_audio_assets(
+fn[T] validate_script_audio_assets(
   script : Script[T],
   store : AssetStore,
 ) -> Unit raise AppBootstrapError {
@@ -80,7 +80,7 @@ pub fn[T] validate_script_audio_assets(
 }
 
 ///|
-pub fn[T] validate_script_assets(
+fn[T] validate_script_assets(
   script : Script[T],
   store : AssetStore,
 ) -> Unit raise AppBootstrapError {
