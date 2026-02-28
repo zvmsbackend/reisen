@@ -4,8 +4,8 @@ fn dummy_bg(id : String) -> Background {
 }
 
 ///|
-fn dummy_figure(id : String) -> PixiFigure {
-  PixiFigure::new(id)
+fn dummy_figure(id : String) -> @assets.PixiFigure {
+  @assets.PixiFigure::new(id)
 }
 
 ///|

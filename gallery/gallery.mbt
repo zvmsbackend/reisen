@@ -1,6 +1,6 @@
 ///|
 /// Gallery image registration and persistent unlock state helpers.
-pub struct ReplayStateFactories[T](Map[String, () -> @core.GameState[T]])
+pub struct ReplayStateFactories[T](Map[String, () -> @state.GameState[T]])
 
 ///|
 pub fn[T] ReplayStateFactories::new() -> ReplayStateFactories[T] {
@@ -18,7 +18,7 @@ pub fn ReplayStateFactoryKey::new(key : String) -> ReplayStateFactoryKey {
 ///|
 pub fn[T] ReplayStateFactories::register(
   self : ReplayStateFactories[T],
-  factory : () -> @core.GameState[T],
+  factory : () -> @state.GameState[T],
   key? : String = @util.gensym(prefix="replay_factory"),
 ) -> ReplayStateFactoryKey {
   self.0.set(key, factory)
@@ -29,7 +29,7 @@ pub fn[T] ReplayStateFactories::register(
 pub fn[T] ReplayStateFactories::get(
   self : ReplayStateFactories[T],
   key : ReplayStateFactoryKey,
-) -> (() -> @core.GameState[T])? {
+) -> (() -> @state.GameState[T])? {
   self.0.get(key.0)
 }
 

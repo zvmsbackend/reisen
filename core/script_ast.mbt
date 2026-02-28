@@ -2,6 +2,14 @@
 /// Script AST and compiled metadata for the visual novel runtime.
 
 ///|
+pub struct Label(String)
+
+///|
+pub fn label(name? : String = @util.gensym(prefix="label")) -> Label {
+  name
+}
+
+///|
 pub(all) enum Position {
   Left
   Center
@@ -18,7 +26,7 @@ pub(all) enum Easing {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub enum AnimProp {
+pub(all) enum AnimProp {
   Opacity
   Position
   Scale
@@ -34,7 +42,7 @@ pub enum AnimProp {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub struct AnimationSpec {
+pub(all) struct AnimationSpec {
   prop : AnimProp
   duration_ms : Int
   easing : Easing
@@ -86,7 +94,7 @@ pub(all) enum EffectPhase {
 pub type EffectParam = (String, Double)
 
 ///|
-pub struct EffectSpec {
+pub(all) struct EffectSpec {
   id : String
   params : Array[EffectParam]
   phase : EffectPhase
@@ -96,30 +104,39 @@ pub struct EffectSpec {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub struct FigurePlacement {
+pub(all) struct FigurePlacement {
   pos : Position
   layer : Int
   scalars : ScalarState
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub struct DomFigureState {
+pub(all) struct DomFigureState {
   placement : FigurePlacement
   interactive : Bool
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub struct BackgroundState {
+pub(all) struct BackgroundState {
   id : String
   scalars : ScalarState
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-struct ChoiceOption {
+pub struct ChoiceOption {
   id : String
   text : String
   jump : String
 } derive(Show, Eq, ToJson, FromJson)
+
+///|
+pub fn ChoiceOption::new(
+  text : String,
+  jump : Label,
+  id : String,
+) -> ChoiceOption {
+  { id, text, jump: jump.0 }
+}
 
 ///|
 /// User-defined MoonBit code hook executed by the script runtime.
@@ -138,7 +155,7 @@ pub type PayloadPredicate[T] = (GameState[T], String) -> Bool
 pub type PayloadJumpSelector[T] = (GameState[T], String) -> Label
 
 ///|
-pub enum Instruction[T] {
+pub(all) enum Instruction[T] {
   Label(String)
   Jump(String)
   JumpIf(String, ScriptPredicate[T])
@@ -188,12 +205,10 @@ pub struct Script[T] {
 }
 
 ///|
-pub(all) suberror ScriptBuildError {
+pub suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
-  EffectUnsupportedOnDomTarget(target~ : String)
-  SetInteractiveUnsupportedOnPixiTarget(target~ : String)
 }
 
 ///|

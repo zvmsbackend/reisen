@@ -5,9 +5,6 @@
 struct Effect(String)
 
 ///|
-struct Label(String)
-
-///|
 struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
 }
@@ -29,12 +26,7 @@ pub fn option(
   jump : Label,
   id? : String = gensym(prefix="choice"),
 ) -> ChoiceOption {
-  { id, text, jump: jump.0 }
-}
-
-///|
-pub fn label(name? : String = gensym(prefix="label")) -> Label {
-  name
+  ChoiceOption::new(text, jump, id)
 }
 
 ///|

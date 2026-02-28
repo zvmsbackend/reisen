@@ -1,4 +1,7 @@
 ///|
+using @core {type Script}
+
+///|
 test "parse empty string" {
   let script : Script[Unit] = reisen_parse_text_script("")
   assert_eq(script.labels.length(), 0)

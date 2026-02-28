@@ -1,5 +1,5 @@
 import {
-  "sennenki/reisen/core",
+  "sennenki/reisen/state",
   "sennenki/reisen/storage",
   "sennenki/reisen/util",
   "moonbitlang/core/json",

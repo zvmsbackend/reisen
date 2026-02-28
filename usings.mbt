@@ -6,13 +6,6 @@ using @storage {
   type GameSettings,
   type SaveSlotEntry,
   game_settings_default,
-  persistent_delete,
-  persistent_delete_in,
-  persistent_get_flag,
-  persistent_get_flag_in,
-  persistent_get_text,
-  persistent_set_flag,
-  persistent_set_flag_in,
   save_slot_delete_in,
   save_slot_entries_in,
   save_slot_list_in,
@@ -25,29 +18,46 @@ using @storage {
 }
 
 ///|
-using @core {type GameState, game_state_from_json_string}
+using @core {
+  type AnimationSpec,
+  type BackgroundState,
+  type ChoiceOption,
+  type DomFigureState,
+  type EffectParam,
+  type EffectSpec,
+  type FigurePlacement,
+  type Instruction,
+  type Runtime,
+  type RuntimeEvent,
+  type RuntimeSave,
+  type Script,
+  type ScriptFlowTrace,
+  type ScriptHook,
+  type ScriptPredicate,
+  type ScalarState,
+  type PayloadPredicate,
+  type PayloadJumpSelector,
+  type ScriptBuildError,
+  type ScriptRuntimeError,
+  type Position,
+  type Easing,
+  type EffectPhase,
+  type Label,
+  script_from_instructions,
+}
 
 ///|
-using @gallery {
-  type GalleryImage,
-  type ReplayStateFactories,
-  type ReplayStateFactoryKey,
-}
+using @state {type GameState}
+
+///|
+using @gallery {type GalleryImage, type ReplayStateFactories}
 
 ///|
 using @assets {
   type AssetStore,
   type Background,
   type DomFigure,
-  type Image,
   type Live2dFigure,
   type Music,
-  type PixiFigure,
   type Sfx,
-  type Video,
-  dom_figure,
-  load_bytes,
-  load_image,
-  load_text,
-  load_video,
 }

@@ -319,7 +319,7 @@ fn[T] reisen_text_script_to_builder(
       "show" | "figure" => {
         let (id, pos) = get_first_part(args_str, ",")
         if id != "" {
-          let position = match pos.trim().to_string() {
+          let position : Position = match pos.trim().to_string() {
             "left" => Left
             "center" | "c" => Center
             "right" | "r" => Right

@@ -1,4 +1,10 @@
 ///|
+using @core {label}
+
+///|
+using @assets {dom_figure}
+
+///|
 test "director maps runtime events into ui and render state" {
   let a = label()
   let b = label()

@@ -3,7 +3,7 @@
 /// Produces runtime events for renderer/audio/UI layers.
 
 ///|
-pub enum RuntimeEvent {
+pub(all) enum RuntimeEvent {
   Noop
   Said(
     speaker~ : String,
@@ -151,7 +151,7 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
 }
 
 ///|
-fn[T] Runtime::from_save(
+pub fn[T] Runtime::from_save(
   script : Script[T],
   save : RuntimeSave[T],
 ) -> Runtime[T] raise ScriptRuntimeError {
@@ -383,7 +383,7 @@ fn[T] Runtime::run_inst(
     }
     UnlockCg(id) => {
       self.ip = self.ip + 1
-      @gallery.unlock_image_by_id(id)
+      @storage.persistent_set_flag("gallery.image." + id, true)
       CgUnlocked(id)
     }
     AnimatePixi(target, spec) => {

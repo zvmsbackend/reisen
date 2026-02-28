@@ -127,7 +127,9 @@ async test "gallery replay uses image-specific state factory key" {
     gensym(prefix="gallery_custom"),
     "assets/cg_custom.jpg",
     replay_label~,
-    replay_state_factory_key=ReplayStateFactoryKey::new("custom_factory"),
+    replay_state_factory_key=@gallery.ReplayStateFactoryKey::new(
+      "custom_factory",
+    ),
   )
   @gallery.register_image(image)
   @gallery.unlock_image(image)

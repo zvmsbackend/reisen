@@ -1,6 +1,7 @@
 import {
   "sennenki/reisen/util",
   "sennenki/reisen/storage",
+  "sennenki/reisen/state",
   "sennenki/reisen/core",
   "sennenki/reisen/gallery",
   "sennenki/reisen/assets",

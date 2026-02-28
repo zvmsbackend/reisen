@@ -191,7 +191,7 @@ test "validate_script_image_assets succeeds when all ids exist" {
     builder.show_figure_at(dummy_figure("alice"), Left)
   })
   let store = AssetStore::new()
-  let dummy : Image = @js.Value::cast_from(0).cast()
+  let dummy : @assets.Image = @js.Value::cast_from(0).cast()
   store.put_image("bg_school", dummy)
   store.put_image("alice", dummy)
 

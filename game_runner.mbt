@@ -626,7 +626,7 @@ pub async fn[T] GameRunner::step(
   }
   if self.director.text_input() is Some(_) {
     if self.ui_dirty {
-      let event = match self.director.text_input() {
+      let event : RuntimeEvent = match self.director.text_input() {
         Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
         None => Noop
       }
@@ -642,7 +642,7 @@ pub async fn[T] GameRunner::step(
         return event
       }
       None => {
-        let event = match self.director.text_input() {
+        let event : RuntimeEvent = match self.director.text_input() {
           Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
           None => Noop
         }
