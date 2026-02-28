@@ -5,9 +5,6 @@
 pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
 
 ///|
-pub type EventHook = (RuntimeEvent) -> Unit
-
-///|
 pub enum LogBuildState {
   NotBuilt
   Building
@@ -374,7 +371,7 @@ fn[T] GameRunner::is_blocking_active(self : GameRunner[T]) -> Bool {
     return true
   }
   if self.blocking_wait_sfx {
-    if audio_dom_has_active_sfx() {
+    if AudioDom::has_active_sfx() {
       return true
     }
     self.blocking_wait_sfx = false
@@ -384,7 +381,9 @@ fn[T] GameRunner::is_blocking_active(self : GameRunner[T]) -> Bool {
 
 ///|
 fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
-  self.ui.render(ui_view_from_director(self.director, self.ui))
+  self.ui.render(
+    UiViewModel::from_snapshot(self.director.ui_snapshot(), self.ui),
+  )
   self.ui_dirty = false
 }
 
@@ -415,7 +414,7 @@ fn[T] GameRunner::apply_event_effects(
       if mark_ui_for_text {
         self.ui_dirty = true
       }
-      self.ui.mark_dirty_text()
+      self.ui.mark_dirty_text_and_speaker()
     }
     ChoicePrompt(_) => {
       if mark_ui_for_text {
@@ -433,14 +432,14 @@ fn[T] GameRunner::apply_event_effects(
       if mark_ui_for_text {
         self.ui_dirty = true
       }
-      self.ui.mark_dirty_text()
+      self.ui.mark_dirty_text_and_speaker()
       self.ui.mark_dirty_action_buttons()
     }
     AvatarShown(_) | AvatarHidden => {
       if mark_ui_for_text {
         self.ui_dirty = true
       }
-      self.ui.mark_dirty_text()
+      self.ui.mark_dirty_text_and_speaker()
     }
     IntroShown(_) | VideoStarted(_, _) | VideoEnded(_) | ScriptEnded => {
       if mark_ui_for_text {
@@ -558,7 +557,7 @@ pub async fn[T] GameRunner::step(
         self.ui.mark_auto_advanced()
       }
     }
-    if self.ui.skip_mode {
+    if self.ui.skip_mode() {
       self.director.skip_wait()
     } else if self.ui.check_typewriter_click() {
       self.director.skip_wait()
@@ -576,7 +575,7 @@ pub async fn[T] GameRunner::step(
             self.director.apply_event(TextBoxShown)
           }
           self.ui_dirty = true
-          self.ui.mark_dirty_text()
+          self.ui.mark_dirty_text_and_speaker()
         }
         "log" => self.pending_action = Some("log")
         "skip_on" => self.ui.set_skip_mode(true)
@@ -696,13 +695,13 @@ pub async fn[T] GameRunner::step(
   if not(is_typewriter_done) {
     if self.ui.check_typewriter_click() {
       self.ui.complete_typewriter()
-      self.ui.dirty_text = true
+      self.ui.mark_dirty_text()
       let event = self.current_dialog_event()
       self.render_ui()
       return event
     } else {
       ignore(self.ui.advance_typewriter(elapsed_ms~))
-      self.ui.dirty_text = true
+      self.ui.mark_dirty_text()
       let event = self.current_dialog_event()
       self.render_ui()
       return event
@@ -950,6 +949,6 @@ pub fn[T] GameRunner::apply_settings(
 ) -> Unit {
   self.ui.set_text_speed(settings.text_speed)
   self.ui.set_media_volume(settings.bgm_volume)
-  audio_dom_set_bgm_gain(settings.bgm_volume)
-  audio_dom_set_sfx_gain(settings.sfx_volume)
+  AudioDom::set_bgm_gain(settings.bgm_volume)
+  AudioDom::set_sfx_gain(settings.sfx_volume)
 }

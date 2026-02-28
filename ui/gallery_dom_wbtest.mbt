@@ -1,6 +1,6 @@
 ///|
 test "gallery tile views respect unlock and show_locked" {
-  let ns = gensym(prefix="wb_gallery_dom")
+  let ns = @util.gensym(prefix="wb_gallery_dom")
   let unlocked = GalleryImage::new("img_u", title="Unlocked")
   let locked = GalleryImage::new("img_l", title="Locked")
   @gallery.register_image(unlocked)

@@ -2,7 +2,7 @@
 /// Gallery viewer DOM integration (grid + fullscreen viewer actions).
 
 ///|
-priv enum GalleryAction {
+pub enum GalleryAction {
   NoAction
   Back
   Open(String)
@@ -23,7 +23,7 @@ struct GalleryTileView {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-priv struct GalleryMenu {
+struct GalleryMenu {
   root_id : String
   save_ns : String
   background : String
@@ -32,7 +32,7 @@ priv struct GalleryMenu {
 }
 
 ///|
-fn GalleryMenu::new(
+pub fn GalleryMenu::new(
   root_id : String,
   save_namespace? : String = "global",
   background? : String = "",
@@ -254,7 +254,7 @@ extern "js" fn gallery_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-fn GalleryMenu::render(self : GalleryMenu) -> Unit {
+pub fn GalleryMenu::render(self : GalleryMenu) -> Unit {
   let tiles = gallery_tile_views(self.save_ns, self.show_locked)
   let tiles_json = tiles.to_json().stringify()
   gallery_dom_render(
@@ -266,13 +266,13 @@ fn GalleryMenu::render(self : GalleryMenu) -> Unit {
 }
 
 ///|
-fn GalleryMenu::clear(self : GalleryMenu) -> Unit {
+pub fn GalleryMenu::clear(self : GalleryMenu) -> Unit {
   self.active_id = None
   gallery_dom_clear(self.root_id)
 }
 
 ///|
-fn GalleryMenu::take_action(self : GalleryMenu) -> GalleryAction {
+pub fn GalleryMenu::take_action(self : GalleryMenu) -> GalleryAction {
   let action = match gallery_action_kind(self.root_id).to_option() {
     Some("back") => GalleryAction::Back
     Some("close") => GalleryAction::Close

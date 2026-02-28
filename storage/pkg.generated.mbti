@@ -6,8 +6,6 @@ import {
 }
 
 // Values
-pub fn game_settings_default() -> GameSettings
-
 pub fn persistent_delete(String) -> Unit
 
 pub fn persistent_delete_in(String, String) -> Unit
@@ -93,6 +91,7 @@ pub struct GameSettings {
   sfx_volume : Double
 }
 pub fn GameSettings::new(Int, Double, Double) -> Self raise StorageValidationError
+pub impl Default for GameSettings
 pub impl Eq for GameSettings
 pub impl Show for GameSettings
 pub impl ToJson for GameSettings

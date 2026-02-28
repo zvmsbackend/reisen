@@ -5,7 +5,7 @@ async test "app controller enters game on new game action" {
 
   assert_eq(app.phase(), AppPhase::StartGate)
   app.enter_start_menu()
-  app.handle_menu_action(StartMenuAction::NewGame)
+  app.handle_menu_action(NewGame)
   assert_eq(app.phase(), AppPhase::InGame)
 }
 
@@ -16,7 +16,7 @@ async test "app controller stays in menu when loading missing slot" {
   let app = AppController::new(() => script, () => GameState::new(0), "app")
   // Load from start menu now goes to settings
   app.enter_start_menu()
-  app.handle_menu_action(StartMenuAction::NoAction)
+  app.handle_menu_action(NoAction)
   assert_eq(app.phase(), AppPhase::StartMenu)
 }
 
@@ -41,7 +41,7 @@ async test "app controller can continue from saved slot" {
     save_namespace="app_test_ns_continue",
   )
   app.enter_start_menu()
-  app.handle_menu_action(StartMenuAction::Continue("slot1"))
+  app.handle_menu_action(Continue("slot1"))
   assert_eq(app.phase(), AppPhase::InGame)
 }
 
@@ -51,7 +51,7 @@ async test "app controller opens gallery when entries exist" {
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(() => script, () => GameState::new(0), "app")
   app.enter_start_menu()
-  app.handle_menu_action(StartMenuAction::Gallery)
+  app.handle_menu_action(Gallery)
   assert_eq(app.phase(), AppPhase::Gallery)
 }
 
@@ -168,7 +168,7 @@ async test "app controller submit custom event only works in game" {
 
   assert_eq(app.submit_custom_event("evt", "ok"), false)
   app.enter_start_menu()
-  app.handle_menu_action(StartMenuAction::NewGame)
+  app.handle_menu_action(NewGame)
   assert_eq(app.phase(), AppPhase::InGame)
   match app.runner {
     Some(runner) => assert_eq(runner.step(), WaitCustomEventStarted("evt"))
@@ -213,7 +213,7 @@ async test "app controller custom event jump resumes on next step" {
   })
   let app = AppController::new(() => script, () => GameState::new(0), "app")
   app.enter_start_menu()
-  app.handle_menu_action(StartMenuAction::NewGame)
+  app.handle_menu_action(NewGame)
   match app.runner {
     Some(runner) => assert_eq(runner.step(), WaitCustomEventStarted("route"))
     None => fail("Expected runner")
@@ -295,13 +295,13 @@ async test "script factory is lazy and cached" {
 
   assert_eq(calls.val, 0)
   app.enter_start_menu()
-  app.handle_menu_action(StartMenuAction::NewGame)
+  app.handle_menu_action(NewGame)
   assert_eq(app.phase(), AppPhase::InGame)
   assert_eq(calls.val, 1)
 
   app.runner = None
   app.phase = AppPhase::StartMenu
-  app.handle_menu_action(StartMenuAction::NewGame)
+  app.handle_menu_action(NewGame)
   assert_eq(app.phase(), AppPhase::InGame)
   assert_eq(calls.val, 1)
 }

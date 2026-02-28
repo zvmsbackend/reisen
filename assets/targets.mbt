@@ -34,7 +34,7 @@ impl Figure with dummy(_) {
 
 ///|
 pub impl AnimationTarget for PixiFigure with id(self) {
-  self.id()
+  self.0
 }
 
 ///|
@@ -50,7 +50,7 @@ pub impl Figure for PixiFigure
 
 ///|
 pub impl AnimationTarget for Live2dFigure with id(self) {
-  self.id()
+  self.0
 }
 
 ///|
@@ -66,7 +66,7 @@ pub impl Figure for Live2dFigure
 
 ///|
 pub impl AnimationTarget for DomFigure with id(self) {
-  self.id()
+  self.0
 }
 
 ///|

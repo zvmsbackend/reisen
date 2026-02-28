@@ -1,22 +1,22 @@
 ///|
 test "audio command mapping from runtime event" {
   assert_eq(
-    audio_command_from_event(MusicPlayed("bgm", true)),
+    AudioCommand::from_event(MusicPlayed("bgm", true)),
     PlayMusic("bgm", true),
   )
-  assert_eq(audio_command_from_event(MusicStopped), StopMusic)
+  assert_eq(AudioCommand::from_event(MusicStopped), StopMusic)
   assert_eq(
-    audio_command_from_event(SfxPlayed("click", false)),
+    AudioCommand::from_event(SfxPlayed("click", false)),
     PlaySfx("click"),
   )
   assert_eq(
-    audio_command_from_event(
+    AudioCommand::from_event(
       Said(speaker="n", text="t", typewriter=true, append=false, voice=None),
     ),
     Noop,
   )
   assert_eq(
-    audio_command_from_event(
+    AudioCommand::from_event(
       Said(
         speaker="n",
         text="t",

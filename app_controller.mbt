@@ -30,7 +30,7 @@ struct AppController[T] {
   start_logo_duration_ms : Int
   mut start_logo_elapsed_ms : Int
   mut start_logo_index : Int
-  menu : StartMenu
+  start_menu : StartMenu
   gallery_menu : GalleryMenu
   settings_menu : SettingsMenu
   gallery_replay_state_factories : ReplayStateFactories[T]
@@ -76,7 +76,7 @@ pub fn[T] AppController::new(
     start_logo_duration_ms,
     start_logo_elapsed_ms: 0,
     start_logo_index: 0,
-    menu: StartMenu::new(
+    start_menu: StartMenu::new(
       ui_root_id,
       save_namespace~,
       background=menu_background,
@@ -98,7 +98,7 @@ pub fn[T] AppController::new(
     saved_director_json: None,
     gallery_replay_state_factories,
   }
-  app.menu.render_gate()
+  app.start_menu.render_gate()
   app
 }
 
@@ -125,7 +125,7 @@ fn[T] AppController::show_current_start_logo(self : AppController[T]) -> Unit {
     self.enter_start_menu()
     return
   }
-  self.menu.render_logo(
+  self.start_menu.render_logo(
     self.start_logo_urls[self.start_logo_index],
     self.start_logo_duration_ms,
   )
@@ -154,9 +154,9 @@ fn[T] AppController::start_menu_music_stop(self : AppController[T]) -> Unit {
 ///|
 fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
   self.gallery_menu.clear()
-  self.menu.clear_logo()
-  self.menu.clear_gate()
-  self.menu.render()
+  self.start_menu.clear_logo()
+  self.start_menu.clear_gate()
+  self.start_menu.render()
   self.phase = AppPhase::StartMenu
   self.start_menu_music_start()
 }
@@ -167,7 +167,7 @@ fn[T] AppController::enter_start_logo(self : AppController[T]) -> Unit {
     self.enter_start_menu()
     return
   }
-  self.menu.clear_gate()
+  self.start_menu.clear_gate()
   self.start_logo_index = 0
   self.show_current_start_logo()
 }
@@ -275,7 +275,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
           settings?,
         ),
       )
-      self.menu.clear()
+      self.start_menu.clear()
       self.phase = AppPhase::InGame
     }
     Continue(slot) =>
@@ -290,7 +290,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
         )
         self.start_menu_music_stop()
         self.runner = Some(runner)
-        self.menu.clear()
+        self.start_menu.clear()
         self.phase = AppPhase::InGame
       } catch {
         _ => {
@@ -299,21 +299,21 @@ async fn[T : FromJson] AppController::handle_menu_action(
         }
       }
     Load => {
-      self.menu.clear()
-      self.settings_menu.set_context(SettingsContext::FromStartMenu)
-      self.settings_menu.set_view_mode(SettingsViewMode::LoadList)
+      self.start_menu.clear()
+      self.settings_menu.set_context(FromStartMenu)
+      self.settings_menu.set_view_mode(LoadList)
       self.settings_menu.render()
       self.phase = AppPhase::Settings
     }
     Settings => {
-      self.menu.clear()
-      self.settings_menu.set_context(SettingsContext::FromStartMenu)
+      self.start_menu.clear()
+      self.settings_menu.set_context(FromStartMenu)
       self.settings_menu.render()
       self.phase = AppPhase::Settings
     }
     Gallery =>
       if @gallery.registered_images().length() > 0 {
-        self.menu.clear()
+        self.start_menu.clear()
         self.gallery_menu.render()
         self.phase = AppPhase::Gallery
       }
@@ -380,22 +380,22 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
 ) -> Bool {
   match self.phase {
     AppPhase::StartGate => {
-      match self.menu.take_gate_action() {
-        StartGateAction::Start =>
+      match self.start_menu.take_gate_action() {
+        Start =>
           if self.start_logo_urls.is_empty() {
             self.enter_start_menu()
           } else {
             self.enter_start_logo()
           }
-        StartGateAction::NoAction => ()
+        NoAction => ()
       }
       true
     }
     AppPhase::StartLogo => {
       self.start_logo_elapsed_ms += elapsed_ms
-      match self.menu.take_logo_action() {
-        StartLogoAction::Done => self.advance_start_logo()
-        StartLogoAction::NoAction =>
+      match self.start_menu.take_logo_action() {
+        Done => self.advance_start_logo()
+        NoAction =>
           if self.start_logo_elapsed_ms >= self.start_logo_duration_ms {
             self.advance_start_logo()
           }
@@ -410,7 +410,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               Some("settings") => {
                 self.saved_director_json = Some(runner.director().save_json())
                 runner.clear_ui()
-                self.settings_menu.set_context(SettingsContext::FromMidgame)
+                self.settings_menu.set_context(FromMidgame)
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
               }
@@ -424,8 +424,8 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               Some("save") => {
                 self.saved_director_json = Some(runner.director().save_json())
                 runner.clear_ui()
-                self.settings_menu.set_context(SettingsContext::FromMidgame)
-                self.settings_menu.set_view_mode(SettingsViewMode::SaveList)
+                self.settings_menu.set_context(FromMidgame)
+                self.settings_menu.set_view_mode(SaveList)
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
               }
@@ -457,7 +457,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
       }
     AppPhase::Settings => {
       match self.settings_menu.take_action() {
-        SettingsAction::Back => {
+        Back => {
           self.settings_menu.clear()
           match self.saved_director_json {
             Some(json) => {
@@ -485,7 +485,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             None => self.enter_start_menu()
           }
         }
-        SettingsAction::NewGame => {
+        NewGame => {
           self.settings_menu.clear()
           self.saved_director_json = None
           let settings = settings_read_in(self.save_ns)
@@ -502,7 +502,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           )
           self.phase = AppPhase::InGame
         }
-        SettingsAction::StartMenu => {
+        StartMenu => {
           self.save_autosave_if_enabled()
           match self.runner {
             Some(runner) => {
@@ -518,7 +518,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.runner = None
           self.enter_start_menu()
         }
-        SettingsAction::Log => {
+        Log => {
           self.settings_menu.clear()
           match self.runner {
             Some(runner) => {
@@ -534,7 +534,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             None => self.enter_start_menu()
           }
         }
-        SettingsAction::SaveSlot(slot) => {
+        SaveSlot(slot) => {
           match self.runner {
             Some(runner) =>
               save_runner_to_slot_with_meta(
@@ -547,7 +547,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           }
           self.settings_menu.render()
         }
-        SettingsAction::LoadSlot(slot) => {
+        LoadSlot(slot) => {
           self.settings_menu.clear()
           let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
             self.script(),
@@ -566,29 +566,26 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             Err(_) => self.settings_menu.render()
           }
         }
-        SettingsAction::ViewChanged => self.settings_menu.render()
-        SettingsAction::NoAction => ()
+        ViewChanged => self.settings_menu.render()
+        NoAction => ()
       }
       true
     }
     AppPhase::Gallery => {
       match self.gallery_menu.take_action() {
-        GalleryAction::Back => {
+        Back => {
           self.gallery_menu.clear()
           self.enter_start_menu()
         }
-        GalleryAction::Open(_)
-        | GalleryAction::Close
-        | GalleryAction::Prev
-        | GalleryAction::Next => self.gallery_menu.render()
-        GalleryAction::Replay(label) => self.start_gallery_replay(label)
-        GalleryAction::NoAction => ()
+        Open(_) | Close | Prev | Next => self.gallery_menu.render()
+        Replay(label) => self.start_gallery_replay(label)
+        NoAction => ()
       }
       true
     }
     AppPhase::StartMenu => {
       self.start_menu_music_start()
-      self.handle_menu_action(self.menu.take_action())
+      self.handle_menu_action(self.start_menu.take_action())
       true
     }
   }

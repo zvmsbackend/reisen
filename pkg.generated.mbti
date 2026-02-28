@@ -9,11 +9,10 @@ import {
   "sennenki/reisen/pixi",
   "sennenki/reisen/state",
   "sennenki/reisen/storage",
+  "sennenki/reisen/ui",
 }
 
 // Values
-pub fn audio_dom_has_active_sfx() -> Bool
-
 pub fn[T : @json.FromJson] director_from_save_json(@core.Script[T], String) -> Director[T] raise
 
 pub async fn[T] make_pixi_render_sync_hook_from_canvas(String, @assets.AssetStore) -> (async (Director[T]) -> Unit noraise)?
@@ -80,33 +79,11 @@ pub enum AppPhase {
 pub impl Eq for AppPhase
 pub impl Show for AppPhase
 
-type AudioCommand
-pub impl Eq for AudioCommand
-pub impl Show for AudioCommand
-
-type AudioDom
-pub fn AudioDom::apply_settings(Self, @storage.GameSettings) -> Unit
-pub fn AudioDom::as_event_hook(Self) -> (@core.RuntimeEvent) -> Unit
-pub fn AudioDom::handle_event(Self, @core.RuntimeEvent) -> Unit
-pub fn AudioDom::new((String) -> String?) -> Self
-pub fn AudioDom::new_with_store(@assets.AssetStore) -> Self
-pub fn AudioDom::set_bgm_gain(Self, Double) -> Unit
-pub fn AudioDom::set_sfx_gain(Self, Double) -> Unit
-
 type DialogLine
 pub impl Eq for DialogLine
 pub impl Show for DialogLine
 pub impl ToJson for DialogLine
 pub impl @json.FromJson for DialogLine
-
-pub struct DialogLogEntry {
-  speaker : String
-  text : String
-}
-pub impl Eq for DialogLogEntry
-pub impl Show for DialogLogEntry
-pub impl ToJson for DialogLogEntry
-pub impl @json.FromJson for DialogLogEntry
 
 type Director[T]
 pub fn[T] Director::animations(Self[T]) -> Array[(String, @core.AnimationSpec)]
@@ -121,7 +98,7 @@ pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::complete_video_wait(Self[T], Bool) -> @core.RuntimeEvent
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
-pub fn[T] Director::dialog_history(Self[T]) -> Array[DialogLogEntry]
+pub fn[T] Director::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
 pub fn[T] Director::dialog_seq(Self[T]) -> Int
 pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, @core.AnimationSpec)]
 pub fn[T] Director::dom_figures(Self[T]) -> Map[String, @core.DomFigureState]
@@ -143,7 +120,7 @@ pub fn[T] Director::render_epoch(Self[T]) -> String
 pub fn[T] Director::runtime_ip(Self[T]) -> Int
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String
 pub fn[T] Director::set_background_state(Self[T], @core.BackgroundState) -> Unit
-pub fn[T] Director::set_dialog_history(Self[T], Array[DialogLogEntry]) -> Unit
+pub fn[T] Director::set_dialog_history(Self[T], Array[@core.DialogLogEntry]) -> Unit
 pub fn[T] Director::skip_wait(Self[T]) -> Unit
 pub fn[T] Director::step(Self[T], elapsed_ms? : Int) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
 pub fn[T] Director::submit_custom_event(Self[T], String, String) -> @core.RuntimeEvent
@@ -151,6 +128,7 @@ pub fn[T] Director::submit_text_input(Self[T], String) -> @core.RuntimeEvent rai
 pub fn[T] Director::take_interrupted_sfx(Self[T]) -> String?
 pub fn[T] Director::text_box_visible(Self[T]) -> Bool
 pub fn[T] Director::text_input(Self[T]) -> (String, String)?
+pub fn[T] Director::ui_snapshot(Self[T]) -> @core.UiSnapshot
 pub fn[T] Director::video(Self[T]) -> (String, Bool)?
 
 pub struct DirectorSave[T] {
@@ -166,27 +144,21 @@ pub struct DirectorSave[T] {
 pub impl[T : ToJson] ToJson for DirectorSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
 
-type GalleryTileView
-pub impl Eq for GalleryTileView
-pub impl Show for GalleryTileView
-pub impl ToJson for GalleryTileView
-pub impl @json.FromJson for GalleryTileView
-
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], @core.RuntimeEvent) -> Unit
 pub fn[T] GameRunner::apply_settings(Self[T], @storage.GameSettings) -> Unit
 pub async fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
-pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[DialogLogEntry]
+pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::flow_trace(Self[T]) -> Array[@core.ScriptFlowTrace]
 pub fn[T] GameRunner::is_log_visible(Self[T]) -> Bool
 pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise @core.ScriptRuntimeError
 pub fn[T] GameRunner::log_build_state(Self[T]) -> LogBuildState
-pub fn[T] GameRunner::new(Director[T], UiDom) -> Self[T]
-pub fn[T] GameRunner::new_with_hooks(Director[T], UiDom, async (Director[T]) -> Unit noraise, (@core.RuntimeEvent) -> Unit) -> Self[T]
-pub fn[T] GameRunner::new_with_render_sync(Director[T], UiDom, async (Director[T]) -> Unit noraise) -> Self[T]
+pub fn[T] GameRunner::new(Director[T], @ui.UiDom) -> Self[T]
+pub fn[T] GameRunner::new_with_hooks(Director[T], @ui.UiDom, async (Director[T]) -> Unit noraise, (@core.RuntimeEvent) -> Unit) -> Self[T]
+pub fn[T] GameRunner::new_with_render_sync(Director[T], @ui.UiDom, async (Director[T]) -> Unit noraise) -> Self[T]
 pub fn[T] GameRunner::reconstruct_dialog_history(Self[T], @core.Script[T], @state.GameState[T], max_steps? : Int) -> Unit raise LogReconstructionError
 pub fn[T] GameRunner::set_log_build_state(Self[T], LogBuildState) -> Unit
 pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
@@ -246,76 +218,7 @@ pub struct SaveSlotPayload {
 pub impl ToJson for SaveSlotPayload
 pub impl @json.FromJson for SaveSlotPayload
 
-pub enum SettingsContext {
-  FromStartMenu
-  FromMidgame
-}
-pub impl Eq for SettingsContext
-pub impl Show for SettingsContext
-
-type UiChoiceView
-pub impl Eq for UiChoiceView
-pub impl Show for UiChoiceView
-
-type UiDom
-pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
-pub fn UiDom::advance_dom_animation_timer(Self, Int) -> Unit
-pub fn UiDom::advance_skip_mode_timer(Self, elapsed_ms~ : Int) -> Unit
-pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
-pub fn UiDom::clear_game_ui(Self) -> Unit
-pub fn UiDom::complete_typewriter(Self) -> Unit
-pub fn UiDom::has_active_dom_animations(Self) -> Bool
-pub fn UiDom::is_log_building(Self) -> Bool
-pub fn UiDom::is_log_visible(Self) -> Bool
-pub fn UiDom::is_skip_active(Self) -> Bool
-pub fn UiDom::is_typewriter_done(Self) -> Bool
-pub fn UiDom::mark_all_dirty(Self) -> Unit
-pub fn UiDom::mark_auto_advanced(Self) -> Unit
-pub fn UiDom::mark_dirty_action_buttons(Self) -> Unit
-pub fn UiDom::mark_dirty_choices(Self) -> Unit
-pub fn UiDom::mark_dirty_text(Self) -> Unit
-pub fn UiDom::mark_dirty_text_input(Self) -> Unit
-pub fn UiDom::mark_skip_advanced(Self) -> Unit
-pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
-pub fn UiDom::set_log_building(Self, Bool) -> Unit
-pub fn UiDom::set_log_visible(Self, Bool) -> Unit
-pub fn UiDom::set_media_volume(Self, Double) -> Unit
-pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
-pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
-pub fn UiDom::set_text_speed(Self, Int) -> Unit
-pub fn UiDom::should_auto_advance(Self) -> Bool
-pub fn UiDom::should_auto_skip_wait_click(Self) -> Bool
-pub fn UiDom::should_skip_advance(Self) -> Bool
-pub fn UiDom::simulate_click(Self) -> Unit
-pub fn UiDom::simulate_intro_done(Self) -> Unit
-pub fn UiDom::start_typewriter(Self, String) -> Unit
-pub fn UiDom::text_speed_ms_per_char(Self) -> Int
-pub fn UiDom::toggle_auto_mode(Self) -> Unit
-pub fn UiDom::toggle_log_visible(Self) -> Unit
-pub fn UiDom::toggle_skip_mode(Self) -> Unit
-pub fn UiDom::typewriter_visible_text(Self) -> StringView
-
-type UiDomFigureView
-pub impl Eq for UiDomFigureView
-pub impl Show for UiDomFigureView
-pub impl ToJson for UiDomFigureView
-pub impl @json.FromJson for UiDomFigureView
-
-type UiTextInputView
-pub impl Eq for UiTextInputView
-pub impl Show for UiTextInputView
-
-type UiVideoView
-pub impl Eq for UiVideoView
-pub impl Show for UiVideoView
-
-type UiViewModel
-pub impl Eq for UiViewModel
-pub impl Show for UiViewModel
-
 // Type aliases
-pub type EventHook = (@core.RuntimeEvent) -> Unit
-
 pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
 
 pub type ScriptFactory[T] = async () -> @core.Script[T]

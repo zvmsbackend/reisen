@@ -269,7 +269,7 @@ pub fn GameSettings::new(
 }
 
 ///|
-pub fn game_settings_default() -> GameSettings {
+pub impl Default for GameSettings with default() {
   { text_speed: 50, bgm_volume: 0.7, sfx_volume: 0.8 }
 }
 

@@ -1,12 +1,17 @@
 ///|
-using @storage {save_slot_delete, save_slot_read, save_slot_read_meta}
+using @storage {
+  save_slot_delete,
+  save_slot_read,
+  save_slot_read_meta,
+  save_slot_delete_in,
+}
 
 ///|
 using @core {script}
 
 ///|
 fn dummy_bg(id : String) -> @assets.Background {
-  @js.Value::cast_from(id).cast()
+  @js.Object::from_iter([("id", id), ("url", "")].iter()).to_value().cast()
 }
 
 ///|

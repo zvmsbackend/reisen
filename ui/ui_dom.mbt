@@ -108,7 +108,7 @@ struct UiDom {
 }
 
 ///|
-fn UiDom::new(root_id : String) -> UiDom {
+pub fn UiDom::new(root_id : String) -> UiDom {
   {
     root_id,
     dom_animation_cursor: 0,
@@ -247,11 +247,32 @@ fn dom_pos_tuple(pos : Position) -> (Double, Double) {
 }
 
 ///|
-fn[T] UiDom::pull_new_dom_animations(
-  self : UiDom,
-  director : Director[T],
-) -> Unit {
-  let all = director.dom_animations()
+fn anim_value(values : Array[Double]?, index : Int) -> Double? {
+  match values {
+    Some(xs) =>
+      if index >= 0 && index < xs.length() {
+        Some(xs[index])
+      } else {
+        None
+      }
+    None => None
+  }
+}
+
+///|
+fn clone_dom_figures(
+  src : Map[String, DomFigureState],
+) -> Map[String, DomFigureState] {
+  let out : Map[String, DomFigureState] = {}
+  for id, state in src {
+    out.set(id, state)
+  }
+  out
+}
+
+///|
+fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
+  let all = snapshot.dom_animations
   if self.dom_animation_cursor > all.length() {
     self.dom_animation_cursor = 0
   }
@@ -260,7 +281,7 @@ fn[T] UiDom::pull_new_dom_animations(
       continue
     }
     let (target, spec) = entry
-    let dom_figures = director.dom_figures()
+    let dom_figures = snapshot.dom_figures
     match spec.prop {
       Position => {
         let (cur_x, cur_y) = match dom_figures.get(target) {
@@ -598,6 +619,11 @@ pub fn UiDom::advance_auto_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
     return
   }
   self.auto_mode_last_advance_ms += elapsed_ms
+}
+
+///|
+pub fn UiDom::skip_mode(self : UiDom) -> Bool {
+  self.skip_mode
 }
 
 ///|
@@ -1597,11 +1623,10 @@ extern "js" fn dom_take_typewriter_click(root_id : String) -> Bool =
   #| }
 
 ///|
-fn[T] UiDom::apply_active_dom_animations(
+fn UiDom::apply_active_dom_animations(
   self : UiDom,
-  director : Director[T],
+  dom_figures : Map[String, DomFigureState],
 ) -> Unit {
-  let dom_figures = director.dom_figures()
   let finished_position : Array[String] = []
   let finished_opacity : Array[String] = []
   let finished_scale : Array[String] = []
@@ -1780,11 +1805,15 @@ fn[T] UiDom::apply_active_dom_animations(
 }
 
 ///|
-fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
-  ui.pull_new_dom_animations(director)
-  ui.apply_active_dom_animations(director)
+pub fn UiViewModel::from_snapshot(
+  snapshot : UiSnapshot,
+  ui : UiDom,
+) -> UiViewModel {
+  ui.pull_new_dom_animations(snapshot)
+  let dom_figure_states = clone_dom_figures(snapshot.dom_figures)
+  ui.apply_active_dom_animations(dom_figure_states)
   let dom_figures : Array[UiDomFigureView] = []
-  for id, state in director.dom_figures() {
+  for id, state in dom_figure_states {
     let placement = state.placement
     let (left_pct, top_pct, anchor_x, anchor_y) = match placement.pos {
       Left => (18.0, 50.0, 0.5, 0.5)
@@ -1814,36 +1843,37 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
       color_b: placement.scalars.color_b,
     })
   }
-  let (speaker, text) = match director.dialog() {
-    Some(line) => (line.speaker, line.text)
+  let (speaker, text) = match snapshot.dialog {
+    Some((speaker, text, _, _)) => (speaker, text)
     None => ("", "")
   }
-  let typewriter = match director.dialog() {
-    Some(line) => line.typewriter
+  let typewriter = match snapshot.dialog {
+    Some((_, _, typewriter, _)) => typewriter
     None => true
   }
-  let append = match director.dialog() {
-    Some(line) => line.append
+  let append = match snapshot.dialog {
+    Some((_, _, _, append)) => append
     None => false
   }
-  let intro_text = director.intro_text()
-  let video = match director.video() {
+  let intro_text = snapshot.intro_text
+  let video = match snapshot.video {
     Some((url, can_skip)) => Some(UiVideoView::{ url, can_skip })
     None => None
   }
-  let text_box_visible = director.text_box_visible()
-  let avatar_id = director.avatar_id()
-  let choices = director
-    .choices()
-    .map(opt => UiChoiceView::{ id: opt.id, text: opt.text })
-  let text_input = match director.text_input() {
+  let text_box_visible = snapshot.text_box_visible
+  let avatar_id = snapshot.avatar_id
+  let choices = snapshot.choices.map(opt => UiChoiceView::{
+    id: opt.id,
+    text: opt.text,
+  })
+  let text_input = match snapshot.text_input {
     Some((var_name, prompt)) => Some(UiTextInputView::{ var_name, prompt })
     None => None
   }
   {
     speaker,
     text,
-    dialog_seq: director.dialog_seq(),
+    dialog_seq: snapshot.dialog_seq,
     typewriter,
     intro_text,
     video,
@@ -1852,7 +1882,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
     avatar_id,
     choices,
     text_input,
-    dialog_history: director.dialog_history(),
+    dialog_history: snapshot.dialog_history,
     dom_figures,
     auto_mode: ui.auto_mode,
     skip_mode: ui.skip_mode,
@@ -1862,7 +1892,7 @@ fn[T] ui_view_from_director(director : Director[T], ui : UiDom) -> UiViewModel {
 }
 
 ///|
-fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
+pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   let dom_figures_json = view.dom_figures.to_json().stringify()
   dom_render_dom_figures(self.root_id, dom_figures_json)
   match view.video {
@@ -1966,12 +1996,12 @@ fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
 }
 
 ///|
-fn UiDom::take_selected_choice(self : UiDom) -> String? {
+pub fn UiDom::take_selected_choice(self : UiDom) -> String? {
   dom_take_selected_choice(self.root_id).to_option()
 }
 
 ///|
-fn UiDom::take_submitted_text_input(self : UiDom) -> String? {
+pub fn UiDom::take_submitted_text_input(self : UiDom) -> String? {
   dom_take_submitted_text_input(self.root_id).to_option()
 }
 
@@ -1989,17 +2019,17 @@ extern "js" fn dom_take_action(root_id : String) -> @js.Nullable[String] =
   #| }
 
 ///|
-fn UiDom::take_action(self : UiDom) -> String? {
+pub fn UiDom::take_action(self : UiDom) -> String? {
   dom_take_action(self.root_id).to_option()
 }
 
 ///|
-fn UiDom::take_video_action(self : UiDom) -> String? {
+pub fn UiDom::take_video_action(self : UiDom) -> String? {
   dom_take_video_action(self.root_id).to_option()
 }
 
 ///|
-fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
+pub fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
   if self.simulated_click {
     self.simulated_click = false
     return true
@@ -2008,7 +2038,7 @@ fn UiDom::check_typewriter_click(self : UiDom) -> Bool {
 }
 
 ///|
-fn UiDom::check_intro_done(self : UiDom) -> Bool {
+pub fn UiDom::check_intro_done(self : UiDom) -> Bool {
   if self.simulated_intro_done {
     self.simulated_intro_done = false
     return true
@@ -2017,7 +2047,7 @@ fn UiDom::check_intro_done(self : UiDom) -> Bool {
 }
 
 ///|
-fn UiDom::reveal_intro_line(self : UiDom) -> Bool {
+pub fn UiDom::reveal_intro_line(self : UiDom) -> Bool {
   dom_reveal_intro_line(self.root_id)
 }
 
@@ -2038,6 +2068,11 @@ pub fn UiDom::mark_all_dirty(self : UiDom) -> Unit {
 
 ///|
 pub fn UiDom::mark_dirty_text(self : UiDom) -> Unit {
+  self.dirty_text = true
+}
+
+///|
+pub fn UiDom::mark_dirty_text_and_speaker(self : UiDom) -> Unit {
   self.dirty_speaker = true
   self.dirty_text = true
 }

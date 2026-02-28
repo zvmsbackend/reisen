@@ -12,12 +12,6 @@ struct DialogLine {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
-pub struct DialogLogEntry {
-  speaker : String
-  text : String
-} derive(Show, Eq, ToJson, FromJson)
-
-///|
 priv struct UiState {
   mut dialog : DialogLine?
   mut dialog_seq : Int
@@ -454,6 +448,27 @@ pub fn[T] Director::dom_animations(
   self : Director[T],
 ) -> Array[(String, AnimationSpec)] {
   self.render.dom_animations
+}
+
+///|
+pub fn[T] Director::ui_snapshot(self : Director[T]) -> UiSnapshot {
+  let dialog = match self.ui.dialog {
+    Some(line) => Some((line.speaker, line.text, line.typewriter, line.append))
+    None => None
+  }
+  {
+    dialog,
+    dialog_seq: self.ui.dialog_seq,
+    dialog_history: self.ui.dialog_history,
+    choices: self.ui.choices,
+    text_input: self.ui.text_input,
+    intro_text: self.ui.intro_text,
+    video: self.ui.video,
+    text_box_visible: self.ui.text_box_visible,
+    avatar_id: self.ui.avatar_id,
+    dom_figures: self.render.dom_figures,
+    dom_animations: self.render.dom_animations,
+  }
 }
 
 ///|

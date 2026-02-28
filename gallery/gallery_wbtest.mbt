@@ -10,7 +10,7 @@ test "gallery register keeps stable order and replacement" {
     replay_label="scene_a",
   )
   let b = GalleryImage::new("img_b", title="B")
-  let a2 = GalleryImage::new("img_a_new", title="A2")
+  let a2 = GalleryImage::new("img_a_new", title="A2", id="id_a")
 
   register_image(a)
   register_image(b)

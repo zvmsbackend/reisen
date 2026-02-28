@@ -120,11 +120,19 @@ pub struct ChoiceOption {
   text : String
   jump : String
 }
-pub fn ChoiceOption::new(String, Label, String) -> Self
 pub impl Eq for ChoiceOption
 pub impl Show for ChoiceOption
 pub impl ToJson for ChoiceOption
 pub impl @json.FromJson for ChoiceOption
+
+pub(all) struct DialogLogEntry {
+  speaker : String
+  text : String
+}
+pub impl Eq for DialogLogEntry
+pub impl Show for DialogLogEntry
+pub impl ToJson for DialogLogEntry
+pub impl @json.FromJson for DialogLogEntry
 
 pub(all) struct DomFigureState {
   placement : FigurePlacement
@@ -409,7 +417,26 @@ pub impl Show for ScriptFlowTrace
 pub impl ToJson for ScriptFlowTrace
 pub impl @json.FromJson for ScriptFlowTrace
 
+pub(all) struct UiSnapshot {
+  dialog : (String, String, Bool, Bool)?
+  dialog_seq : Int
+  dialog_history : Array[DialogLogEntry]
+  choices : Array[ChoiceOption]
+  text_input : (String, String)?
+  intro_text : String?
+  video : (String, Bool)?
+  text_box_visible : Bool
+  avatar_id : String?
+  dom_figures : Map[String, DomFigureState]
+  dom_animations : Array[(String, AnimationSpec)]
+}
+pub impl Default for UiSnapshot
+pub impl Eq for UiSnapshot
+pub impl Show for UiSnapshot
+
 // Type aliases
+pub type EventHook = (RuntimeEvent) -> Unit
+
 pub type PayloadJumpSelector[T] = (@state.GameState[T], String) -> Label
 
 pub type PayloadPredicate[T] = (@state.GameState[T], String) -> Bool

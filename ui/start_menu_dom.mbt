@@ -2,7 +2,7 @@
 /// Start menu DOM integration (New Game / Continue / Load Slot / Settings).
 
 ///|
-priv enum StartMenuAction {
+pub(all) enum StartMenuAction {
   NoAction
   NewGame
   Continue(String)
@@ -12,26 +12,26 @@ priv enum StartMenuAction {
 }
 
 ///|
-priv enum StartGateAction {
+pub enum StartGateAction {
   NoAction
   Start
 }
 
 ///|
-priv enum StartLogoAction {
+pub enum StartLogoAction {
   NoAction
   Done
 }
 
 ///|
-priv struct StartMenu {
+struct StartMenu {
   root_id : String
   save_ns : String
   background : String
 }
 
 ///|
-fn StartMenu::new(
+pub fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
   background? : String = "",
@@ -40,17 +40,17 @@ fn StartMenu::new(
 }
 
 ///|
-fn StartMenu::render_gate(self : StartMenu) -> Unit {
+pub fn StartMenu::render_gate(self : StartMenu) -> Unit {
   start_gate_dom_render(self.root_id)
 }
 
 ///|
-fn StartMenu::clear_gate(self : StartMenu) -> Unit {
+pub fn StartMenu::clear_gate(self : StartMenu) -> Unit {
   start_gate_dom_clear(self.root_id)
 }
 
 ///|
-fn StartMenu::take_gate_action(self : StartMenu) -> StartGateAction {
+pub fn StartMenu::take_gate_action(self : StartMenu) -> StartGateAction {
   match start_gate_action_kind(self.root_id).to_option() {
     Some("start") => {
       start_gate_action_clear(self.root_id)
@@ -61,7 +61,7 @@ fn StartMenu::take_gate_action(self : StartMenu) -> StartGateAction {
 }
 
 ///|
-fn StartMenu::render_logo(
+pub fn StartMenu::render_logo(
   self : StartMenu,
   url : String,
   duration_ms : Int,
@@ -70,12 +70,12 @@ fn StartMenu::render_logo(
 }
 
 ///|
-fn StartMenu::clear_logo(self : StartMenu) -> Unit {
+pub fn StartMenu::clear_logo(self : StartMenu) -> Unit {
   start_logo_dom_clear(self.root_id)
 }
 
 ///|
-fn StartMenu::take_logo_action(self : StartMenu) -> StartLogoAction {
+pub fn StartMenu::take_logo_action(self : StartMenu) -> StartLogoAction {
   match start_logo_action_kind(self.root_id).to_option() {
     Some("done") => {
       start_logo_action_clear(self.root_id)
@@ -314,7 +314,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-fn StartMenu::render(self : StartMenu) -> Unit {
+pub fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_entries_in(self.save_ns)
   let has_gallery = @gallery.registered_images().length() > 0
   let continue_slot = choose_continue_slot(entries)
@@ -352,16 +352,16 @@ extern "js" fn start_menu_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-fn StartMenu::clear(self : StartMenu) -> Unit {
+pub fn StartMenu::clear(self : StartMenu) -> Unit {
   start_menu_dom_clear(self.root_id)
 }
 
 ///|
-fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
+pub fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
   match start_menu_action_kind(self.root_id).to_option() {
     Some("new") => {
       start_menu_action_clear(self.root_id)
-      StartMenuAction::NewGame
+      NewGame
     }
     Some("continue") => {
       let slot = match start_menu_action_slot(self.root_id).to_option() {
@@ -370,23 +370,23 @@ fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
       }
       start_menu_action_clear(self.root_id)
       if slot == "" {
-        StartMenuAction::NoAction
+        NoAction
       } else {
-        StartMenuAction::Continue(slot)
+        Continue(slot)
       }
     }
     Some("load") => {
       start_menu_action_clear(self.root_id)
-      StartMenuAction::Load
+      Load
     }
     Some("settings") => {
       start_menu_action_clear(self.root_id)
-      StartMenuAction::Settings
+      Settings
     }
     Some("gallery") => {
       start_menu_action_clear(self.root_id)
-      StartMenuAction::Gallery
+      Gallery
     }
-    _ => StartMenuAction::NoAction
+    _ => NoAction
   }
 }

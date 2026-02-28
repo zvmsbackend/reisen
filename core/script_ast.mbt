@@ -10,6 +10,12 @@ pub fn label(name? : String = @util.gensym(prefix="label")) -> Label {
 }
 
 ///|
+pub(all) struct DialogLogEntry {
+  speaker : String
+  text : String
+} derive(Show, Eq, ToJson, FromJson)
+
+///|
 pub(all) enum Position {
   Left
   Center
@@ -114,6 +120,38 @@ pub(all) struct DomFigureState {
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
+pub(all) struct UiSnapshot {
+  dialog : (String, String, Bool, Bool)?
+  dialog_seq : Int
+  dialog_history : Array[DialogLogEntry]
+  choices : Array[ChoiceOption]
+  text_input : (String, String)?
+  intro_text : String?
+  video : (String, Bool)?
+  text_box_visible : Bool
+  avatar_id : String?
+  dom_figures : Map[String, DomFigureState]
+  dom_animations : Array[(String, AnimationSpec)]
+} derive(Show, Eq)
+
+///|
+pub impl Default for UiSnapshot with default() {
+  {
+    dialog: None,
+    dialog_seq: 0,
+    dialog_history: [],
+    choices: [],
+    text_input: None,
+    intro_text: None,
+    video: None,
+    text_box_visible: true,
+    avatar_id: None,
+    dom_figures: {},
+    dom_animations: [],
+  }
+}
+
+///|
 pub(all) struct BackgroundState {
   id : String
   scalars : ScalarState
@@ -125,15 +163,6 @@ pub struct ChoiceOption {
   text : String
   jump : String
 } derive(Show, Eq, ToJson, FromJson)
-
-///|
-pub fn ChoiceOption::new(
-  text : String,
-  jump : Label,
-  id : String,
-) -> ChoiceOption {
-  { id, text, jump: jump.0 }
-}
 
 ///|
 /// User-defined MoonBit code hook executed by the script runtime.

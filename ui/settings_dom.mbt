@@ -2,20 +2,20 @@
 /// Settings menu DOM integration (text speed, BGM volume, SFX volume, skip mode).
 
 ///|
-pub enum SettingsContext {
+pub(all) enum SettingsContext {
   FromStartMenu
   FromMidgame
 } derive(Show, Eq)
 
 ///|
-priv enum SettingsViewMode {
+pub(all) enum SettingsViewMode {
   Settings
   SaveList
   LoadList
 }
 
 ///|
-priv enum SettingsAction {
+pub enum SettingsAction {
   ViewChanged
   NoAction
   Back
@@ -34,7 +34,7 @@ priv enum SaveSlotType {
 }
 
 ///|
-priv struct SettingsMenu {
+struct SettingsMenu {
   root_id : String
   save_ns : String
   background : String
@@ -52,7 +52,7 @@ priv struct SettingsView {
 }
 
 ///|
-fn SettingsMenu::new(
+pub fn SettingsMenu::new(
   root_id : String,
   save_namespace? : String = "global",
   background? : String = "",
@@ -70,7 +70,7 @@ fn SettingsMenu::new(
 }
 
 ///|
-fn SettingsMenu::set_context(
+pub fn SettingsMenu::set_context(
   self : SettingsMenu,
   context : SettingsContext,
 ) -> Unit {
@@ -78,7 +78,7 @@ fn SettingsMenu::set_context(
 }
 
 ///|
-fn SettingsMenu::set_view_mode(
+pub fn SettingsMenu::set_view_mode(
   self : SettingsMenu,
   mode : SettingsViewMode,
 ) -> Unit {
@@ -502,7 +502,7 @@ fn filter_entries_by_type(
 }
 
 ///|
-fn SettingsMenu::render(self : SettingsMenu) -> Unit {
+pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
   settings_dom_install_confirm_helper()
   match self.view_mode {
     SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
@@ -572,7 +572,7 @@ fn SettingsMenu::render(self : SettingsMenu) -> Unit {
     SettingsViewMode::Settings => {
       let settings = match settings_read_in(self.save_ns) {
         Some(s) => s
-        None => game_settings_default()
+        None => GameSettings::default()
       }
       let view = to_settings_view(settings)
       let context_str = match self.context {
@@ -606,7 +606,7 @@ extern "js" fn settings_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-fn SettingsMenu::clear(self : SettingsMenu) -> Unit {
+pub fn SettingsMenu::clear(self : SettingsMenu) -> Unit {
   settings_dom_clear(self.root_id)
 }
 
@@ -627,7 +627,7 @@ fn SettingsMenu::persist_settings(self : SettingsMenu) -> Unit {
 }
 
 ///|
-fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
+pub fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
   match settings_action_kind(self.root_id).to_option() {
     Some("start_menu") => {
       if self.view_mode is SettingsViewMode::Settings {
@@ -694,7 +694,7 @@ fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
       settings_action_clear(self.root_id)
       match slot {
         Some(s) => {
-          save_slot_delete_in(self.save_ns, s)
+          @storage.save_slot_delete_in(self.save_ns, s)
           SettingsAction::ViewChanged
         }
         None => SettingsAction::NoAction

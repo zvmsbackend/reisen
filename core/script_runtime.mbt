@@ -46,6 +46,9 @@ pub(all) enum RuntimeEvent {
 } derive(Show, Eq)
 
 ///|
+pub type EventHook = (RuntimeEvent) -> Unit
+
+///|
 pub suberror ScriptRuntimeError {
   LabelNotFound(label~ : String)
   ChoiceNotActive

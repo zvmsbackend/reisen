@@ -3,11 +3,11 @@ test "choose_continue_slot prefers newest metadata timestamp" {
   let entries = [
     try! SaveSlotEntry::new(
       "a",
-      meta=Some(save_slot_meta("A", "", updated_at_ms=10.0)),
+      meta=Some(@storage.save_slot_meta("A", "", updated_at_ms=10.0)),
     ),
     try! SaveSlotEntry::new(
       "b",
-      meta=Some(save_slot_meta("B", "", updated_at_ms=20.0)),
+      meta=Some(@storage.save_slot_meta("B", "", updated_at_ms=20.0)),
     ),
     try! SaveSlotEntry::new("c"),
   ]

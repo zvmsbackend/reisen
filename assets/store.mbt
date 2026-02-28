@@ -1,5 +1,8 @@
 ///|
 /// Asset loading helpers for the browser target.
+
+///|
+/// |
 using @pixi {type PixiLive2dModel}
 
 ///|

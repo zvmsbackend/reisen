@@ -11,7 +11,7 @@ enum AudioCommand {
 } derive(Show, Eq)
 
 ///|
-fn audio_command_from_event(event : RuntimeEvent) -> AudioCommand {
+fn AudioCommand::from_event(event : RuntimeEvent) -> AudioCommand {
   match event {
     MusicPlayed(id, should_loop) => AudioCommand::PlayMusic(id, should_loop)
     MusicStopped => AudioCommand::StopMusic
@@ -45,24 +45,21 @@ pub fn AudioDom::new_with_store(store : AssetStore) -> AudioDom {
 }
 
 ///|
-pub fn AudioDom::set_bgm_gain(_self : AudioDom, gain : Double) -> Unit {
+pub fn AudioDom::set_bgm_gain(gain : Double) -> Unit {
   let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
   audio_dom_set_bgm_gain(clamped)
 }
 
 ///|
-pub fn AudioDom::set_sfx_gain(_self : AudioDom, gain : Double) -> Unit {
+pub fn AudioDom::set_sfx_gain(gain : Double) -> Unit {
   let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
   audio_dom_set_sfx_gain(clamped)
 }
 
 ///|
-pub fn AudioDom::apply_settings(
-  self : AudioDom,
-  settings : GameSettings,
-) -> Unit {
-  self.set_bgm_gain(settings.bgm_volume)
-  self.set_sfx_gain(settings.sfx_volume)
+pub fn AudioDom::apply_settings(settings : GameSettings) -> Unit {
+  AudioDom::set_bgm_gain(settings.bgm_volume)
+  AudioDom::set_sfx_gain(settings.sfx_volume)
 }
 
 ///|
@@ -143,7 +140,7 @@ extern "js" fn audio_dom_has_active_sfx_impl() -> Bool =
 
 ///|
 pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
-  match audio_command_from_event(event) {
+  match AudioCommand::from_event(event) {
     AudioCommand::PlayMusic(id, should_loop) =>
       match (self.resolve_url)(id) {
         Some(url) => audio_dom_play_music(url, should_loop)
@@ -161,11 +158,11 @@ pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
 }
 
 ///|
-pub fn audio_dom_has_active_sfx() -> Bool {
+pub fn AudioDom::has_active_sfx() -> Bool {
   audio_dom_has_active_sfx_impl()
 }
 
 ///|
-pub fn AudioDom::as_event_hook(self : AudioDom) -> EventHook {
+pub fn AudioDom::as_event_hook(self : AudioDom) -> @core.EventHook {
   event => self.handle_event(event)
 }

@@ -4,25 +4,23 @@ using @util {gensym}
 ///|
 using @storage {
   type GameSettings,
-  type SaveSlotEntry,
-  game_settings_default,
-  save_slot_delete_in,
-  save_slot_entries_in,
   save_slot_list_in,
   save_slot_meta,
   save_slot_read_in,
   save_slot_write_in,
   save_slot_write_meta_in,
   settings_read_in,
-  settings_write_in,
 }
 
 ///|
 using @core {
+  type EventHook,
+  type UiSnapshot,
   type AnimationSpec,
   type BackgroundState,
   type ChoiceOption,
   type DomFigureState,
+  type DialogLogEntry,
   type EffectSpec,
   type FigurePlacement,
   type Runtime,
@@ -64,4 +62,15 @@ using @pixi {
   pixi_effect_defaults_for,
   window_inner_height,
   window_inner_width,
+}
+
+///|
+using @ui {
+  type UiDom,
+  type StartMenu,
+  type GalleryMenu,
+  type SettingsMenu,
+  type StartMenuAction,
+  type AudioDom,
+  type UiViewModel,
 }

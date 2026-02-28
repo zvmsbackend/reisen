@@ -1,5 +1,7 @@
 ///|
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
+
+///|
 using @pixi {type Effect}
 
 ///|
@@ -24,7 +26,7 @@ pub fn option(
   jump : Label,
   id? : String = gensym(prefix="choice"),
 ) -> ChoiceOption {
-  ChoiceOption::new(text, jump, id)
+  { id, text, jump: jump.0 }
 }
 
 ///|
