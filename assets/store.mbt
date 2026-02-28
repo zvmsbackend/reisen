@@ -9,6 +9,9 @@ pub type Image
 #external
 pub type Video
 
+#external
+pub type Live2dModel
+
 ///|
 extern "js" fn load_image_promise(url : String) -> @js.Promise =
   #| (url) => new Promise((resolve, reject) => {
@@ -121,7 +124,7 @@ extern "js" fn load_result_error(
 ///|
 pub async fn load_live2d_model(
   source : String,
-) -> @js.Value raise AssetStoreError {
+) -> Live2dModel raise AssetStoreError {
   let result = @js.Promise::wait(js_load_live2d_model_promise(source)) catch {
     _ =>
       raise AssetStoreError::ResourceLoadFailed(
@@ -136,7 +139,7 @@ pub async fn load_live2d_model(
       ),
     )
   }
-  load_result_value(result)
+  load_result_value(result).cast()
 }
 
 ///|
@@ -146,7 +149,7 @@ pub struct AssetStore {
   texts : Map[String, String]
   bytes : Map[String, Bytes]
   audios : Map[String, String]
-  live2d_models : Map[String, @js.Value]
+  live2d_models : Map[String, Live2dModel]
 }
 
 ///|
@@ -255,7 +258,7 @@ pub fn AssetStore::register_sfx(
 pub fn AssetStore::put_live2d_model(
   self : AssetStore,
   id : String,
-  model : @js.Value,
+  model : Live2dModel,
 ) -> Unit {
   self.live2d_models.set(id, model)
 }
@@ -264,7 +267,7 @@ pub fn AssetStore::put_live2d_model(
 pub fn AssetStore::get_live2d_model(
   self : AssetStore,
   id : String,
-) -> @js.Value? {
+) -> Live2dModel? {
   self.live2d_models.get(id)
 }
 
