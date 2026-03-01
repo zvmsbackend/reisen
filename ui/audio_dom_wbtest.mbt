@@ -25,7 +25,7 @@ test "audio command mapping from runtime event" {
         voice=Some("voice"),
       ),
     ),
-    PlaySfx("voice"),
+    PlaySfxUrl("voice"),
   )
 }
 

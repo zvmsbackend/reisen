@@ -7,6 +7,7 @@ enum AudioCommand {
   PlayMusic(String, Bool)
   StopMusic
   PlaySfx(String)
+  PlaySfxUrl(String)
   StopSfx
 } derive(Show, Eq)
 
@@ -19,7 +20,7 @@ fn AudioCommand::from_event(event : RuntimeEvent) -> AudioCommand {
     SfxStopped => AudioCommand::StopSfx
     Said(voice~, ..) =>
       match voice {
-        Some(id) => AudioCommand::PlaySfx(id)
+        Some(url) => AudioCommand::PlaySfxUrl(url)
         None => AudioCommand::Noop
       }
     IntroShown(_) => AudioCommand::Noop
@@ -149,6 +150,7 @@ pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
         Some(url) => audio_dom_play_sfx(url)
         None => ()
       }
+    AudioCommand::PlaySfxUrl(url) => audio_dom_play_sfx(url)
     AudioCommand::StopSfx => audio_dom_stop_sfx()
     AudioCommand::Noop => ()
   }

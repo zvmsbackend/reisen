@@ -5,7 +5,6 @@ import {
   "moonbitlang/core/json",
   "sennenki/reisen/assets",
   "sennenki/reisen/core",
-  "sennenki/reisen/storage",
 }
 
 // Values
@@ -18,7 +17,6 @@ pub impl Eq for AudioCommand
 pub impl Show for AudioCommand
 
 type AudioDom
-pub fn AudioDom::apply_settings(@storage.GameSettings) -> Unit
 pub fn AudioDom::as_event_hook(Self) -> (@core.RuntimeEvent) -> Unit
 pub fn AudioDom::handle_event(Self, @core.RuntimeEvent) -> Unit
 pub fn AudioDom::has_active_sfx() -> Bool

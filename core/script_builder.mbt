@@ -470,14 +470,14 @@ pub fn[T] ScriptBuilder::narrate(
   voice? : String = "",
   proceed_on_done? : Bool = false,
 ) -> Unit {
-  let voice_id = if voice == "" { None } else { Some(voice) }
+  let voice_url = if voice == "" { None } else { Some(voice) }
   self.instructions.push(
     Say(
       speaker="",
       text~,
       typewriter~,
       append~,
-      voice=voice_id,
+      voice=voice_url,
       proceed_on_done~,
     ),
   )
@@ -493,9 +493,16 @@ pub fn[T] ScriptBuilder::say(
   voice? : String = "",
   proceed_on_done? : Bool = false,
 ) -> Unit {
-  let voice_id = if voice == "" { None } else { Some(voice) }
+  let voice_url = if voice == "" { None } else { Some(voice) }
   self.instructions.push(
-    Say(speaker~, text~, typewriter~, append~, voice=voice_id, proceed_on_done~),
+    Say(
+      speaker~,
+      text~,
+      typewriter~,
+      append~,
+      voice=voice_url,
+      proceed_on_done~,
+    ),
   )
 }
 
@@ -509,7 +516,7 @@ pub fn[T] ScriptBuilder::say_many(
   voice? : String = "",
   proceed_on_done? : Bool = false,
 ) -> Unit {
-  let voice_id = if voice == "" { None } else { Some(voice) }
+  let voice_url = if voice == "" { None } else { Some(voice) }
   for text in texts {
     self.instructions.push(
       Say(
@@ -517,7 +524,7 @@ pub fn[T] ScriptBuilder::say_many(
         text~,
         typewriter~,
         append~,
-        voice=voice_id,
+        voice=voice_url,
         proceed_on_done~,
       ),
     )
