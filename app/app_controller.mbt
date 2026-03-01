@@ -32,6 +32,8 @@ struct AppController[T] {
   script_locale_dir : String
   mut script_locale_json : String?
   mut script_default_locale_json : String?
+  mut vocal_locale_json : String?
+  mut vocal_default_locale_json : String?
   mut script_locale_load_attempted : Bool
   save_ns : String
   autosave_slot : String
@@ -122,6 +124,8 @@ pub fn[T] AppController::new(
     script_locale_dir,
     script_locale_json: None,
     script_default_locale_json: None,
+    vocal_locale_json: None,
+    vocal_default_locale_json: None,
     script_locale_load_attempted: false,
     save_ns: save_namespace,
     autosave_slot,
@@ -296,6 +300,8 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
       runner.set_script_localization(
         self.script_locale_json,
         self.script_default_locale_json,
+        self.vocal_locale_json,
+        self.vocal_default_locale_json,
         effective_locale,
         self.default_locale,
       )
@@ -368,6 +374,16 @@ async fn[T] AppController::ensure_script_locales_loaded(
   } else {
     "\{self.script_locale_dir}/\{default_code}.json"
   }
+  let selected_vocal_path = if selected_code == "" {
+    ""
+  } else {
+    "\{self.script_locale_dir}/\{selected_code}-vocal.json"
+  }
+  let default_vocal_path = if default_code == "" {
+    ""
+  } else {
+    "\{self.script_locale_dir}/\{default_code}-vocal.json"
+  }
   self.script_locale_json = if selected_path == "" {
     None
   } else {
@@ -382,6 +398,26 @@ async fn[T] AppController::ensure_script_locales_loaded(
     None
   } else {
     let raw = load_text(default_path) catch { _ => "" }
+    if raw == "" {
+      None
+    } else {
+      Some(raw)
+    }
+  }
+  self.vocal_locale_json = if selected_vocal_path == "" {
+    None
+  } else {
+    let raw = load_text(selected_vocal_path) catch { _ => "" }
+    if raw == "" {
+      None
+    } else {
+      Some(raw)
+    }
+  }
+  self.vocal_default_locale_json = if default_vocal_path == "" {
+    None
+  } else {
+    let raw = load_text(default_vocal_path) catch { _ => "" }
     if raw == "" {
       None
     } else {
@@ -403,6 +439,8 @@ fn[T] AppController::apply_locale(
   self.script_locale_load_attempted = false
   self.script_locale_json = None
   self.script_default_locale_json = None
+  self.vocal_locale_json = None
+  self.vocal_default_locale_json = None
   self.refresh_ui_strings()
 }
 
@@ -472,6 +510,8 @@ async fn[T] AppController::start_gallery_replay(
         ui_strings=self.ui_strings,
         script_locale_json=self.script_locale_json.unwrap_or(""),
         script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
+        vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
+        vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(""),
         script_locale=self.locale,
         script_default_locale=self.default_locale,
       )
@@ -512,6 +552,8 @@ async fn[T : FromJson] AppController::handle_menu_action(
         ui_strings=self.ui_strings,
         script_locale_json=self.script_locale_json.unwrap_or(""),
         script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
+        vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
+        vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(""),
         script_locale=self.locale,
         script_default_locale=self.default_locale,
       )
@@ -536,6 +578,8 @@ async fn[T : FromJson] AppController::handle_menu_action(
           script_default_locale_json=self.script_default_locale_json.unwrap_or(
             "",
           ),
+          vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
+          vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(""),
           script_locale=self.locale,
           script_default_locale=self.default_locale,
         )
@@ -766,6 +810,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                   script_default_locale_json=self.script_default_locale_json.unwrap_or(
                     "",
                   ),
+                  vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
+                  vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(
+                    "",
+                  ),
                   script_locale=self.locale,
                   script_default_locale=self.default_locale,
                 )
@@ -803,6 +851,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             ui_strings=self.ui_strings,
             script_locale_json=self.script_locale_json.unwrap_or(""),
             script_default_locale_json=self.script_default_locale_json.unwrap_or(
+              "",
+            ),
+            vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
+            vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(
               "",
             ),
             script_locale=self.locale,
@@ -874,6 +926,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             ui_strings=self.ui_strings,
             script_locale_json=self.script_locale_json.unwrap_or(""),
             script_default_locale_json=self.script_default_locale_json.unwrap_or(
+              "",
+            ),
+            vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
+            vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(
               "",
             ),
             script_locale=self.locale,

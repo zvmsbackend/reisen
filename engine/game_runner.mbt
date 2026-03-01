@@ -192,6 +192,25 @@ fn[T] GameRunner::emit_ui_click_sfx(self : GameRunner[T]) -> Unit {
 }
 
 ///|
+fn[T] GameRunner::emit_runtime_event(
+  self : GameRunner[T],
+  event : RuntimeEvent,
+) -> Unit {
+  let localized = match event {
+    Said(speaker~, text~, typewriter~, append~, voice~) =>
+      @core.Said(
+        speaker~,
+        text~,
+        typewriter~,
+        append~,
+        voice=voice.map(raw => self.ui.localize_vocal_url(raw)),
+      )
+    _ => event
+  }
+  (self.event_hook)(localized)
+}
+
+///|
 pub fn[T] GameRunner::set_ui_click_sfx(
   self : GameRunner[T],
   ui_click_sfx_id : String?,
@@ -562,7 +581,7 @@ pub async fn[T] GameRunner::step(
       Some(action) => {
         let skipped = action == "skip"
         let event = self.director.complete_video_wait(skipped)
-        (self.event_hook)(event)
+        self.emit_runtime_event(event)
         self.apply_event_and_render(event, false, RenderMode::RenderUi)
         return event
       }
@@ -624,7 +643,7 @@ pub async fn[T] GameRunner::step(
   }
   if self.director.is_waiting() {
     let event = self.director.step(elapsed_ms~)
-    (self.event_hook)(event)
+    self.emit_runtime_event(event)
     self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
@@ -633,7 +652,7 @@ pub async fn[T] GameRunner::step(
       Some(choice_id) => {
         self.emit_ui_click_sfx()
         let event = self.director.choose(choice_id)
-        (self.event_hook)(event)
+        self.emit_runtime_event(event)
         self.ui.mark_all_dirty()
         self.render_ui()
         return event
@@ -659,7 +678,7 @@ pub async fn[T] GameRunner::step(
       Some(value) => {
         self.emit_ui_click_sfx()
         let event = self.director.submit_text_input(value)
-        (self.event_hook)(event)
+        self.emit_runtime_event(event)
         self.director.ui.text_input = None
         self.ui.mark_dirty_text_input()
         self.render_ui()
@@ -670,7 +689,7 @@ pub async fn[T] GameRunner::step(
           Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
           None => Noop
         }
-        (self.event_hook)(event)
+        self.emit_runtime_event(event)
         return event
       }
     }
@@ -685,7 +704,7 @@ pub async fn[T] GameRunner::step(
       if intro_done {
         self.director.ui.intro_text = None
         let event = self.director.step(elapsed_ms=0)
-        (self.event_hook)(event)
+        self.emit_runtime_event(event)
         self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
         return event
       }
@@ -696,7 +715,7 @@ pub async fn[T] GameRunner::step(
   }
   if self.director.dialog() is None {
     let event = self.director.step(elapsed_ms~)
-    (self.event_hook)(event)
+    self.emit_runtime_event(event)
     self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
@@ -705,7 +724,7 @@ pub async fn[T] GameRunner::step(
     self.ui.complete_typewriter()
     self.ui.mark_skip_advanced()
     let event = self.director.step(elapsed_ms=0)
-    (self.event_hook)(event)
+    self.emit_runtime_event(event)
     match event {
       ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded => {
         self.ui.mark_dirty_choices()
@@ -737,7 +756,7 @@ pub async fn[T] GameRunner::step(
   match self.director.dialog() {
     Some(line) if line.proceed_on_done => {
       let event = self.director.step(elapsed_ms=0)
-      (self.event_hook)(event)
+      self.emit_runtime_event(event)
       self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
       return event
     }
@@ -749,7 +768,7 @@ pub async fn[T] GameRunner::step(
       self.emit_ui_click_sfx()
     }
     let event = self.director.step(elapsed_ms=0)
-    (self.event_hook)(event)
+    self.emit_runtime_event(event)
     self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
@@ -757,7 +776,7 @@ pub async fn[T] GameRunner::step(
   if self.ui.should_auto_advance() {
     self.ui.mark_auto_advanced()
     let event = self.director.step(elapsed_ms=0)
-    (self.event_hook)(event)
+    self.emit_runtime_event(event)
     self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
@@ -787,7 +806,7 @@ pub fn[T] GameRunner::submit_choice(
   choice_id : String,
 ) -> RuntimeEvent raise ScriptRuntimeError {
   let event = self.director.choose(choice_id)
-  (self.event_hook)(event)
+  self.emit_runtime_event(event)
   self.render_ui()
   event
 }
@@ -799,7 +818,7 @@ pub fn[T] GameRunner::submit_custom_event(
   payload : String,
 ) -> RuntimeEvent {
   let event = self.director.submit_custom_event(name, payload)
-  (self.event_hook)(event)
+  self.emit_runtime_event(event)
   event
 }
 
@@ -892,11 +911,14 @@ pub fn[T] GameRunner::set_script_localization(
   self : GameRunner[T],
   script_locale_json : String?,
   script_default_locale_json : String?,
+  vocal_locale_json : String?,
+  vocal_default_locale_json : String?,
   script_locale : String,
   script_default_locale : String,
 ) -> Unit {
   self.ui.set_script_localization(
-    script_locale_json, script_default_locale_json, script_locale, script_default_locale,
+    script_locale_json, script_default_locale_json, vocal_locale_json, vocal_default_locale_json,
+    script_locale, script_default_locale,
   )
   self.ui_dirty = true
 }

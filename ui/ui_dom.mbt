@@ -70,6 +70,8 @@ struct UiDom {
   mut ui_strings : UiStrings
   mut script_locale_json : String?
   mut script_default_locale_json : String?
+  mut vocal_locale_json : String?
+  mut vocal_default_locale_json : String?
   mut script_locale : String
   mut script_default_locale : String
   mut dom_animation_cursor : Int
@@ -118,6 +120,8 @@ pub fn UiDom::new(
   ui_strings? : UiStrings = UiStrings::default(),
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
+  vocal_locale_json? : String = "",
+  vocal_default_locale_json? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
 ) -> UiDom {
@@ -133,6 +137,16 @@ pub fn UiDom::new(
       None
     } else {
       Some(script_default_locale_json)
+    },
+    vocal_locale_json: if vocal_locale_json == "" {
+      None
+    } else {
+      Some(vocal_locale_json)
+    },
+    vocal_default_locale_json: if vocal_default_locale_json == "" {
+      None
+    } else {
+      Some(vocal_default_locale_json)
     },
     script_locale,
     script_default_locale,
@@ -302,6 +316,18 @@ extern "js" fn script_locale_warn_missing(
   #| }
 
 ///|
+extern "js" fn vocal_locale_warn_missing(
+  locale : String,
+  default_locale : String,
+  key : String,
+) -> Unit =
+  #| (locale, default_locale, key) => {
+  #|   if (typeof console !== 'undefined' && console.warn) {
+  #|     console.warn(`[reisen:i18n] missing vocal key '${key}' for locale='${locale}' (default='${default_locale}')`);
+  #|   }
+  #| }
+
+///|
 fn UiDom::localize_script_text(self : UiDom, raw : String) -> String {
   if !raw.has_prefix("@") {
     return raw
@@ -313,8 +339,7 @@ fn UiDom::localize_script_text(self : UiDom, raw : String) -> String {
   let selected_locale = self.script_locale
   let default_locale = self.script_default_locale
   match self.script_locale_json {
-    Some(locale_json) => {
-      println(locale_json)
+    Some(locale_json) =>
       match script_locale_lookup(locale_json, key).to_option() {
         Some(value) => value
         None =>
@@ -335,7 +360,6 @@ fn UiDom::localize_script_text(self : UiDom, raw : String) -> String {
             }
           }
       }
-    }
     None =>
       match self.script_default_locale_json {
         Some(default_json) =>
@@ -343,6 +367,54 @@ fn UiDom::localize_script_text(self : UiDom, raw : String) -> String {
             Some(value) => value
             None => {
               script_locale_warn_missing(selected_locale, default_locale, key)
+              key
+            }
+          }
+        None => key
+      }
+  }
+}
+
+///|
+pub fn UiDom::localize_vocal_url(self : UiDom, raw : String) -> String {
+  if !raw.has_prefix("@") {
+    return raw
+  }
+  let key = script_locale_strip_at(raw)
+  if key == "" {
+    return raw
+  }
+  let selected_locale = self.script_locale
+  let default_locale = self.script_default_locale
+  match self.vocal_locale_json {
+    Some(locale_json) =>
+      match script_locale_lookup(locale_json, key).to_option() {
+        Some(value) => value
+        None =>
+          match self.vocal_default_locale_json {
+            Some(default_json) =>
+              match script_locale_lookup(default_json, key).to_option() {
+                Some(value) => value
+                None => {
+                  vocal_locale_warn_missing(
+                    selected_locale, default_locale, key,
+                  )
+                  key
+                }
+              }
+            None => {
+              vocal_locale_warn_missing(selected_locale, default_locale, key)
+              key
+            }
+          }
+      }
+    None =>
+      match self.vocal_default_locale_json {
+        Some(default_json) =>
+          match script_locale_lookup(default_json, key).to_option() {
+            Some(value) => value
+            None => {
+              vocal_locale_warn_missing(selected_locale, default_locale, key)
               key
             }
           }
@@ -801,11 +873,15 @@ pub fn UiDom::set_script_localization(
   self : UiDom,
   script_locale_json : String?,
   script_default_locale_json : String?,
+  vocal_locale_json : String?,
+  vocal_default_locale_json : String?,
   script_locale : String,
   script_default_locale : String,
 ) -> Unit {
   self.script_locale_json = script_locale_json
   self.script_default_locale_json = script_default_locale_json
+  self.vocal_locale_json = vocal_locale_json
+  self.vocal_default_locale_json = vocal_default_locale_json
   self.script_locale = script_locale
   self.script_default_locale = script_default_locale
   self.mark_all_dirty()

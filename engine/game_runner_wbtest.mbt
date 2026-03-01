@@ -302,6 +302,65 @@ async test "runner emits ui click sfx on midgame click advance" {
 }
 
 ///|
+async test "runner emits selected localized vocal url" {
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "hello", voice="@voice.demo")
+  })
+  let seen : Array[RuntimeEvent] = []
+  let ui = UiDom::new(
+    "app",
+    vocal_locale_json="{\"voice.demo\":\"assets/ja/demo.ogg\"}",
+    vocal_default_locale_json="{\"voice.demo\":\"assets/en/demo.ogg\"}",
+    script_locale="ja",
+    script_default_locale="en",
+  )
+  let runner = GameRunner::new_with_hooks(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+    _ => (),
+    event => seen.push(event),
+  )
+
+  ignore(runner.step())
+  assert_eq(
+    seen[0],
+    Said(
+      speaker="n",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=Some("assets/ja/demo.ogg"),
+    ),
+  )
+}
+
+///|
+async test "runner keeps literal vocal url unchanged" {
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "hello", voice="assets/direct.ogg")
+  })
+  let seen : Array[RuntimeEvent] = []
+  let runner = GameRunner::new_with_hooks(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    UiDom::new("app"),
+    _ => (),
+    event => seen.push(event),
+  )
+
+  ignore(runner.step())
+  assert_eq(
+    seen[0],
+    Said(
+      speaker="n",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=Some("assets/direct.ogg"),
+    ),
+  )
+}
+
+///|
 async test "runner clear presentation resets render and syncs canvas" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)

@@ -99,6 +99,8 @@ pub async fn[T] start_game(
   ui_strings? : UiStrings = UiStrings::default(),
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
+  vocal_locale_json? : String = "",
+  vocal_default_locale_json? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
 ) -> GameRunner[T] {
@@ -109,6 +111,8 @@ pub async fn[T] start_game(
     ui_strings~,
     script_locale_json~,
     script_default_locale_json~,
+    vocal_locale_json~,
+    vocal_default_locale_json~,
     script_locale~,
     script_default_locale~,
   )
@@ -132,6 +136,8 @@ pub async fn[T : FromJson] start_game_from_save(
   ui_strings? : UiStrings = UiStrings::default(),
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
+  vocal_locale_json? : String = "",
+  vocal_default_locale_json? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
 ) -> GameRunner[T] {
@@ -141,6 +147,8 @@ pub async fn[T : FromJson] start_game_from_save(
     ui_strings~,
     script_locale_json~,
     script_default_locale_json~,
+    vocal_locale_json~,
+    vocal_default_locale_json~,
     script_locale~,
     script_default_locale~,
   )
@@ -212,6 +220,8 @@ pub async fn[T : FromJson] start_game_from_slot(
   ui_strings? : UiStrings = UiStrings::default(),
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
+  vocal_locale_json? : String = "",
+  vocal_default_locale_json? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
 ) -> GameRunner[T] {
@@ -227,6 +237,8 @@ pub async fn[T : FromJson] start_game_from_slot(
         ui_strings~,
         script_locale_json~,
         script_default_locale_json~,
+        vocal_locale_json~,
+        vocal_default_locale_json~,
         script_locale~,
         script_default_locale~,
       )
