@@ -27,7 +27,7 @@ struct GalleryMenu {
   root_id : String
   save_ns : String
   background : String
-  ui_strings : UiStrings
+  mut ui_strings : UiStrings
   show_locked : Bool
   mut active_id : String?
 }
@@ -48,6 +48,14 @@ pub fn GalleryMenu::new(
     show_locked,
     active_id: None,
   }
+}
+
+///|
+pub fn GalleryMenu::set_ui_strings(
+  self : GalleryMenu,
+  ui_strings : UiStrings,
+) -> Unit {
+  self.ui_strings = ui_strings
 }
 
 ///|

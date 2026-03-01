@@ -21,7 +21,7 @@ using @state {type GameState}
 using @gallery {type GalleryImage, type ReplayStateFactories}
 
 ///|
-using @assets {type AssetStore, type Music}
+using @assets {type AssetStore, type Music, load_text}
 
 ///|
 using @pixi {type PixiBindingError}

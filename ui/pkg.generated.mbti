@@ -41,6 +41,7 @@ type GalleryMenu
 pub fn GalleryMenu::clear(Self) -> Unit
 pub fn GalleryMenu::new(String, save_namespace? : String, background? : String, show_locked? : Bool, ui_strings? : UiStrings) -> Self
 pub fn GalleryMenu::render(Self) -> Unit
+pub fn GalleryMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn GalleryMenu::take_action(Self) -> GalleryAction
 
 type GalleryTileView
@@ -75,6 +76,7 @@ pub fn SettingsMenu::render(Self) -> Unit
 pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
 pub fn SettingsMenu::set_languages(Self, Array[(String, String)]) -> Unit
 pub fn SettingsMenu::set_locale(Self, String) -> Unit
+pub fn SettingsMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn SettingsMenu::set_view_mode(Self, SettingsViewMode) -> Unit
 pub fn SettingsMenu::take_action(Self) -> SettingsAction
 
@@ -109,6 +111,7 @@ pub fn StartMenu::render(Self) -> Unit
 pub fn StartMenu::render_gate(Self) -> Unit
 pub fn StartMenu::render_locale_picker(Self, Array[(String, String)]) -> Unit
 pub fn StartMenu::render_logo(Self, String, Int) -> Unit
+pub fn StartMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn StartMenu::take_action(Self) -> StartMenuAction
 pub fn StartMenu::take_gate_action(Self) -> StartGateAction
 pub fn StartMenu::take_locale_action(Self) -> StartLocaleAction
@@ -234,6 +237,7 @@ pub struct UiStrings {
   game_text_input_submit : String
   game_log_building : String
 }
+pub fn UiStrings::from_locales_json(String, String, String, fallback? : Self) -> Self
 pub impl Default for UiStrings
 
 type UiTextInputView

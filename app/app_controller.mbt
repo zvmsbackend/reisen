@@ -21,9 +21,14 @@ struct AppController[T] {
   mut script : Script[T]?
   new_state : () -> GameState[T]
   ui_root_id : String
-  ui_strings : UiStrings
+  ui_strings_default : UiStrings
+  mut ui_strings : UiStrings
   languages : Array[(String, String)]
   mut locale : String
+  default_locale : String
+  ui_locale_path : String
+  mut ui_locales_json : String?
+  mut ui_locale_load_attempted : Bool
   save_ns : String
   autosave_slot : String
   autosave_title : String
@@ -62,6 +67,7 @@ pub fn[T] AppController::new(
   menu_music_loop? : Bool = true,
   ui_strings? : UiStrings = UiStrings::default(),
   languages? : Array[(String, String)] = [],
+  ui_locale_path? : String = "locales/ui.json",
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
@@ -92,9 +98,14 @@ pub fn[T] AppController::new(
     script: None,
     new_state,
     ui_root_id,
+    ui_strings_default: ui_strings,
     ui_strings,
     languages,
     locale: selected_locale,
+    default_locale,
+    ui_locale_path,
+    ui_locales_json: None,
+    ui_locale_load_attempted: false,
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
@@ -135,11 +146,11 @@ pub fn[T] AppController::new(
     gallery_replay_state_factories,
     assets,
   }
+  app.settings_menu.set_languages(languages)
+  app.settings_menu.set_locale(selected_locale)
   if app.phase == AppPhase::LocaleSelect {
     app.start_menu.render_locale_picker(languages)
   } else {
-    app.settings_menu.set_languages(languages)
-    app.settings_menu.set_locale(selected_locale)
     app.start_menu.render_gate()
   }
   app
@@ -240,6 +251,49 @@ pub fn[T] AppController::phase(self : AppController[T]) -> AppPhase {
 }
 
 ///|
+fn[T] AppController::sync_ui_strings(self : AppController[T]) -> Unit {
+  self.start_menu.set_ui_strings(self.ui_strings)
+  self.settings_menu.set_ui_strings(self.ui_strings)
+  self.gallery_menu.set_ui_strings(self.ui_strings)
+}
+
+///|
+fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
+  let effective_locale = if self.locale != "" {
+    self.locale
+  } else {
+    self.default_locale
+  }
+  self.ui_strings = match self.ui_locales_json {
+    Some(locales_json) if effective_locale != "" && self.default_locale != "" =>
+      UiStrings::from_locales_json(
+        locales_json,
+        effective_locale,
+        self.default_locale,
+        fallback=self.ui_strings_default,
+      )
+    _ => self.ui_strings_default
+  }
+  self.sync_ui_strings()
+}
+
+///|
+async fn[T] AppController::ensure_ui_locales_loaded(
+  self : AppController[T],
+) -> Bool {
+  if self.ui_locale_load_attempted {
+    return false
+  }
+  self.ui_locale_load_attempted = true
+  if self.ui_locale_path == "" {
+    return false
+  }
+  self.ui_locales_json = Some(load_text(self.ui_locale_path) catch { _ => "" })
+  self.refresh_ui_strings()
+  true
+}
+
+///|
 fn[T] AppController::apply_locale(
   self : AppController[T],
   code : String,
@@ -247,6 +301,7 @@ fn[T] AppController::apply_locale(
   self.locale = code
   self.settings_menu.set_locale(code)
   persistent_set_text_in(self.save_ns, "locale", code)
+  self.refresh_ui_strings()
 }
 
 ///|
@@ -442,12 +497,23 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
 ) -> Bool {
+  let ui_locale_changed = self.ensure_ui_locales_loaded()
+  if ui_locale_changed {
+    match self.phase {
+      AppPhase::LocaleSelect =>
+        self.start_menu.render_locale_picker(self.languages)
+      AppPhase::StartGate => self.start_menu.render_gate()
+      AppPhase::StartMenu => self.start_menu.render()
+      AppPhase::Settings => self.settings_menu.render()
+      AppPhase::Gallery => self.gallery_menu.render()
+      _ => ()
+    }
+  }
   match self.phase {
     AppPhase::LocaleSelect => {
       match self.start_menu.take_locale_action() {
         StartLocaleAction::Select(code) => {
           self.apply_locale(code)
-          self.settings_menu.set_languages(self.languages)
           self.start_menu.clear_locale_picker()
           self.start_menu.render_gate()
           self.phase = AppPhase::StartGate

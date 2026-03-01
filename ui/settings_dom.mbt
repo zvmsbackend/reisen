@@ -39,7 +39,7 @@ struct SettingsMenu {
   root_id : String
   save_ns : String
   background : String
-  ui_strings : UiStrings
+  mut ui_strings : UiStrings
   mut languages : Array[(String, String)]
   mut locale : String
   mut context : SettingsContext
@@ -75,6 +75,14 @@ pub fn SettingsMenu::new(
     save_slot_type: SaveSlotType::Normal,
     page: 0,
   }
+}
+
+///|
+pub fn SettingsMenu::set_ui_strings(
+  self : SettingsMenu,
+  ui_strings : UiStrings,
+) -> Unit {
+  self.ui_strings = ui_strings
 }
 
 ///|

@@ -34,7 +34,7 @@ struct StartMenu {
   root_id : String
   save_ns : String
   background : String
-  ui_strings : UiStrings
+  mut ui_strings : UiStrings
 }
 
 ///|
@@ -45,6 +45,14 @@ pub fn StartMenu::new(
   ui_strings? : UiStrings = UiStrings::default(),
 ) -> StartMenu {
   { root_id, save_ns: save_namespace, background, ui_strings }
+}
+
+///|
+pub fn StartMenu::set_ui_strings(
+  self : StartMenu,
+  ui_strings : UiStrings,
+) -> Unit {
+  self.ui_strings = ui_strings
 }
 
 ///|
