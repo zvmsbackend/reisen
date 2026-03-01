@@ -14,7 +14,9 @@ pub struct SexpScriptParser[T] {
 
 ///|
 pub fn[T] SexpScriptParser::new() -> SexpScriptParser[T] {
-  { host_functions: {} }
+  let parser = { host_functions: {} }
+  register_default_functions(parser)
+  parser
 }
 
 ///|
@@ -28,6 +30,413 @@ pub fn[T] SexpScriptParser::register_function(
 
 ///|
 extern "js" fn js_undefined() -> @js.Value = "() => undefined"
+
+///|
+extern "js" fn js_strict_eq(lhs : @js.Value, rhs : @js.Value) -> Bool =
+  #| (lhs, rhs) => lhs === rhs
+
+///|
+fn js_value_as_string(value : @js.Value) -> String? {
+  @js.Cast::into(value)
+}
+
+///|
+fn js_value_as_int(value : @js.Value) -> Int? {
+  @js.Cast::into(value)
+}
+
+///|
+fn js_value_as_double(value : @js.Value) -> Double? {
+  @js.Cast::into(value)
+}
+
+///|
+fn js_value_as_bool(value : @js.Value) -> Bool? {
+  @js.Cast::into(value)
+}
+
+///|
+fn js_to_string(value : @js.Value) -> String {
+  match js_value_as_string(value) {
+    Some(s) => s
+    None =>
+      match js_value_as_int(value) {
+        Some(i) => i.to_string()
+        None =>
+          match js_value_as_double(value) {
+            Some(d) => d.to_string()
+            None =>
+              match js_value_as_bool(value) {
+                Some(b) => if b { "true" } else { "false" }
+                None => ""
+              }
+          }
+      }
+  }
+}
+
+///|
+fn js_to_int(value : @js.Value) -> Int {
+  match js_value_as_int(value) {
+    Some(i) => i
+    None =>
+      match js_value_as_double(value) {
+        Some(d) => d.to_int()
+        None =>
+          match js_value_as_bool(value) {
+            Some(b) => if b { 1 } else { 0 }
+            None =>
+              match js_value_as_string(value) {
+                Some(s) => @strconv.parse_int(s) catch { _ => 0 }
+                None => 0
+              }
+          }
+      }
+  }
+}
+
+///|
+fn js_to_double(value : @js.Value) -> Double {
+  match js_value_as_double(value) {
+    Some(d) => d
+    None =>
+      match js_value_as_int(value) {
+        Some(i) => i.to_double()
+        None =>
+          match js_value_as_bool(value) {
+            Some(b) => if b { 1.0 } else { 0.0 }
+            None =>
+              match js_value_as_string(value) {
+                Some(s) => @strconv.parse_double(s) catch { _ => 0.0 }
+                None => 0.0
+              }
+          }
+      }
+  }
+}
+
+///|
+fn js_to_bool(value : @js.Value) -> Bool {
+  match js_value_as_bool(value) {
+    Some(b) => b
+    None =>
+      match js_value_as_int(value) {
+        Some(i) => i != 0
+        None =>
+          match js_value_as_double(value) {
+            Some(d) => d != 0.0
+            None =>
+              match js_value_as_string(value) {
+                Some(s) => {
+                  let lowered = s.trim().to_lower()
+                  !(lowered == "" || lowered == "false" || lowered == "0")
+                }
+                None => false
+              }
+          }
+      }
+  }
+}
+
+///|
+fn[T] std_eq(_ : @state.GameState[T], args : ArrayView[@js.Value]) -> @js.Value {
+  match args {
+    [lhs, rhs] => @js.Cast::from(js_strict_eq(lhs, rhs))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_neq(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [lhs, rhs] => @js.Cast::from(!js_strict_eq(lhs, rhs))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_not(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [v] => @js.Cast::from(!js_to_bool(v))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_and(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  let mut all_true = true
+  for arg in args {
+    if !js_to_bool(arg) {
+      all_true = false
+    }
+  }
+  @js.Cast::from(all_true)
+}
+
+///|
+fn[T] std_or(_ : @state.GameState[T], args : ArrayView[@js.Value]) -> @js.Value {
+  let mut any_true = false
+  for arg in args {
+    if js_to_bool(arg) {
+      any_true = true
+    }
+  }
+  @js.Cast::from(any_true)
+}
+
+///|
+fn[T] std_gt(_ : @state.GameState[T], args : ArrayView[@js.Value]) -> @js.Value {
+  match args {
+    [lhs, rhs] => @js.Cast::from(js_to_double(lhs) > js_to_double(rhs))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_gte(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [lhs, rhs] => @js.Cast::from(js_to_double(lhs) >= js_to_double(rhs))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_lt(_ : @state.GameState[T], args : ArrayView[@js.Value]) -> @js.Value {
+  match args {
+    [lhs, rhs] => @js.Cast::from(js_to_double(lhs) < js_to_double(rhs))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_lte(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [lhs, rhs] => @js.Cast::from(js_to_double(lhs) <= js_to_double(rhs))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_add(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  let mut sum = 0.0
+  for arg in args {
+    sum = sum + js_to_double(arg)
+  }
+  @js.Cast::from(sum)
+}
+
+///|
+fn[T] std_sub(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [] => js_undefined()
+    [x] => @js.Cast::from(-js_to_double(x))
+    [head, .. rest] => {
+      let mut out = js_to_double(head)
+      for v in rest {
+        out = out - js_to_double(v)
+      }
+      @js.Cast::from(out)
+    }
+  }
+}
+
+///|
+fn[T] std_mul(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  if args.length() == 0 {
+    return js_undefined()
+  }
+  let mut out = 1.0
+  for arg in args {
+    out = out * js_to_double(arg)
+  }
+  @js.Cast::from(out)
+}
+
+///|
+fn[T] std_div(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [lhs, rhs] => {
+      let divisor = js_to_double(rhs)
+      if divisor == 0.0 {
+        js_undefined()
+      } else {
+        @js.Cast::from(js_to_double(lhs) / divisor)
+      }
+    }
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_mod(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [lhs, rhs] => {
+      let divisor = js_to_int(rhs)
+      if divisor == 0 {
+        js_undefined()
+      } else {
+        @js.Cast::from(js_to_int(lhs) % divisor)
+      }
+    }
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_concat(
+  _ : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  let mut out = ""
+  for arg in args {
+    out = out + js_to_string(arg)
+  }
+  @js.Cast::from(out)
+}
+
+///|
+fn[T] std_int_var(
+  state : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [name] => @js.Cast::from(state.int_var(js_to_string(name)))
+    [name, default_value] =>
+      @js.Cast::from(
+        state.int_var(
+          js_to_string(name),
+          default_value=js_to_int(default_value),
+        ),
+      )
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_flag(
+  state : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [name] => @js.Cast::from(state.flag(js_to_string(name)))
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_text_var(
+  state : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [name] => @js.Cast::from(state.text_var(js_to_string(name)))
+    [name, default_value] =>
+      @js.Cast::from(
+        state.text_var(
+          js_to_string(name),
+          default_value=js_to_string(default_value),
+        ),
+      )
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_set_int(
+  state : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [name, value] => {
+      state.set_int_var(js_to_string(name), js_to_int(value))
+      @js.Cast::from(true)
+    }
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_set_flag(
+  state : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [name, value] => {
+      state.set_flag(js_to_string(name), js_to_bool(value))
+      @js.Cast::from(true)
+    }
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] std_set_text(
+  state : @state.GameState[T],
+  args : ArrayView[@js.Value],
+) -> @js.Value {
+  match args {
+    [name, value] => {
+      state.set_text_var(js_to_string(name), js_to_string(value))
+      @js.Cast::from(true)
+    }
+    _ => js_undefined()
+  }
+}
+
+///|
+fn[T] register_default_functions(parser : SexpScriptParser[T]) -> Unit {
+  parser.register_function("eq", std_eq)
+  parser.register_function("neq", std_neq)
+  parser.register_function("not", std_not)
+  parser.register_function("and", std_and)
+  parser.register_function("or", std_or)
+  parser.register_function("gt", std_gt)
+  parser.register_function("gte", std_gte)
+  parser.register_function("lt", std_lt)
+  parser.register_function("lte", std_lte)
+  parser.register_function("add", std_add)
+  parser.register_function("sub", std_sub)
+  parser.register_function("mul", std_mul)
+  parser.register_function("div", std_div)
+  parser.register_function("mod", std_mod)
+  parser.register_function("concat", std_concat)
+  parser.register_function("int-var", std_int_var)
+  parser.register_function("flag", std_flag)
+  parser.register_function("text-var", std_text_var)
+  parser.register_function("set-int", std_set_int)
+  parser.register_function("set-flag", std_set_flag)
+  parser.register_function("set-text", std_set_text)
+}
 
 ///|
 fn sexp_as_string(value : @sexp.Sexp) -> String? {

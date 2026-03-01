@@ -457,3 +457,44 @@ test "sexp say unknown option key is ignored" {
     is Say(speaker="guide", text="line", typewriter=true, append=false, ..),
   )
 }
+
+///|
+test "sexp builtins int-var and eq work without manual registration" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(jump-if good (eq (int-var \"answer\") 42)) (say n \"bad\") (label good) (say n \"ok\")",
+  )
+  let state = @state.GameState::new(())
+  state.set_int_var("answer", 42)
+  let runtime = Runtime::new(script, state)
+  assert_true(runtime.step() is Said(speaker="n", text="ok", ..))
+}
+
+///|
+test "sexp builtins set-int and add run in run-code" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(run-code (set-int \"score\" (add 3 4))) (say n \"done\")",
+  )
+  let state = @state.GameState::new(())
+  let runtime = Runtime::new(script, state)
+  assert_true(runtime.step() is Said(speaker="n", text="done", ..))
+  assert_eq(state.int_var("score"), 7)
+}
+
+///|
+test "sexp builtins use payload keyword directly in custom event" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(wait-custom-event route (eq payload \"open\")) (say n \"opened\")",
+  )
+  let runtime = Runtime::new(script, @state.GameState::new(()))
+  assert_eq(runtime.step(), WaitCustomEventStarted("route"))
+  assert_eq(
+    runtime.submit_custom_event("route", "closed"),
+    Custom("route", "closed"),
+  )
+  assert_eq(runtime.step(), Noop)
+  assert_eq(
+    runtime.submit_custom_event("route", "open"),
+    Custom("route", "open"),
+  )
+  assert_true(runtime.step() is Said(speaker="n", text="opened", ..))
+}
