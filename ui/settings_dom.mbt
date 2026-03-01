@@ -18,6 +18,7 @@ pub(all) enum SettingsViewMode {
 pub enum SettingsAction {
   ViewChanged
   NoAction
+  LanguageChanged(String)
   Back
   NewGame
   StartMenu
@@ -39,6 +40,8 @@ struct SettingsMenu {
   save_ns : String
   background : String
   ui_strings : UiStrings
+  mut languages : Array[(String, String)]
+  mut locale : String
   mut context : SettingsContext
   mut view_mode : SettingsViewMode
   mut save_slot_type : SaveSlotType
@@ -65,11 +68,26 @@ pub fn SettingsMenu::new(
     save_ns: save_namespace,
     background,
     ui_strings,
+    languages: [],
+    locale: "",
     context,
     view_mode: SettingsViewMode::Settings,
     save_slot_type: SaveSlotType::Normal,
     page: 0,
   }
+}
+
+///|
+pub fn SettingsMenu::set_languages(
+  self : SettingsMenu,
+  languages : Array[(String, String)],
+) -> Unit {
+  self.languages = languages
+}
+
+///|
+pub fn SettingsMenu::set_locale(self : SettingsMenu, locale : String) -> Unit {
+  self.locale = locale
 }
 
 ///|
@@ -168,8 +186,12 @@ extern "js" fn settings_dom_render(
   defaults_label : String,
   back_label : String,
   confirm_start_menu_text : String,
+  language_label : String,
+  language_names : Array[String],
+  language_codes : Array[String],
+  selected_locale : String,
 ) -> Unit =
-  #| (root_id, text_speed, bgm_volume, sfx_volume, background, context, text_speed_label, bgm_volume_label, sfx_volume_label, save_label, load_label, log_label, start_menu_label, new_game_label, defaults_label, back_label, confirm_start_menu_text) => {
+  #| (root_id, text_speed, bgm_volume, sfx_volume, background, context, text_speed_label, bgm_volume_label, sfx_volume_label, save_label, load_label, log_label, start_menu_label, new_game_label, defaults_label, back_label, confirm_start_menu_text, language_label, language_names, language_codes, selected_locale) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   if (globalThis.__reisenOpenConfirm == null) return;
@@ -235,6 +257,22 @@ extern "js" fn settings_dom_render(
   #|   };
   #|
   #|   settingsPanel.appendChild(mkRow(text_speed_label, mkSlider('text_speed', 10, 100, text_speed, 10)));
+  #|   if (language_codes.length > 0) {
+  #|     const select = doc.createElement('select');
+  #|     select.dataset.reisenSetting = 'language';
+  #|     for (let i = 0; i < language_codes.length; i++) {
+  #|       const option = doc.createElement('option');
+  #|       option.value = language_codes[i];
+  #|       option.textContent = language_names[i] || language_codes[i];
+  #|       if (language_codes[i] === selected_locale) option.selected = true;
+  #|       select.appendChild(option);
+  #|     }
+  #|     select.addEventListener('change', () => {
+  #|       root.dataset.reisenSettingsAction = 'language_changed';
+  #|       root.dataset.reisenSettingsLocale = select.value || '';
+  #|     });
+  #|     settingsPanel.appendChild(mkRow(language_label, select));
+  #|   }
   #|   settingsPanel.appendChild(mkRow(bgm_volume_label, mkSlider('bgm_volume', 0, 100, Math.round(bgm_volume * 100), 1)));
   #|   settingsPanel.appendChild(mkRow(sfx_volume_label, mkSlider('sfx_volume', 0, 100, Math.round(sfx_volume * 100), 1)));
   #|
@@ -319,6 +357,19 @@ extern "js" fn settings_action_slot_type(
   #| }
 
 ///|
+extern "js" fn settings_action_locale_code(
+  root_id : String,
+) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const code = root.dataset.reisenSettingsLocale;
+  #|   return code || null;
+  #| }
+
+///|
 extern "js" fn settings_action_clear(root_id : String) -> Unit =
   #| (root_id) => {
   #|   const doc = globalThis.document;
@@ -327,6 +378,7 @@ extern "js" fn settings_action_clear(root_id : String) -> Unit =
   #|   if (!root) return;
   #|   delete root.dataset.reisenSettingsAction;
   #|   delete root.dataset.reisenSettingsActionSlot;
+  #|   delete root.dataset.reisenSettingsLocale;
   #| }
 
 ///|
@@ -623,6 +675,12 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         None => GameSettings::default()
       }
       let view = to_settings_view(settings)
+      let language_names : Array[String] = []
+      let language_codes : Array[String] = []
+      for language in self.languages {
+        language_names.push(language.0)
+        language_codes.push(language.1)
+      }
       let context_str = match self.context {
         SettingsContext::FromStartMenu => "start_menu"
         SettingsContext::FromMidgame => "midgame"
@@ -645,6 +703,10 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         self.ui_strings.settings_defaults,
         self.ui_strings.settings_back,
         self.ui_strings.settings_confirm_return_start_menu,
+        self.ui_strings.settings_language,
+        language_names,
+        language_codes,
+        self.locale,
       )
     }
   }
@@ -808,6 +870,18 @@ pub fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
       settings_action_clear(self.root_id)
       self.persist_settings()
       SettingsAction::NoAction
+    }
+    Some("language_changed") => {
+      let code = settings_action_locale_code(self.root_id)
+        .to_option()
+        .unwrap_or("")
+      settings_action_clear(self.root_id)
+      if code == "" {
+        SettingsAction::NoAction
+      } else {
+        self.locale = code
+        SettingsAction::LanguageChanged(code)
+      }
     }
     Some("defaults") => {
       settings_action_clear(self.root_id)

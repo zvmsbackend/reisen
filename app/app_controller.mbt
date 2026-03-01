@@ -22,6 +22,8 @@ struct AppController[T] {
   new_state : () -> GameState[T]
   ui_root_id : String
   ui_strings : UiStrings
+  languages : Array[(String, String)]
+  mut locale : String
   save_ns : String
   autosave_slot : String
   autosave_title : String
@@ -91,6 +93,8 @@ pub fn[T] AppController::new(
     new_state,
     ui_root_id,
     ui_strings,
+    languages,
+    locale: selected_locale,
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
@@ -134,6 +138,8 @@ pub fn[T] AppController::new(
   if app.phase == AppPhase::LocaleSelect {
     app.start_menu.render_locale_picker(languages)
   } else {
+    app.settings_menu.set_languages(languages)
+    app.settings_menu.set_locale(selected_locale)
     app.start_menu.render_gate()
   }
   app
@@ -238,6 +244,8 @@ fn[T] AppController::apply_locale(
   self : AppController[T],
   code : String,
 ) -> Unit {
+  self.locale = code
+  self.settings_menu.set_locale(code)
   persistent_set_text_in(self.save_ns, "locale", code)
 }
 
@@ -437,13 +445,14 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   match self.phase {
     AppPhase::LocaleSelect => {
       match self.start_menu.take_locale_action() {
-        Select(code) => {
+        StartLocaleAction::Select(code) => {
           self.apply_locale(code)
+          self.settings_menu.set_languages(self.languages)
           self.start_menu.clear_locale_picker()
           self.start_menu.render_gate()
           self.phase = AppPhase::StartGate
         }
-        NoAction => ()
+        StartLocaleAction::NoAction => ()
       }
       true
     }
@@ -525,6 +534,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
       }
     AppPhase::Settings => {
       match self.settings_menu.take_action() {
+        LanguageChanged(code) => {
+          self.apply_locale(code)
+          self.settings_menu.render()
+        }
         Back => {
           self.settings_menu.clear()
           match self.saved_director_json {

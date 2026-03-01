@@ -34,6 +34,7 @@ using @ui {
   type GalleryMenu,
   type SettingsMenu,
   type StartMenuAction,
+  type StartLocaleAction,
 }
 
 ///|

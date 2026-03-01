@@ -52,6 +52,7 @@ pub impl @json.FromJson for GalleryTileView
 pub enum SettingsAction {
   ViewChanged
   NoAction
+  LanguageChanged(String)
   Back
   NewGame
   StartMenu
@@ -72,6 +73,8 @@ pub fn SettingsMenu::clear(Self) -> Unit
 pub fn SettingsMenu::new(String, save_namespace? : String, background? : String, context? : SettingsContext, ui_strings? : UiStrings) -> Self
 pub fn SettingsMenu::render(Self) -> Unit
 pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
+pub fn SettingsMenu::set_languages(Self, Array[(String, String)]) -> Unit
+pub fn SettingsMenu::set_locale(Self, String) -> Unit
 pub fn SettingsMenu::set_view_mode(Self, SettingsViewMode) -> Unit
 pub fn SettingsMenu::take_action(Self) -> SettingsAction
 
@@ -188,6 +191,7 @@ pub struct UiStrings {
   start_menu_settings : String
   start_menu_gallery : String
   settings_text_speed : String
+  settings_language : String
   settings_bgm_volume : String
   settings_sfx_volume : String
   settings_save : String

@@ -9,6 +9,7 @@ pub struct UiStrings {
   start_menu_settings : String
   start_menu_gallery : String
   settings_text_speed : String
+  settings_language : String
   settings_bgm_volume : String
   settings_sfx_volume : String
   settings_save : String
@@ -63,6 +64,7 @@ pub impl Default for UiStrings with default() {
     start_menu_settings: "Settings",
     start_menu_gallery: "Gallery",
     settings_text_speed: "Text Speed",
+    settings_language: "Language",
     settings_bgm_volume: "BGM Volume",
     settings_sfx_volume: "SFX Volume",
     settings_save: "Save",
