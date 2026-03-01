@@ -28,4 +28,4 @@ using @storage {type GameSettings}
 using @state {type GameState}
 
 ///|
-using @ui {type AudioDom, type UiDom, type UiViewModel}
+using @ui {type AudioDom, type UiDom, type UiViewModel, type UiStrings}

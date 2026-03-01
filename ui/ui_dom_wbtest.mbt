@@ -69,3 +69,45 @@ test "ui view model includes dom figures and applies dom animation" {
   assert_eq(view.dom_figures[0].layer, 2)
   assert_eq(view.dom_figures[0].opacity, 0.4)
 }
+
+///|
+test "ui dom localizes script key with selected locale" {
+  let locale_json = "{\"demo.line\":\"こんにちは\"}"
+  let default_json = "{\"demo.line\":\"Hello\"}"
+  let ui = UiDom::new(
+    "ui-root",
+    script_locale_json=locale_json,
+    script_default_locale_json=default_json,
+    script_locale="ja",
+    script_default_locale="en",
+  )
+  assert_eq(ui.localize_script_text("@demo.line"), "こんにちは")
+}
+
+///|
+test "ui dom localizes script key with default locale fallback" {
+  let locale_json = "{}"
+  let default_json = "{\"demo.line\":\"Hello\"}"
+  let ui = UiDom::new(
+    "ui-root",
+    script_locale_json=locale_json,
+    script_default_locale_json=default_json,
+    script_locale="ja",
+    script_default_locale="en",
+  )
+  assert_eq(ui.localize_script_text("@demo.line"), "Hello")
+}
+
+///|
+test "ui dom localizes script key fallback to key" {
+  let locale_json = "{}"
+  let default_json = "{}"
+  let ui = UiDom::new(
+    "ui-root",
+    script_locale_json=locale_json,
+    script_default_locale_json=default_json,
+    script_locale="ja",
+    script_default_locale="en",
+  )
+  assert_eq(ui.localize_script_text("@demo.line"), "demo.line")
+}

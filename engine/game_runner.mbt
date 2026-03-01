@@ -848,6 +848,29 @@ pub fn[T] GameRunner::set_log_visible(
 }
 
 ///|
+pub fn[T] GameRunner::set_ui_strings(
+  self : GameRunner[T],
+  ui_strings : UiStrings,
+) -> Unit {
+  self.ui.set_ui_strings(ui_strings)
+  self.ui_dirty = true
+}
+
+///|
+pub fn[T] GameRunner::set_script_localization(
+  self : GameRunner[T],
+  script_locale_json : String?,
+  script_default_locale_json : String?,
+  script_locale : String,
+  script_default_locale : String,
+) -> Unit {
+  self.ui.set_script_localization(
+    script_locale_json, script_default_locale_json, script_locale, script_default_locale,
+  )
+  self.ui_dirty = true
+}
+
+///|
 pub fn[T] GameRunner::toggle_log_visible(self : GameRunner[T]) -> Unit {
   self.ui.toggle_log_visible()
   self.ui_dirty = true

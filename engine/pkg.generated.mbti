@@ -110,6 +110,8 @@ pub fn[T] GameRunner::new_with_render_sync(Director[T], @ui.UiDom, async (Direct
 pub fn[T] GameRunner::reconstruct_dialog_history(Self[T], @core.Script[T], @state.GameState[T], max_steps? : Int) -> Unit raise LogReconstructionError
 pub fn[T] GameRunner::set_log_build_state(Self[T], LogBuildState) -> Unit
 pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
+pub fn[T] GameRunner::set_script_localization(Self[T], String?, String?, String, String) -> Unit
+pub fn[T] GameRunner::set_ui_strings(Self[T], @ui.UiStrings) -> Unit
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
 pub fn[T] GameRunner::start_reconstruct_dialog_history(Self[T], @core.Script[T], @state.GameState[T], max_steps? : Int) -> Unit
 pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> @core.RuntimeEvent raise @core.ScriptRuntimeError

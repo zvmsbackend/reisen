@@ -97,10 +97,21 @@ pub async fn[T] start_game(
   event_hook? : EventHook = _ => (),
   settings? : GameSettings,
   ui_strings? : UiStrings = UiStrings::default(),
+  script_locale_json? : String = "",
+  script_default_locale_json? : String = "",
+  script_locale? : String = "",
+  script_default_locale? : String = "",
 ) -> GameRunner[T] {
   let runtime = Runtime::new(script, state)
   let director = Director::new(runtime)
-  let ui = UiDom::new(ui_root_id, ui_strings~)
+  let ui = UiDom::new(
+    ui_root_id,
+    ui_strings~,
+    script_locale_json~,
+    script_default_locale_json~,
+    script_locale~,
+    script_default_locale~,
+  )
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
   match settings {
     Some(s) => runner.apply_settings(s)
@@ -119,9 +130,20 @@ pub async fn[T : FromJson] start_game_from_save(
   event_hook? : EventHook = _ => (),
   settings? : GameSettings,
   ui_strings? : UiStrings = UiStrings::default(),
+  script_locale_json? : String = "",
+  script_default_locale_json? : String = "",
+  script_locale? : String = "",
+  script_default_locale? : String = "",
 ) -> GameRunner[T] {
   let director = director_from_save_json(script, save_json)
-  let ui = UiDom::new(ui_root_id, ui_strings~)
+  let ui = UiDom::new(
+    ui_root_id,
+    ui_strings~,
+    script_locale_json~,
+    script_default_locale_json~,
+    script_locale~,
+    script_default_locale~,
+  )
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
   match settings {
     Some(s) => runner.apply_settings(s)
@@ -188,6 +210,10 @@ pub async fn[T : FromJson] start_game_from_slot(
   settings? : GameSettings,
   slot_payload_version? : Int = save_slot_payload_version,
   ui_strings? : UiStrings = UiStrings::default(),
+  script_locale_json? : String = "",
+  script_default_locale_json? : String = "",
+  script_locale? : String = "",
+  script_default_locale? : String = "",
 ) -> GameRunner[T] {
   match save_slot_read_in(save_namespace, slot) {
     Some(save_json) =>
@@ -199,6 +225,10 @@ pub async fn[T : FromJson] start_game_from_slot(
         event_hook~,
         settings?,
         ui_strings~,
+        script_locale_json~,
+        script_default_locale_json~,
+        script_locale~,
+        script_default_locale~,
       )
     None => raise AppBootstrapError::MissingSaveSlot(slot~)
   }

@@ -67,7 +67,11 @@ struct UiViewModel {
 ///|
 struct UiDom {
   root_id : String
-  ui_strings : UiStrings
+  mut ui_strings : UiStrings
+  mut script_locale_json : String?
+  mut script_default_locale_json : String?
+  mut script_locale : String
+  mut script_default_locale : String
   mut dom_animation_cursor : Int
   mut dom_timeline_ms : Int
   dom_position_anims : Map[String, DomPositionAnim]
@@ -112,10 +116,26 @@ struct UiDom {
 pub fn UiDom::new(
   root_id : String,
   ui_strings? : UiStrings = UiStrings::default(),
+  script_locale_json? : String = "",
+  script_default_locale_json? : String = "",
+  script_locale? : String = "",
+  script_default_locale? : String = "",
 ) -> UiDom {
   {
     root_id,
     ui_strings,
+    script_locale_json: if script_locale_json == "" {
+      None
+    } else {
+      Some(script_locale_json)
+    },
+    script_default_locale_json: if script_default_locale_json == "" {
+      None
+    } else {
+      Some(script_default_locale_json)
+    },
+    script_locale,
+    script_default_locale,
     dom_animation_cursor: 0,
     dom_timeline_ms: 0,
     dom_position_anims: {},
@@ -239,6 +259,96 @@ fn pos_at(now_ms : Int, anim : DomPositionAnim) -> (Double, Double, Bool) {
     anim.from_y + (anim.to_y - anim.from_y) * p,
     done,
   )
+}
+
+///|
+extern "js" fn script_locale_strip_at(raw : String) -> String =
+  #| (raw) => (typeof raw === 'string' && raw.startsWith('@') ? raw.slice(1) : raw)
+
+///|
+extern "js" fn script_locale_lookup(
+  locale_json : String,
+  key : String,
+) -> @js.Nullable[String] =
+  #| (locale_json, key) => {
+  #|   try {
+  #|     if (!globalThis.__reisenScriptLocaleTableCache) {
+  #|       globalThis.__reisenScriptLocaleTableCache = { raw: '', parsed: null };
+  #|     }
+  #|     const cache = globalThis.__reisenScriptLocaleTableCache;
+  #|     if (cache.raw !== locale_json) {
+  #|       cache.raw = locale_json;
+  #|       cache.parsed = locale_json ? JSON.parse(locale_json) : null;
+  #|     }
+  #|     const parsed = cache.parsed;
+  #|     if (!parsed || typeof parsed !== 'object') return null;
+  #|     const value = parsed[key];
+  #|     return typeof value === 'string' ? value : null;
+  #|   } catch {
+  #|     return null;
+  #|   }
+  #| }
+
+///|
+extern "js" fn script_locale_warn_missing(
+  locale : String,
+  default_locale : String,
+  key : String,
+) -> Unit =
+  #| (locale, default_locale, key) => {
+  #|   if (typeof console !== 'undefined' && console.warn) {
+  #|     console.warn(`[reisen:i18n] missing script key '${key}' for locale='${locale}' (default='${default_locale}')`);
+  #|   }
+  #| }
+
+///|
+fn UiDom::localize_script_text(self : UiDom, raw : String) -> String {
+  if !raw.has_prefix("@") {
+    return raw
+  }
+  let key = script_locale_strip_at(raw)
+  if key == "" {
+    return raw
+  }
+  let selected_locale = self.script_locale
+  let default_locale = self.script_default_locale
+  match self.script_locale_json {
+    Some(locale_json) => {
+      println(locale_json)
+      match script_locale_lookup(locale_json, key).to_option() {
+        Some(value) => value
+        None =>
+          match self.script_default_locale_json {
+            Some(default_json) =>
+              match script_locale_lookup(default_json, key).to_option() {
+                Some(value) => value
+                None => {
+                  script_locale_warn_missing(
+                    selected_locale, default_locale, key,
+                  )
+                  key
+                }
+              }
+            None => {
+              script_locale_warn_missing(selected_locale, default_locale, key)
+              key
+            }
+          }
+      }
+    }
+    None =>
+      match self.script_default_locale_json {
+        Some(default_json) =>
+          match script_locale_lookup(default_json, key).to_option() {
+            Some(value) => value
+            None => {
+              script_locale_warn_missing(selected_locale, default_locale, key)
+              key
+            }
+          }
+        None => key
+      }
+  }
 }
 
 ///|
@@ -678,6 +788,27 @@ pub fn UiDom::is_log_visible(self : UiDom) -> Bool {
 pub fn UiDom::set_log_building(self : UiDom, building : Bool) -> Unit {
   self.log_building = building
   self.dirty_text = true
+}
+
+///|
+pub fn UiDom::set_ui_strings(self : UiDom, ui_strings : UiStrings) -> Unit {
+  self.ui_strings = ui_strings
+  self.mark_all_dirty()
+}
+
+///|
+pub fn UiDom::set_script_localization(
+  self : UiDom,
+  script_locale_json : String?,
+  script_default_locale_json : String?,
+  script_locale : String,
+  script_default_locale : String,
+) -> Unit {
+  self.script_locale_json = script_locale_json
+  self.script_default_locale_json = script_default_locale_json
+  self.script_locale = script_locale
+  self.script_default_locale = script_default_locale
+  self.mark_all_dirty()
 }
 
 ///|
@@ -1911,6 +2042,28 @@ pub fn UiViewModel::from_snapshot(
 
 ///|
 pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
+  let localized_speaker = self.localize_script_text(view.speaker)
+  let localized_text = self.localize_script_text(view.text)
+  let localized_intro_text = view.intro_text.map(text => {
+    self.localize_script_text(text)
+  })
+  let localized_choices = view.choices.map(choice => UiChoiceView::{
+    id: choice.id,
+    text: self.localize_script_text(choice.text),
+  })
+  let localized_text_input = match view.text_input {
+    Some(input_view) =>
+      Some(UiTextInputView::{
+        var_name: input_view.var_name,
+        prompt: self.localize_script_text(input_view.prompt),
+      })
+    None => None
+  }
+  let localized_dialog_history : Array[DialogLogEntry] = view.dialog_history.map(entry => DialogLogEntry::{
+      speaker: self.localize_script_text(entry.speaker),
+      text: self.localize_script_text(entry.text),
+    },
+  )
   let dom_figures_json = view.dom_figures.to_json().stringify()
   dom_render_dom_figures(self.root_id, dom_figures_json)
   match view.video {
@@ -1926,36 +2079,36 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     }
     None => dom_clear_video(self.root_id)
   }
-  if view.intro_text is Some(text) {
+  if localized_intro_text is Some(text) {
     dom_render_intro(self.root_id, text)
     dom_setup_typewriter_click(self.root_id)
     return
   } else {
     dom_clear_intro(self.root_id)
   }
-  if view.dialog_seq != self.last_dialog_seq && view.text != "" {
+  if view.dialog_seq != self.last_dialog_seq && localized_text != "" {
     if view.append &&
       view.typewriter &&
-      view.text.has_prefix(self.typewriter_raw_text) {
+      localized_text.has_prefix(self.typewriter_raw_text) {
       let prev_len = self.typewriter_text.length()
-      self.typewriter_raw_text = view.text
-      self.typewriter_text = dom_strip_text_markup(view.text)
+      self.typewriter_raw_text = localized_text
+      self.typewriter_text = dom_strip_text_markup(localized_text)
       if self.typewriter_visible < prev_len {
         self.typewriter_visible = prev_len
       }
       self.typewriter_last_update_ms = 0
     } else if view.typewriter && !self.skip_mode {
-      self.start_typewriter(view.text)
+      self.start_typewriter(localized_text)
     } else {
-      self.typewriter_raw_text = view.text
-      self.typewriter_text = dom_strip_text_markup(view.text)
+      self.typewriter_raw_text = localized_text
+      self.typewriter_text = dom_strip_text_markup(localized_text)
       self.typewriter_visible = self.typewriter_text.length()
       self.typewriter_last_update_ms = 0
     }
   }
   self.last_dialog_seq = view.dialog_seq
   dom_setup_typewriter_click(self.root_id)
-  let visible_count = if view.text == "" {
+  let visible_count = if localized_text == "" {
     0
   } else if self.is_typewriter_done() {
     self.typewriter_text.length()
@@ -1965,7 +2118,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   if self.dirty_speaker || self.dirty_text {
     dom_render_speaker_text(
       self.root_id,
-      view.speaker,
+      localized_speaker,
       self.typewriter_raw_text,
       visible_count,
     )
@@ -1975,8 +2128,8 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   dom_set_text_box_visible(self.root_id, view.text_box_visible)
   dom_set_avatar(self.root_id, view.avatar_id)
   if self.dirty_choices {
-    let ids = view.choices.map(c => c.id)
-    let texts = view.choices.map(c => c.text)
+    let ids = localized_choices.map(c => c.id)
+    let texts = localized_choices.map(c => c.text)
     dom_render_choices(self.root_id, ids, texts)
     self.dirty_choices = false
   }
@@ -2002,7 +2155,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   if view.log_visible {
     dom_render_log(
       self.root_id,
-      view.dialog_history.to_json().stringify(),
+      localized_dialog_history.to_json().stringify(),
       view.log_building,
       self.ui_strings.game_log_building,
     )
@@ -2010,7 +2163,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     dom_clear_log(self.root_id)
   }
   if self.dirty_text_input {
-    match view.text_input {
+    match localized_text_input {
       Some(input_view) =>
         dom_render_text_input(
           self.root_id,

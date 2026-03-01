@@ -29,6 +29,10 @@ struct AppController[T] {
   ui_locale_path : String
   mut ui_locales_json : String?
   mut ui_locale_load_attempted : Bool
+  script_locale_dir : String
+  mut script_locale_json : String?
+  mut script_default_locale_json : String?
+  mut script_locale_load_attempted : Bool
   save_ns : String
   autosave_slot : String
   autosave_title : String
@@ -68,6 +72,7 @@ pub fn[T] AppController::new(
   ui_strings? : UiStrings = UiStrings::default(),
   languages? : Array[(String, String)] = [],
   ui_locale_path? : String = "locales/ui.json",
+  script_locale_dir? : String = "locales",
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
@@ -106,6 +111,10 @@ pub fn[T] AppController::new(
     ui_locale_path,
     ui_locales_json: None,
     ui_locale_load_attempted: false,
+    script_locale_dir,
+    script_locale_json: None,
+    script_default_locale_json: None,
+    script_locale_load_attempted: false,
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
@@ -258,6 +267,27 @@ fn[T] AppController::sync_ui_strings(self : AppController[T]) -> Unit {
 }
 
 ///|
+fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
+  let effective_locale = if self.locale != "" {
+    self.locale
+  } else {
+    self.default_locale
+  }
+  match self.runner {
+    Some(runner) => {
+      runner.set_ui_strings(self.ui_strings)
+      runner.set_script_localization(
+        self.script_locale_json,
+        self.script_default_locale_json,
+        effective_locale,
+        self.default_locale,
+      )
+    }
+    None => ()
+  }
+}
+
+///|
 fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
   let effective_locale = if self.locale != "" {
     self.locale
@@ -275,6 +305,7 @@ fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
     _ => self.ui_strings_default
   }
   self.sync_ui_strings()
+  self.sync_runner_localization()
 }
 
 ///|
@@ -294,6 +325,57 @@ async fn[T] AppController::ensure_ui_locales_loaded(
 }
 
 ///|
+async fn[T] AppController::ensure_script_locales_loaded(
+  self : AppController[T],
+) -> Bool {
+  if self.script_locale_load_attempted {
+    return false
+  }
+  self.script_locale_load_attempted = true
+  if self.script_locale_dir == "" {
+    return false
+  }
+  let selected_code = if self.locale != "" {
+    self.locale
+  } else {
+    self.default_locale
+  }
+  let default_code = self.default_locale
+  let selected_path = if selected_code == "" {
+    ""
+  } else {
+    "\{self.script_locale_dir}/\{selected_code}.json"
+  }
+  let default_path = if default_code == "" {
+    ""
+  } else {
+    "\{self.script_locale_dir}/\{default_code}.json"
+  }
+  self.script_locale_json = if selected_path == "" {
+    None
+  } else {
+    let raw = load_text(selected_path) catch { _ => "" }
+    if raw == "" {
+      None
+    } else {
+      Some(raw)
+    }
+  }
+  self.script_default_locale_json = if default_path == "" {
+    None
+  } else {
+    let raw = load_text(default_path) catch { _ => "" }
+    if raw == "" {
+      None
+    } else {
+      Some(raw)
+    }
+  }
+  self.sync_runner_localization()
+  true
+}
+
+///|
 fn[T] AppController::apply_locale(
   self : AppController[T],
   code : String,
@@ -301,6 +383,9 @@ fn[T] AppController::apply_locale(
   self.locale = code
   self.settings_menu.set_locale(code)
   persistent_set_text_in(self.save_ns, "locale", code)
+  self.script_locale_load_attempted = false
+  self.script_locale_json = None
+  self.script_default_locale_json = None
   self.refresh_ui_strings()
 }
 
@@ -357,6 +442,10 @@ async fn[T] AppController::start_gallery_replay(
         event_hook=self.event_hook,
         settings?,
         ui_strings=self.ui_strings,
+        script_locale_json=self.script_locale_json.unwrap_or(""),
+        script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
+        script_locale=self.locale,
+        script_default_locale=self.default_locale,
       )
       try {
         runner.jump_to_label(replay_label)
@@ -391,6 +480,12 @@ async fn[T : FromJson] AppController::handle_menu_action(
           event_hook=self.event_hook,
           settings?,
           ui_strings=self.ui_strings,
+          script_locale_json=self.script_locale_json.unwrap_or(""),
+          script_default_locale_json=self.script_default_locale_json.unwrap_or(
+            "",
+          ),
+          script_locale=self.locale,
+          script_default_locale=self.default_locale,
         ),
       )
       self.start_menu.clear()
@@ -406,6 +501,12 @@ async fn[T : FromJson] AppController::handle_menu_action(
           event_hook=self.event_hook,
           save_namespace=self.save_ns,
           ui_strings=self.ui_strings,
+          script_locale_json=self.script_locale_json.unwrap_or(""),
+          script_default_locale_json=self.script_default_locale_json.unwrap_or(
+            "",
+          ),
+          script_locale=self.locale,
+          script_default_locale=self.default_locale,
         )
         self.start_menu_music_stop()
         self.runner = Some(runner)
@@ -498,7 +599,8 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   elapsed_ms? : Int = 0,
 ) -> Bool {
   let ui_locale_changed = self.ensure_ui_locales_loaded()
-  if ui_locale_changed {
+  let script_locale_changed = self.ensure_script_locales_loaded()
+  if ui_locale_changed || script_locale_changed {
     match self.phase {
       AppPhase::LocaleSelect =>
         self.start_menu.render_locale_picker(self.languages)
@@ -506,6 +608,11 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
       AppPhase::StartMenu => self.start_menu.render()
       AppPhase::Settings => self.settings_menu.render()
       AppPhase::Gallery => self.gallery_menu.render()
+      AppPhase::InGame =>
+        match self.runner {
+          Some(runner) => runner.sync_ui()
+          None => ()
+        }
       _ => ()
     }
   }
@@ -611,7 +718,16 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               self.saved_director_json = None
               try {
                 let director = director_from_save_json(self.script(), json)
-                let ui = UiDom::new(self.ui_root_id, ui_strings=self.ui_strings)
+                let ui = UiDom::new(
+                  self.ui_root_id,
+                  ui_strings=self.ui_strings,
+                  script_locale_json=self.script_locale_json.unwrap_or(""),
+                  script_default_locale_json=self.script_default_locale_json.unwrap_or(
+                    "",
+                  ),
+                  script_locale=self.locale,
+                  script_default_locale=self.default_locale,
+                )
                 let runner = GameRunner::new_with_hooks(
                   director,
                   ui,
@@ -646,6 +762,12 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               event_hook=self.event_hook,
               settings?,
               ui_strings=self.ui_strings,
+              script_locale_json=self.script_locale_json.unwrap_or(""),
+              script_default_locale_json=self.script_default_locale_json.unwrap_or(
+                "",
+              ),
+              script_locale=self.locale,
+              script_default_locale=self.default_locale,
             ),
           )
           self.phase = AppPhase::InGame
@@ -705,6 +827,12 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             event_hook=self.event_hook,
             save_namespace=self.save_ns,
             ui_strings=self.ui_strings,
+            script_locale_json=self.script_locale_json.unwrap_or(""),
+            script_default_locale_json=self.script_default_locale_json.unwrap_or(
+              "",
+            ),
+            script_locale=self.locale,
+            script_default_locale=self.default_locale,
           )
           match restored {
             Ok(runner) => {

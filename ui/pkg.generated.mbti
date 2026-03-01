@@ -152,16 +152,18 @@ pub fn UiDom::mark_dirty_text(Self) -> Unit
 pub fn UiDom::mark_dirty_text_and_speaker(Self) -> Unit
 pub fn UiDom::mark_dirty_text_input(Self) -> Unit
 pub fn UiDom::mark_skip_advanced(Self) -> Unit
-pub fn UiDom::new(String, ui_strings? : UiStrings) -> Self
+pub fn UiDom::new(String, ui_strings? : UiStrings, script_locale_json? : String, script_default_locale_json? : String, script_locale? : String, script_default_locale? : String) -> Self
 pub fn UiDom::render(Self, UiViewModel) -> Unit
 pub fn UiDom::reveal_intro_line(Self) -> Bool
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
 pub fn UiDom::set_log_building(Self, Bool) -> Unit
 pub fn UiDom::set_log_visible(Self, Bool) -> Unit
 pub fn UiDom::set_media_volume(Self, Double) -> Unit
+pub fn UiDom::set_script_localization(Self, String?, String?, String, String) -> Unit
 pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
 pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
 pub fn UiDom::set_text_speed(Self, Int) -> Unit
+pub fn UiDom::set_ui_strings(Self, UiStrings) -> Unit
 pub fn UiDom::should_auto_advance(Self) -> Bool
 pub fn UiDom::should_auto_skip_wait_click(Self) -> Bool
 pub fn UiDom::should_skip_advance(Self) -> Bool
