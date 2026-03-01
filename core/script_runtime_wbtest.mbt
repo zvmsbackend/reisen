@@ -141,3 +141,35 @@ test "runtime records flow trace" {
     ScriptFlowTrace::JumpIfResolved(ip=0, target="target", taken=true),
   ])
 }
+
+///|
+test "runtime jump_by resolves selector label" {
+  let script : Script[Int] = script_from_instructions([
+    JumpBy(state => if state.int_var("route") == 1 { "left" } else { "right" }),
+    Label("left"),
+    Say(
+      speaker="n",
+      text="left",
+      typewriter=true,
+      append=false,
+      voice=None,
+      proceed_on_done=false,
+    ),
+    Label("right"),
+    Say(
+      speaker="n",
+      text="right",
+      typewriter=true,
+      append=false,
+      voice=None,
+      proceed_on_done=false,
+    ),
+  ])
+  let state = GameState::new(0)
+  state.set_int_var("route", 1)
+  let runtime = Runtime::new(script, state)
+  assert_eq(
+    runtime.step(),
+    Said(speaker="n", text="left", typewriter=true, append=false, voice=None),
+  )
+}

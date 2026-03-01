@@ -364,6 +364,14 @@ pub fn[T] ScriptBuilder::jump_if(
 }
 
 ///|
+pub fn[T] ScriptBuilder::jump_by(
+  self : ScriptBuilder[T],
+  selector : ScriptJumpSelector[T],
+) -> Unit {
+  self.instructions.push(JumpBy(selector))
+}
+
+///|
 /// Emits a two-way branch:
 /// - `JumpIf(then_label, predicate)`
 /// - `Jump(else_label)`

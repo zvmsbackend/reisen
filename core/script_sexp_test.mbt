@@ -128,6 +128,15 @@ test "parse sexp jump-if with host functions" {
 }
 
 ///|
+test "parse sexp jump-by selector" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(jump-by (concat \"go\" \"od\")) (label good)",
+  )
+  assert_eq(script.instructions.length(), 2)
+  assert_true(script.instructions[0] is JumpBy(_))
+}
+
+///|
 test "parse sexp wait-custom-event with payload symbol" {
   let parser = SexpScriptParser::new()
   parser.register_function("eq", host_eq)
@@ -249,6 +258,15 @@ test "sexp jump-if executes host expression" {
   let state = @state.GameState::new(())
   state.set_int_var("answer", 42)
   let runtime = Runtime::new(script, state)
+  assert_true(runtime.step() is Said(speaker="n", text="ok", ..))
+}
+
+///|
+test "sexp jump-by executes selector expression" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(jump-by (concat \"g\" \"ood\")) (say n \"bad\") (label good) (say n \"ok\")",
+  )
+  let runtime = Runtime::new(script, @state.GameState::new(()))
   assert_true(runtime.step() is Said(speaker="n", text="ok", ..))
 }
 

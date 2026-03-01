@@ -53,8 +53,6 @@ pub fn[T] reisen_parse_sexp_script(String) -> Script[T] raise ScriptBuildError
 
 pub fn[T] reisen_parse_sexp_script_with_parser(String, SexpScriptParser[T]) -> Script[T] raise ScriptBuildError
 
-pub fn[T] reisen_parse_text_script(String) -> Script[T] raise ScriptBuildError
-
 pub fn[T] reisen_sexp_script_to_builder(String, ScriptBuilder[T]) -> Unit
 
 pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
@@ -65,10 +63,6 @@ pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise Scr
 pub suberror ReisenSexpError
 pub impl Eq for ReisenSexpError
 pub impl Show for ReisenSexpError
-
-pub suberror ReisenTextError
-pub impl Eq for ReisenTextError
-pub impl Show for ReisenTextError
 
 pub suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
@@ -201,6 +195,7 @@ pub(all) enum Instruction[T] {
   Label(String)
   Jump(String)
   JumpIf(String, (@state.GameState[T]) -> Bool)
+  JumpBy((@state.GameState[T]) -> Label)
   Wait(Int)
   WaitForClick(Bool)
   WaitCustomEvent(String, (@state.GameState[T], String) -> Bool)
@@ -391,6 +386,7 @@ pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
 pub fn[T] ScriptBuilder::input_text(Self[T], String, String) -> Unit
 pub fn[T] ScriptBuilder::intro(Self[T], String) -> Unit
 pub fn[T] ScriptBuilder::jump(Self[T], Label) -> Unit
+pub fn[T] ScriptBuilder::jump_by(Self[T], (@state.GameState[T]) -> Label) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (@state.GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
 pub fn[T] ScriptBuilder::load_sexp(Self[T], String) -> Unit
@@ -459,6 +455,8 @@ pub type PayloadJumpSelector[T] = (@state.GameState[T], String) -> Label
 pub type PayloadPredicate[T] = (@state.GameState[T], String) -> Bool
 
 pub type ScriptHook[T] = (@state.GameState[T]) -> Unit
+
+pub type ScriptJumpSelector[T] = (@state.GameState[T]) -> Label
 
 pub type ScriptPredicate[T] = (@state.GameState[T]) -> Bool
 

@@ -618,6 +618,16 @@ fn[T] lower_form(
             }
             _ => ()
           }
+        "jump-by" =>
+          match args {
+            [selector] =>
+              builder.jump_by(state => {
+                let value = sexp_to_js_value(selector, state, host_functions)
+                let target = js_value_to_string(value).unwrap_or("")
+                label(name=target)
+              })
+            _ => ()
+          }
         "run-code" =>
           match args {
             [expr] =>

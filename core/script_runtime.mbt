@@ -265,6 +265,11 @@ fn[T] Runtime::run_inst(
       }
       Noop
     }
+    JumpBy(selector) => {
+      let target = selector(self.state)
+      self.jump_to_label(target.0)
+      Noop
+    }
     Wait(ms) => {
       self.ip = self.ip + 1
       self.wait_ms = if ms < 0 { 0 } else { ms }

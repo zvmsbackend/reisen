@@ -173,6 +173,17 @@ test "branch helper emits jump_if and jump instructions" {
 }
 
 ///|
+test "jump_by helper emits computed jump instruction" {
+  let built : Script[Int] = script(builder => {
+    builder.jump_by(_ => label(name="target"))
+    builder.label(label(name="target"))
+  })
+
+  assert_eq(built.instructions.length(), 2)
+  assert_true(built.instructions[0] is JumpBy(_))
+}
+
+///|
 test "menu helper emits say then choice" {
   let label_a = label(name="label_a")
   let label_b = label(name="label_b")
