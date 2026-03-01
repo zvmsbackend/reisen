@@ -26,6 +26,7 @@ using @pixi {type PixiBindingError}
 
 ///|
 using @ui {
+  type UiStrings,
   type UiDom,
   type StartMenu,
   type GalleryMenu,

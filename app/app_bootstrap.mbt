@@ -96,10 +96,11 @@ pub async fn[T] start_game(
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
   settings? : GameSettings,
+  ui_strings? : UiStrings = UiStrings::default(),
 ) -> GameRunner[T] {
   let runtime = Runtime::new(script, state)
   let director = Director::new(runtime)
-  let ui = UiDom::new(ui_root_id)
+  let ui = UiDom::new(ui_root_id, ui_strings~)
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
   match settings {
     Some(s) => runner.apply_settings(s)
@@ -117,9 +118,10 @@ pub async fn[T : FromJson] start_game_from_save(
   render_sync? : RenderSyncHook[T] = _ => (),
   event_hook? : EventHook = _ => (),
   settings? : GameSettings,
+  ui_strings? : UiStrings = UiStrings::default(),
 ) -> GameRunner[T] {
   let director = director_from_save_json(script, save_json)
-  let ui = UiDom::new(ui_root_id)
+  let ui = UiDom::new(ui_root_id, ui_strings~)
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
   match settings {
     Some(s) => runner.apply_settings(s)
@@ -185,6 +187,7 @@ pub async fn[T : FromJson] start_game_from_slot(
   save_namespace? : String = "global",
   settings? : GameSettings,
   slot_payload_version? : Int = save_slot_payload_version,
+  ui_strings? : UiStrings = UiStrings::default(),
 ) -> GameRunner[T] {
   match save_slot_read_in(save_namespace, slot) {
     Some(save_json) =>
@@ -195,6 +198,7 @@ pub async fn[T : FromJson] start_game_from_slot(
         render_sync~,
         event_hook~,
         settings?,
+        ui_strings~,
       )
     None => raise AppBootstrapError::MissingSaveSlot(slot~)
   }

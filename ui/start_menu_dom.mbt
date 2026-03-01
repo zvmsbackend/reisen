@@ -28,6 +28,7 @@ struct StartMenu {
   root_id : String
   save_ns : String
   background : String
+  ui_strings : UiStrings
 }
 
 ///|
@@ -35,13 +36,14 @@ pub fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
   background? : String = "",
+  ui_strings? : UiStrings = UiStrings::default(),
 ) -> StartMenu {
-  { root_id, save_ns: save_namespace, background }
+  { root_id, save_ns: save_namespace, background, ui_strings }
 }
 
 ///|
 pub fn StartMenu::render_gate(self : StartMenu) -> Unit {
-  start_gate_dom_render(self.root_id)
+  start_gate_dom_render(self.root_id, self.ui_strings.start_gate_click_to_start)
 }
 
 ///|
@@ -109,8 +111,13 @@ extern "js" fn start_menu_dom_render(
   continue_slot : String,
   background : String,
   has_gallery : Bool,
+  new_game_label : String,
+  continue_label : String,
+  load_label : String,
+  settings_label : String,
+  gallery_label : String,
 ) -> Unit =
-  #| (root_id, has_continue, continue_slot, background, has_gallery) => {
+  #| (root_id, has_continue, continue_slot, background, has_gallery, new_game_label, continue_label, load_label, settings_label, gallery_label) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -146,21 +153,24 @@ extern "js" fn start_menu_dom_render(
   #|     return btn;
   #|   };
   #|
-  #|   actions.appendChild(mkButton('New Game', 'new'));
-  #|   const continueBtn = mkButton('Continue', 'continue', continue_slot);
+  #|   actions.appendChild(mkButton(new_game_label, 'new'));
+  #|   const continueBtn = mkButton(continue_label, 'continue', continue_slot);
   #|   continueBtn.disabled = !has_continue;
   #|   actions.appendChild(continueBtn);
-  #|   actions.appendChild(mkButton('Load', 'load'));
-  #|   actions.appendChild(mkButton('Settings', 'settings'));
+  #|   actions.appendChild(mkButton(load_label, 'load'));
+  #|   actions.appendChild(mkButton(settings_label, 'settings'));
   #|   if (has_gallery) {
-  #|     actions.appendChild(mkButton('Gallery', 'gallery'));
+  #|     actions.appendChild(mkButton(gallery_label, 'gallery'));
   #|   }
   #|   menu.appendChild(actions);
   #| }
 
 ///|
-extern "js" fn start_gate_dom_render(root_id : String) -> Unit =
-  #| (root_id) => {
+extern "js" fn start_gate_dom_render(
+  root_id : String,
+  click_to_start : String,
+) -> Unit =
+  #| (root_id, click_to_start) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -174,7 +184,7 @@ extern "js" fn start_gate_dom_render(root_id : String) -> Unit =
   #|   gate.innerHTML = '';
   #|   const text = doc.createElement('div');
   #|   text.dataset.reisen = 'start-gate-text';
-  #|   text.textContent = 'Click to Start';
+  #|   text.textContent = click_to_start;
   #|   gate.appendChild(text);
   #|   if (!gate.__reisenGateBound) {
   #|     gate.__reisenGateBound = true;
@@ -326,6 +336,11 @@ pub fn StartMenu::render(self : StartMenu) -> Unit {
         slot,
         self.background,
         has_gallery,
+        self.ui_strings.start_menu_new_game,
+        self.ui_strings.start_menu_continue,
+        self.ui_strings.start_menu_load,
+        self.ui_strings.start_menu_settings,
+        self.ui_strings.start_menu_gallery,
       )
     None =>
       start_menu_dom_render(
@@ -334,6 +349,11 @@ pub fn StartMenu::render(self : StartMenu) -> Unit {
         "",
         self.background,
         has_gallery,
+        self.ui_strings.start_menu_new_game,
+        self.ui_strings.start_menu_continue,
+        self.ui_strings.start_menu_load,
+        self.ui_strings.start_menu_settings,
+        self.ui_strings.start_menu_gallery,
       )
   }
 }

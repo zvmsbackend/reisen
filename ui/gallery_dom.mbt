@@ -27,6 +27,7 @@ struct GalleryMenu {
   root_id : String
   save_ns : String
   background : String
+  ui_strings : UiStrings
   show_locked : Bool
   mut active_id : String?
 }
@@ -37,8 +38,16 @@ pub fn GalleryMenu::new(
   save_namespace? : String = "global",
   background? : String = "",
   show_locked? : Bool = true,
+  ui_strings? : UiStrings = UiStrings::default(),
 ) -> GalleryMenu {
-  { root_id, save_ns: save_namespace, background, show_locked, active_id: None }
+  {
+    root_id,
+    save_ns: save_namespace,
+    background,
+    ui_strings,
+    show_locked,
+    active_id: None,
+  }
 }
 
 ///|
@@ -115,8 +124,14 @@ extern "js" fn gallery_dom_render(
   background : String,
   tiles_json : String,
   active_id : String,
+  back_label : String,
+  locked_label : String,
+  prev_label : String,
+  next_label : String,
+  replay_label : String,
+  close_label : String,
 ) -> Unit =
-  #| (root_id, background, tiles_json, active_id) => {
+  #| (root_id, background, tiles_json, active_id, back_label, locked_label, prev_label, next_label, replay_label, close_label) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -142,7 +157,7 @@ extern "js" fn gallery_dom_render(
   #|   toolbar.dataset.reisen = 'gallery-toolbar';
   #|   const backBtn = doc.createElement('button');
   #|   backBtn.type = 'button';
-  #|   backBtn.textContent = 'Back';
+  #|   backBtn.textContent = back_label;
   #|   backBtn.addEventListener('click', () => {
   #|     root.dataset.reisenGalleryActionKind = 'back';
   #|   });
@@ -158,7 +173,7 @@ extern "js" fn gallery_dom_render(
   #|     btn.dataset.galleryId = tile.id || '';
   #|     if (!tile.unlocked) btn.dataset.locked = '1';
   #|     const label = doc.createElement('div');
-  #|     label.textContent = tile.unlocked ? titleOf(tile) : 'Locked';
+  #|     label.textContent = tile.unlocked ? titleOf(tile) : locked_label;
   #|     btn.appendChild(label);
   #|     if (tile.unlocked) {
   #|       const img = doc.createElement('img');
@@ -199,12 +214,12 @@ extern "js" fn gallery_dom_render(
   #|     });
   #|     return btn;
   #|   };
-  #|   controls.appendChild(mkControl('Prev', 'prev'));
-  #|   controls.appendChild(mkControl('Next', 'next'));
+  #|   controls.appendChild(mkControl(prev_label, 'prev'));
+  #|   controls.appendChild(mkControl(next_label, 'next'));
   #|   if (active.replay_label) {
-  #|     controls.appendChild(mkControl('Replay', 'replay', active.replay_label));
+  #|     controls.appendChild(mkControl(replay_label, 'replay', active.replay_label));
   #|   }
-  #|   controls.appendChild(mkControl('Close', 'close'));
+  #|   controls.appendChild(mkControl(close_label, 'close'));
   #|   overlay.appendChild(controls);
   #|   host.appendChild(overlay);
   #| }
@@ -262,6 +277,12 @@ pub fn GalleryMenu::render(self : GalleryMenu) -> Unit {
     self.background,
     tiles_json,
     self.active_id.unwrap_or(""),
+    self.ui_strings.gallery_back,
+    self.ui_strings.gallery_locked,
+    self.ui_strings.gallery_prev,
+    self.ui_strings.gallery_next,
+    self.ui_strings.gallery_replay,
+    self.ui_strings.gallery_close,
   )
 }
 

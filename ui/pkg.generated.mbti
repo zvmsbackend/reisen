@@ -39,7 +39,7 @@ pub enum GalleryAction {
 
 type GalleryMenu
 pub fn GalleryMenu::clear(Self) -> Unit
-pub fn GalleryMenu::new(String, save_namespace? : String, background? : String, show_locked? : Bool) -> Self
+pub fn GalleryMenu::new(String, save_namespace? : String, background? : String, show_locked? : Bool, ui_strings? : UiStrings) -> Self
 pub fn GalleryMenu::render(Self) -> Unit
 pub fn GalleryMenu::take_action(Self) -> GalleryAction
 
@@ -69,7 +69,7 @@ pub impl Show for SettingsContext
 
 type SettingsMenu
 pub fn SettingsMenu::clear(Self) -> Unit
-pub fn SettingsMenu::new(String, save_namespace? : String, background? : String, context? : SettingsContext) -> Self
+pub fn SettingsMenu::new(String, save_namespace? : String, background? : String, context? : SettingsContext, ui_strings? : UiStrings) -> Self
 pub fn SettingsMenu::render(Self) -> Unit
 pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
 pub fn SettingsMenu::set_view_mode(Self, SettingsViewMode) -> Unit
@@ -95,7 +95,7 @@ type StartMenu
 pub fn StartMenu::clear(Self) -> Unit
 pub fn StartMenu::clear_gate(Self) -> Unit
 pub fn StartMenu::clear_logo(Self) -> Unit
-pub fn StartMenu::new(String, save_namespace? : String, background? : String) -> Self
+pub fn StartMenu::new(String, save_namespace? : String, background? : String, ui_strings? : UiStrings) -> Self
 pub fn StartMenu::render(Self) -> Unit
 pub fn StartMenu::render_gate(Self) -> Unit
 pub fn StartMenu::render_logo(Self, String, Int) -> Unit
@@ -138,7 +138,7 @@ pub fn UiDom::mark_dirty_text(Self) -> Unit
 pub fn UiDom::mark_dirty_text_and_speaker(Self) -> Unit
 pub fn UiDom::mark_dirty_text_input(Self) -> Unit
 pub fn UiDom::mark_skip_advanced(Self) -> Unit
-pub fn UiDom::new(String) -> Self
+pub fn UiDom::new(String, ui_strings? : UiStrings) -> Self
 pub fn UiDom::render(Self, UiViewModel) -> Unit
 pub fn UiDom::reveal_intro_line(Self) -> Bool
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
@@ -170,6 +170,58 @@ pub impl Eq for UiDomFigureView
 pub impl Show for UiDomFigureView
 pub impl ToJson for UiDomFigureView
 pub impl @json.FromJson for UiDomFigureView
+
+pub struct UiStrings {
+  start_gate_click_to_start : String
+  start_menu_new_game : String
+  start_menu_continue : String
+  start_menu_load : String
+  start_menu_settings : String
+  start_menu_gallery : String
+  settings_text_speed : String
+  settings_bgm_volume : String
+  settings_sfx_volume : String
+  settings_save : String
+  settings_load : String
+  settings_log : String
+  settings_start_menu : String
+  settings_new_game : String
+  settings_defaults : String
+  settings_back : String
+  settings_confirm_cancel : String
+  settings_confirm_ok : String
+  settings_confirm_return_start_menu : String
+  settings_save_game_title : String
+  settings_load_game_title : String
+  settings_tab_auto : String
+  settings_tab_quick : String
+  settings_tab_save : String
+  settings_slot_delete : String
+  settings_confirm_delete_slot : String
+  settings_confirm_overwrite_slot : String
+  settings_nav_prev : String
+  settings_nav_next : String
+  settings_page_prefix : String
+  settings_slot_empty : String
+  gallery_back : String
+  gallery_locked : String
+  gallery_prev : String
+  gallery_next : String
+  gallery_replay : String
+  gallery_close : String
+  game_action_settings : String
+  game_action_quicksave : String
+  game_action_save : String
+  game_action_log : String
+  game_action_dialog : String
+  game_action_auto : String
+  game_action_skip : String
+  game_toggle_on_prefix : String
+  game_toggle_off_prefix : String
+  game_text_input_submit : String
+  game_log_building : String
+}
+pub impl Default for UiStrings
 
 type UiTextInputView
 pub impl Eq for UiTextInputView

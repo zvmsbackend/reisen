@@ -20,6 +20,7 @@ struct AppController[T] {
   mut script : Script[T]?
   new_state : () -> GameState[T]
   ui_root_id : String
+  ui_strings : UiStrings
   save_ns : String
   autosave_slot : String
   autosave_title : String
@@ -56,6 +57,7 @@ pub fn[T] AppController::new(
   gallery_background? : String = "",
   menu_music? : Music,
   menu_music_loop? : Bool = true,
+  ui_strings? : UiStrings = UiStrings::default(),
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
@@ -68,6 +70,7 @@ pub fn[T] AppController::new(
     script: None,
     new_state,
     ui_root_id,
+    ui_strings,
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
@@ -82,16 +85,19 @@ pub fn[T] AppController::new(
       ui_root_id,
       save_namespace~,
       background=menu_background,
+      ui_strings~,
     ),
     gallery_menu: GalleryMenu::new(
       ui_root_id,
       save_namespace~,
       background=gallery_background,
+      ui_strings~,
     ),
     settings_menu: SettingsMenu::new(
       ui_root_id,
       save_namespace~,
       background=settings_background,
+      ui_strings~,
     ),
     phase: AppPhase::StartGate,
     render_sync,
@@ -251,6 +257,7 @@ async fn[T] AppController::start_gallery_replay(
         render_sync=self.render_sync,
         event_hook=self.event_hook,
         settings?,
+        ui_strings=self.ui_strings,
       )
       try {
         runner.jump_to_label(replay_label)
@@ -284,6 +291,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
           render_sync=self.render_sync,
           event_hook=self.event_hook,
           settings?,
+          ui_strings=self.ui_strings,
         ),
       )
       self.start_menu.clear()
@@ -298,6 +306,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
           render_sync=self.render_sync,
           event_hook=self.event_hook,
           save_namespace=self.save_ns,
+          ui_strings=self.ui_strings,
         )
         self.start_menu_music_stop()
         self.runner = Some(runner)
@@ -475,7 +484,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               self.saved_director_json = None
               try {
                 let director = director_from_save_json(self.script(), json)
-                let ui = UiDom::new(self.ui_root_id)
+                let ui = UiDom::new(self.ui_root_id, ui_strings=self.ui_strings)
                 let runner = GameRunner::new_with_hooks(
                   director,
                   ui,
@@ -509,6 +518,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               render_sync=self.render_sync,
               event_hook=self.event_hook,
               settings?,
+              ui_strings=self.ui_strings,
             ),
           )
           self.phase = AppPhase::InGame
@@ -567,6 +577,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             render_sync=self.render_sync,
             event_hook=self.event_hook,
             save_namespace=self.save_ns,
+            ui_strings=self.ui_strings,
           )
           match restored {
             Ok(runner) => {

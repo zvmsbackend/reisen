@@ -67,6 +67,7 @@ struct UiViewModel {
 ///|
 struct UiDom {
   root_id : String
+  ui_strings : UiStrings
   mut dom_animation_cursor : Int
   mut dom_timeline_ms : Int
   dom_position_anims : Map[String, DomPositionAnim]
@@ -108,9 +109,13 @@ struct UiDom {
 }
 
 ///|
-pub fn UiDom::new(root_id : String) -> UiDom {
+pub fn UiDom::new(
+  root_id : String,
+  ui_strings? : UiStrings = UiStrings::default(),
+) -> UiDom {
   {
     root_id,
+    ui_strings,
     dom_animation_cursor: 0,
     dom_timeline_ms: 0,
     dom_position_anims: {},
@@ -1187,8 +1192,9 @@ extern "js" fn dom_render_text_input(
   root_id : String,
   var_name : String,
   prompt : String,
+  submit_label : String,
 ) -> Unit =
-  #| (root_id, var_name, prompt) => {
+  #| (root_id, var_name, prompt, submit_label) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -1219,7 +1225,7 @@ extern "js" fn dom_render_text_input(
   #|
   #|   const submitBtn = doc.createElement('button');
   #|   submitBtn.type = 'button';
-  #|   submitBtn.textContent = 'Submit';
+  #|   submitBtn.textContent = submit_label;
   #|   submitBtn.addEventListener('click', () => {
   #|     root.dataset.reisenSubmittedInput = input.value;
   #|   });
@@ -1367,8 +1373,17 @@ extern "js" fn dom_render_action_buttons(
   skip_mode : Bool,
   dialog_visible : Bool,
   log_visible : Bool,
+  settings_label : String,
+  quicksave_label : String,
+  save_label : String,
+  log_label : String,
+  dialog_label : String,
+  auto_label : String,
+  skip_label : String,
+  toggle_on_prefix : String,
+  toggle_off_prefix : String,
 ) -> Unit =
-  #| (root_id, auto_mode, skip_mode, dialog_visible, log_visible) => {
+  #| (root_id, auto_mode, skip_mode, dialog_visible, log_visible, settings_label, quicksave_label, save_label, log_label, dialog_label, auto_label, skip_label, toggle_on_prefix, toggle_off_prefix) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -1383,14 +1398,16 @@ extern "js" fn dom_render_action_buttons(
   #|   actions.style.zIndex = '230';
   #|   actions.innerHTML = '';
   #|
+  #|   const on = toggle_on_prefix || '';
+  #|   const off = toggle_off_prefix || '';
   #|   const buttons = [
-  #|     { id: 'settings', label: '⚙' },
-  #|     { id: 'qsave', label: 'Q.Save' },
-  #|     { id: 'save', label: 'Save' },
-  #|     { id: 'log', label: log_visible ? '☑ Log' : '☐ Log', data: 'log' },
-  #|     { id: 'dialog', label: dialog_visible ? '☑ Dialog' : '☐ Dialog', data: 'dialog' },
-  #|     { id: 'auto', label: auto_mode ? '☑ Auto' : '☐ Auto', data: 'auto' },
-  #|     { id: 'skip', label: skip_mode ? '☑ Skip' : '☐ Skip', data: 'skip' },
+  #|     { id: 'settings', label: settings_label },
+  #|     { id: 'qsave', label: quicksave_label },
+  #|     { id: 'save', label: save_label },
+  #|     { id: 'log', label: (log_visible ? on : off) + log_label, data: 'log' },
+  #|     { id: 'dialog', label: (dialog_visible ? on : off) + dialog_label, data: 'dialog' },
+  #|     { id: 'auto', label: (auto_mode ? on : off) + auto_label, data: 'auto' },
+  #|     { id: 'skip', label: (skip_mode ? on : off) + skip_label, data: 'skip' },
   #|   ];
   #|
   #|   for (const btnInfo of buttons) {
@@ -1437,8 +1454,9 @@ extern "js" fn dom_render_log(
   root_id : String,
   history_json : String,
   building : Bool,
+  building_text : String,
 ) -> Unit =
-  #| (root_id, history_json, building) => {
+  #| (root_id, history_json, building, building_text) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -1468,7 +1486,7 @@ extern "js" fn dom_render_log(
   #|     status.style.fontWeight = '700';
   #|     status.style.opacity = '0.9';
   #|     status.style.marginBottom = '12px';
-  #|     status.textContent = 'Building log...';
+  #|     status.textContent = building_text;
   #|     panel.appendChild(status);
   #|   }
   #|   let rows = [];
@@ -1969,6 +1987,15 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       view.skip_mode,
       view.text_box_visible,
       view.log_visible,
+      self.ui_strings.game_action_settings,
+      self.ui_strings.game_action_quicksave,
+      self.ui_strings.game_action_save,
+      self.ui_strings.game_action_log,
+      self.ui_strings.game_action_dialog,
+      self.ui_strings.game_action_auto,
+      self.ui_strings.game_action_skip,
+      self.ui_strings.game_toggle_on_prefix,
+      self.ui_strings.game_toggle_off_prefix,
     )
     self.dirty_action_buttons = false
   }
@@ -1977,6 +2004,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       self.root_id,
       view.dialog_history.to_json().stringify(),
       view.log_building,
+      self.ui_strings.game_log_building,
     )
   } else {
     dom_clear_log(self.root_id)
@@ -1988,6 +2016,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
           self.root_id,
           input_view.var_name,
           input_view.prompt,
+          self.ui_strings.game_text_input_submit,
         )
       None => dom_clear_text_input(self.root_id)
     }

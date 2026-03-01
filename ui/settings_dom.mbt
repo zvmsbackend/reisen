@@ -38,6 +38,7 @@ struct SettingsMenu {
   root_id : String
   save_ns : String
   background : String
+  ui_strings : UiStrings
   mut context : SettingsContext
   mut view_mode : SettingsViewMode
   mut save_slot_type : SaveSlotType
@@ -57,11 +58,13 @@ pub fn SettingsMenu::new(
   save_namespace? : String = "global",
   background? : String = "",
   context? : SettingsContext = SettingsContext::FromStartMenu,
+  ui_strings? : UiStrings = UiStrings::default(),
 ) -> SettingsMenu {
   {
     root_id,
     save_ns: save_namespace,
     background,
+    ui_strings,
     context,
     view_mode: SettingsViewMode::Settings,
     save_slot_type: SaveSlotType::Normal,
@@ -97,8 +100,13 @@ fn to_settings_view(settings : GameSettings) -> SettingsView {
 }
 
 ///|
-extern "js" fn settings_dom_install_confirm_helper() -> Unit =
-  #| () => {
+extern "js" fn settings_dom_install_confirm_helper(
+  cancel_label : String,
+  ok_label : String,
+) -> Unit =
+  #| (cancel_label, ok_label) => {
+  #|   globalThis.__reisenConfirmCancelLabel = cancel_label;
+  #|   globalThis.__reisenConfirmOkLabel = ok_label;
   #|   if (globalThis.__reisenOpenConfirm) return;
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
@@ -115,10 +123,10 @@ extern "js" fn settings_dom_install_confirm_helper() -> Unit =
   #|     actions.dataset.reisen = 'confirm-actions';
   #|     const cancelBtn = doc.createElement('button');
   #|     cancelBtn.type = 'button';
-  #|     cancelBtn.textContent = 'Cancel';
+  #|     cancelBtn.textContent = globalThis.__reisenConfirmCancelLabel || '';
   #|     const okBtn = doc.createElement('button');
   #|     okBtn.type = 'button';
-  #|     okBtn.textContent = 'Confirm';
+  #|     okBtn.textContent = globalThis.__reisenConfirmOkLabel || '';
   #|     const close = () => backdrop.remove();
   #|     cancelBtn.addEventListener('click', close);
   #|     okBtn.addEventListener('click', () => {
@@ -149,8 +157,19 @@ extern "js" fn settings_dom_render(
   sfx_volume : Double,
   background : String,
   context : String,
+  text_speed_label : String,
+  bgm_volume_label : String,
+  sfx_volume_label : String,
+  save_label : String,
+  load_label : String,
+  log_label : String,
+  start_menu_label : String,
+  new_game_label : String,
+  defaults_label : String,
+  back_label : String,
+  confirm_start_menu_text : String,
 ) -> Unit =
-  #| (root_id, text_speed, bgm_volume, sfx_volume, background, context) => {
+  #| (root_id, text_speed, bgm_volume, sfx_volume, background, context, text_speed_label, bgm_volume_label, sfx_volume_label, save_label, load_label, log_label, start_menu_label, new_game_label, defaults_label, back_label, confirm_start_menu_text) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   if (globalThis.__reisenOpenConfirm == null) return;
@@ -215,9 +234,9 @@ extern "js" fn settings_dom_render(
   #|     return row;
   #|   };
   #|
-  #|   settingsPanel.appendChild(mkRow('Text Speed', mkSlider('text_speed', 10, 100, text_speed, 10)));
-  #|   settingsPanel.appendChild(mkRow('BGM Volume', mkSlider('bgm_volume', 0, 100, Math.round(bgm_volume * 100), 1)));
-  #|   settingsPanel.appendChild(mkRow('SFX Volume', mkSlider('sfx_volume', 0, 100, Math.round(sfx_volume * 100), 1)));
+  #|   settingsPanel.appendChild(mkRow(text_speed_label, mkSlider('text_speed', 10, 100, text_speed, 10)));
+  #|   settingsPanel.appendChild(mkRow(bgm_volume_label, mkSlider('bgm_volume', 0, 100, Math.round(bgm_volume * 100), 1)));
+  #|   settingsPanel.appendChild(mkRow(sfx_volume_label, mkSlider('sfx_volume', 0, 100, Math.round(sfx_volume * 100), 1)));
   #|
   #|   menu.appendChild(settingsPanel);
   #|
@@ -240,7 +259,7 @@ extern "js" fn settings_dom_render(
   #|         return;
   #|       }
   #|       if (kind === 'start_menu' && context === 'midgame') {
-  #|         openConfirm('Return to the start menu? Unsaved progress will be lost.', () => {
+  #|         openConfirm(confirm_start_menu_text, () => {
   #|           root.dataset.reisenSettingsAction = kind;
   #|         });
   #|         return;
@@ -251,16 +270,16 @@ extern "js" fn settings_dom_render(
   #|   };
   #|
   #|   if (context === 'midgame') {
-  #|     actions.appendChild(mkButton('Save', 'save'));
-  #|     actions.appendChild(mkButton('Load', 'load'));
-  #|     actions.appendChild(mkButton('Log', 'log'));
-  #|     actions.appendChild(mkButton('Start Menu', 'start_menu'));
+  #|     actions.appendChild(mkButton(save_label, 'save'));
+  #|     actions.appendChild(mkButton(load_label, 'load'));
+  #|     actions.appendChild(mkButton(log_label, 'log'));
+  #|     actions.appendChild(mkButton(start_menu_label, 'start_menu'));
   #|   } else {
-  #|     actions.appendChild(mkButton('New Game', 'new_game'));
-  #|     actions.appendChild(mkButton('Load', 'load'));
+  #|     actions.appendChild(mkButton(new_game_label, 'new_game'));
+  #|     actions.appendChild(mkButton(load_label, 'load'));
   #|   }
-  #|   actions.appendChild(mkButton('Defaults', 'defaults'));
-  #|   actions.appendChild(mkButton('Back', 'back'));
+  #|   actions.appendChild(mkButton(defaults_label, 'defaults'));
+  #|   actions.appendChild(mkButton(back_label, 'back'));
   #|   menu.appendChild(actions);
   #| }
 
@@ -322,8 +341,21 @@ extern "js" fn settings_dom_render_slots(
   total_pages : Int,
   max_pages : Int,
   background : String,
+  save_game_title : String,
+  load_game_title : String,
+  tab_auto : String,
+  tab_quick : String,
+  tab_save : String,
+  slot_delete_label : String,
+  confirm_delete_slot_text : String,
+  confirm_overwrite_slot_text : String,
+  nav_prev_label : String,
+  nav_next_label : String,
+  page_prefix : String,
+  slot_empty_title : String,
+  back_label : String,
 ) -> Unit =
-  #| (root_id, slots, titles, previews, mode, slot_type, current_page, total_pages, max_pages, background) => {
+  #| (root_id, slots, titles, previews, mode, slot_type, current_page, total_pages, max_pages, background, save_game_title, load_game_title, tab_auto, tab_quick, tab_save, slot_delete_label, confirm_delete_slot_text, confirm_overwrite_slot_text, nav_prev_label, nav_next_label, page_prefix, slot_empty_title, back_label) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   if (globalThis.__reisenOpenConfirm == null) return;
@@ -347,7 +379,7 @@ extern "js" fn settings_dom_render_slots(
   #|   menu.innerHTML = '';
   #|
   #|   const title = doc.createElement('h2');
-  #|   title.textContent = mode === 'save' ? 'Save Game' : 'Load Game';
+  #|   title.textContent = mode === 'save' ? save_game_title : load_game_title;
   #|   title.dataset.reisen = 'settings-title';
   #|   menu.appendChild(title);
   #|
@@ -369,9 +401,9 @@ extern "js" fn settings_dom_render_slots(
   #|     return btn;
   #|   };
   #|
-  #|   tabs.appendChild(mkTab('Auto', 'autosave'));
-  #|   tabs.appendChild(mkTab('Quick', 'quicksave'));
-  #|   tabs.appendChild(mkTab('Save', 'normal'));
+  #|   tabs.appendChild(mkTab(tab_auto, 'autosave'));
+  #|   tabs.appendChild(mkTab(tab_quick, 'quicksave'));
+  #|   tabs.appendChild(mkTab(tab_save, 'normal'));
   #|   menu.appendChild(tabs);
   #|
   #|   // Grid container
@@ -394,19 +426,19 @@ extern "js" fn settings_dom_render_slots(
   #|     }
   #|     const deleteBtn = doc.createElement('button');
   #|     deleteBtn.type = 'button';
-  #|     deleteBtn.textContent = '×';
+  #|     deleteBtn.textContent = slot_delete_label;
   #|     deleteBtn.dataset.reisen = 'settings-slot-delete';
   #|     deleteBtn.addEventListener('click', (e) => {
   #|       e.stopPropagation();
-  #|       openConfirm('Delete this save slot?', () => {
+  #|       openConfirm(confirm_delete_slot_text, () => {
   #|         root.dataset.reisenSettingsAction = 'delete_slot';
   #|         root.dataset.reisenSettingsActionSlot = slot;
   #|       });
   #|     });
   #|     btn.appendChild(deleteBtn);
   #|     btn.addEventListener('click', () => {
-  #|       if (mode === 'save' && title_ !== 'Empty') {
-  #|         openConfirm('Overwrite this save slot?', () => {
+  #|       if (mode === 'save' && title_ !== slot_empty_title) {
+  #|         openConfirm(confirm_overwrite_slot_text, () => {
   #|           root.dataset.reisenSettingsAction = mode;
   #|           root.dataset.reisenSettingsActionSlot = slot;
   #|         });
@@ -430,18 +462,18 @@ extern "js" fn settings_dom_render_slots(
   #|
   #|     const prevBtn = doc.createElement('button');
   #|     prevBtn.type = 'button';
-  #|     prevBtn.textContent = 'Prev';
+  #|     prevBtn.textContent = nav_prev_label;
   #|     prevBtn.disabled = current_page <= 0;
   #|     prevBtn.dataset.reisen = 'settings-nav-prev';
   #|     prevBtn.addEventListener('click', () => {
   #|       root.dataset.reisenSettingsAction = 'prev_page';
   #|     });
   #|     const pageInfo = doc.createElement('span');
-  #|     pageInfo.textContent = `Page ${current_page + 1}`;
+  #|     pageInfo.textContent = `${page_prefix} ${current_page + 1}`;
   #|     pageInfo.dataset.reisen = 'settings-page-info';
   #|     const nextBtn = doc.createElement('button');
   #|     nextBtn.type = 'button';
-  #|     nextBtn.textContent = 'Next';
+  #|     nextBtn.textContent = nav_next_label;
   #|     nextBtn.disabled = current_page >= max_pages - 1;
   #|     nextBtn.dataset.reisen = 'settings-nav-next';
   #|     nextBtn.addEventListener('click', () => {
@@ -456,7 +488,7 @@ extern "js" fn settings_dom_render_slots(
   #|
   #|   const backBtn = doc.createElement('button');
   #|   backBtn.type = 'button';
-  #|   backBtn.textContent = 'Back';
+  #|   backBtn.textContent = back_label;
   #|   backBtn.dataset.reisen = 'settings-back';
   #|   backBtn.addEventListener('click', () => {
   #|     root.dataset.reisenSettingsAction = 'back';
@@ -503,7 +535,10 @@ fn filter_entries_by_type(
 
 ///|
 pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
-  settings_dom_install_confirm_helper()
+  settings_dom_install_confirm_helper(
+    self.ui_strings.settings_confirm_cancel,
+    self.ui_strings.settings_confirm_ok,
+  )
   match self.view_mode {
     SettingsViewMode::SaveList | SettingsViewMode::LoadList => {
       let mode_str = match self.view_mode {
@@ -547,7 +582,7 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
             SaveSlotType::Normal => slot_num.to_string()
           }
           slots.push(slot_name)
-          titles.push("Empty")
+          titles.push(self.ui_strings.settings_slot_empty)
           previews.push("")
         }
       }
@@ -567,6 +602,19 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         total_pages,
         max_pages,
         self.background,
+        self.ui_strings.settings_save_game_title,
+        self.ui_strings.settings_load_game_title,
+        self.ui_strings.settings_tab_auto,
+        self.ui_strings.settings_tab_quick,
+        self.ui_strings.settings_tab_save,
+        self.ui_strings.settings_slot_delete,
+        self.ui_strings.settings_confirm_delete_slot,
+        self.ui_strings.settings_confirm_overwrite_slot,
+        self.ui_strings.settings_nav_prev,
+        self.ui_strings.settings_nav_next,
+        self.ui_strings.settings_page_prefix,
+        self.ui_strings.settings_slot_empty,
+        self.ui_strings.settings_back,
       )
     }
     SettingsViewMode::Settings => {
@@ -586,6 +634,17 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         view.sfx_volume,
         self.background,
         context_str,
+        self.ui_strings.settings_text_speed,
+        self.ui_strings.settings_bgm_volume,
+        self.ui_strings.settings_sfx_volume,
+        self.ui_strings.settings_save,
+        self.ui_strings.settings_load,
+        self.ui_strings.settings_log,
+        self.ui_strings.settings_start_menu,
+        self.ui_strings.settings_new_game,
+        self.ui_strings.settings_defaults,
+        self.ui_strings.settings_back,
+        self.ui_strings.settings_confirm_return_start_menu,
       )
     }
   }
