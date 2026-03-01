@@ -102,6 +102,7 @@ struct GameRunner[T] {
   ui : UiDom
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
+  mut ui_click_sfx_id : String?
   mut ui_dirty : Bool
   mut render_sync_dirty : Bool
   mut pending_action : String?
@@ -120,6 +121,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     ui,
     render_sync: _ => (),
     event_hook: _ => (),
+    ui_click_sfx_id: None,
     ui_dirty: true,
     render_sync_dirty: true,
     pending_action: None,
@@ -143,6 +145,7 @@ pub fn[T] GameRunner::new_with_render_sync(
     ui,
     render_sync,
     event_hook: _ => (),
+    ui_click_sfx_id: None,
     ui_dirty: true,
     render_sync_dirty: true,
     pending_action: None,
@@ -167,6 +170,7 @@ pub fn[T] GameRunner::new_with_hooks(
     ui,
     render_sync,
     event_hook,
+    ui_click_sfx_id: None,
     ui_dirty: true,
     render_sync_dirty: true,
     pending_action: None,
@@ -177,6 +181,22 @@ pub fn[T] GameRunner::new_with_hooks(
     log_build_state: NotBuilt,
     log_build_job: None,
   }
+}
+
+///|
+fn[T] GameRunner::emit_ui_click_sfx(self : GameRunner[T]) -> Unit {
+  match self.ui_click_sfx_id {
+    Some(sfx_id) => (self.event_hook)(SfxPlayed(sfx_id, false))
+    None => ()
+  }
+}
+
+///|
+pub fn[T] GameRunner::set_ui_click_sfx(
+  self : GameRunner[T],
+  ui_click_sfx_id : String?,
+) -> Unit {
+  self.ui_click_sfx_id = ui_click_sfx_id
 }
 
 ///|
@@ -560,11 +580,13 @@ pub async fn[T] GameRunner::step(
     if self.ui.skip_mode() {
       self.director.skip_wait()
     } else if self.ui.check_typewriter_click() {
+      self.emit_ui_click_sfx()
       self.director.skip_wait()
     }
   }
   match self.ui.take_action() {
     Some(action) => {
+      self.emit_ui_click_sfx()
       match action {
         "auto" => self.ui.toggle_auto_mode()
         "skip" => self.ui.toggle_skip_mode()
@@ -593,6 +615,7 @@ pub async fn[T] GameRunner::step(
   }
   if self.is_blocking_active() {
     if self.ui.check_typewriter_click() {
+      self.emit_ui_click_sfx()
       self.clear_blocking()
     } else {
       self.maybe_render_ui()
@@ -608,6 +631,7 @@ pub async fn[T] GameRunner::step(
   if !self.director.choices().is_empty() {
     match self.ui.take_selected_choice() {
       Some(choice_id) => {
+        self.emit_ui_click_sfx()
         let event = self.director.choose(choice_id)
         (self.event_hook)(event)
         self.ui.mark_all_dirty()
@@ -633,6 +657,7 @@ pub async fn[T] GameRunner::step(
     }
     match self.ui.take_submitted_text_input() {
       Some(value) => {
+        self.emit_ui_click_sfx()
         let event = self.director.submit_text_input(value)
         (self.event_hook)(event)
         self.director.ui.text_input = None
@@ -654,6 +679,7 @@ pub async fn[T] GameRunner::step(
     Some(text) => {
       let mut intro_done = self.ui.check_intro_done()
       if self.ui.check_typewriter_click() && !intro_done {
+        self.emit_ui_click_sfx()
         intro_done = self.ui.reveal_intro_line() || intro_done
       }
       if intro_done {
@@ -694,6 +720,7 @@ pub async fn[T] GameRunner::step(
   let is_typewriter_done = self.ui.is_typewriter_done()
   if not(is_typewriter_done) {
     if self.ui.check_typewriter_click() {
+      self.emit_ui_click_sfx()
       self.ui.complete_typewriter()
       self.ui.mark_dirty_text()
       let event = self.current_dialog_event()
@@ -716,7 +743,11 @@ pub async fn[T] GameRunner::step(
     }
     _ => ()
   }
-  if !self.director.last_event_said || self.ui.check_typewriter_click() {
+  let dialog_advance_click = self.ui.check_typewriter_click()
+  if !self.director.last_event_said || dialog_advance_click {
+    if dialog_advance_click {
+      self.emit_ui_click_sfx()
+    }
     let event = self.director.step(elapsed_ms=0)
     (self.event_hook)(event)
     self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)

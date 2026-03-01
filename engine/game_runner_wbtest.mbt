@@ -266,6 +266,42 @@ async test "runner click reveals typewriter then advances on next click" {
 }
 
 ///|
+async test "runner emits ui click sfx on midgame click advance" {
+  let click_sfx = "assets/ui_click.ogg"
+  let seen : Array[RuntimeEvent] = []
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "hello")
+    builder.say("n", "next")
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new_with_hooks(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    ui,
+    _ => (),
+    event => seen.push(event),
+  )
+  runner.set_ui_click_sfx(Some(click_sfx))
+
+  assert_true(
+    runner.step()
+    is Said(
+      speaker="n",
+      text="hello",
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+  ui.complete_typewriter()
+  ui.simulate_click()
+  assert_true(
+    runner.step(elapsed_ms=0)
+    is Said(speaker="n", text="next", typewriter=true, append=false, voice=None),
+  )
+  assert_true(seen.contains(SfxPlayed(click_sfx, false)))
+}
+
+///|
 async test "runner clear presentation resets render and syncs canvas" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook[Int] = _ => calls.push(1)

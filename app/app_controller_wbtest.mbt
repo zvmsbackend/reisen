@@ -391,3 +391,22 @@ test "app controller skips locale select when language already chosen" {
   )
   assert_eq(app.phase(), AppPhase::StartGate)
 }
+
+///|
+async test "app controller emits ui click sfx on menu action" {
+  let assets = AssetStore::new()
+  let click_sfx_url = "assets/ui_click.ogg"
+  let seen : Array[RuntimeEvent] = []
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    assets,
+    ui_click_sfx_url=click_sfx_url,
+    event_hook=event => seen.push(event),
+  )
+  app.enter_start_menu()
+  app.handle_menu_action(NewGame)
+  assert_eq(seen.contains(SfxPlayed(click_sfx_url, false)), true)
+}

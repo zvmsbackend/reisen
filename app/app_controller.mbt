@@ -37,6 +37,7 @@ struct AppController[T] {
   autosave_slot : String
   autosave_title : String
   menu_music_id : String?
+  ui_click_sfx_id : String?
   menu_music_loop : Bool
   mut menu_music_playing : Bool
   start_logo_urls : Array[String]
@@ -68,6 +69,7 @@ pub fn[T] AppController::new(
   settings_background? : String = "",
   gallery_background? : String = "",
   menu_music? : Music,
+  ui_click_sfx_url? : String = "",
   menu_music_loop? : Bool = true,
   ui_strings? : UiStrings = UiStrings::default(),
   languages? : Array[(String, String)] = [],
@@ -98,6 +100,12 @@ pub fn[T] AppController::new(
   } else {
     default_locale
   }
+  let ui_click_sfx_id = if ui_click_sfx_url == "" {
+    None
+  } else {
+    assets.put_audio_url(ui_click_sfx_url, ui_click_sfx_url)
+    Some(ui_click_sfx_url)
+  }
   let app : AppController[T] = {
     script_factory,
     script: None,
@@ -119,6 +127,7 @@ pub fn[T] AppController::new(
     autosave_slot,
     autosave_title,
     menu_music_id: menu_music.map(music => music.0),
+    ui_click_sfx_id,
     menu_music_loop,
     menu_music_playing: false,
     start_logo_urls: normalized_start_logos,
@@ -218,6 +227,14 @@ fn[T] AppController::start_menu_music_stop(self : AppController[T]) -> Unit {
 }
 
 ///|
+fn[T] AppController::emit_ui_click_sfx(self : AppController[T]) -> Unit {
+  match self.ui_click_sfx_id {
+    Some(sfx_id) => (self.event_hook)(SfxPlayed(sfx_id, false))
+    None => ()
+  }
+}
+
+///|
 fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
   self.gallery_menu.clear()
   self.start_menu.clear_logo()
@@ -270,6 +287,7 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
   }
   match self.runner {
     Some(runner) => {
+      runner.set_ui_click_sfx(self.ui_click_sfx_id)
       runner.set_ui_strings(self.ui_strings)
       runner.set_script_localization(
         self.script_locale_json,
@@ -442,6 +460,7 @@ async fn[T] AppController::start_gallery_replay(
         script_locale=self.locale,
         script_default_locale=self.default_locale,
       )
+      runner.set_ui_click_sfx(self.ui_click_sfx_id)
       try {
         runner.jump_to_label(replay_label)
         self.start_menu_music_stop()
@@ -465,29 +484,29 @@ async fn[T : FromJson] AppController::handle_menu_action(
   match action {
     NoAction => ()
     NewGame => {
+      self.emit_ui_click_sfx()
       self.start_menu_music_stop()
-      self.runner = Some(
-        start_game(
-          self.script(),
-          (self.new_state)(),
-          self.ui_root_id,
-          render_sync=self.render_sync,
-          event_hook=self.event_hook,
-          settings?,
-          ui_strings=self.ui_strings,
-          script_locale_json=self.script_locale_json.unwrap_or(""),
-          script_default_locale_json=self.script_default_locale_json.unwrap_or(
-            "",
-          ),
-          script_locale=self.locale,
-          script_default_locale=self.default_locale,
-        ),
+      let runner = start_game(
+        self.script(),
+        (self.new_state)(),
+        self.ui_root_id,
+        render_sync=self.render_sync,
+        event_hook=self.event_hook,
+        settings?,
+        ui_strings=self.ui_strings,
+        script_locale_json=self.script_locale_json.unwrap_or(""),
+        script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
+        script_locale=self.locale,
+        script_default_locale=self.default_locale,
       )
+      runner.set_ui_click_sfx(self.ui_click_sfx_id)
+      self.runner = Some(runner)
       self.start_menu.clear()
       self.phase = AppPhase::InGame
     }
     Continue(slot) =>
       try {
+        self.emit_ui_click_sfx()
         let runner = start_game_from_slot(
           self.script(),
           slot,
@@ -503,6 +522,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
           script_locale=self.locale,
           script_default_locale=self.default_locale,
         )
+        runner.set_ui_click_sfx(self.ui_click_sfx_id)
         self.start_menu_music_stop()
         self.runner = Some(runner)
         self.start_menu.clear()
@@ -514,6 +534,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
         }
       }
     Load => {
+      self.emit_ui_click_sfx()
       self.start_menu.clear()
       self.settings_menu.set_context(FromStartMenu)
       self.settings_menu.set_view_mode(LoadList)
@@ -521,6 +542,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
       self.phase = AppPhase::Settings
     }
     Settings => {
+      self.emit_ui_click_sfx()
       self.start_menu.clear()
       self.settings_menu.set_context(FromStartMenu)
       self.settings_menu.render()
@@ -528,6 +550,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
     }
     Gallery =>
       if @gallery.registered_images().length() > 0 {
+        self.emit_ui_click_sfx()
         self.start_menu.clear()
         self.gallery_menu.render()
         self.phase = AppPhase::Gallery
@@ -615,6 +638,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
     AppPhase::LocaleSelect => {
       match self.start_menu.take_locale_action() {
         StartLocaleAction::Select(code) => {
+          self.emit_ui_click_sfx()
           self.apply_locale(code)
           self.start_menu.clear_locale_picker()
           self.start_menu.render_gate()
@@ -626,12 +650,14 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
     }
     AppPhase::StartGate => {
       match self.start_menu.take_gate_action() {
-        Start =>
+        Start => {
+          self.emit_ui_click_sfx()
           if self.start_logo_urls.is_empty() {
             self.enter_start_menu()
           } else {
             self.enter_start_logo()
           }
+        }
         NoAction => ()
       }
       true
@@ -703,10 +729,12 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
     AppPhase::Settings => {
       match self.settings_menu.take_action() {
         LanguageChanged(code) => {
+          self.emit_ui_click_sfx()
           self.apply_locale(code)
           self.settings_menu.render()
         }
         Back => {
+          self.emit_ui_click_sfx()
           self.settings_menu.clear()
           match self.saved_director_json {
             Some(json) => {
@@ -729,6 +757,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                   self.render_sync,
                   self.event_hook,
                 )
+                runner.set_ui_click_sfx(self.ui_click_sfx_id)
                 match settings_read_in(self.save_ns) {
                   Some(settings) => runner.apply_settings(settings)
                   None => ()
@@ -744,30 +773,32 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           }
         }
         NewGame => {
+          self.emit_ui_click_sfx()
           self.settings_menu.clear()
           self.saved_director_json = None
           let settings = settings_read_in(self.save_ns)
           self.start_menu_music_stop()
-          self.runner = Some(
-            start_game(
-              self.script(),
-              (self.new_state)(),
-              self.ui_root_id,
-              render_sync=self.render_sync,
-              event_hook=self.event_hook,
-              settings?,
-              ui_strings=self.ui_strings,
-              script_locale_json=self.script_locale_json.unwrap_or(""),
-              script_default_locale_json=self.script_default_locale_json.unwrap_or(
-                "",
-              ),
-              script_locale=self.locale,
-              script_default_locale=self.default_locale,
+          let runner = start_game(
+            self.script(),
+            (self.new_state)(),
+            self.ui_root_id,
+            render_sync=self.render_sync,
+            event_hook=self.event_hook,
+            settings?,
+            ui_strings=self.ui_strings,
+            script_locale_json=self.script_locale_json.unwrap_or(""),
+            script_default_locale_json=self.script_default_locale_json.unwrap_or(
+              "",
             ),
+            script_locale=self.locale,
+            script_default_locale=self.default_locale,
           )
+          runner.set_ui_click_sfx(self.ui_click_sfx_id)
+          self.runner = Some(runner)
           self.phase = AppPhase::InGame
         }
         StartMenu => {
+          self.emit_ui_click_sfx()
           self.save_autosave_if_enabled()
           match self.runner {
             Some(runner) => {
@@ -784,6 +815,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.enter_start_menu()
         }
         Log => {
+          self.emit_ui_click_sfx()
           self.settings_menu.clear()
           match self.runner {
             Some(runner) => {
@@ -800,6 +832,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           }
         }
         SaveSlot(slot) => {
+          self.emit_ui_click_sfx()
           match self.runner {
             Some(runner) =>
               save_runner_to_slot_with_meta(
@@ -813,6 +846,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.settings_menu.render()
         }
         LoadSlot(slot) => {
+          self.emit_ui_click_sfx()
           self.settings_menu.clear()
           let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
             self.script(),
@@ -831,6 +865,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           )
           match restored {
             Ok(runner) => {
+              runner.set_ui_click_sfx(self.ui_click_sfx_id)
               self.start_menu_music_stop()
               self.runner = Some(runner)
               self.phase = AppPhase::InGame
@@ -838,7 +873,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             Err(_) => self.settings_menu.render()
           }
         }
-        ViewChanged => self.settings_menu.render()
+        ViewChanged => {
+          self.emit_ui_click_sfx()
+          self.settings_menu.render()
+        }
         NoAction => ()
       }
       true
@@ -846,11 +884,18 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
     AppPhase::Gallery => {
       match self.gallery_menu.take_action() {
         Back => {
+          self.emit_ui_click_sfx()
           self.gallery_menu.clear()
           self.enter_start_menu()
         }
-        Open(_) | Close | Prev | Next => self.gallery_menu.render()
-        Replay(label) => self.start_gallery_replay(label)
+        Open(_) | Close | Prev | Next => {
+          self.emit_ui_click_sfx()
+          self.gallery_menu.render()
+        }
+        Replay(label) => {
+          self.emit_ui_click_sfx()
+          self.start_gallery_replay(label)
+        }
         NoAction => ()
       }
       true
