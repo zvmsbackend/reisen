@@ -57,18 +57,14 @@ pub fn AudioDom::set_sfx_gain(gain : Double) -> Unit {
 }
 
 ///|
-pub fn AudioDom::apply_settings(settings : GameSettings) -> Unit {
-  AudioDom::set_bgm_gain(settings.bgm_volume)
-  AudioDom::set_sfx_gain(settings.sfx_volume)
-}
-
-///|
 extern "js" fn audio_dom_play_music(url : String, should_loop : Bool) -> Unit =
   #| (url, should_loop) => {
   #|   const key = "__reisenBgm";
   #|   let bgm = globalThis[key];
   #|   if (!bgm) {
   #|     bgm = new Audio();
+  #|     const gain = globalThis.__reisenBgmGain ?? 0.7;
+  #|     if (bgm.volume !== undefined) bgm.volume = gain;
   #|     globalThis[key] = bgm;
   #|   }
   #|   bgm.loop = !!should_loop;
@@ -105,6 +101,7 @@ extern "js" fn audio_dom_play_sfx(url : String) -> Unit =
 ///|
 extern "js" fn audio_dom_set_bgm_gain(gain : Double) -> Unit =
   #| (gain) => {
+  #|   globalThis.__reisenBgmGain = Math.max(0, Math.min(1, gain));
   #|   const bgm = globalThis.__reisenBgm;
   #|   if (bgm && bgm.volume !== undefined) {
   #|     bgm.volume = Math.max(0, Math.min(1, gain));

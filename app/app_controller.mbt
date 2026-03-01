@@ -164,6 +164,10 @@ pub fn[T] AppController::new(
     gallery_replay_state_factories,
     assets,
   }
+  match settings_read_in(save_namespace) {
+    Some(settings) => AudioDom::set_sfx_gain(settings.sfx_volume)
+    None => ()
+  }
   app.settings_menu.set_languages(languages)
   app.settings_menu.set_locale(selected_locale)
   app
@@ -403,6 +407,17 @@ fn[T] AppController::apply_locale(
 }
 
 ///|
+fn[T] AppController::apply_settings_from_storage(
+  self : AppController[T],
+  runner : GameRunner[T],
+) -> Unit {
+  match settings_read_in(self.save_ns) {
+    Some(settings) => runner.apply_settings(settings)
+    None => ()
+  }
+}
+
+///|
 pub fn[T] AppController::submit_custom_event(
   self : AppController[T],
   name : String,
@@ -463,6 +478,7 @@ async fn[T] AppController::start_gallery_replay(
       runner.set_ui_click_sfx(self.ui_click_sfx_id)
       try {
         runner.jump_to_label(replay_label)
+        self.apply_settings_from_storage(runner)
         self.start_menu_music_stop()
         self.gallery_menu.clear()
         self.runner = Some(runner)
@@ -500,6 +516,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
         script_default_locale=self.default_locale,
       )
       runner.set_ui_click_sfx(self.ui_click_sfx_id)
+      self.apply_settings_from_storage(runner)
       self.runner = Some(runner)
       self.start_menu.clear()
       self.phase = AppPhase::InGame
@@ -523,6 +540,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
           script_default_locale=self.default_locale,
         )
         runner.set_ui_click_sfx(self.ui_click_sfx_id)
+        self.apply_settings_from_storage(runner)
         self.start_menu_music_stop()
         self.runner = Some(runner)
         self.start_menu.clear()
@@ -758,10 +776,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                   self.event_hook,
                 )
                 runner.set_ui_click_sfx(self.ui_click_sfx_id)
-                match settings_read_in(self.save_ns) {
-                  Some(settings) => runner.apply_settings(settings)
-                  None => ()
-                }
+                self.apply_settings_from_storage(runner)
                 runner.sync_ui()
                 self.runner = Some(runner)
                 self.phase = AppPhase::InGame
@@ -794,6 +809,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             script_default_locale=self.default_locale,
           )
           runner.set_ui_click_sfx(self.ui_click_sfx_id)
+          self.apply_settings_from_storage(runner)
           self.runner = Some(runner)
           self.phase = AppPhase::InGame
         }
@@ -866,6 +882,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           match restored {
             Ok(runner) => {
               runner.set_ui_click_sfx(self.ui_click_sfx_id)
+              self.apply_settings_from_storage(runner)
               self.start_menu_music_stop()
               self.runner = Some(runner)
               self.phase = AppPhase::InGame

@@ -28,6 +28,7 @@ using @pixi {type PixiBindingError}
 
 ///|
 using @ui {
+  type AudioDom,
   type UiStrings,
   type UiDom,
   type StartMenu,
