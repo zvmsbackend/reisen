@@ -38,12 +38,13 @@ pub suberror AppBootstrapError {
 
 // Types and methods
 type AppController[T]
-pub fn[T] AppController::new(async () -> @core.Script[T], () -> @state.GameState[T], String, @assets.AssetStore, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : @assets.Music, menu_music_loop? : Bool, ui_strings? : @ui.UiStrings, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : async (@engine.Director[T]) -> Unit noraise, event_hook? : (@core.RuntimeEvent) -> Unit, gallery_replay_state_factories? : @gallery.ReplayStateFactories[T]) -> Self[T]
+pub fn[T] AppController::new(async () -> @core.Script[T], () -> @state.GameState[T], String, @assets.AssetStore, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, menu_music? : @assets.Music, menu_music_loop? : Bool, ui_strings? : @ui.UiStrings, languages? : Array[(String, String)], start_logo_urls? : Array[String], start_logo_duration_ms? : Int, render_sync? : async (@engine.Director[T]) -> Unit noraise, event_hook? : (@core.RuntimeEvent) -> Unit, gallery_replay_state_factories? : @gallery.ReplayStateFactories[T]) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
 pub fn[T] AppController::submit_custom_event(Self[T], String, String) -> Bool
 pub async fn[T : @json.FromJson + ToJson] AppController::tick(Self[T], elapsed_ms? : Int) -> Bool
 
 pub enum AppPhase {
+  LocaleSelect
   StartGate
   StartLogo
   StartMenu

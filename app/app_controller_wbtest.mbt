@@ -2,6 +2,9 @@
 using @util {gensym}
 
 ///|
+using @storage {persistent_delete_in}
+
+///|
 using @core {label, type RuntimeEvent}
 
 ///|
@@ -356,4 +359,35 @@ test "start logo urls normalize by removing empty entries" {
     start_logo_urls=["", "logo_a.png", "", "logo_b.png", ""],
   )
   assert_eq(app.start_logo_urls, ["logo_a.png", "logo_b.png"])
+}
+
+///|
+test "app controller enters locale select when language not chosen" {
+  persistent_delete_in("app_test_locale", "locale")
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+    save_namespace="app_test_locale",
+    languages=[("English", "en"), ("Japanese", "ja")],
+  )
+  assert_eq(app.phase(), AppPhase::LocaleSelect)
+  assert_eq(persistent_get_text_in("app_test_locale", "locale"), "")
+}
+
+///|
+test "app controller skips locale select when language already chosen" {
+  persistent_set_text_in("app_test_locale2", "locale", "ja")
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    "app",
+    dummy_assets,
+    save_namespace="app_test_locale2",
+    languages=[("English", "en"), ("Japanese", "ja")],
+  )
+  assert_eq(app.phase(), AppPhase::StartGate)
 }

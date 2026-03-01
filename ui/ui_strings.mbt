@@ -1,6 +1,7 @@
 ///|
 /// User-facing UI strings used by engine-provided menus and overlays.
 pub struct UiStrings {
+  start_locale_title : String
   start_gate_click_to_start : String
   start_menu_new_game : String
   start_menu_continue : String
@@ -54,6 +55,7 @@ pub struct UiStrings {
 ///|
 pub impl Default for UiStrings with default() {
   {
+    start_locale_title: "Choose Language",
     start_gate_click_to_start: "Click to Start",
     start_menu_new_game: "New Game",
     start_menu_continue: "Continue",

@@ -1,6 +1,8 @@
 ///|
 using @storage {
   type GameSettings,
+  persistent_get_text_in,
+  persistent_set_text_in,
   save_slot_list_in,
   save_slot_meta,
   save_slot_read_in,

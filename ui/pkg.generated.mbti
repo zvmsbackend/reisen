@@ -86,6 +86,11 @@ pub enum StartGateAction {
   Start
 }
 
+pub enum StartLocaleAction {
+  NoAction
+  Select(String)
+}
+
 pub enum StartLogoAction {
   NoAction
   Done
@@ -94,13 +99,16 @@ pub enum StartLogoAction {
 type StartMenu
 pub fn StartMenu::clear(Self) -> Unit
 pub fn StartMenu::clear_gate(Self) -> Unit
+pub fn StartMenu::clear_locale_picker(Self) -> Unit
 pub fn StartMenu::clear_logo(Self) -> Unit
 pub fn StartMenu::new(String, save_namespace? : String, background? : String, ui_strings? : UiStrings) -> Self
 pub fn StartMenu::render(Self) -> Unit
 pub fn StartMenu::render_gate(Self) -> Unit
+pub fn StartMenu::render_locale_picker(Self, Array[(String, String)]) -> Unit
 pub fn StartMenu::render_logo(Self, String, Int) -> Unit
 pub fn StartMenu::take_action(Self) -> StartMenuAction
 pub fn StartMenu::take_gate_action(Self) -> StartGateAction
+pub fn StartMenu::take_locale_action(Self) -> StartLocaleAction
 pub fn StartMenu::take_logo_action(Self) -> StartLogoAction
 
 pub(all) enum StartMenuAction {
@@ -172,6 +180,7 @@ pub impl ToJson for UiDomFigureView
 pub impl @json.FromJson for UiDomFigureView
 
 pub struct UiStrings {
+  start_locale_title : String
   start_gate_click_to_start : String
   start_menu_new_game : String
   start_menu_continue : String

@@ -3,6 +3,7 @@
 
 ///|
 pub enum AppPhase {
+  LocaleSelect
   StartGate
   StartLogo
   StartMenu
@@ -58,6 +59,7 @@ pub fn[T] AppController::new(
   menu_music? : Music,
   menu_music_loop? : Bool = true,
   ui_strings? : UiStrings = UiStrings::default(),
+  languages? : Array[(String, String)] = [],
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
@@ -65,6 +67,24 @@ pub fn[T] AppController::new(
   gallery_replay_state_factories? : ReplayStateFactories[T] = ReplayStateFactories::new(),
 ) -> AppController[T] {
   let normalized_start_logos = start_logo_urls.filter(logo => logo != "")
+  let persisted_locale = persistent_get_text_in(save_namespace, "locale")
+  let mut valid_persisted_locale = ""
+  let mut has_persisted = false
+  for language in languages {
+    if language.1 == persisted_locale {
+      valid_persisted_locale = language.1
+      has_persisted = true
+    }
+  }
+  let default_locale = match languages {
+    [(_, code), ..] => code
+    _ => ""
+  }
+  let selected_locale = if has_persisted {
+    valid_persisted_locale
+  } else {
+    default_locale
+  }
   let app : AppController[T] = {
     script_factory,
     script: None,
@@ -99,7 +119,11 @@ pub fn[T] AppController::new(
       background=settings_background,
       ui_strings~,
     ),
-    phase: AppPhase::StartGate,
+    phase: if !languages.is_empty() && !has_persisted {
+      AppPhase::LocaleSelect
+    } else {
+      AppPhase::StartGate
+    },
     render_sync,
     event_hook,
     runner: None,
@@ -107,7 +131,11 @@ pub fn[T] AppController::new(
     gallery_replay_state_factories,
     assets,
   }
-  app.start_menu.render_gate()
+  if app.phase == AppPhase::LocaleSelect {
+    app.start_menu.render_locale_picker(languages)
+  } else {
+    app.start_menu.render_gate()
+  }
   app
 }
 
@@ -203,6 +231,14 @@ fn[T] AppController::advance_start_logo(self : AppController[T]) -> Unit {
 ///|
 pub fn[T] AppController::phase(self : AppController[T]) -> AppPhase {
   self.phase
+}
+
+///|
+fn[T] AppController::apply_locale(
+  self : AppController[T],
+  code : String,
+) -> Unit {
+  persistent_set_text_in(self.save_ns, "locale", code)
 }
 
 ///|
@@ -399,6 +435,18 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   elapsed_ms? : Int = 0,
 ) -> Bool {
   match self.phase {
+    AppPhase::LocaleSelect => {
+      match self.start_menu.take_locale_action() {
+        Select(code) => {
+          self.apply_locale(code)
+          self.start_menu.clear_locale_picker()
+          self.start_menu.render_gate()
+          self.phase = AppPhase::StartGate
+        }
+        NoAction => ()
+      }
+      true
+    }
     AppPhase::StartGate => {
       match self.start_menu.take_gate_action() {
         Start =>

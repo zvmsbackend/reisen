@@ -24,6 +24,12 @@ pub enum StartLogoAction {
 }
 
 ///|
+pub enum StartLocaleAction {
+  NoAction
+  Select(String)
+}
+
+///|
 struct StartMenu {
   root_id : String
   save_ns : String
@@ -84,6 +90,41 @@ pub fn StartMenu::take_logo_action(self : StartMenu) -> StartLogoAction {
       StartLogoAction::Done
     }
     _ => StartLogoAction::NoAction
+  }
+}
+
+///|
+pub fn StartMenu::render_locale_picker(
+  self : StartMenu,
+  languages : Array[(String, String)],
+) -> Unit {
+  let names : Array[String] = []
+  let codes : Array[String] = []
+  for language in languages {
+    names.push(language.0)
+    codes.push(language.1)
+  }
+  start_locale_dom_render(
+    self.root_id,
+    names,
+    codes,
+    self.ui_strings.start_locale_title,
+  )
+}
+
+///|
+pub fn StartMenu::clear_locale_picker(self : StartMenu) -> Unit {
+  start_locale_dom_clear(self.root_id)
+}
+
+///|
+pub fn StartMenu::take_locale_action(self : StartMenu) -> StartLocaleAction {
+  match start_locale_action_code(self.root_id).to_option() {
+    Some(code) => {
+      start_locale_action_clear(self.root_id)
+      Select(code)
+    }
+    None => NoAction
   }
 }
 
@@ -203,6 +244,77 @@ extern "js" fn start_gate_dom_clear(root_id : String) -> Unit =
   #|   if (!root) return;
   #|   const gate = root.querySelector('[data-reisen="start-gate"]');
   #|   if (gate) gate.remove();
+  #| }
+
+///|
+extern "js" fn start_locale_dom_render(
+  root_id : String,
+  names : Array[String],
+  codes : Array[String],
+  title : String,
+) -> Unit =
+  #| (root_id, names, codes, title) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   let host = root.querySelector('[data-reisen="start-locale"]');
+  #|   if (!host) {
+  #|     host = doc.createElement('div');
+  #|     host.dataset.reisen = 'start-locale';
+  #|     root.appendChild(host);
+  #|   }
+  #|   host.innerHTML = '';
+  #|   const heading = doc.createElement('h2');
+  #|   heading.textContent = title;
+  #|   host.appendChild(heading);
+  #|   const list = doc.createElement('div');
+  #|   list.dataset.reisen = 'start-locale-list';
+  #|   for (let i = 0; i < names.length; i++) {
+  #|     const btn = doc.createElement('button');
+  #|     btn.type = 'button';
+  #|     btn.textContent = names[i] || codes[i] || '';
+  #|     btn.addEventListener('click', () => {
+  #|       root.dataset.reisenLocaleActionCode = codes[i] || '';
+  #|     });
+  #|     list.appendChild(btn);
+  #|   }
+  #|   host.appendChild(list);
+  #| }
+
+///|
+extern "js" fn start_locale_action_code(
+  root_id : String,
+) -> @js.Nullable[String] =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return null;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return null;
+  #|   const code = root.dataset.reisenLocaleActionCode;
+  #|   return code || null;
+  #| }
+
+///|
+extern "js" fn start_locale_action_clear(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   delete root.dataset.reisenLocaleActionCode;
+  #| }
+
+///|
+extern "js" fn start_locale_dom_clear(root_id : String) -> Unit =
+  #| (root_id) => {
+  #|   const doc = globalThis.document;
+  #|   if (!doc) return;
+  #|   const root = doc.getElementById(root_id);
+  #|   if (!root) return;
+  #|   const host = root.querySelector('[data-reisen="start-locale"]');
+  #|   if (host) host.remove();
+  #|   delete root.dataset.reisenLocaleActionCode;
   #| }
 
 ///|
@@ -373,6 +485,7 @@ extern "js" fn start_menu_dom_clear(root_id : String) -> Unit =
 
 ///|
 pub fn StartMenu::clear(self : StartMenu) -> Unit {
+  start_locale_dom_clear(self.root_id)
   start_menu_dom_clear(self.root_id)
 }
 
