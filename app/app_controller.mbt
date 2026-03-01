@@ -157,11 +157,6 @@ pub fn[T] AppController::new(
   }
   app.settings_menu.set_languages(languages)
   app.settings_menu.set_locale(selected_locale)
-  if app.phase == AppPhase::LocaleSelect {
-    app.start_menu.render_locale_picker(languages)
-  } else {
-    app.start_menu.render_gate()
-  }
   app
 }
 
