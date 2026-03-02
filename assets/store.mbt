@@ -14,17 +14,21 @@ pub type Image
 pub type Video
 
 ///|
-extern "js" fn load_image_promise(url : String) -> @js.Promise =
-  #| (url) => new Promise((resolve, reject) => {
+extern "js" fn load_image_result_promise(url : String) -> @js.Promise =
+  #| (url) => new Promise((resolve) => {
   #|   const img = new Image();
-  #|   img.onload = () => resolve(img);
-  #|   img.onerror = (e) => reject(e);
+  #|   img.onload = () => resolve({ ok: true, value: img });
+  #|   img.onerror = (event) => {
+  #|     const target = event?.currentTarget ?? event?.target ?? img;
+  #|     const src = target?.currentSrc || target?.src || url;
+  #|     resolve({ ok: false, error: `Failed to load image: ${String(src ?? url)}` });
+  #|   };
   #|   img.src = url;
   #| })
 
 ///|
-extern "js" fn load_video_promise(url : String) -> @js.Promise =
-  #| (url) => new Promise((resolve, reject) => {
+extern "js" fn load_video_result_promise(url : String) -> @js.Promise =
+  #| (url) => new Promise((resolve) => {
   #|   const video = document.createElement('video');
   #|   video.preload = 'auto';
   #|   video.muted = true;
@@ -35,26 +39,38 @@ extern "js" fn load_video_promise(url : String) -> @js.Promise =
   #|   const done = () => {
   #|     const p = video.play();
   #|     if (p && typeof p.catch === 'function') p.catch(() => {});
-  #|     resolve(video);
+  #|     resolve({ ok: true, value: video });
   #|   };
   #|   video.onloadeddata = done;
-  #|   video.onerror = (e) => reject(e);
+  #|   video.onerror = (event) => {
+  #|     const target = event?.currentTarget ?? event?.target ?? video;
+  #|     const src = target?.currentSrc || target?.src || url;
+  #|     resolve({ ok: false, error: `Failed to load video: ${String(src ?? url)}` });
+  #|   };
   #|   video.src = url;
   #| })
 
 ///|
-extern "js" fn fetch_text_promise(url : String) -> @js.Promise =
+extern "js" fn load_text_result_promise(url : String) -> @js.Promise =
   #| (url) => fetch(url).then(r => {
-  #|   if (!r.ok) { throw new Error(`HTTP ${r.status}`); }
+  #|   if (!r.ok) {
+  #|     throw new Error(`HTTP ${r.status}`);
+  #|   }
   #|   return r.text();
   #| })
+  #|   .then(value => ({ ok: true, value }))
+  #|   .catch(error => ({ ok: false, error: String(error?.message ?? error ?? '') }))
 
 ///|
-extern "js" fn fetch_arraybuffer_promise(url : String) -> @js.Promise =
+extern "js" fn load_arraybuffer_result_promise(url : String) -> @js.Promise =
   #| (url) => fetch(url).then(r => {
-  #|   if (!r.ok) { throw new Error(`HTTP ${r.status}`); }
+  #|   if (!r.ok) {
+  #|     throw new Error(`HTTP ${r.status}`);
+  #|   }
   #|   return r.arrayBuffer();
   #| })
+  #|   .then(value => ({ ok: true, value }))
+  #|   .catch(error => ({ ok: false, error: String(error?.message ?? error ?? '') }))
 
 ///|
 extern "js" fn arraybuffer_to_u8array(buf : @js.Value) -> @js.Value =
@@ -70,26 +86,67 @@ fn int_array_to_bytes(xs : Array[Int]) -> Bytes {
 }
 
 ///|
-pub async fn load_image(url : String) -> Image {
-  let v = @js.Promise::wait(load_image_promise(url))
-  v.cast()
+pub async fn load_image(url : String) -> Image raise AssetStoreError {
+  let result = @js.Promise::wait(load_image_result_promise(url)) catch {
+    err =>
+      raise ResourceLoadFailed(
+        message=promise_error_message(err, "Failed to load image: \{url}"),
+      )
+  }
+  if !load_result_ok(result) {
+    raise ResourceLoadFailed(
+      message=load_result_error(result, "Failed to load image: \{url}"),
+    )
+  }
+  load_result_value(result).cast()
 }
 
 ///|
-pub async fn load_video(url : String) -> Video {
-  let v = @js.Promise::wait(load_video_promise(url))
-  v.cast()
+pub async fn load_video(url : String) -> Video raise AssetStoreError {
+  let result = @js.Promise::wait(load_video_result_promise(url)) catch {
+    err =>
+      raise ResourceLoadFailed(
+        message=promise_error_message(err, "Failed to load video: \{url}"),
+      )
+  }
+  if !load_result_ok(result) {
+    raise ResourceLoadFailed(
+      message=load_result_error(result, "Failed to load video: \{url}"),
+    )
+  }
+  load_result_value(result).cast()
 }
 
 ///|
-pub async fn load_text(url : String) -> String {
-  let v = @js.Promise::wait(fetch_text_promise(url))
-  v.cast()
+pub async fn load_text(url : String) -> String raise AssetStoreError {
+  let result = @js.Promise::wait(load_text_result_promise(url)) catch {
+    err =>
+      raise ResourceLoadFailed(
+        message=promise_error_message(err, "Failed to load text: \{url}"),
+      )
+  }
+  if !load_result_ok(result) {
+    raise ResourceLoadFailed(
+      message=load_result_error(result, "Failed to load text: \{url}"),
+    )
+  }
+  load_result_value(result).cast()
 }
 
 ///|
-pub async fn load_bytes(url : String) -> Bytes {
-  let v = @js.Promise::wait(fetch_arraybuffer_promise(url))
+pub async fn load_bytes(url : String) -> Bytes raise AssetStoreError {
+  let result = @js.Promise::wait(load_arraybuffer_result_promise(url)) catch {
+    err =>
+      raise ResourceLoadFailed(
+        message=promise_error_message(err, "Failed to load bytes: \{url}"),
+      )
+  }
+  if !load_result_ok(result) {
+    raise ResourceLoadFailed(
+      message=load_result_error(result, "Failed to load bytes: \{url}"),
+    )
+  }
+  let v = load_result_value(result)
   let u8 = arraybuffer_to_u8array(v)
   let arr = u8array_to_int_array(u8)
   int_array_to_bytes(arr)
@@ -99,6 +156,25 @@ pub async fn load_bytes(url : String) -> Bytes {
 pub suberror AssetStoreError {
   ResourceLoadFailed(message~ : String)
 }
+
+///|
+pub fn AssetStoreError::message(self : AssetStoreError) -> String {
+  let ResourceLoadFailed(message~) = self
+  message
+}
+
+///|
+extern "js" fn promise_error_message(err : Error, fallback : String) -> String =
+  #| (err, fallback) => {
+  #|   if (typeof err === 'string' && err.length > 0) return err;
+  #|   if (err && typeof err.message === 'string' && err.message.length > 0) return err.message;
+  #|   try {
+  #|     const txt = String(err ?? '').trim();
+  #|     return txt.length > 0 ? txt : fallback;
+  #|   } catch (_) {
+  #|     return fallback;
+  #|   }
+  #| }
 
 ///|
 #module("/pixi-bridge.js")
@@ -277,7 +353,7 @@ pub async fn AssetStore::register_figure(
   self : AssetStore,
   url : String,
   id? : String = @util.gensym(prefix="figure"),
-) -> PixiFigure {
+) -> PixiFigure raise AssetStoreError {
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
@@ -303,7 +379,7 @@ pub async fn AssetStore::register_background(
   self : AssetStore,
   url : String,
   id? : String = @util.gensym(prefix="background"),
-) -> Background {
+) -> Background raise AssetStoreError {
   if self.images.get(id) is None {
     let img = load_image(url)
     self.put_image(id, img)
@@ -316,7 +392,7 @@ pub async fn AssetStore::register_background_video(
   self : AssetStore,
   url : String,
   id? : String = @util.gensym(prefix="background_video"),
-) -> Background {
+) -> Background raise AssetStoreError {
   if self.videos.get(id) is None {
     let video = load_video(url)
     self.put_video(id, video)

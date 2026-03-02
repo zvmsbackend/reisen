@@ -979,7 +979,9 @@ pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
-pub async fn[T] GameRunner::clear_presentation(self : GameRunner[T]) -> Unit noraise {
+pub async fn[T] GameRunner::clear_presentation(
+  self : GameRunner[T],
+) -> Unit noraise {
   self.ui.clear_game_ui()
   self.director.clear_render()
   self.sync_canvas()

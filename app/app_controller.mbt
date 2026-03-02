@@ -206,16 +206,22 @@ async fn[T] AppController::script(
     None => {
       let script = (self.script_factory)() catch {
         PixiBindingError::ResourceLoadFailed(message~) =>
-          raise ScriptLoadFailed(message~)
-        error => raise ScriptLoadFailed(message="Unknown script factory error \{error}")
+          raise ScriptLoadFailed(
+            message="Pixi resource load failed: \{message}",
+          )
+        AssetStoreError::ResourceLoadFailed(message~) =>
+          raise ScriptLoadFailed(
+            message="Asset resource load failed: \{message}",
+          )
+        error =>
+          raise ScriptLoadFailed(
+            message="Unknown script factory error \{error}",
+          )
       }
       validate_script_assets(script, self.assets) catch {
-        MissingImageAsset(id~) =>
-          raise ScriptValidationMissingImage(id~)
-        MissingAudioAsset(id~) =>
-          raise ScriptValidationMissingAudio(id~)
-        MissingSaveSlot(slot~) =>
-          raise ScriptValidationMissingSaveSlot(slot~)
+        MissingImageAsset(id~) => raise ScriptValidationMissingImage(id~)
+        MissingAudioAsset(id~) => raise ScriptValidationMissingAudio(id~)
+        MissingSaveSlot(slot~) => raise ScriptValidationMissingSaveSlot(slot~)
       }
       self.script = Some(script)
       script

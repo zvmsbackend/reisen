@@ -9,20 +9,21 @@ import {
 // Values
 pub fn dom_figure(String) -> DomFigure
 
-pub async fn load_bytes(String) -> Bytes
+pub async fn load_bytes(String) -> Bytes raise AssetStoreError
 
-pub async fn load_image(String) -> Image
+pub async fn load_image(String) -> Image raise AssetStoreError
 
 pub async fn load_live2d_model(String) -> @pixi.PixiLive2dModel raise AssetStoreError
 
-pub async fn load_text(String) -> String
+pub async fn load_text(String) -> String raise AssetStoreError
 
-pub async fn load_video(String) -> Video
+pub async fn load_video(String) -> Video raise AssetStoreError
 
 // Errors
 pub suberror AssetStoreError {
   ResourceLoadFailed(message~ : String)
 }
+pub fn AssetStoreError::message(Self) -> String
 
 // Types and methods
 pub struct AssetStore {
@@ -46,9 +47,9 @@ pub fn AssetStore::put_image(Self, String, Image) -> Unit
 pub fn AssetStore::put_live2d_model(Self, String, @pixi.PixiLive2dModel) -> Unit
 pub fn AssetStore::put_text(Self, String, String) -> Unit
 pub fn AssetStore::put_video(Self, String, Video) -> Unit
-pub async fn AssetStore::register_background(Self, String, id? : String) -> Background
-pub async fn AssetStore::register_background_video(Self, String, id? : String) -> Background
-pub async fn AssetStore::register_figure(Self, String, id? : String) -> PixiFigure
+pub async fn AssetStore::register_background(Self, String, id? : String) -> Background raise AssetStoreError
+pub async fn AssetStore::register_background_video(Self, String, id? : String) -> Background raise AssetStoreError
+pub async fn AssetStore::register_figure(Self, String, id? : String) -> PixiFigure raise AssetStoreError
 pub async fn AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure raise AssetStoreError
 pub fn AssetStore::register_music(Self, String, id? : String) -> Music
 pub fn AssetStore::register_sfx(Self, String, id? : String) -> Sfx

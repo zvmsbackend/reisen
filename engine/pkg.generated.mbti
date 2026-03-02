@@ -95,7 +95,7 @@ pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], @core.RuntimeEvent) -> Unit
 pub fn[T] GameRunner::apply_settings(Self[T], @storage.GameSettings) -> Unit
-pub async fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
+pub async fn[T] GameRunner::clear_presentation(Self[T]) -> Unit noraise
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
@@ -118,10 +118,10 @@ pub fn[T] GameRunner::start_reconstruct_dialog_history(Self[T], @core.Script[T],
 pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
 pub fn[T] GameRunner::submit_custom_event(Self[T], String, String) -> @core.RuntimeEvent
-pub async fn[T] GameRunner::sync_ui(Self[T]) -> Unit
+pub async fn[T] GameRunner::sync_ui(Self[T]) -> Unit noraise
 pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
 pub fn[T] GameRunner::take_pending_action(Self[T]) -> String?
-pub async fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
+pub async fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool noraise
 pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_log_visible(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit

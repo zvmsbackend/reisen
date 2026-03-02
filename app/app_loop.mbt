@@ -14,7 +14,9 @@ fn max(x : Int, y : Int) -> Int {
 }
 
 ///|
-async fn[E : Error] run_browser_loop_impl(on_tick : async (Int) -> Bool raise E) -> Unit raise E {
+async fn[E : Error] run_browser_loop_impl(
+  on_tick : async (Int) -> Bool raise E,
+) -> Unit raise E {
   for last = 0.0 {
     let ts = @js.Promise::wait(raf_promise()).cast() catch {
       @js.Error_(msg) => abort(msg.to_string())
