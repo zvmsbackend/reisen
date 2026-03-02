@@ -4,6 +4,33 @@
 ///|
 using @pixi {type Effect}
 
+// Pixi figure slot x-positions (fraction of viewport width, matching pixi_presenter_geometry)
+
+///|
+let pixi_pos_left_x : Double = 0.05
+
+///|
+let pixi_pos_center_x : Double = 0.30
+
+///|
+let pixi_pos_right_x : Double = 0.55
+
+// DOM figure x-positions (fraction of viewport width)
+
+///|
+let dom_pos_left_x : Double = 0.18
+
+///|
+let dom_pos_center_x : Double = 0.5
+
+///|
+let dom_pos_right_x : Double = 0.82
+
+// Vertical mid-point for DOM figures
+
+///|
+let dom_pos_mid_y : Double = 0.5
+
 ///|
 struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
@@ -66,9 +93,9 @@ pub fn place_custom(
 ///|
 fn position_to_anim_coords(pos : Position) -> (Double, Double) {
   match pos {
-    Left => (0.05, 0.0)
-    Center => (0.30, 0.0)
-    Right => (0.55, 0.0)
+    Left => (pixi_pos_left_x, 0.0)
+    Center => (pixi_pos_center_x, 0.0)
+    Right => (pixi_pos_right_x, 0.0)
     Custom(x, y) => (x, y)
   }
 }
@@ -76,9 +103,9 @@ fn position_to_anim_coords(pos : Position) -> (Double, Double) {
 ///|
 fn position_to_dom_anim_coords(pos : Position) -> (Double, Double) {
   match pos {
-    Left => (0.18, 0.5)
-    Center => (0.5, 0.5)
-    Right => (0.82, 0.5)
+    Left => (dom_pos_left_x, dom_pos_mid_y)
+    Center => (dom_pos_center_x, dom_pos_mid_y)
+    Right => (dom_pos_right_x, dom_pos_mid_y)
     Custom(x, y) => (x, y)
   }
 }

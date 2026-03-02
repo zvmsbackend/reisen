@@ -16,18 +16,32 @@ extern "js" fn set_canvas_element_size(
   #|   canvas.style.height = height + 'px';
   #| }
 
+// Figure slot layout ratios (fraction of viewport)
+
+///|
+let figure_slot_width_ratio : Double = 0.40
+
+///|
+let figure_slot_height_ratio : Double = 0.90
+
+///|
+let figure_left_x_ratio : Double = 0.05
+
+///|
+let figure_right_x_ratio : Double = 0.55
+
 ///|
 fn figure_rect(
   pos : Position,
   viewport_w : Double,
   viewport_h : Double,
 ) -> (Double, Double, Double, Double) {
-  let w = viewport_w * 0.40
-  let h = viewport_h * 0.90
+  let w = viewport_w * figure_slot_width_ratio
+  let h = viewport_h * figure_slot_height_ratio
   match pos {
-    Left => (viewport_w * 0.05, 0.0, w, h)
+    Left => (viewport_w * figure_left_x_ratio, 0.0, w, h)
     Center => ((viewport_w - w) / 2.0, 0.0, w, h)
-    Right => (viewport_w * 0.55, 0.0, w, h)
+    Right => (viewport_w * figure_right_x_ratio, 0.0, w, h)
     Custom(x, y) => (x * viewport_w, y * viewport_h, w, h)
   }
 }

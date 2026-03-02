@@ -2,6 +2,18 @@
 /// HTML UI bridge for dialogs and choice buttons.
 /// Figures/backgrounds stay in PIXI; this module only updates DOM nodes.
 
+// DOM figure x-positions (fraction of viewport width, matches core/script_builder constants)
+let dom_pos_left_x : Double = 0.18
+
+///|
+let dom_pos_center_x : Double = 0.5
+
+///|
+let dom_pos_right_x : Double = 0.82
+
+///|
+let dom_pos_mid_y : Double = 0.5
+
 ///|
 struct UiChoiceView {
   id : String
@@ -379,9 +391,9 @@ pub fn UiDom::localize_vocal_url(self : UiDom, raw : String) -> String {
 ///|
 fn dom_pos_tuple(pos : Position) -> (Double, Double) {
   match pos {
-    Left => (0.18, 0.5)
-    Center => (0.5, 0.5)
-    Right => (0.82, 0.5)
+    Left => (dom_pos_left_x, dom_pos_mid_y)
+    Center => (dom_pos_center_x, dom_pos_mid_y)
+    Right => (dom_pos_right_x, dom_pos_mid_y)
     Custom(x, y) => (x, y)
   }
 }
