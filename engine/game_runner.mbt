@@ -77,17 +77,9 @@ fn append_dialog_history_from_event(
     Said(speaker~, text~, append~, ..) =>
       if append && history.length() > 0 {
         let last_index = history.length() - 1
-        let updated : Array[DialogLogEntry] = []
-        for i, entry in history {
-          if i == last_index {
-            updated.push({ speaker: entry.speaker, text: entry.text + text })
-          } else {
-            updated.push(entry)
-          }
-        }
-        history.clear()
-        for entry in updated {
-          history.push(entry)
+        history[last_index] = {
+          speaker: history[last_index].speaker,
+          text: history[last_index].text + text,
         }
       } else {
         history.push({ speaker, text })
