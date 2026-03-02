@@ -120,8 +120,9 @@ test "parse sexp jump-if with host functions" {
   let parser = SexpScriptParser::new()
   parser.register_function("int-var", host_int_var)
   parser.register_function("eq", host_eq)
-  let script : Script[Unit] = reisen_parse_sexp_script_with_parser(
-    "(jump-if good (eq (int-var \"answer\") 42)) (label good)", parser,
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(jump-if good (eq (int-var \"answer\") 42)) (label good)",
+    parser~,
   )
   assert_eq(script.instructions.length(), 2)
   assert_true(script.instructions[0] is JumpIf(_, _))
@@ -140,8 +141,9 @@ test "parse sexp jump-by selector" {
 test "parse sexp wait-custom-event with payload symbol" {
   let parser = SexpScriptParser::new()
   parser.register_function("eq", host_eq)
-  let script : Script[Unit] = reisen_parse_sexp_script_with_parser(
-    "(wait-custom-event route (eq payload \"open\"))", parser,
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(wait-custom-event route (eq payload \"open\"))",
+    parser~,
   )
   assert_eq(script.instructions.length(), 1)
   assert_true(script.instructions[0] is WaitCustomEvent(_, _))
@@ -220,8 +222,9 @@ test "parse sexp effect and animate" {
 test "parse sexp run-code emits runtime hook" {
   let parser = SexpScriptParser::new()
   parser.register_function("int-var", host_int_var)
-  let script : Script[Unit] = reisen_parse_sexp_script_with_parser(
-    "(run-code (int-var answer))", parser,
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(run-code (int-var answer))",
+    parser~,
   )
   assert_eq(script.instructions.length(), 1)
   assert_true(script.instructions[0] is RunCode(_))
@@ -239,7 +242,7 @@ test "wait-custom-event-jump supports payload as reserved symbol" {
 ///|
 test "builder load_sexp appends parsed instructions" {
   let builder : ScriptBuilder[Unit] = ScriptBuilder::new()
-  builder.load_sexp("(label start) (say guide \"hello\")")
+  builder.load_sexp_text("(label start) (say guide \"hello\")")
   let script = builder.build()
   assert_eq(script.instructions.length(), 2)
   assert_true(script.instructions[0] is Label("start"))
@@ -251,9 +254,9 @@ test "sexp jump-if executes host expression" {
   let parser = SexpScriptParser::new()
   parser.register_function("int-var", host_int_var)
   parser.register_function("eq", host_eq)
-  let script : Script[Unit] = reisen_parse_sexp_script_with_parser(
+  let script : Script[Unit] = reisen_parse_sexp_script(
     "(jump-if good (eq (int-var \"answer\") 42)) (say n \"bad\") (label good) (say n \"ok\")",
-    parser,
+    parser~,
   )
   let state = @state.GameState::new(())
   state.set_int_var("answer", 42)
@@ -274,8 +277,9 @@ test "sexp jump-by executes selector expression" {
 test "sexp run-code executes host side effect" {
   let parser = SexpScriptParser::new()
   parser.register_function("set-int", host_set_int)
-  let script : Script[Unit] = reisen_parse_sexp_script_with_parser(
-    "(run-code (set-int \"score\" 7)) (say n \"done\")", parser,
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(run-code (set-int \"score\" 7)) (say n \"done\")",
+    parser~,
   )
   let state = @state.GameState::new(())
   let runtime = Runtime::new(script, state)
@@ -287,8 +291,9 @@ test "sexp run-code executes host side effect" {
 test "sexp custom-event predicate uses payload" {
   let parser = SexpScriptParser::new()
   parser.register_function("eq", host_eq)
-  let script : Script[Unit] = reisen_parse_sexp_script_with_parser(
-    "(wait-custom-event route (eq payload \"open\")) (say n \"opened\")", parser,
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(wait-custom-event route (eq payload \"open\")) (say n \"opened\")",
+    parser~,
   )
   let runtime = Runtime::new(script, @state.GameState::new(()))
   assert_eq(runtime.step(), WaitCustomEventStarted("route"))
@@ -447,9 +452,9 @@ test "sexp runtime eval covers doubles chars and list fallbacks" {
   let parser = SexpScriptParser::new()
   parser.register_function("always", host_true)
   parser.register_function("set-int", host_set_int)
-  let script : Script[Unit] = reisen_parse_sexp_script_with_parser(
+  let script : Script[Unit] = reisen_parse_sexp_script(
     "(run-code (set-int score 7)) (run-code (unknown-fn 1)) (run-code ((1 2) 3)) (jump-if ok (always 1.5 #\\a)) (say n \"bad\") (label ok) (say n \"ok\")",
-    parser,
+    parser~,
   )
   let state = @state.GameState::new(())
   let runtime = Runtime::new(script, state)

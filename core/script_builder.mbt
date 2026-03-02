@@ -962,11 +962,31 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_blue(
 }
 
 ///|
-pub fn[T] ScriptBuilder::load_sexp(
+pub fn[T] ScriptBuilder::load_sexp_text(
   self : ScriptBuilder[T],
   text : String,
+  parser? : SexpScriptParser[T] = SexpScriptParser::new(),
 ) -> Unit raise ScriptBuildError {
-  reisen_sexp_script_to_builder(text, self)
+  parser.to_builder_with_text(text, self)
+}
+
+///|
+pub fn[T] ScriptBuilder::load_sexp(
+  self : ScriptBuilder[T],
+  forms : ArrayView[@sexp.Sexp],
+  parser? : SexpScriptParser[T] = SexpScriptParser::new(),
+) -> Unit {
+  parser.to_builder(forms, self)
+}
+
+///|
+pub async fn[T] ScriptBuilder::load_sexp_file(
+  self : ScriptBuilder[T],
+  path : String,
+  parser? : SexpScriptParser[T] = SexpScriptParser::new(),
+) -> Unit {
+  let text = @assets.load_text(path)
+  parser.to_builder_with_text(text, self)
 }
 
 ///|

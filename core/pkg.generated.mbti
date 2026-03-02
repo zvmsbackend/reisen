@@ -8,6 +8,7 @@ import {
   "sennenki/reisen/gallery",
   "sennenki/reisen/pixi",
   "sennenki/reisen/state",
+  "sennenki/sexp",
 }
 
 // Values
@@ -49,11 +50,7 @@ pub fn place_left(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
 pub fn place_right(layer? : Int, scalars? : ScalarState) -> FigurePlacement
 
-pub fn[T] reisen_parse_sexp_script(String) -> Script[T] raise ScriptBuildError
-
-pub fn[T] reisen_parse_sexp_script_with_parser(String, SexpScriptParser[T]) -> Script[T] raise ScriptBuildError
-
-pub fn[T] reisen_sexp_script_to_builder(String, ScriptBuilder[T]) -> Unit raise ScriptBuildError
+pub fn[T] reisen_parse_sexp_script(String, parser? : SexpScriptParser[T]) -> Script[T] raise ScriptBuildError
 
 pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
@@ -390,7 +387,9 @@ pub fn[T] ScriptBuilder::jump(Self[T], Label) -> Unit
 pub fn[T] ScriptBuilder::jump_by(Self[T], (@state.GameState[T]) -> Label) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (@state.GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
-pub fn[T] ScriptBuilder::load_sexp(Self[T], String) -> Unit raise ScriptBuildError
+pub fn[T] ScriptBuilder::load_sexp(Self[T], ArrayView[@sexp.Sexp], parser? : SexpScriptParser[T]) -> Unit
+pub async fn[T] ScriptBuilder::load_sexp_file(Self[T], String, parser? : SexpScriptParser[T]) -> Unit
+pub fn[T] ScriptBuilder::load_sexp_text(Self[T], String, parser? : SexpScriptParser[T]) -> Unit raise ScriptBuildError
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]
@@ -425,11 +424,11 @@ pub impl Show for ScriptFlowTrace
 pub impl ToJson for ScriptFlowTrace
 pub impl @json.FromJson for ScriptFlowTrace
 
-pub struct SexpScriptParser[T] {
-  host_functions : Map[String, (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value]
-}
+type SexpScriptParser[T]
 pub fn[T] SexpScriptParser::new() -> Self[T]
 pub fn[T] SexpScriptParser::register_function(Self[T], String, (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value) -> Unit
+pub fn[T] SexpScriptParser::to_builder(Self[T], ArrayView[@sexp.Sexp], ScriptBuilder[T]) -> Unit
+pub fn[T] SexpScriptParser::to_builder_with_text(Self[T], String, ScriptBuilder[T]) -> Unit raise ScriptBuildError
 
 pub(all) struct UiSnapshot {
   dialog : (String, String, Bool, Bool)?

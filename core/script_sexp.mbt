@@ -8,7 +8,7 @@ pub suberror ReisenSexpError derive(Show, Eq)
 pub type SexpHostFunction[T] = (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value
 
 ///|
-pub struct SexpScriptParser[T] {
+struct SexpScriptParser[T] {
   host_functions : Map[String, SexpHostFunction[T]]
 }
 
@@ -964,42 +964,34 @@ fn[T] lower_form(
 }
 
 ///|
-fn[T] SexpScriptParser::to_builder(
+pub fn[T] SexpScriptParser::to_builder(
   parser : SexpScriptParser[T],
-  text : String,
+  forms : ArrayView[@sexp.Sexp],
   builder : ScriptBuilder[T],
-) -> Unit raise ScriptBuildError {
-  let forms = @sexp.parse_many(text) catch {
-    error => raise SexpParseError(message=error.to_string())
-  }
+) -> Unit {
   for form in forms {
     lower_form(form, builder, parser.host_functions)
   }
 }
 
 ///|
-pub fn[T] reisen_sexp_script_to_builder(
+pub fn[T] SexpScriptParser::to_builder_with_text(
+  parser : SexpScriptParser[T],
   text : String,
   builder : ScriptBuilder[T],
 ) -> Unit raise ScriptBuildError {
-  SexpScriptParser::new().to_builder(text, builder)
+  let forms = @sexp.parse_many(text) catch {
+    err => raise SexpParseError(message=err.to_string())
+  }
+  parser.to_builder(forms, builder)
 }
 
 ///|
 pub fn[T] reisen_parse_sexp_script(
   text : String,
+  parser? : SexpScriptParser[T] = SexpScriptParser::new(),
 ) -> Script[T] raise ScriptBuildError {
   let builder : ScriptBuilder[T] = ScriptBuilder::new()
-  reisen_sexp_script_to_builder(text, builder)
-  builder.build()
-}
-
-///|
-pub fn[T] reisen_parse_sexp_script_with_parser(
-  text : String,
-  parser : SexpScriptParser[T],
-) -> Script[T] raise ScriptBuildError {
-  let builder : ScriptBuilder[T] = ScriptBuilder::new()
-  parser.to_builder(text, builder)
+  parser.to_builder_with_text(text, builder)
   builder.build()
 }
