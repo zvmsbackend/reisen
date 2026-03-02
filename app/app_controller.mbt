@@ -2,6 +2,14 @@
 /// Top-level app controller: start menu <-> game runtime switching.
 
 ///|
+extern "js" fn log_app_warn(message : String) -> Unit =
+  #| (msg) => {
+  #|   if (typeof console !== 'undefined' && console.warn) {
+  #|     console.warn('[reisen:app]', msg);
+  #|   }
+  #| }
+
+///|
 pub enum AppPhase {
   LocaleSelect
   StartGate
@@ -369,7 +377,16 @@ async fn[T] AppController::ensure_ui_locales_loaded(
   if self.ui_locale_path == "" {
     return false
   }
-  self.ui_locales_json = Some(load_text(self.ui_locale_path) catch { _ => "" })
+  self.ui_locales_json = Some(
+    load_text(self.ui_locale_path) catch {
+      error => {
+        log_app_warn(
+          "failed to load ui locale '\{self.ui_locale_path}': \{error.message()}",
+        )
+        ""
+      }
+    },
+  )
   self.refresh_ui_strings()
   true
 }
@@ -404,7 +421,14 @@ async fn[T] AppController::ensure_script_locales_loaded(
   self.script_locale_json = if selected_path == "" {
     None
   } else {
-    let raw = load_text(selected_path) catch { _ => "" }
+    let raw = load_text(selected_path) catch {
+      error => {
+        log_app_warn(
+          "failed to load script locale '\{selected_path}': \{error.message()}",
+        )
+        ""
+      }
+    }
     if raw == "" {
       None
     } else {
@@ -414,7 +438,14 @@ async fn[T] AppController::ensure_script_locales_loaded(
   self.script_default_locale_json = if default_path == "" {
     None
   } else {
-    let raw = load_text(default_path) catch { _ => "" }
+    let raw = load_text(default_path) catch {
+      error => {
+        log_app_warn(
+          "failed to load default script locale '\{default_path}': \{error.message()}",
+        )
+        ""
+      }
+    }
     if raw == "" {
       None
     } else {
@@ -448,6 +479,88 @@ fn[T] AppController::apply_settings_from_storage(
     Some(settings) => runner.apply_settings(settings)
     None => ()
   }
+}
+
+///|
+/// Creates a fresh `GameRunner` for the given script + state, pre-filling all
+/// locale and rendering arguments from the controller's current configuration.
+/// Also calls `set_ui_click_sfx` and `apply_settings_from_storage`.
+async fn[T] AppController::make_runner(
+  self : AppController[T],
+  script : Script[T],
+  state : GameState[T],
+) -> GameRunner[T] noraise {
+  let runner = start_game(
+    script,
+    state,
+    self.ui_root_id,
+    render_sync=self.render_sync,
+    event_hook=self.event_hook,
+    ui_strings=self.ui_strings,
+    script_locale_json=self.script_locale_json.unwrap_or(""),
+    script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
+    vocal_locale_dir=self.vocal_locale_dir,
+    script_locale=self.locale,
+    script_default_locale=self.default_locale,
+  )
+  runner.set_ui_click_sfx(self.ui_click_sfx_id)
+  self.apply_settings_from_storage(runner)
+  runner
+}
+
+///|
+/// Loads a `GameRunner` from a save slot, pre-filling all locale and rendering
+/// arguments from the controller's current configuration.
+/// Also calls `set_ui_click_sfx` and `apply_settings_from_storage`.
+async fn[T : FromJson] AppController::load_runner_from_slot(
+  self : AppController[T],
+  script : Script[T],
+  slot : String,
+) -> GameRunner[T] {
+  let runner = start_game_from_slot(
+    script,
+    slot,
+    self.ui_root_id,
+    render_sync=self.render_sync,
+    event_hook=self.event_hook,
+    save_namespace=self.save_ns,
+    ui_strings=self.ui_strings,
+    script_locale_json=self.script_locale_json.unwrap_or(""),
+    script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
+    vocal_locale_dir=self.vocal_locale_dir,
+    script_locale=self.locale,
+    script_default_locale=self.default_locale,
+  )
+  runner.set_ui_click_sfx(self.ui_click_sfx_id)
+  self.apply_settings_from_storage(runner)
+  runner
+}
+
+///|
+/// Restores a `GameRunner` from a mid-game director JSON snapshot (used when
+/// returning from the settings/save screen back to an in-progress game).
+/// Also calls `set_ui_click_sfx` and `apply_settings_from_storage`.
+async fn[T : FromJson] AppController::resume_runner_from_json(
+  self : AppController[T],
+  script : Script[T],
+  director_json : String,
+) -> GameRunner[T] {
+  let runner = start_game_from_save(
+    script,
+    director_json,
+    self.ui_root_id,
+    render_sync=self.render_sync,
+    event_hook=self.event_hook,
+    ui_strings=self.ui_strings,
+    script_locale_json=self.script_locale_json.unwrap_or(""),
+    script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
+    vocal_locale_dir=self.vocal_locale_dir,
+    script_locale=self.locale,
+    script_default_locale=self.default_locale,
+  )
+  runner.set_ui_click_sfx(self.ui_click_sfx_id)
+  self.apply_settings_from_storage(runner)
+  runner
 }
 
 ///|
@@ -493,31 +606,19 @@ async fn[T] AppController::start_gallery_replay(
     .find_first(image => image.replay_label == Some(replay_label))
   match target {
     Some(image) => {
-      let settings = settings_read_in(self.save_ns)
       let replay_factory = self.replay_factory_for_image(image)
-      let runner = start_game(
-        self.script(),
-        replay_factory(),
-        self.ui_root_id,
-        render_sync=self.render_sync,
-        event_hook=self.event_hook,
-        settings?,
-        ui_strings=self.ui_strings,
-        script_locale_json=self.script_locale_json.unwrap_or(""),
-        script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
-        vocal_locale_dir=self.vocal_locale_dir,
-        script_locale=self.locale,
-        script_default_locale=self.default_locale,
-      )
-      runner.set_ui_click_sfx(self.ui_click_sfx_id)
+      let runner = self.make_runner(self.script(), replay_factory())
       try {
         runner.jump_to_label(replay_label)
-        self.apply_settings_from_storage(runner)
         self.start_menu_music_stop()
         self.gallery_menu.clear()
         self.runner = Some(runner)
         self.phase = AppPhase::InGame
       } catch {
+        LabelNotFound(label~) => {
+          log_app_warn("gallery replay label not found: '\{label}'")
+          self.gallery_menu.render()
+        }
         _ => self.gallery_menu.render()
       }
     }
@@ -530,60 +631,28 @@ async fn[T : FromJson] AppController::handle_menu_action(
   self : AppController[T],
   action : StartMenuAction,
 ) -> Unit raise AppControllerError {
-  let settings = settings_read_in(self.save_ns)
   match action {
     NoAction => ()
     NewGame => {
       self.emit_ui_click_sfx()
       self.start_menu_music_stop()
-      let runner = start_game(
-        self.script(),
-        (self.new_state)(),
-        self.ui_root_id,
-        render_sync=self.render_sync,
-        event_hook=self.event_hook,
-        settings?,
-        ui_strings=self.ui_strings,
-        script_locale_json=self.script_locale_json.unwrap_or(""),
-        script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
-        vocal_locale_dir=self.vocal_locale_dir,
-        script_locale=self.locale,
-        script_default_locale=self.default_locale,
-      )
-      runner.set_ui_click_sfx(self.ui_click_sfx_id)
-      self.apply_settings_from_storage(runner)
+      let runner = self.make_runner(self.script(), (self.new_state)())
       self.runner = Some(runner)
       self.start_menu.clear()
       self.phase = AppPhase::InGame
     }
     Continue(slot) => {
+      self.emit_ui_click_sfx()
       let script = self.script()
       try {
-        self.emit_ui_click_sfx()
-        let runner = start_game_from_slot(
-          script,
-          slot,
-          self.ui_root_id,
-          render_sync=self.render_sync,
-          event_hook=self.event_hook,
-          save_namespace=self.save_ns,
-          ui_strings=self.ui_strings,
-          script_locale_json=self.script_locale_json.unwrap_or(""),
-          script_default_locale_json=self.script_default_locale_json.unwrap_or(
-            "",
-          ),
-          vocal_locale_dir=self.vocal_locale_dir,
-          script_locale=self.locale,
-          script_default_locale=self.default_locale,
-        )
-        runner.set_ui_click_sfx(self.ui_click_sfx_id)
-        self.apply_settings_from_storage(runner)
+        let runner = self.load_runner_from_slot(script, slot)
         self.start_menu_music_stop()
         self.runner = Some(runner)
         self.start_menu.clear()
         self.phase = AppPhase::InGame
       } catch {
         _ => {
+          log_app_warn("continue from slot '\{slot}' failed (slot missing or corrupt)")
           self.runner = None
           self.enter_start_menu()
         }
@@ -797,31 +866,15 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               self.saved_director_json = None
               let script = self.script()
               try {
-                let director = director_from_save_json(script, json)
-                let ui = UiDom::new(
-                  self.ui_root_id,
-                  ui_strings=self.ui_strings,
-                  script_locale_json=self.script_locale_json.unwrap_or(""),
-                  script_default_locale_json=self.script_default_locale_json.unwrap_or(
-                    "",
-                  ),
-                  vocal_locale_dir=self.vocal_locale_dir,
-                  script_locale=self.locale,
-                  script_default_locale=self.default_locale,
-                )
-                let runner = GameRunner::new_with_hooks(
-                  director,
-                  ui,
-                  self.render_sync,
-                  self.event_hook,
-                )
-                runner.set_ui_click_sfx(self.ui_click_sfx_id)
-                self.apply_settings_from_storage(runner)
+                let runner = self.resume_runner_from_json(script, json)
                 runner.sync_ui()
                 self.runner = Some(runner)
                 self.phase = AppPhase::InGame
               } catch {
-                _ => self.enter_start_menu()
+                _ => {
+                  log_app_warn("resume from saved state failed (corrupt save data)")
+                  self.enter_start_menu()
+                }
               }
             }
             None => self.enter_start_menu()
@@ -831,26 +884,8 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.emit_ui_click_sfx()
           self.settings_menu.clear()
           self.saved_director_json = None
-          let settings = settings_read_in(self.save_ns)
           self.start_menu_music_stop()
-          let runner = start_game(
-            self.script(),
-            (self.new_state)(),
-            self.ui_root_id,
-            render_sync=self.render_sync,
-            event_hook=self.event_hook,
-            settings?,
-            ui_strings=self.ui_strings,
-            script_locale_json=self.script_locale_json.unwrap_or(""),
-            script_default_locale_json=self.script_default_locale_json.unwrap_or(
-              "",
-            ),
-            vocal_locale_dir=self.vocal_locale_dir,
-            script_locale=self.locale,
-            script_default_locale=self.default_locale,
-          )
-          runner.set_ui_click_sfx(self.ui_click_sfx_id)
-          self.apply_settings_from_storage(runner)
+          let runner = self.make_runner(self.script(), (self.new_state)())
           self.runner = Some(runner)
           self.phase = AppPhase::InGame
         }
@@ -906,31 +941,19 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.emit_ui_click_sfx()
           self.settings_menu.clear()
           let script = self.script()
-          let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
-            script,
-            slot,
-            self.ui_root_id,
-            render_sync=self.render_sync,
-            event_hook=self.event_hook,
-            save_namespace=self.save_ns,
-            ui_strings=self.ui_strings,
-            script_locale_json=self.script_locale_json.unwrap_or(""),
-            script_default_locale_json=self.script_default_locale_json.unwrap_or(
-              "",
-            ),
-            vocal_locale_dir=self.vocal_locale_dir,
-            script_locale=self.locale,
-            script_default_locale=self.default_locale,
+          let restored : Result[GameRunner[T], Error] = try? self.load_runner_from_slot(
+            script, slot,
           )
           match restored {
             Ok(runner) => {
-              runner.set_ui_click_sfx(self.ui_click_sfx_id)
-              self.apply_settings_from_storage(runner)
               self.start_menu_music_stop()
               self.runner = Some(runner)
               self.phase = AppPhase::InGame
             }
-            Err(_) => self.settings_menu.render()
+            Err(_) => {
+              log_app_warn("load from slot '\{slot}' failed (slot missing or corrupt)")
+              self.settings_menu.render()
+            }
           }
         }
         ViewChanged => {
