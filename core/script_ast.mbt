@@ -240,6 +240,7 @@ pub suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
+  SexpParseError(message~ : String)
 }
 
 ///|

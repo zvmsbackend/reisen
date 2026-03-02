@@ -53,7 +53,7 @@ pub fn[T] reisen_parse_sexp_script(String) -> Script[T] raise ScriptBuildError
 
 pub fn[T] reisen_parse_sexp_script_with_parser(String, SexpScriptParser[T]) -> Script[T] raise ScriptBuildError
 
-pub fn[T] reisen_sexp_script_to_builder(String, ScriptBuilder[T]) -> Unit
+pub fn[T] reisen_sexp_script_to_builder(String, ScriptBuilder[T]) -> Unit raise ScriptBuildError
 
 pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 
@@ -68,6 +68,7 @@ pub suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
   MissingJumpTarget(target~ : String)
   MissingChoiceTarget(choice_id~ : String, target~ : String)
+  SexpParseError(message~ : String)
 }
 
 pub suberror ScriptRuntimeError {
@@ -389,7 +390,7 @@ pub fn[T] ScriptBuilder::jump(Self[T], Label) -> Unit
 pub fn[T] ScriptBuilder::jump_by(Self[T], (@state.GameState[T]) -> Label) -> Unit
 pub fn[T] ScriptBuilder::jump_if(Self[T], Label, (@state.GameState[T]) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::label(Self[T], Label) -> Unit
-pub fn[T] ScriptBuilder::load_sexp(Self[T], String) -> Unit
+pub fn[T] ScriptBuilder::load_sexp(Self[T], String) -> Unit raise ScriptBuildError
 pub fn[T] ScriptBuilder::menu(Self[T], String, String, Array[ChoiceOption]) -> Unit
 pub fn[T] ScriptBuilder::narrate(Self[T], String, typewriter? : Bool, append? : Bool, voice? : String, proceed_on_done? : Bool) -> Unit
 pub fn[T] ScriptBuilder::new() -> Self[T]

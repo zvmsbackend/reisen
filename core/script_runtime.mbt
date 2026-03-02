@@ -158,7 +158,7 @@ pub fn[T] Runtime::from_save(
   script : Script[T],
   save : RuntimeSave[T],
 ) -> Runtime[T] raise ScriptRuntimeError {
-  if save.ip < 0 || save.ip > script.instructions.length() {
+  if save.ip < 0 || save.ip >= script.instructions.length() {
     raise ScriptRuntimeError::InvalidInstructionPointer(ip=save.ip)
   }
   {

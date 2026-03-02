@@ -567,222 +567,224 @@ pub async fn[T] GameRunner::step(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
-  ignore(self.advance_log_build_job(256)) catch {
-    _ => ()
-  }
-  self.advance_animation_timer(elapsed_ms)
-  self.advance_blocking_timer(elapsed_ms)
-  self.ui.advance_dom_animation_timer(elapsed_ms)
-  if self.ui.has_active_dom_animations() {
-    self.ui_dirty = true
-  }
-  if self.director.is_waiting_video() {
-    match self.ui.take_video_action() {
+  for elapsed_ms = elapsed_ms {
+    ignore(self.advance_log_build_job(256)) catch {
+      _ => ()
+    }
+    self.advance_animation_timer(elapsed_ms)
+    self.advance_blocking_timer(elapsed_ms)
+    self.ui.advance_dom_animation_timer(elapsed_ms)
+    if self.ui.has_active_dom_animations() {
+      self.ui_dirty = true
+    }
+    if self.director.is_waiting_video() {
+      match self.ui.take_video_action() {
+        Some(action) => {
+          let skipped = action == "skip"
+          let event = self.director.complete_video_wait(skipped)
+          self.emit_runtime_event(event)
+          self.apply_event_and_render(event, false, RenderMode::RenderUi)
+          return event
+        }
+        None => ()
+      }
+    }
+    if self.director.is_waiting() {
+      if self.director.can_auto_skip_wait_click() {
+        self.ui.advance_auto_mode_timer(elapsed_ms~)
+        if self.ui.should_auto_skip_wait_click() {
+          self.director.skip_wait()
+          self.ui.mark_auto_advanced()
+        }
+      }
+      if self.ui.skip_mode() {
+        self.director.skip_wait()
+      } else if self.ui.check_typewriter_click() {
+        self.emit_ui_click_sfx()
+        self.director.skip_wait()
+      }
+    }
+    match self.ui.take_action() {
       Some(action) => {
-        let skipped = action == "skip"
-        let event = self.director.complete_video_wait(skipped)
-        self.emit_runtime_event(event)
-        self.apply_event_and_render(event, false, RenderMode::RenderUi)
-        return event
+        self.emit_ui_click_sfx()
+        match action {
+          "auto" => self.ui.toggle_auto_mode()
+          "skip" => self.ui.toggle_skip_mode()
+          "dialog" => {
+            if self.director.text_box_visible() {
+              self.director.apply_event(TextBoxHidden)
+            } else {
+              self.director.apply_event(TextBoxShown)
+            }
+            self.ui_dirty = true
+            self.ui.mark_dirty_text_and_speaker()
+          }
+          "log" => self.pending_action = Some("log")
+          "skip_on" => self.ui.set_skip_mode(true)
+          "skip_off" => self.ui.set_skip_mode(false)
+          "skip_hold_on" => self.ui.set_skip_hold(true)
+          "skip_hold_off" => self.ui.set_skip_hold(false)
+          "settings" | "qsave" | "save" => self.pending_action = Some(action)
+          _ => ()
+        }
+        self.ui.mark_dirty_action_buttons()
+        self.render_ui()
+        return Noop
       }
       None => ()
     }
-  }
-  if self.director.is_waiting() {
-    if self.director.can_auto_skip_wait_click() {
-      self.ui.advance_auto_mode_timer(elapsed_ms~)
-      if self.ui.should_auto_skip_wait_click() {
-        self.director.skip_wait()
-        self.ui.mark_auto_advanced()
-      }
-    }
-    if self.ui.skip_mode() {
-      self.director.skip_wait()
-    } else if self.ui.check_typewriter_click() {
-      self.emit_ui_click_sfx()
-      self.director.skip_wait()
-    }
-  }
-  match self.ui.take_action() {
-    Some(action) => {
-      self.emit_ui_click_sfx()
-      match action {
-        "auto" => self.ui.toggle_auto_mode()
-        "skip" => self.ui.toggle_skip_mode()
-        "dialog" => {
-          if self.director.text_box_visible() {
-            self.director.apply_event(TextBoxHidden)
-          } else {
-            self.director.apply_event(TextBoxShown)
-          }
-          self.ui_dirty = true
-          self.ui.mark_dirty_text_and_speaker()
-        }
-        "log" => self.pending_action = Some("log")
-        "skip_on" => self.ui.set_skip_mode(true)
-        "skip_off" => self.ui.set_skip_mode(false)
-        "skip_hold_on" => self.ui.set_skip_hold(true)
-        "skip_hold_off" => self.ui.set_skip_hold(false)
-        "settings" | "qsave" | "save" => self.pending_action = Some(action)
-        _ => ()
-      }
-      self.ui.mark_dirty_action_buttons()
-      self.render_ui()
-      return Noop
-    }
-    None => ()
-  }
-  if self.is_blocking_active() {
-    if self.ui.check_typewriter_click() {
-      self.emit_ui_click_sfx()
-      self.clear_blocking()
-    } else {
-      self.maybe_render_ui()
-      return Noop
-    }
-  }
-  if self.director.is_waiting() {
-    let event = self.director.step(elapsed_ms~)
-    self.emit_runtime_event(event)
-    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
-    return event
-  }
-  if !self.director.choices().is_empty() {
-    match self.ui.take_selected_choice() {
-      Some(choice_id) => {
+    if self.is_blocking_active() {
+      if self.ui.check_typewriter_click() {
         self.emit_ui_click_sfx()
-        let event = self.director.choose(choice_id)
-        self.emit_runtime_event(event)
-        self.ui.mark_all_dirty()
-        self.render_ui()
-        return event
-      }
-      None => {
-        if self.ui_dirty {
-          self.ui.mark_dirty_choices()
-          self.render_ui()
-        }
-        return ChoicePrompt(self.director.choices())
+        self.clear_blocking()
+      } else {
+        self.maybe_render_ui()
+        return Noop
       }
     }
-  }
-  if self.director.text_input() is Some(_) {
-    if self.ui_dirty {
-      let event : RuntimeEvent = match self.director.text_input() {
-        Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
-        None => Noop
-      }
+    if self.director.is_waiting() {
+      let event = self.director.step(elapsed_ms~)
+      self.emit_runtime_event(event)
+      self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
       return event
     }
-    match self.ui.take_submitted_text_input() {
-      Some(value) => {
-        self.emit_ui_click_sfx()
-        let event = self.director.submit_text_input(value)
-        self.emit_runtime_event(event)
-        self.director.ui.text_input = None
-        self.ui.mark_dirty_text_input()
-        self.render_ui()
-        return event
+    if !self.director.choices().is_empty() {
+      match self.ui.take_selected_choice() {
+        Some(choice_id) => {
+          self.emit_ui_click_sfx()
+          let event = self.director.choose(choice_id)
+          self.emit_runtime_event(event)
+          self.ui.mark_all_dirty()
+          self.render_ui()
+          return event
+        }
+        None => {
+          if self.ui_dirty {
+            self.ui.mark_dirty_choices()
+            self.render_ui()
+          }
+          return ChoicePrompt(self.director.choices())
+        }
       }
-      None => {
+    }
+    if self.director.text_input() is Some(_) {
+      if self.ui_dirty {
         let event : RuntimeEvent = match self.director.text_input() {
           Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
           None => Noop
         }
-        self.emit_runtime_event(event)
+        return event
+      }
+      match self.ui.take_submitted_text_input() {
+        Some(value) => {
+          self.emit_ui_click_sfx()
+          let event = self.director.submit_text_input(value)
+          self.emit_runtime_event(event)
+          self.director.ui.text_input = None
+          self.ui.mark_dirty_text_input()
+          self.render_ui()
+          return event
+        }
+        None => {
+          let event : RuntimeEvent = match self.director.text_input() {
+            Some((var_name, prompt)) => TextInputPrompt(var_name, prompt)
+            None => Noop
+          }
+          self.emit_runtime_event(event)
+          return event
+        }
+      }
+    }
+    match self.director.intro_text() {
+      Some(text) => {
+        let mut intro_done = self.ui.check_intro_done()
+        if self.ui.check_typewriter_click() && !intro_done {
+          self.emit_ui_click_sfx()
+          intro_done = self.ui.reveal_intro_line() || intro_done
+        }
+        if intro_done {
+          self.director.ui.intro_text = None
+          let event = self.director.step(elapsed_ms=0)
+          self.emit_runtime_event(event)
+          self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
+          return event
+        }
+        self.maybe_render_ui()
+        return IntroShown(text)
+      }
+      None => ()
+    }
+    if self.director.dialog() is None {
+      let event = self.director.step(elapsed_ms~)
+      self.emit_runtime_event(event)
+      self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
+      return event
+    }
+    self.ui.advance_skip_mode_timer(elapsed_ms~)
+    if self.ui.should_skip_advance() {
+      self.ui.complete_typewriter()
+      self.ui.mark_skip_advanced()
+      let event = self.director.step(elapsed_ms=0)
+      self.emit_runtime_event(event)
+      match event {
+        ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded => {
+          self.ui.mark_dirty_choices()
+          return event
+        }
+        _ => {
+          self.apply_event_and_render(event, false, RenderMode::RenderUi)
+          continue 0
+        }
+      }
+    }
+    let is_typewriter_done = self.ui.is_typewriter_done()
+    if not(is_typewriter_done) {
+      if self.ui.check_typewriter_click() {
+        self.emit_ui_click_sfx()
+        self.ui.complete_typewriter()
+        self.ui.mark_dirty_text()
+        let event = self.current_dialog_event()
+        self.render_ui()
+        return event
+      } else {
+        ignore(self.ui.advance_typewriter(elapsed_ms~))
+        self.ui.mark_dirty_text()
+        let event = self.current_dialog_event()
+        self.render_ui()
         return event
       }
     }
-  }
-  match self.director.intro_text() {
-    Some(text) => {
-      let mut intro_done = self.ui.check_intro_done()
-      if self.ui.check_typewriter_click() && !intro_done {
-        self.emit_ui_click_sfx()
-        intro_done = self.ui.reveal_intro_line() || intro_done
-      }
-      if intro_done {
-        self.director.ui.intro_text = None
+    match self.director.dialog() {
+      Some(line) if line.proceed_on_done => {
         let event = self.director.step(elapsed_ms=0)
         self.emit_runtime_event(event)
         self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
         return event
       }
-      self.maybe_render_ui()
-      return IntroShown(text)
+      _ => ()
     }
-    None => ()
-  }
-  if self.director.dialog() is None {
-    let event = self.director.step(elapsed_ms~)
-    self.emit_runtime_event(event)
-    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
-    return event
-  }
-  self.ui.advance_skip_mode_timer(elapsed_ms~)
-  if self.ui.should_skip_advance() {
-    self.ui.complete_typewriter()
-    self.ui.mark_skip_advanced()
-    let event = self.director.step(elapsed_ms=0)
-    self.emit_runtime_event(event)
-    match event {
-      ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded => {
-        self.ui.mark_dirty_choices()
-        return event
+    let dialog_advance_click = self.ui.check_typewriter_click()
+    if !self.director.last_event_said || dialog_advance_click {
+      if dialog_advance_click {
+        self.emit_ui_click_sfx()
       }
-      _ => {
-        self.apply_event_and_render(event, false, RenderMode::RenderUi)
-        return self.step(elapsed_ms=0)
-      }
-    }
-  }
-  let is_typewriter_done = self.ui.is_typewriter_done()
-  if not(is_typewriter_done) {
-    if self.ui.check_typewriter_click() {
-      self.emit_ui_click_sfx()
-      self.ui.complete_typewriter()
-      self.ui.mark_dirty_text()
-      let event = self.current_dialog_event()
-      self.render_ui()
-      return event
-    } else {
-      ignore(self.ui.advance_typewriter(elapsed_ms~))
-      self.ui.mark_dirty_text()
-      let event = self.current_dialog_event()
-      self.render_ui()
-      return event
-    }
-  }
-  match self.director.dialog() {
-    Some(line) if line.proceed_on_done => {
       let event = self.director.step(elapsed_ms=0)
       self.emit_runtime_event(event)
       self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
       return event
     }
-    _ => ()
-  }
-  let dialog_advance_click = self.ui.check_typewriter_click()
-  if !self.director.last_event_said || dialog_advance_click {
-    if dialog_advance_click {
-      self.emit_ui_click_sfx()
+    self.ui.advance_auto_mode_timer(elapsed_ms~)
+    if self.ui.should_auto_advance() {
+      self.ui.mark_auto_advanced()
+      let event = self.director.step(elapsed_ms=0)
+      self.emit_runtime_event(event)
+      self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
+      return event
     }
-    let event = self.director.step(elapsed_ms=0)
-    self.emit_runtime_event(event)
-    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
+    let event = self.current_dialog_event()
+    self.maybe_render_ui()
     return event
   }
-  self.ui.advance_auto_mode_timer(elapsed_ms~)
-  if self.ui.should_auto_advance() {
-    self.ui.mark_auto_advanced()
-    let event = self.director.step(elapsed_ms=0)
-    self.emit_runtime_event(event)
-    self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
-    return event
-  }
-  let event = self.current_dialog_event()
-  self.maybe_render_ui()
-  event
 }
 
 ///|

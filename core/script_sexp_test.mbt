@@ -375,13 +375,6 @@ test "sexp parse malformed or unknown forms are ignored" {
 }
 
 ///|
-test "sexp parse many error returns empty builder output" {
-  let script : Script[Unit] = reisen_parse_sexp_script("(label start")
-  assert_eq(script.instructions.length(), 0)
-  assert_eq(script.labels.length(), 0)
-}
-
-///|
 test "sexp parse play-video single arg defaults can-skip false" {
   let script : Script[Unit] = reisen_parse_sexp_script("(play-video intro.mp4)")
   assert_eq(script.instructions.length(), 1)

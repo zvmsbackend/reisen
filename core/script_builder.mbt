@@ -965,7 +965,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_blue(
 pub fn[T] ScriptBuilder::load_sexp(
   self : ScriptBuilder[T],
   text : String,
-) -> Unit {
+) -> Unit raise ScriptBuildError {
   reisen_sexp_script_to_builder(text, self)
 }
 

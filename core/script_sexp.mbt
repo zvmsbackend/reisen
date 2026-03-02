@@ -968,8 +968,10 @@ fn[T] SexpScriptParser::to_builder(
   parser : SexpScriptParser[T],
   text : String,
   builder : ScriptBuilder[T],
-) -> Unit {
-  let forms = @sexp.parse_many(text) catch { _ => return }
+) -> Unit raise ScriptBuildError {
+  let forms = @sexp.parse_many(text) catch {
+    error => raise SexpParseError(message=error.to_string())
+  }
   for form in forms {
     lower_form(form, builder, parser.host_functions)
   }
@@ -979,7 +981,7 @@ fn[T] SexpScriptParser::to_builder(
 pub fn[T] reisen_sexp_script_to_builder(
   text : String,
   builder : ScriptBuilder[T],
-) -> Unit {
+) -> Unit raise ScriptBuildError {
   SexpScriptParser::new().to_builder(text, builder)
 }
 
