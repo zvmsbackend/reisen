@@ -308,6 +308,16 @@ pub fn[T] Director::text_input(self : Director[T]) -> (String, String)? {
 }
 
 ///|
+pub fn[T] Director::clear_text_input(self : Director[T]) -> Unit {
+  self.ui.text_input = None
+}
+
+///|
+pub fn[T] Director::clear_intro_text(self : Director[T]) -> Unit {
+  self.ui.intro_text = None
+}
+
+///|
 pub fn[T] Director::is_waiting(self : Director[T]) -> Bool {
   self.runtime.is_waiting()
 }

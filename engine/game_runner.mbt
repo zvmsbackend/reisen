@@ -672,7 +672,7 @@ pub async fn[T] GameRunner::step(
           self.emit_ui_click_sfx()
           let event = self.director.submit_text_input(value)
           self.emit_runtime_event(event)
-          self.director.ui.text_input = None
+          self.director.clear_text_input()
           self.ui.mark_dirty_text_input()
           self.render_ui()
           return event
@@ -695,7 +695,7 @@ pub async fn[T] GameRunner::step(
           intro_done = self.ui.reveal_intro_line() || intro_done
         }
         if intro_done {
-          self.director.ui.intro_text = None
+          self.director.clear_intro_text()
           let event = self.director.step(elapsed_ms=0)
           self.emit_runtime_event(event)
           self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)

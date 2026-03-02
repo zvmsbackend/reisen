@@ -43,7 +43,9 @@ pub fn[T] Director::can_skip_wait(Self[T]) -> Bool
 pub fn[T] Director::choices(Self[T]) -> Array[@core.ChoiceOption]
 pub fn[T] Director::choose(Self[T], String) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
 pub fn[T] Director::clear_dialog(Self[T]) -> Unit
+pub fn[T] Director::clear_intro_text(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
+pub fn[T] Director::clear_text_input(Self[T]) -> Unit
 pub fn[T] Director::complete_video_wait(Self[T], Bool) -> @core.RuntimeEvent
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
