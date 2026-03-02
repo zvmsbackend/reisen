@@ -2,13 +2,13 @@
 test "runtime step and choose" {
   let script : Script[Int] = script_from_instructions([
     Choice([
-      { id: "left", text: "Go left", jump: "left" },
-      { id: "right", text: "Go right", jump: "right" },
+      { id: "left", text: DialogText::String("Go left"), jump: "left" },
+      { id: "right", text: DialogText::String("Go right"), jump: "right" },
     ]),
     Label("left"),
     Say(
-      speaker="narrator",
-      text="left",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("left"),
       typewriter=true,
       append=false,
       voice=None,
@@ -16,8 +16,8 @@ test "runtime step and choose" {
     ),
     Label("right"),
     Say(
-      speaker="narrator",
-      text="right",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("right"),
       typewriter=true,
       append=false,
       voice=None,
@@ -30,8 +30,8 @@ test "runtime step and choose" {
   assert_eq(
     runtime.choose("right"),
     Said(
-      speaker="narrator",
-      text="right",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("right"),
       typewriter=true,
       append=false,
       voice=None,
@@ -46,8 +46,8 @@ test "runtime save and restore json" {
     Wait(100),
     RunCode(gs => gs.set_int_var("count", gs.int_var("count") + 1)),
     Say(
-      speaker="narrator",
-      text="done",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("done"),
       typewriter=true,
       append=false,
       voice=None,
@@ -65,8 +65,8 @@ test "runtime save and restore json" {
   assert_eq(
     restored.step(elapsed_ms=100),
     Said(
-      speaker="narrator",
-      text="done",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("done"),
       typewriter=true,
       append=false,
       voice=None,
@@ -86,8 +86,8 @@ test "runtime custom event jump resumes at selected label" {
     }),
     Label("left"),
     Say(
-      speaker="n",
-      text="left",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("left"),
       typewriter=true,
       append=false,
       voice=None,
@@ -95,8 +95,8 @@ test "runtime custom event jump resumes at selected label" {
     ),
     Label("right"),
     Say(
-      speaker="n",
-      text="right",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("right"),
       typewriter=true,
       append=false,
       voice=None,
@@ -109,7 +109,13 @@ test "runtime custom event jump resumes at selected label" {
   assert_eq(runtime.submit_custom_event("route", "L"), Custom("route", "L"))
   assert_eq(
     runtime.step(),
-    Said(speaker="n", text="left", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("left"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -118,8 +124,8 @@ test "runtime records flow trace" {
   let script : Script[Int] = script_from_instructions([
     JumpIf("target", _ => true),
     Say(
-      speaker="n",
-      text="skip",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("skip"),
       typewriter=true,
       append=false,
       voice=None,
@@ -127,8 +133,8 @@ test "runtime records flow trace" {
     ),
     Label("target"),
     Say(
-      speaker="n",
-      text="ok",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("ok"),
       typewriter=true,
       append=false,
       voice=None,
@@ -148,8 +154,8 @@ test "runtime jump_by resolves selector label" {
     JumpBy(state => if state.int_var("route") == 1 { "left" } else { "right" }),
     Label("left"),
     Say(
-      speaker="n",
-      text="left",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("left"),
       typewriter=true,
       append=false,
       voice=None,
@@ -157,8 +163,8 @@ test "runtime jump_by resolves selector label" {
     ),
     Label("right"),
     Say(
-      speaker="n",
-      text="right",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("right"),
       typewriter=true,
       append=false,
       voice=None,
@@ -170,6 +176,12 @@ test "runtime jump_by resolves selector label" {
   let runtime = Runtime::new(script, state)
   assert_eq(
     runtime.step(),
-    Said(speaker="n", text="left", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("left"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }

@@ -76,70 +76,29 @@ pub fn[T] GameState::set_text_var(
 }
 
 ///|
+extern "js" fn escape_html(s : String) -> String =
+  #| (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+
+///|
 /// Interpolate text variables into a string.
 /// Syntax: `{variable_name}` is replaced with the variable's value.
 /// Undefined variables are left as-is.
-pub fn[T] GameState::interpolate(self : GameState[T], text : String) -> String {
-  let result = StringBuilder::new()
-  let mut in_brace = false
-  let mut in_style = false
-  let mut last_bracket_end = false
-  let mut var_name = ""
-
-  for c in text {
-    if in_style {
-      if c == '}' {
-        result.write_string("}")
-        in_style = false
-      } else {
-        result.write_string(c.to_string())
+pub fn[T] GameState::interpolate(
+  self : GameState[T],
+  text : DialogText,
+) -> DialogText {
+  match text {
+    Interpolation(var_name) => {
+      let value = match self.texts.get(var_name) {
+        Some(text) => text
+        None => @storage.persistent_get_text(var_name, default="{\{var_name}}")
       }
-      continue
+      String(value)
     }
-    match c {
-      '{' =>
-        if last_bracket_end {
-          result.write_string("{")
-          in_style = true
-          last_bracket_end = false
-        } else {
-          in_brace = true
-          var_name = ""
-        }
-      '}' => {
-        if in_brace {
-          let value = match self.texts.get(var_name) {
-            Some(text) => text
-            None =>
-              @storage.persistent_get_text(var_name, default="{\{var_name}}")
-          }
-          result.write_string(value)
-        } else {
-          result.write_string("}")
-        }
-        in_brace = false
-        var_name = ""
-      }
-      _ =>
-        if in_brace {
-          var_name = var_name + c.to_string()
-        } else {
-          if last_bracket_end {
-            last_bracket_end = false
-          }
-          if c == ']' {
-            last_bracket_end = true
-          }
-          result.write_string(c.to_string())
-        }
-    }
+    Concat(parts) => Concat(parts.map(part => self.interpolate(part)))
+    Enhanced(base, style~) => Enhanced(self.interpolate(base), style~)
+    _ => text
   }
-
-  if in_brace {
-    result.write_string("{" + var_name)
-  }
-
-  result.to_string()
 }
 
 ///|

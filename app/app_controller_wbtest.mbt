@@ -52,7 +52,13 @@ async test "app controller can continue from saved slot" {
   let runner = start_game(script, GameState::new(0), "app")
   assert_eq(
     runner.step(),
-    Said(speaker="n", text="a", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   save_runner_to_slot(runner, "slot1", save_namespace="app_test_ns_continue")
 
@@ -115,8 +121,8 @@ async test "gallery replay uses app controller state factory by default" {
       assert_eq(
         runner.step(),
         Said(
-          speaker="n",
-          text="default",
+          speaker=DialogText::String("n"),
+          text=DialogText::String("default"),
           typewriter=true,
           append=false,
           voice=None,
@@ -174,8 +180,8 @@ async test "gallery replay uses image-specific state factory key" {
       assert_eq(
         runner.step(),
         Said(
-          speaker="n",
-          text="custom",
+          speaker=DialogText::String("n"),
+          text=DialogText::String("custom"),
           typewriter=true,
           append=false,
           voice=None,
@@ -217,8 +223,8 @@ async test "app controller submit custom event only works in game" {
       assert_eq(
         runner.step(),
         Said(
-          speaker="n",
-          text="done",
+          speaker=DialogText::String("n"),
+          text=DialogText::String("done"),
           typewriter=true,
           append=false,
           voice=None,
@@ -263,7 +269,13 @@ async test "app controller custom event jump resumes on next step" {
     Some(runner) =>
       assert_eq(
         runner.step(),
-        Said(speaker="n", text="L", typewriter=true, append=false, voice=None),
+        Said(
+          speaker=DialogText::String("n"),
+          text=DialogText::String("L"),
+          typewriter=true,
+          append=false,
+          voice=None,
+        ),
       )
     None => fail("Expected runner")
   }

@@ -14,14 +14,3 @@ test "game state bool/int/string vars" {
   state.set_text_var("name", "Kasumi")
   assert_eq(state.text_var("name"), "Kasumi")
 }
-
-///|
-test "game state interpolation supports vars and style braces" {
-  let state = GameState::new(())
-  state.set_text_var("name", "Ran")
-  let text = "Hello {name}! [color=#f00]{{styled}}[/color] {missing}"
-  assert_eq(
-    state.interpolate(text),
-    "Hello Ran! [color=#f00]{{styled}}[/color] {missing}",
-  )
-}

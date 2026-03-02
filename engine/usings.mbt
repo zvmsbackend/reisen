@@ -25,7 +25,7 @@ using @core {
 using @storage {type GameSettings}
 
 ///|
-using @state {type GameState}
+using @state {type GameState, type DialogText}
 
 ///|
 using @ui {type AudioDom, type UiDom, type UiViewModel, type UiStrings}

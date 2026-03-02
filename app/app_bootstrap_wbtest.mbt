@@ -10,6 +10,9 @@ using @storage {
 using @core {script}
 
 ///|
+using @state {type DialogText}
+
+///|
 fn dummy_bg(id : String) -> @assets.Background {
   @js.Object::from_iter([("id", id), ("url", "")].iter()).to_value().cast()
 }
@@ -41,8 +44,8 @@ async test "start_game wires runner and performs initial sync" {
   assert_eq(
     runner.step(),
     Said(
-      speaker="narrator",
-      text="hello",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=None,
@@ -68,8 +71,8 @@ async test "start_game supports optional hooks" {
   assert_eq(
     runner.step(),
     Said(
-      speaker="narrator",
-      text="hello",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=None,
@@ -88,14 +91,26 @@ async test "start_game_from_save resumes script" {
   let runtime = Runtime::new(script, GameState::new(0))
   assert_eq(
     runtime.step(),
-    Said(speaker="n", text="a", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   let saved = runtime.save_json()
 
   let runner = start_game_from_save(script, saved, "app")
   assert_eq(
     runner.step(),
-    Said(speaker="n", text="b", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("b"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -110,14 +125,26 @@ async test "save_runner_to_slot and start_game_from_slot roundtrip" {
   let runner = start_game(script, GameState::new(0), "app")
   assert_eq(
     runner.step(),
-    Said(speaker="n", text="a", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   save_runner_to_slot(runner, "wb_slot_roundtrip")
 
   let resumed = start_game_from_slot(script, "wb_slot_roundtrip", "app")
   assert_eq(
     resumed.step(),
-    Said(speaker="n", text="a", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -186,7 +213,13 @@ async test "start_game_from_slot respects save namespace" {
   let runner = start_game(script, GameState::new(0), "app")
   assert_eq(
     runner.step(),
-    Said(speaker="n", text="a", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   save_runner_to_slot(runner, "shared_slot", save_namespace="game_a")
 
@@ -198,7 +231,13 @@ async test "start_game_from_slot respects save namespace" {
   )
   assert_eq(
     ok.step(),
-    Said(speaker="n", text="a", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 
   let bad : Result[GameRunner[Int], Error] = try? start_game_from_slot(

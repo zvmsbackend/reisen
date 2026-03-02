@@ -11,15 +11,21 @@ test "audio command mapping from runtime event" {
   )
   assert_eq(
     AudioCommand::from_event(
-      Said(speaker="n", text="t", typewriter=true, append=false, voice=None),
+      Said(
+        speaker=DialogText::String("n"),
+        text=DialogText::String("t"),
+        typewriter=true,
+        append=false,
+        voice=None,
+      ),
     ),
     Noop,
   )
   assert_eq(
     AudioCommand::from_event(
       Said(
-        speaker="n",
-        text="t",
+        speaker=DialogText::String("n"),
+        text=DialogText::String("t"),
         typewriter=true,
         append=false,
         voice=Some("voice"),

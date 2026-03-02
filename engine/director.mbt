@@ -4,8 +4,8 @@
 
 ///|
 pub(all) struct DialogLine {
-  speaker : String
-  text : String
+  speaker : DialogText
+  text : DialogText
   typewriter : Bool
   append : Bool
   proceed_on_done : Bool
@@ -17,8 +17,8 @@ priv struct UiState {
   mut dialog_seq : Int
   mut dialog_history : Array[DialogLogEntry]
   mut choices : Array[ChoiceOption]
-  mut text_input : (String, String)?
-  mut intro_text : String?
+  mut text_input : (String, DialogText)?
+  mut intro_text : DialogText?
   mut video : (String, Bool)?
   mut text_box_visible : Bool
   mut avatar_id : String?
@@ -46,7 +46,7 @@ pub struct DirectorSave[T] {
   render : RenderState
   dialog : DialogLine?
   dialog_seq : Int
-  intro_text : String?
+  intro_text : DialogText?
   video : (String, Bool)?
   text_box_visible : Bool
   avatar_id : String?
@@ -273,7 +273,7 @@ pub fn[T] Director::set_dialog_history(
 }
 
 ///|
-pub fn[T] Director::intro_text(self : Director[T]) -> String? {
+pub fn[T] Director::intro_text(self : Director[T]) -> DialogText? {
   self.ui.intro_text
 }
 
@@ -303,7 +303,7 @@ pub fn[T] Director::choices(self : Director[T]) -> Array[ChoiceOption] {
 }
 
 ///|
-pub fn[T] Director::text_input(self : Director[T]) -> (String, String)? {
+pub fn[T] Director::text_input(self : Director[T]) -> (String, DialogText)? {
   self.ui.text_input
 }
 

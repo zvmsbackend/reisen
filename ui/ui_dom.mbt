@@ -17,13 +17,13 @@ let dom_pos_mid_y : Double = 0.5
 ///|
 struct UiChoiceView {
   id : String
-  text : String
+  text : DialogText
 } derive(Show, Eq)
 
 ///|
 struct UiTextInputView {
   var_name : String
-  prompt : String
+  prompt : DialogText
 } derive(Show, Eq)
 
 ///|
@@ -57,11 +57,11 @@ struct UiDomFigureView {
 
 ///|
 struct UiViewModel {
-  speaker : String
-  text : String
+  speaker : DialogText
+  text : DialogText
   dialog_seq : Int
   typewriter : Bool
-  intro_text : String?
+  intro_text : DialogText?
   video : UiVideoView?
   append : Bool
   text_box_visible : Bool
@@ -100,8 +100,7 @@ struct UiDom {
   dom_color_g_anims : Map[String, DomScalarAnim]
   dom_color_b_anims : Map[String, DomScalarAnim]
   mut text_speed : Int
-  mut typewriter_raw_text : String
-  mut typewriter_text : String
+  mut typewriter_text : DialogText
   mut last_dialog_seq : Int
   mut typewriter_visible : Int
   mut typewriter_last_update_ms : Int
@@ -166,8 +165,7 @@ pub fn UiDom::new(
     dom_color_g_anims: {},
     dom_color_b_anims: {},
     text_speed: 50,
-    typewriter_raw_text: "",
-    typewriter_text: "",
+    typewriter_text: DialogText::empty(),
     last_dialog_seq: -1,
     typewriter_visible: 0,
     typewriter_last_update_ms: 0,
@@ -277,10 +275,6 @@ fn pos_at(now_ms : Int, anim : DomPositionAnim) -> (Double, Double, Bool) {
 }
 
 ///|
-extern "js" fn script_locale_strip_at(raw : String) -> String =
-  #| (raw) => (typeof raw === 'string' && raw.startsWith('@') ? raw.slice(1) : raw)
-
-///|
 extern "js" fn script_locale_lookup(
   locale_json : String,
   key : String,
@@ -317,11 +311,19 @@ extern "js" fn script_locale_warn_missing(
   #| }
 
 ///|
-fn UiDom::localize_script_text(self : UiDom, raw : String) -> String {
+fn UiDom::localize_script_text(self : UiDom, text : DialogText) -> DialogText {
+  match text {
+    String(s) => String(self.localize_script_text_string(s))
+    _ => text
+  }
+}
+
+///|
+fn UiDom::localize_script_text_string(self : UiDom, raw : String) -> String {
   if !raw.has_prefix("@") {
     return raw
   }
-  let key = script_locale_strip_at(raw)
+  let key = try! raw[1:].to_string()
   if key == "" {
     return raw
   }
@@ -369,7 +371,7 @@ pub fn UiDom::localize_vocal_url(self : UiDom, raw : String) -> String {
   if !raw.has_prefix("@") {
     return raw
   }
-  let key = script_locale_strip_at(raw)
+  let key = try! raw[1:].to_string()
   if key == "" {
     return raw
   }
@@ -671,9 +673,8 @@ pub fn UiDom::text_speed_ms_per_char(self : UiDom) -> Int {
 }
 
 ///|
-pub fn UiDom::start_typewriter(self : UiDom, text : String) -> Unit {
-  self.typewriter_raw_text = text
-  self.typewriter_text = dom_strip_text_markup(text)
+pub fn UiDom::start_typewriter(self : UiDom, text : DialogText) -> Unit {
+  self.typewriter_text = text
   self.typewriter_visible = 0
   self.typewriter_last_update_ms = 0
 }
@@ -684,10 +685,8 @@ pub fn UiDom::is_typewriter_done(self : UiDom) -> Bool {
 }
 
 ///|
-pub fn UiDom::typewriter_visible_text(self : UiDom) -> StringView {
-  self.typewriter_text[:self.typewriter_visible] catch {
-    _ => self.typewriter_text
-  }
+pub fn UiDom::typewriter_visible_text(self : UiDom) -> DialogText {
+  self.typewriter_text.slice(self.typewriter_visible)
 }
 
 ///|
@@ -891,10 +890,9 @@ pub fn UiDom::simulate_click(self : UiDom) -> Unit {
 extern "js" fn dom_render_speaker_text(
   root_id : String,
   speaker : String,
-  text : String,
-  visible_count : Int,
+  html : String,
 ) -> Unit =
-  #| (root_id, speaker, text, visible_count) => {
+  #| (root_id, speaker, html) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -922,87 +920,7 @@ extern "js" fn dom_render_speaker_text(
   #|     dialogText.dataset.reisen = 'dialog-text';
   #|     dialog.appendChild(dialogText);
   #|   }
-  #|   dialogText.innerHTML = '';
-  #|   if (visible_count <= 0) return;
-  #|   let lastIndex = 0;
-  #|   let remaining = visible_count;
-  #|   const parseBracketToken = (source, start) => {
-  #|     if (source[start] !== '[') return null;
-  #|     let depth = 0;
-  #|     let endBracket = -1;
-  #|     for (let i = start; i < source.length; i++) {
-  #|       const ch = source[i];
-  #|       if (ch === '[') depth += 1;
-  #|       else if (ch === ']') {
-  #|         depth -= 1;
-  #|         if (depth === 0) {
-  #|           endBracket = i;
-  #|           break;
-  #|         }
-  #|       }
-  #|     }
-  #|     if (endBracket < 0) return null;
-  #|     const marker = source[endBracket + 1];
-  #|     const close = marker === '(' ? ')' : marker === '{' ? '}' : '';
-  #|     if (!close) return null;
-  #|     const endSuffix = source.indexOf(close, endBracket + 2);
-  #|     if (endSuffix < 0) return null;
-  #|     return {
-  #|       index: start,
-  #|       end: endSuffix + 1,
-  #|       kind: marker === '(' ? 'ruby' : 'style',
-  #|       base: source.slice(start + 1, endBracket),
-  #|       value: source.slice(endBracket + 2, endSuffix),
-  #|     };
-  #|   };
-  #|   const nextToken = (source, from) => {
-  #|     for (let i = from; i < source.length; i++) {
-  #|       if (source[i] !== '[') continue;
-  #|       const token = parseBracketToken(source, i);
-  #|       if (token) return token;
-  #|     }
-  #|     return null;
-  #|   };
-  #|   const appendPlain = (chunk) => {
-  #|     if (!chunk) return;
-  #|     const visible = chunk.slice(0, remaining);
-  #|     if (visible) {
-  #|       dialogText.appendChild(doc.createTextNode(visible));
-  #|       remaining -= visible.length;
-  #|     }
-  #|   };
-  #|   while (remaining > 0) {
-  #|     const next = nextToken(text, lastIndex);
-  #|     if (!next) break;
-  #|     if (next.index > lastIndex) {
-  #|       appendPlain(text.slice(lastIndex, next.index));
-  #|     }
-  #|     if (remaining <= 0) break;
-  #|     const base = next.base;
-  #|     if (remaining >= base.length) {
-  #|       if (next.kind === 'ruby') {
-  #|         const ruby = doc.createElement('ruby');
-  #|         ruby.appendChild(doc.createTextNode(base));
-  #|         const rt = doc.createElement('rt');
-  #|         rt.textContent = next.value;
-  #|         ruby.appendChild(rt);
-  #|         dialogText.appendChild(ruby);
-  #|       } else {
-  #|         const span = doc.createElement('span');
-  #|         span.textContent = base;
-  #|         span.setAttribute('style', next.value);
-  #|         dialogText.appendChild(span);
-  #|       }
-  #|       remaining -= base.length;
-  #|     } else {
-  #|       appendPlain(base);
-  #|       break;
-  #|     }
-  #|     lastIndex = next.end;
-  #|   }
-  #|   if (remaining > 0 && lastIndex < text.length) {
-  #|     appendPlain(text.slice(lastIndex));
-  #|   }
+  #|   dialogText.innerHTML = html;
   #| }
 
 ///|
@@ -1054,12 +972,6 @@ extern "js" fn dom_set_avatar(root_id : String, avatar_id : String?) -> Unit =
   #|   avatar.src = url;
   #|   dialog.dataset.reisenAvatar = 'on';
   #| }
-
-///|
-extern "js" fn dom_strip_text_markup(text : String) -> String =
-  #| (text) => text
-  #|   .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1')
-  #|   .replace(/\[([^\]]+)\]\{([^}]+)\}/g, '$1')
 
 ///|
 extern "js" fn dom_render_intro(root_id : String, text : String) -> Unit =
@@ -2033,7 +1945,7 @@ pub fn UiViewModel::from_snapshot(
   }
   let (speaker, text) = match snapshot.dialog {
     Some((speaker, text, _, _)) => (speaker, text)
-    None => ("", "")
+    None => (DialogText::empty(), DialogText::empty())
   }
   let typewriter = match snapshot.dialog {
     Some((_, _, typewriter, _)) => typewriter
@@ -2050,12 +1962,9 @@ pub fn UiViewModel::from_snapshot(
   }
   let text_box_visible = snapshot.text_box_visible
   let avatar_id = snapshot.avatar_id
-  let choices = snapshot.choices.map(opt => UiChoiceView::{
-    id: opt.id,
-    text: opt.text,
-  })
+  let choices = snapshot.choices.map(opt => { id: opt.id, text: opt.text })
   let text_input = match snapshot.text_input {
-    Some((var_name, prompt)) => Some(UiTextInputView::{ var_name, prompt })
+    Some((var_name, prompt)) => Some({ var_name, prompt })
     None => None
   }
   {
@@ -2086,7 +1995,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   let localized_intro_text = view.intro_text.map(text => {
     self.localize_script_text(text)
   })
-  let localized_choices = view.choices.map(choice => UiChoiceView::{
+  let localized_choices = view.choices.map(choice => {
     id: choice.id,
     text: self.localize_script_text(choice.text),
   })
@@ -2098,7 +2007,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       })
     None => None
   }
-  let localized_dialog_history : Array[DialogLogEntry] = view.dialog_history.map(entry => DialogLogEntry::{
+  let localized_dialog_history : Array[DialogLogEntry] = view.dialog_history.map(entry => {
       speaker: self.localize_script_text(entry.speaker),
       text: self.localize_script_text(entry.text),
     },
@@ -2119,19 +2028,16 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     None => dom_clear_video(self.root_id)
   }
   if localized_intro_text is Some(text) {
-    dom_render_intro(self.root_id, text)
+    dom_render_intro(self.root_id, text.render())
     dom_setup_typewriter_click(self.root_id)
     return
   } else {
     dom_clear_intro(self.root_id)
   }
-  if view.dialog_seq != self.last_dialog_seq && localized_text != "" {
-    if view.append &&
-      view.typewriter &&
-      localized_text.has_prefix(self.typewriter_raw_text) {
+  if view.dialog_seq != self.last_dialog_seq && !localized_text.is_empty() {
+    if view.append && view.typewriter {
       let prev_len = self.typewriter_text.length()
-      self.typewriter_raw_text = localized_text
-      self.typewriter_text = dom_strip_text_markup(localized_text)
+      self.typewriter_text = localized_text
       if self.typewriter_visible < prev_len {
         self.typewriter_visible = prev_len
       }
@@ -2139,27 +2045,25 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     } else if view.typewriter && !self.skip_mode {
       self.start_typewriter(localized_text)
     } else {
-      self.typewriter_raw_text = localized_text
-      self.typewriter_text = dom_strip_text_markup(localized_text)
+      self.typewriter_text = localized_text
       self.typewriter_visible = self.typewriter_text.length()
       self.typewriter_last_update_ms = 0
     }
   }
   self.last_dialog_seq = view.dialog_seq
   dom_setup_typewriter_click(self.root_id)
-  let visible_count = if localized_text == "" {
-    0
-  } else if self.is_typewriter_done() {
-    self.typewriter_text.length()
-  } else {
-    self.typewriter_visible
-  }
   if self.dirty_speaker || self.dirty_text {
+    let visible_html = if localized_text.is_empty() {
+      ""
+    } else if self.is_typewriter_done() {
+      self.typewriter_text.render()
+    } else {
+      self.typewriter_text.slice(self.typewriter_visible).render()
+    }
     dom_render_speaker_text(
       self.root_id,
-      localized_speaker,
-      self.typewriter_raw_text,
-      visible_count,
+      localized_speaker.render(),
+      visible_html,
     )
     self.dirty_speaker = false
     self.dirty_text = false
@@ -2168,7 +2072,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   dom_set_avatar(self.root_id, view.avatar_id)
   if self.dirty_choices {
     let ids = localized_choices.map(c => c.id)
-    let texts = localized_choices.map(c => c.text)
+    let texts = localized_choices.map(c => c.text.render())
     dom_render_choices(self.root_id, ids, texts)
     self.dirty_choices = false
   }
@@ -2207,7 +2111,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
         dom_render_text_input(
           self.root_id,
           input_view.var_name,
-          input_view.prompt,
+          input_view.prompt.render(),
           self.ui_strings.game_text_input_submit,
         )
       None => dom_clear_text_input(self.root_id)

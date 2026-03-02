@@ -6,13 +6,13 @@
 pub(all) enum RuntimeEvent {
   Noop
   Said(
-    speaker~ : String,
-    text~ : String,
+    speaker~ : DialogText,
+    text~ : DialogText,
     typewriter~ : Bool,
     append~ : Bool,
     voice~ : String?
   )
-  IntroShown(String)
+  IntroShown(DialogText)
   TextBoxShown
   TextBoxHidden
   AvatarShown(String)
@@ -20,7 +20,7 @@ pub(all) enum RuntimeEvent {
   VideoStarted(String, Bool)
   VideoEnded(Bool)
   ChoicePrompt(Array[ChoiceOption])
-  TextInputPrompt(String, String)
+  TextInputPrompt(String, DialogText)
   BackgroundShown(String)
   BackgroundShownState(BackgroundState)
   FigureShown(String, FigurePlacement)
@@ -70,7 +70,7 @@ pub struct Runtime[T] {
   mut ip : Int
   mut pending_choices : Array[ChoiceOption]
   mut pending_choice_ip : Int?
-  mut pending_text_input : (String, String)?
+  mut pending_text_input : (String, DialogText)?
   mut wait_ms : Int
   mut wait_for_click : Bool
   mut wait_for_click_can_skip : Bool
@@ -87,7 +87,7 @@ pub struct RuntimeSave[T] {
   ip : Int
   pending_choices : Array[ChoiceOption]
   pending_choice_ip : Int?
-  pending_text_input : (String, String)?
+  pending_text_input : (String, DialogText)?
   wait_ms : Int
   wait_for_click : Bool
   wait_for_click_can_skip : Bool
@@ -103,7 +103,7 @@ priv struct RuntimeSaveLegacy[T] {
   state : GameState[T]
   ip : Int
   pending_choices : Array[ChoiceOption]
-  pending_text_input : (String, String)?
+  pending_text_input : (String, DialogText)?
   wait_ms : Int
   wait_for_click : Bool
   wait_custom_name : String?
@@ -167,7 +167,7 @@ pub fn[T] Runtime::from_save(
     ip: save.ip,
     pending_choices: save.pending_choices,
     pending_choice_ip: save.pending_choice_ip,
-    pending_text_input: None,
+    pending_text_input: save.pending_text_input,
     wait_ms: if save.wait_ms < 0 {
       0
     } else {
@@ -294,16 +294,12 @@ fn[T] Runtime::run_inst(
       self.last_say_proceed_on_done = proceed_on_done
       let interpolated = self.state.interpolate(text)
       let name_interpolated = self.state.interpolate(speaker)
-      let voice_interpolated = match voice {
-        Some(v) => Some(self.state.interpolate(v))
-        None => None
-      }
       Said(
         speaker=name_interpolated,
         text=interpolated,
         typewriter~,
         append~,
-        voice=voice_interpolated,
+        voice~,
       )
     }
     Intro(text) => {

@@ -2,7 +2,7 @@
 using @util {gensym}
 
 ///|
-using @state {type GameState}
+using @state {type GameState, type DialogText}
 
 ///|
 using @gallery {type GalleryImage}

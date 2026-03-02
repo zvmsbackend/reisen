@@ -11,6 +11,26 @@ pub fn[T : @json.FromJson] game_state_from_json_string(String) -> GameState[T] r
 // Errors
 
 // Types and methods
+pub(all) enum DialogText {
+  String(String)
+  Concat(Array[DialogText])
+  Interpolation(String)
+  Enhanced(DialogText, style~ : String)
+  Ruby(String, ruby~ : String)
+}
+pub fn DialogText::empty() -> Self
+pub fn DialogText::is_empty(Self) -> Bool
+pub fn DialogText::length(Self) -> Int
+pub fn DialogText::new(String) -> Self
+pub fn DialogText::raw_text(Self) -> String
+pub fn DialogText::render(Self) -> String
+pub fn DialogText::slice(Self, Int) -> Self
+pub impl Add for DialogText
+pub impl Eq for DialogText
+pub impl Show for DialogText
+pub impl ToJson for DialogText
+pub impl @json.FromJson for DialogText
+
 pub struct GameState[T] {
   mut user_data : T
   flags : Map[String, Bool]
@@ -20,7 +40,7 @@ pub struct GameState[T] {
 pub fn[T] GameState::flag(Self[T], String) -> Bool
 pub fn[T] GameState::get_user_data(Self[T]) -> T
 pub fn[T] GameState::int_var(Self[T], String, default_value? : Int) -> Int
-pub fn[T] GameState::interpolate(Self[T], String) -> String
+pub fn[T] GameState::interpolate(Self[T], DialogText) -> DialogText
 pub fn[T] GameState::new(T) -> Self[T]
 pub fn[T] GameState::set_flag(Self[T], String, Bool) -> Unit
 pub fn[T] GameState::set_int_var(Self[T], String, Int) -> Unit

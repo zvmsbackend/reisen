@@ -652,7 +652,9 @@ async fn[T : FromJson] AppController::handle_menu_action(
         self.phase = AppPhase::InGame
       } catch {
         _ => {
-          log_app_warn("continue from slot '\{slot}' failed (slot missing or corrupt)")
+          log_app_warn(
+            "continue from slot '\{slot}' failed (slot missing or corrupt)",
+          )
           self.runner = None
           self.enter_start_menu()
         }
@@ -709,7 +711,7 @@ fn[T : ToJson] AppController::save_autosave_if_enabled(
 ///|
 fn[T] dialog_preview(runner : GameRunner[T]) -> String {
   match runner.director().dialog() {
-    Some(line) => line.text
+    Some(line) => line.text.raw_text()
     None => ""
   }
 }
@@ -872,7 +874,9 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                 self.phase = AppPhase::InGame
               } catch {
                 _ => {
-                  log_app_warn("resume from saved state failed (corrupt save data)")
+                  log_app_warn(
+                    "resume from saved state failed (corrupt save data)",
+                  )
                   self.enter_start_menu()
                 }
               }
@@ -951,7 +955,9 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               self.phase = AppPhase::InGame
             }
             Err(_) => {
-              log_app_warn("load from slot '\{slot}' failed (slot missing or corrupt)")
+              log_app_warn(
+                "load from slot '\{slot}' failed (slot missing or corrupt)",
+              )
               self.settings_menu.render()
             }
           }

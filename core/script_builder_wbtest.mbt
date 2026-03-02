@@ -65,7 +65,7 @@ test "builder missing choice target raises" {
 ///|
 test "option helper builds expected choice option" {
   let got = option("Go left", label(name="left_path"))
-  assert_eq(got.text, "Go left")
+  assert_eq(got.text, DialogText::String("Go left"))
   assert_eq(got.jump, "left_path")
 }
 
@@ -200,8 +200,8 @@ test "menu helper emits say then choice" {
   assert_true(
     built.instructions[1]
     is Say(
-      speaker="narrator",
-      text="Pick one",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("Pick one"),
       typewriter=true,
       append=false,
       voice=None,
@@ -263,8 +263,8 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   assert_true(
     built.instructions[5]
     is Say(
-      speaker="",
-      text="done",
+      speaker=DialogText::String(""),
+      text=DialogText::String("done"),
       typewriter=true,
       append=false,
       voice=None,

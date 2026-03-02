@@ -7,28 +7,40 @@ test "ui view model reflects dialog and choices from snapshot" {
   let b = label(name="b")
   let snapshot = {
     ..UiSnapshot::default(),
-    dialog: Some(("guide", "Pick one", true, false)),
+    dialog: Some(
+      (DialogText::String("guide"), DialogText::String("Pick one"), true, false),
+    ),
     dialog_seq: 1,
-    dialog_history: [{ speaker: "guide", text: "Pick one" }],
+    dialog_history: [
+      {
+        speaker: DialogText::String("guide"),
+        text: DialogText::String("Pick one"),
+      },
+    ],
     choices: [option("Route A", a), option("Route B", b)],
   }
   let ui = UiDom::new("ui-root")
 
   let view = UiViewModel::from_snapshot(snapshot, ui)
-  assert_eq(view.speaker, "guide")
-  assert_eq(view.text, "Pick one")
+  assert_eq(view.speaker, DialogText::String("guide"))
+  assert_eq(view.text, DialogText::String("Pick one"))
   assert_eq(view.dialog_seq, 1)
   assert_eq(view.choices.length(), 2)
-  assert_eq(view.choices[0].text, "Route A")
-  assert_eq(view.dialog_history, [{ speaker: "guide", text: "Pick one" }])
+  assert_eq(view.choices[0].text, DialogText::String("Route A"))
+  assert_eq(view.dialog_history, [
+    {
+      speaker: DialogText::String("guide"),
+      text: DialogText::String("Pick one"),
+    },
+  ])
 }
 
 ///|
 test "ui view model is empty with default snapshot" {
   let ui = UiDom::new("ui-root")
   let view = UiViewModel::from_snapshot(UiSnapshot::default(), ui)
-  assert_eq(view.speaker, "")
-  assert_eq(view.text, "")
+  assert_eq(view.speaker, DialogText::String(""))
+  assert_eq(view.text, DialogText::String(""))
   assert_eq(view.dialog_seq, 0)
   assert_eq(view.choices, [])
   assert_eq(view.dialog_history, [])
@@ -81,7 +93,10 @@ test "ui dom localizes script key with selected locale" {
     script_locale="ja",
     script_default_locale="en",
   )
-  assert_eq(ui.localize_script_text("@demo.line"), "こんにちは")
+  assert_eq(
+    ui.localize_script_text(DialogText::String("@demo.line")),
+    DialogText::String("こんにちは"),
+  )
 }
 
 ///|
@@ -95,7 +110,10 @@ test "ui dom localizes script key with default locale fallback" {
     script_locale="ja",
     script_default_locale="en",
   )
-  assert_eq(ui.localize_script_text("@demo.line"), "Hello")
+  assert_eq(
+    ui.localize_script_text(DialogText::String("@demo.line")),
+    DialogText::String("Hello"),
+  )
 }
 
 ///|
@@ -109,7 +127,10 @@ test "ui dom localizes script key fallback to key" {
     script_locale="ja",
     script_default_locale="en",
   )
-  assert_eq(ui.localize_script_text("@demo.line"), "demo.line")
+  assert_eq(
+    ui.localize_script_text(DialogText::String("@demo.line")),
+    DialogText::String("demo.line"),
+  )
 }
 
 ///|

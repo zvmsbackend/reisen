@@ -21,8 +21,8 @@ test "parse sexp say and scene" {
   assert_true(
     script.instructions[1]
     is Say(
-      speaker="Speaker",
-      text="Hello world",
+      speaker=@state.DialogText::String("Speaker"),
+      text=@state.DialogText::String("Hello world"),
       typewriter=true,
       append=false,
       voice=None,
@@ -246,7 +246,14 @@ test "builder load_sexp appends parsed instructions" {
   let script = builder.build()
   assert_eq(script.instructions.length(), 2)
   assert_true(script.instructions[0] is Label("start"))
-  assert_true(script.instructions[1] is Say(speaker="guide", text="hello", ..))
+  assert_true(
+    script.instructions[1]
+    is Say(
+      speaker=@state.DialogText::String("guide"),
+      text=@state.DialogText::String("hello"),
+      ..
+    ),
+  )
 }
 
 ///|
@@ -261,7 +268,14 @@ test "sexp jump-if executes host expression" {
   let state = @state.GameState::new(())
   state.set_int_var("answer", 42)
   let runtime = Runtime::new(script, state)
-  assert_true(runtime.step() is Said(speaker="n", text="ok", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("ok"),
+      ..
+    ),
+  )
 }
 
 ///|
@@ -270,7 +284,14 @@ test "sexp jump-by executes selector expression" {
     "(jump-by (concat \"g\" \"ood\")) (say n \"bad\") (label good) (say n \"ok\")",
   )
   let runtime = Runtime::new(script, @state.GameState::new(()))
-  assert_true(runtime.step() is Said(speaker="n", text="ok", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("ok"),
+      ..
+    ),
+  )
 }
 
 ///|
@@ -283,7 +304,14 @@ test "sexp run-code executes host side effect" {
   )
   let state = @state.GameState::new(())
   let runtime = Runtime::new(script, state)
-  assert_true(runtime.step() is Said(speaker="n", text="done", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("done"),
+      ..
+    ),
+  )
   assert_eq(state.int_var("score"), 7)
 }
 
@@ -306,7 +334,14 @@ test "sexp custom-event predicate uses payload" {
     runtime.submit_custom_event("route", "open"),
     Custom("route", "open"),
   )
-  assert_true(runtime.step() is Said(speaker="n", text="opened", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("opened"),
+      ..
+    ),
+  )
 }
 
 ///|
@@ -320,7 +355,14 @@ test "sexp custom-event jump selector uses payload" {
     runtime.submit_custom_event("route", "right"),
     Custom("route", "right"),
   )
-  assert_true(runtime.step() is Said(speaker="n", text="R", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("R"),
+      ..
+    ),
+  )
 }
 
 ///|
@@ -329,12 +371,17 @@ test "sexp parse intro textbox avatar input and choice" {
     "(intro \"prologue\") (show-text-box) (hide-text-box) (show-avatar \"hero.png\") (hide-avatar) (input-text \"name\" \"who?\") (choice (\"A\" a) (\"B\" b)) (label a) (label b)",
   )
   assert_eq(script.instructions.length(), 9)
-  assert_true(script.instructions[0] is Intro("prologue"))
+  assert_true(
+    script.instructions[0] is Intro(@state.DialogText::String("prologue")),
+  )
   assert_true(script.instructions[1] is ShowTextBox)
   assert_true(script.instructions[2] is HideTextBox)
   assert_true(script.instructions[3] is ShowAvatar("hero.png"))
   assert_true(script.instructions[4] is HideAvatar)
-  assert_true(script.instructions[5] is InputText("name", "who?"))
+  assert_true(
+    script.instructions[5]
+    is InputText("name", @state.DialogText::String("who?")),
+  )
   assert_true(script.instructions[6] is Choice(_))
 }
 
@@ -347,8 +394,8 @@ test "sexp parse say option flags" {
   assert_true(
     script.instructions[0]
     is Say(
-      speaker="guide",
-      text="line",
+      speaker=@state.DialogText::String("guide"),
+      text=@state.DialogText::String("line"),
       typewriter=false,
       append=true,
       voice=Some("v1"),
@@ -426,7 +473,13 @@ test "sexp parse narrate command" {
   assert_eq(script.instructions.length(), 1)
   assert_true(
     script.instructions[0]
-    is Say(speaker="", text="line", typewriter=true, append=false, ..),
+    is Say(
+      speaker=@state.DialogText::String(""),
+      text=@state.DialogText::String("line"),
+      typewriter=true,
+      append=false,
+      ..
+    ),
   )
 }
 
@@ -458,7 +511,14 @@ test "sexp runtime eval covers doubles chars and list fallbacks" {
   )
   let state = @state.GameState::new(())
   let runtime = Runtime::new(script, state)
-  assert_true(runtime.step() is Said(speaker="n", text="ok", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("ok"),
+      ..
+    ),
+  )
   assert_eq(state.int_var("score"), 7)
 }
 
@@ -470,7 +530,13 @@ test "sexp say unknown option key is ignored" {
   assert_eq(script.instructions.length(), 1)
   assert_true(
     script.instructions[0]
-    is Say(speaker="guide", text="line", typewriter=true, append=false, ..),
+    is Say(
+      speaker=@state.DialogText::String("guide"),
+      text=@state.DialogText::String("line"),
+      typewriter=true,
+      append=false,
+      ..
+    ),
   )
 }
 
@@ -482,7 +548,14 @@ test "sexp builtins int-var and equals work without manual registration" {
   let state = @state.GameState::new(())
   state.set_int_var("answer", 42)
   let runtime = Runtime::new(script, state)
-  assert_true(runtime.step() is Said(speaker="n", text="ok", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("ok"),
+      ..
+    ),
+  )
 }
 
 ///|
@@ -492,7 +565,14 @@ test "sexp builtins set-int and plus run in run-code" {
   )
   let state = @state.GameState::new(())
   let runtime = Runtime::new(script, state)
-  assert_true(runtime.step() is Said(speaker="n", text="done", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("done"),
+      ..
+    ),
+  )
   assert_eq(state.int_var("score"), 7)
 }
 
@@ -512,5 +592,12 @@ test "sexp builtins use payload keyword directly in custom event" {
     runtime.submit_custom_event("route", "open"),
     Custom("route", "open"),
   )
-  assert_true(runtime.step() is Said(speaker="n", text="opened", ..))
+  assert_true(
+    runtime.step()
+    is Said(
+      speaker=@state.DialogText::String("n"),
+      text=@state.DialogText::String("opened"),
+      ..
+    ),
+  )
 }

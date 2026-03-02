@@ -120,7 +120,7 @@ pub impl @json.FromJson for BackgroundState
 
 pub struct ChoiceOption {
   id : String
-  text : String
+  text : @state.DialogText
   jump : String
 }
 pub impl Eq for ChoiceOption
@@ -129,8 +129,8 @@ pub impl ToJson for ChoiceOption
 pub impl @json.FromJson for ChoiceOption
 
 pub(all) struct DialogLogEntry {
-  speaker : String
-  text : String
+  speaker : @state.DialogText
+  text : @state.DialogText
 }
 pub impl Eq for DialogLogEntry
 pub impl Show for DialogLogEntry
@@ -198,15 +198,15 @@ pub(all) enum Instruction[T] {
   WaitForClick(Bool)
   WaitCustomEvent(String, (@state.GameState[T], String) -> Bool)
   WaitCustomEventJump(String, (@state.GameState[T], String) -> Label)
-  Say(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?, proceed_on_done~ : Bool)
-  Intro(String)
+  Say(speaker~ : @state.DialogText, text~ : @state.DialogText, typewriter~ : Bool, append~ : Bool, voice~ : String?, proceed_on_done~ : Bool)
+  Intro(@state.DialogText)
   ShowTextBox
   HideTextBox
   ShowAvatar(String)
   HideAvatar
   PlayVideo(String, Bool)
   Choice(Array[ChoiceOption])
-  InputText(String, String)
+  InputText(String, @state.DialogText)
   RunCode((@state.GameState[T]) -> Unit)
   ShowBackground(String)
   ShowBackgroundState(BackgroundState)
@@ -247,7 +247,7 @@ pub struct Runtime[T] {
   mut ip : Int
   mut pending_choices : Array[ChoiceOption]
   mut pending_choice_ip : Int?
-  mut pending_text_input : (String, String)?
+  mut pending_text_input : (String, @state.DialogText)?
   mut wait_ms : Int
   mut wait_for_click : Bool
   mut wait_for_click_can_skip : Bool
@@ -280,8 +280,8 @@ pub fn[T] Runtime::submit_text_input(Self[T], String) -> RuntimeEvent raise Scri
 
 pub(all) enum RuntimeEvent {
   Noop
-  Said(speaker~ : String, text~ : String, typewriter~ : Bool, append~ : Bool, voice~ : String?)
-  IntroShown(String)
+  Said(speaker~ : @state.DialogText, text~ : @state.DialogText, typewriter~ : Bool, append~ : Bool, voice~ : String?)
+  IntroShown(@state.DialogText)
   TextBoxShown
   TextBoxHidden
   AvatarShown(String)
@@ -289,7 +289,7 @@ pub(all) enum RuntimeEvent {
   VideoStarted(String, Bool)
   VideoEnded(Bool)
   ChoicePrompt(Array[ChoiceOption])
-  TextInputPrompt(String, String)
+  TextInputPrompt(String, @state.DialogText)
   BackgroundShown(String)
   BackgroundShownState(BackgroundState)
   FigureShown(String, FigurePlacement)
@@ -321,7 +321,7 @@ pub struct RuntimeSave[T] {
   ip : Int
   pending_choices : Array[ChoiceOption]
   pending_choice_ip : Int?
-  pending_text_input : (String, String)?
+  pending_text_input : (String, @state.DialogText)?
   wait_ms : Int
   wait_for_click : Bool
   wait_for_click_can_skip : Bool
@@ -431,12 +431,12 @@ pub fn[T] SexpScriptParser::to_builder(Self[T], ArrayView[@sexp.Sexp], ScriptBui
 pub fn[T] SexpScriptParser::to_builder_with_text(Self[T], String, ScriptBuilder[T]) -> Unit raise ScriptBuildError
 
 pub(all) struct UiSnapshot {
-  dialog : (String, String, Bool, Bool)?
+  dialog : (@state.DialogText, @state.DialogText, Bool, Bool)?
   dialog_seq : Int
   dialog_history : Array[DialogLogEntry]
   choices : Array[ChoiceOption]
-  text_input : (String, String)?
-  intro_text : String?
+  text_input : (String, @state.DialogText)?
+  intro_text : @state.DialogText?
   video : (String, Bool)?
   text_box_visible : Bool
   avatar_id : String?

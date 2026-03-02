@@ -53,7 +53,7 @@ pub fn option(
   jump : Label,
   id? : String = gensym(prefix="choice"),
 ) -> ChoiceOption {
-  { id, text, jump: jump.0 }
+  { id, text: DialogText::new(text), jump: jump.0 }
 }
 
 ///|
@@ -453,7 +453,7 @@ pub fn[T] ScriptBuilder::unlock_cg(
 
 ///|
 pub fn[T] ScriptBuilder::intro(self : ScriptBuilder[T], text : String) -> Unit {
-  self.instructions.push(Intro(text))
+  self.instructions.push(Intro(DialogText::new(text)))
 }
 
 ///|
@@ -500,8 +500,8 @@ pub fn[T] ScriptBuilder::narrate(
   let voice_url = if voice == "" { None } else { Some(voice) }
   self.instructions.push(
     Say(
-      speaker="",
-      text~,
+      speaker=DialogText::empty(),
+      text=DialogText::new(text),
       typewriter~,
       append~,
       voice=voice_url,
@@ -523,8 +523,8 @@ pub fn[T] ScriptBuilder::say(
   let voice_url = if voice == "" { None } else { Some(voice) }
   self.instructions.push(
     Say(
-      speaker~,
-      text~,
+      speaker=DialogText::new(speaker),
+      text=DialogText::new(text),
       typewriter~,
       append~,
       voice=voice_url,
@@ -547,8 +547,8 @@ pub fn[T] ScriptBuilder::say_many(
   for text in texts {
     self.instructions.push(
       Say(
-        speaker~,
-        text~,
+        speaker=DialogText::new(speaker),
+        text=DialogText::new(text),
         typewriter~,
         append~,
         voice=voice_url,
@@ -575,8 +575,8 @@ pub fn[T] ScriptBuilder::menu(
 ) -> Unit {
   self.instructions.push(
     Say(
-      speaker~,
-      text=prompt,
+      speaker=DialogText::new(speaker),
+      text=DialogText::new(prompt),
       typewriter=true,
       append=false,
       voice=None,
@@ -600,7 +600,7 @@ pub fn[T] ScriptBuilder::input_text(
   variable_name : String,
   prompt : String,
 ) -> Unit {
-  self.instructions.push(InputText(variable_name, prompt))
+  self.instructions.push(InputText(variable_name, DialogText::new(prompt)))
 }
 
 ///|

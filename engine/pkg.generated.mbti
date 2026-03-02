@@ -22,8 +22,8 @@ pub suberror LogReconstructionError {
 
 // Types and methods
 pub(all) struct DialogLine {
-  speaker : String
-  text : String
+  speaker : @state.DialogText
+  text : @state.DialogText
   typewriter : Bool
   append : Bool
   proceed_on_done : Bool
@@ -57,7 +57,7 @@ pub fn[T] Director::figure(Self[T], String) -> @core.FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, @core.FigurePlacement]
 pub fn[T] Director::flow_trace(Self[T]) -> Array[@core.ScriptFlowTrace]
 pub fn[T] Director::from_save(@core.Script[T], DirectorSave[T]) -> Self[T] raise @core.ScriptRuntimeError
-pub fn[T] Director::intro_text(Self[T]) -> String?
+pub fn[T] Director::intro_text(Self[T]) -> @state.DialogText?
 pub fn[T] Director::is_waiting(Self[T]) -> Bool
 pub fn[T] Director::is_waiting_video(Self[T]) -> Bool
 pub fn[T] Director::jump_to_label(Self[T], String) -> Unit raise @core.ScriptRuntimeError
@@ -77,7 +77,7 @@ pub fn[T] Director::submit_custom_event(Self[T], String, String) -> @core.Runtim
 pub fn[T] Director::submit_text_input(Self[T], String) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
 pub fn[T] Director::take_interrupted_sfx(Self[T]) -> String?
 pub fn[T] Director::text_box_visible(Self[T]) -> Bool
-pub fn[T] Director::text_input(Self[T]) -> (String, String)?
+pub fn[T] Director::text_input(Self[T]) -> (String, @state.DialogText)?
 pub fn[T] Director::ui_snapshot(Self[T]) -> @core.UiSnapshot
 pub fn[T] Director::video(Self[T]) -> (String, Bool)?
 
@@ -86,7 +86,7 @@ pub struct DirectorSave[T] {
   render : RenderState
   dialog : DialogLine?
   dialog_seq : Int
-  intro_text : String?
+  intro_text : @state.DialogText?
   video : (String, Bool)?
   text_box_visible : Bool
   avatar_id : String?

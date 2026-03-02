@@ -11,8 +11,8 @@ pub fn label(name? : String = @util.gensym(prefix="label")) -> Label {
 
 ///|
 pub(all) struct DialogLogEntry {
-  speaker : String
-  text : String
+  speaker : DialogText
+  text : DialogText
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|
@@ -121,12 +121,12 @@ pub(all) struct DomFigureState {
 
 ///|
 pub(all) struct UiSnapshot {
-  dialog : (String, String, Bool, Bool)?
+  dialog : (DialogText, DialogText, Bool, Bool)?
   dialog_seq : Int
   dialog_history : Array[DialogLogEntry]
   choices : Array[ChoiceOption]
-  text_input : (String, String)?
-  intro_text : String?
+  text_input : (String, DialogText)?
+  intro_text : DialogText?
   video : (String, Bool)?
   text_box_visible : Bool
   avatar_id : String?
@@ -160,7 +160,7 @@ pub(all) struct BackgroundState {
 ///|
 pub struct ChoiceOption {
   id : String
-  text : String
+  text : DialogText
   jump : String
 } derive(Show, Eq, ToJson, FromJson)
 
@@ -195,21 +195,21 @@ pub(all) enum Instruction[T] {
   WaitCustomEvent(String, PayloadPredicate[T])
   WaitCustomEventJump(String, PayloadJumpSelector[T])
   Say(
-    speaker~ : String,
-    text~ : String,
+    speaker~ : DialogText,
+    text~ : DialogText,
     typewriter~ : Bool,
     append~ : Bool,
     voice~ : String?,
     proceed_on_done~ : Bool
   )
-  Intro(String)
+  Intro(DialogText)
   ShowTextBox
   HideTextBox
   ShowAvatar(String)
   HideAvatar
   PlayVideo(String, Bool)
   Choice(Array[ChoiceOption])
-  InputText(String, String)
+  InputText(String, DialogText)
   RunCode(ScriptHook[T])
   ShowBackground(String)
   ShowBackgroundState(BackgroundState)

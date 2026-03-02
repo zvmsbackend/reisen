@@ -22,3 +22,6 @@ using @storage {
   settings_read_in,
   settings_write_in,
 }
+
+///|
+using @state {type DialogText}

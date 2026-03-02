@@ -40,8 +40,8 @@ async test "runner drives script and choice flow" {
   assert_eq(
     runner.step(),
     Said(
-      speaker="guide",
-      text="Pick",
+      speaker=DialogText::String("guide"),
+      text=DialogText::String("Pick"),
       typewriter=true,
       append=false,
       voice=None,
@@ -52,7 +52,13 @@ async test "runner drives script and choice flow" {
   assert_true(runner.step() is ChoicePrompt(_))
   assert_eq(
     runner.submit_choice("right"),
-    Said(speaker="guide", text="R", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("guide"),
+      text=DialogText::String("R"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -111,8 +117,8 @@ async test "runner render sync hook is called on ui sync and step" {
   assert_eq(
     runner.step(),
     Said(
-      speaker="narrator",
-      text="hello",
+      speaker=DialogText::String("narrator"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=None,
@@ -150,12 +156,24 @@ async test "runner event hook receives emitted events" {
   )
   assert_eq(
     runner.step(),
-    Said(speaker="n", text="t", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("t"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   assert_eq(seen.length(), 1)
   assert_eq(
     seen[0],
-    Said(speaker="n", text="t", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("t"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -175,7 +193,13 @@ async test "runner click skips wait" {
   ui.simulate_click()
   assert_true(
     runner.step()
-    is Said(speaker="n", text="done", typewriter=true, append=false, voice=None),
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("done"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 
@@ -195,7 +219,13 @@ async test "runner click advances wait click" {
   ui.simulate_click()
   assert_true(
     runner.step()
-    is Said(speaker="n", text="done", typewriter=true, append=false, voice=None),
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("done"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 
@@ -216,7 +246,13 @@ async test "auto mode skips skippable wait_click after short delay" {
   assert_true(runner.step(elapsed_ms=80) is Noop)
   assert_true(
     runner.step(elapsed_ms=90)
-    is Said(speaker="n", text="done", typewriter=true, append=false, voice=None),
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("done"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 
@@ -235,8 +271,8 @@ async test "runner click reveals typewriter then advances on next click" {
   assert_true(
     runner.step()
     is Said(
-      speaker="n",
-      text="hello",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=None
@@ -249,8 +285,8 @@ async test "runner click reveals typewriter then advances on next click" {
   assert_true(
     runner.step(elapsed_ms=0)
     is Said(
-      speaker="n",
-      text="hello",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=None
@@ -261,7 +297,13 @@ async test "runner click reveals typewriter then advances on next click" {
   ui.simulate_click()
   assert_true(
     runner.step(elapsed_ms=0)
-    is Said(speaker="n", text="next", typewriter=true, append=false, voice=None),
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("next"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
 }
 
@@ -285,8 +327,8 @@ async test "runner emits ui click sfx on midgame click advance" {
   assert_true(
     runner.step()
     is Said(
-      speaker="n",
-      text="hello",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=None
@@ -296,7 +338,13 @@ async test "runner emits ui click sfx on midgame click advance" {
   ui.simulate_click()
   assert_true(
     runner.step(elapsed_ms=0)
-    is Said(speaker="n", text="next", typewriter=true, append=false, voice=None),
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("next"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
   )
   assert_true(seen.contains(SfxPlayed(click_sfx, false)))
 }
@@ -324,8 +372,8 @@ async test "runner emits selected localized vocal url" {
   assert_eq(
     seen[0],
     Said(
-      speaker="n",
-      text="hello",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=Some("assets/voice/ja/demo/welcome.ogg"),
@@ -350,8 +398,8 @@ async test "runner keeps literal vocal url unchanged" {
   assert_eq(
     seen[0],
     Said(
-      speaker="n",
-      text="hello",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("hello"),
       typewriter=true,
       append=false,
       voice=Some("assets/direct.ogg"),
@@ -394,8 +442,8 @@ async test "wait advances with elapsed even when dialog remains" {
   assert_true(
     runner.step()
     is Said(
-      speaker="n",
-      text="first",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("first"),
       typewriter=true,
       append=false,
       voice=None
@@ -405,8 +453,8 @@ async test "wait advances with elapsed even when dialog remains" {
   assert_true(
     runner.step()
     is Said(
-      speaker="n",
-      text="first",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("first"),
       typewriter=true,
       append=false,
       voice=None
@@ -417,8 +465,8 @@ async test "wait advances with elapsed even when dialog remains" {
   assert_true(
     runner.step(elapsed_ms=120)
     is Said(
-      speaker="n",
-      text="after",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("after"),
       typewriter=true,
       append=false,
       voice=None
@@ -442,8 +490,8 @@ async test "skip mode ignores waits" {
   assert_true(
     runner.step()
     is Said(
-      speaker="n",
-      text="first",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("first"),
       typewriter=true,
       append=false,
       voice=None
@@ -453,8 +501,8 @@ async test "skip mode ignores waits" {
   assert_true(
     runner.step()
     is Said(
-      speaker="n",
-      text="first",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("first"),
       typewriter=true,
       append=false,
       voice=None
@@ -466,8 +514,8 @@ async test "skip mode ignores waits" {
   assert_true(
     runner.step(elapsed_ms=0)
     is Said(
-      speaker="n",
-      text="after",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("after"),
       typewriter=true,
       append=false,
       voice=None
@@ -487,15 +535,17 @@ async test "intro advances when display completes" {
     ui,
   )
 
-  assert_true(runner.step() is IntroShown("Prelude"))
+  assert_true(runner.step() is IntroShown(DialogText::String("Prelude")))
   ui.simulate_click()
-  assert_true(runner.step(elapsed_ms=0) is IntroShown("Prelude"))
+  assert_true(
+    runner.step(elapsed_ms=0) is IntroShown(DialogText::String("Prelude")),
+  )
   ui.simulate_intro_done()
   assert_true(
     runner.step(elapsed_ms=0)
     is Said(
-      speaker="n",
-      text="after",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("after"),
       typewriter=true,
       append=false,
       voice=None
@@ -556,8 +606,8 @@ async test "runner reconstructs dialog history from trace" {
   assert_true(
     runner.submit_choice("r")
     is Said(
-      speaker="n",
-      text="Right",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("Right"),
       typewriter=true,
       append=false,
       voice=None
@@ -566,7 +616,9 @@ async test "runner reconstructs dialog history from trace" {
 
   runner.reconstruct_dialog_history(script, GameState::new(0))
   assert_eq(runner.log_build_state(), LogBuildState::Ready)
-  assert_eq(runner.dialog_history(), [{ speaker: "n", text: "Right" }])
+  assert_eq(runner.dialog_history(), [
+    { speaker: DialogText::String("n"), text: DialogText::String("Right") },
+  ])
 }
 
 ///|
@@ -589,8 +641,8 @@ async test "runner can start log reconstruction asynchronously" {
   assert_true(
     runner.submit_choice("r")
     is Said(
-      speaker="n",
-      text="Right",
+      speaker=DialogText::String("n"),
+      text=DialogText::String("Right"),
       typewriter=true,
       append=false,
       voice=None
@@ -610,5 +662,7 @@ async test "runner can start log reconstruction asynchronously" {
   }
 
   assert_eq(runner.log_build_state(), LogBuildState::Ready)
-  assert_eq(runner.dialog_history(), [{ speaker: "n", text: "Right" }])
+  assert_eq(runner.dialog_history(), [
+    { speaker: DialogText::String("n"), text: DialogText::String("Right") },
+  ])
 }

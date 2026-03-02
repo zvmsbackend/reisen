@@ -76,8 +76,8 @@ test "director maps runtime events into ui and render state" {
   assert_eq(
     director.step(),
     Said(
-      speaker="alice",
-      text="Where to?",
+      speaker=DialogText::String("alice"),
+      text=DialogText::String("Where to?"),
       typewriter=true,
       append=false,
       voice=None,
@@ -86,8 +86,8 @@ test "director maps runtime events into ui and render state" {
   assert_eq(
     director.dialog(),
     Some({
-      speaker: "alice",
-      text: "Where to?",
+      speaker: DialogText::String("alice"),
+      text: DialogText::String("Where to?"),
       typewriter: true,
       append: false,
       proceed_on_done: false,
@@ -102,7 +102,13 @@ test "director maps runtime events into ui and render state" {
 
   assert_eq(
     director.step(),
-    Said(speaker="alice", text="A", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("alice"),
+      text=DialogText::String("A"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -129,13 +135,19 @@ test "director branch false path through choose" {
   ignore(director.step())
   assert_eq(
     director.choose("right"),
-    Said(speaker="guide", text="R", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("guide"),
+      text=DialogText::String("R"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   assert_eq(
     director.dialog(),
     Some({
-      speaker: "guide",
-      text: "R",
+      speaker: DialogText::String("guide"),
+      text: DialogText::String("R"),
       typewriter: true,
       append: false,
       proceed_on_done: false,
@@ -153,14 +165,26 @@ test "director save json resumes runtime position" {
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_eq(
     director.step(),
-    Said(speaker="n", text="a", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   let saved = director.save_json()
 
   let restored : Director[Int] = director_from_save_json(script, saved)
   assert_eq(
     restored.step(),
-    Said(speaker="n", text="b", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("b"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
 }
 
@@ -173,23 +197,40 @@ test "director appends dialog text" {
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_eq(
     director.step(),
-    Said(speaker="n", text="Hello", typewriter=true, append=false, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("Hello"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
   )
   assert_eq(
     director.step(),
-    Said(speaker="n", text=" world", typewriter=true, append=true, voice=None),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String(" world"),
+      typewriter=true,
+      append=true,
+      voice=None,
+    ),
   )
   assert_eq(
     director.dialog(),
     Some({
-      speaker: "n",
-      text: "Hello world",
+      speaker: DialogText::String("n"),
+      text: DialogText::String("Hello world"),
       typewriter: true,
       append: true,
       proceed_on_done: false,
     }),
   )
-  assert_eq(director.dialog_history(), [{ speaker: "n", text: "Hello world" }])
+  assert_eq(director.dialog_history(), [
+    {
+      speaker: DialogText::String("n"),
+      text: DialogText::String("Hello world"),
+    },
+  ])
 }
 
 ///|
