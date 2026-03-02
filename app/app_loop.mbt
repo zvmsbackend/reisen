@@ -14,9 +14,12 @@ fn max(x : Int, y : Int) -> Int {
 }
 
 ///|
-async fn run_browser_loop_impl(on_tick : async (Int) -> Bool) -> Unit {
+async fn[E : Error] run_browser_loop_impl(on_tick : async (Int) -> Bool raise E) -> Unit raise E {
   for last = 0.0 {
-    let ts = @js.Promise::wait(raf_promise()).cast()
+    let ts = @js.Promise::wait(raf_promise()).cast() catch {
+      @js.Error_(msg) => abort(msg.to_string())
+      _ => panic()
+    }
     let dt = if last == 0 { 0 } else { max(0, @math.floor(ts - last).to_int()) }
     if on_tick(dt) {
       continue ts
@@ -27,10 +30,7 @@ async fn run_browser_loop_impl(on_tick : async (Int) -> Bool) -> Unit {
 }
 
 ///|
-let abort_hook_installed : Ref[Bool] = Ref::new(false)
-
-///|
-extern "js" fn render_abort_dom(message : String) -> Unit =
+extern "js" fn render_app_error_dom(message : String) -> Unit =
   #| (message) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) {
@@ -56,28 +56,22 @@ extern "js" fn render_abort_dom(message : String) -> Unit =
   #|     root.style.boxSizing = 'border-box';
   #|     doc.body.appendChild(root);
   #|   }
-  #|   root.textContent = `Program aborted:\n\n${String(message ?? '')}`;
+  #|   root.textContent = `Program error:\n\n${String(message ?? '')}`;
   #| }
 
 ///|
-fn install_abort_hook_once() -> Unit {
-  if abort_hook_installed.val {
-    return
-  }
-  abort_hook_installed.val = true
-  @lib.add_hook(message => render_abort_dom(message))
+pub fn default_app_error_handler(message : String) -> Unit {
+  render_app_error_dom(message)
 }
 
 ///|
 pub async fn[T] run_browser_loop(runner : GameRunner[T]) -> Unit {
-  install_abort_hook_once()
   run_browser_loop_impl(dt => runner.tick(elapsed_ms=dt))
 }
 
 ///|
 pub async fn[T : FromJson + ToJson] run_browser_app_loop(
   app : AppController[T],
-) -> Unit {
-  install_abort_hook_once()
+) -> Unit raise AppControllerError {
   run_browser_loop_impl(dt => app.tick(elapsed_ms=dt))
 }

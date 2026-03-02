@@ -7,7 +7,6 @@ import {
   "sennenki/reisen/pixi",
   "sennenki/reisen/ui",
   "sennenki/reisen/engine",
-  "sennenki/abort_hook/lib",
   "moonbit-community/js-ffi/js",
   "moonbitlang/core/math",
   "moonbitlang/core/json",

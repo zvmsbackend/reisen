@@ -16,6 +16,27 @@ pub enum AppPhase {
 pub type ScriptFactory[T] = async () -> Script[T]
 
 ///|
+pub suberror AppControllerError {
+  ScriptLoadFailed(message~ : String)
+  ScriptValidationMissingImage(id~ : String)
+  ScriptValidationMissingAudio(id~ : String)
+  ScriptValidationMissingSaveSlot(slot~ : String)
+} derive(Show, Eq)
+
+///|
+pub fn AppControllerError::message(self : AppControllerError) -> String {
+  match self {
+    ScriptLoadFailed(message~) => "Failed to load script resources: \{message}"
+    ScriptValidationMissingImage(id~) =>
+      "Script references missing image asset: \{id}"
+    ScriptValidationMissingAudio(id~) =>
+      "Script references missing audio asset: \{id}"
+    ScriptValidationMissingSaveSlot(slot~) =>
+      "Script references missing save slot: \{slot}"
+  }
+}
+
+///|
 struct AppController[T] {
   script_factory : ScriptFactory[T]
   mut script : Script[T]?
@@ -32,8 +53,7 @@ struct AppController[T] {
   script_locale_dir : String
   mut script_locale_json : String?
   mut script_default_locale_json : String?
-  mut vocal_locale_json : String?
-  mut vocal_default_locale_json : String?
+  vocal_locale_dir : String
   mut script_locale_load_attempted : Bool
   save_ns : String
   autosave_slot : String
@@ -77,6 +97,7 @@ pub fn[T] AppController::new(
   languages? : Array[(String, String)] = [],
   ui_locale_path? : String = "locales/ui.json",
   script_locale_dir? : String = "locales",
+  vocal_locale_dir? : String = "",
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = _ => (),
@@ -124,8 +145,7 @@ pub fn[T] AppController::new(
     script_locale_dir,
     script_locale_json: None,
     script_default_locale_json: None,
-    vocal_locale_json: None,
-    vocal_default_locale_json: None,
+    vocal_locale_dir,
     script_locale_load_attempted: false,
     save_ns: save_namespace,
     autosave_slot,
@@ -178,22 +198,24 @@ pub fn[T] AppController::new(
 }
 
 ///|
-async fn[T] AppController::script(self : AppController[T]) -> Script[T] {
+async fn[T] AppController::script(
+  self : AppController[T],
+) -> Script[T] raise AppControllerError {
   match self.script {
     Some(script) => script
     None => {
       let script = (self.script_factory)() catch {
         PixiBindingError::ResourceLoadFailed(message~) =>
-          abort("Failed to load script resources: \{message}")
-        _ => panic()
+          raise ScriptLoadFailed(message~)
+        error => raise ScriptLoadFailed(message="Unknown script factory error \{error}")
       }
       validate_script_assets(script, self.assets) catch {
         MissingImageAsset(id~) =>
-          abort("Script references missing image asset: \{id}")
+          raise ScriptValidationMissingImage(id~)
         MissingAudioAsset(id~) =>
-          abort("Script references missing audio asset: \{id}")
+          raise ScriptValidationMissingAudio(id~)
         MissingSaveSlot(slot~) =>
-          abort("Script references missing save slot: \{slot}")
+          raise ScriptValidationMissingSaveSlot(slot~)
       }
       self.script = Some(script)
       script
@@ -300,8 +322,7 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
       runner.set_script_localization(
         self.script_locale_json,
         self.script_default_locale_json,
-        self.vocal_locale_json,
-        self.vocal_default_locale_json,
+        self.vocal_locale_dir,
         effective_locale,
         self.default_locale,
       )
@@ -334,7 +355,7 @@ fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
 ///|
 async fn[T] AppController::ensure_ui_locales_loaded(
   self : AppController[T],
-) -> Bool {
+) -> Bool noraise {
   if self.ui_locale_load_attempted {
     return false
   }
@@ -350,7 +371,7 @@ async fn[T] AppController::ensure_ui_locales_loaded(
 ///|
 async fn[T] AppController::ensure_script_locales_loaded(
   self : AppController[T],
-) -> Bool {
+) -> Bool noraise {
   if self.script_locale_load_attempted {
     return false
   }
@@ -374,16 +395,6 @@ async fn[T] AppController::ensure_script_locales_loaded(
   } else {
     "\{self.script_locale_dir}/\{default_code}.json"
   }
-  let selected_vocal_path = if selected_code == "" {
-    ""
-  } else {
-    "\{self.script_locale_dir}/\{selected_code}-vocal.json"
-  }
-  let default_vocal_path = if default_code == "" {
-    ""
-  } else {
-    "\{self.script_locale_dir}/\{default_code}-vocal.json"
-  }
   self.script_locale_json = if selected_path == "" {
     None
   } else {
@@ -398,26 +409,6 @@ async fn[T] AppController::ensure_script_locales_loaded(
     None
   } else {
     let raw = load_text(default_path) catch { _ => "" }
-    if raw == "" {
-      None
-    } else {
-      Some(raw)
-    }
-  }
-  self.vocal_locale_json = if selected_vocal_path == "" {
-    None
-  } else {
-    let raw = load_text(selected_vocal_path) catch { _ => "" }
-    if raw == "" {
-      None
-    } else {
-      Some(raw)
-    }
-  }
-  self.vocal_default_locale_json = if default_vocal_path == "" {
-    None
-  } else {
-    let raw = load_text(default_vocal_path) catch { _ => "" }
     if raw == "" {
       None
     } else {
@@ -439,8 +430,6 @@ fn[T] AppController::apply_locale(
   self.script_locale_load_attempted = false
   self.script_locale_json = None
   self.script_default_locale_json = None
-  self.vocal_locale_json = None
-  self.vocal_default_locale_json = None
   self.refresh_ui_strings()
 }
 
@@ -492,7 +481,7 @@ fn[T] AppController::replay_factory_for_image(
 async fn[T] AppController::start_gallery_replay(
   self : AppController[T],
   replay_label : String,
-) -> Unit {
+) -> Unit raise AppControllerError {
   let target = @gallery.replayable_images_in(self.save_ns)
     .iter()
     .find_first(image => image.replay_label == Some(replay_label))
@@ -510,8 +499,7 @@ async fn[T] AppController::start_gallery_replay(
         ui_strings=self.ui_strings,
         script_locale_json=self.script_locale_json.unwrap_or(""),
         script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
-        vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
-        vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(""),
+        vocal_locale_dir=self.vocal_locale_dir,
         script_locale=self.locale,
         script_default_locale=self.default_locale,
       )
@@ -535,7 +523,7 @@ async fn[T] AppController::start_gallery_replay(
 async fn[T : FromJson] AppController::handle_menu_action(
   self : AppController[T],
   action : StartMenuAction,
-) -> Unit {
+) -> Unit raise AppControllerError {
   let settings = settings_read_in(self.save_ns)
   match action {
     NoAction => ()
@@ -552,8 +540,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
         ui_strings=self.ui_strings,
         script_locale_json=self.script_locale_json.unwrap_or(""),
         script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
-        vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
-        vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(""),
+        vocal_locale_dir=self.vocal_locale_dir,
         script_locale=self.locale,
         script_default_locale=self.default_locale,
       )
@@ -563,11 +550,12 @@ async fn[T : FromJson] AppController::handle_menu_action(
       self.start_menu.clear()
       self.phase = AppPhase::InGame
     }
-    Continue(slot) =>
+    Continue(slot) => {
+      let script = self.script()
       try {
         self.emit_ui_click_sfx()
         let runner = start_game_from_slot(
-          self.script(),
+          script,
           slot,
           self.ui_root_id,
           render_sync=self.render_sync,
@@ -578,8 +566,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
           script_default_locale_json=self.script_default_locale_json.unwrap_or(
             "",
           ),
-          vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
-          vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(""),
+          vocal_locale_dir=self.vocal_locale_dir,
           script_locale=self.locale,
           script_default_locale=self.default_locale,
         )
@@ -595,6 +582,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
           self.enter_start_menu()
         }
       }
+    }
     Load => {
       self.emit_ui_click_sfx()
       self.start_menu.clear()
@@ -677,7 +665,7 @@ fn slot_exists(existing : Array[String], slot : String) -> Bool {
 pub async fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
-) -> Bool {
+) -> Bool raise AppControllerError {
   let ui_locale_changed = self.ensure_ui_locales_loaded()
   let script_locale_changed = self.ensure_script_locales_loaded()
   if ui_locale_changed || script_locale_changed {
@@ -801,8 +789,9 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           match self.saved_director_json {
             Some(json) => {
               self.saved_director_json = None
+              let script = self.script()
               try {
-                let director = director_from_save_json(self.script(), json)
+                let director = director_from_save_json(script, json)
                 let ui = UiDom::new(
                   self.ui_root_id,
                   ui_strings=self.ui_strings,
@@ -810,10 +799,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                   script_default_locale_json=self.script_default_locale_json.unwrap_or(
                     "",
                   ),
-                  vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
-                  vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(
-                    "",
-                  ),
+                  vocal_locale_dir=self.vocal_locale_dir,
                   script_locale=self.locale,
                   script_default_locale=self.default_locale,
                 )
@@ -853,10 +839,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             script_default_locale_json=self.script_default_locale_json.unwrap_or(
               "",
             ),
-            vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
-            vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(
-              "",
-            ),
+            vocal_locale_dir=self.vocal_locale_dir,
             script_locale=self.locale,
             script_default_locale=self.default_locale,
           )
@@ -916,8 +899,9 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
         LoadSlot(slot) => {
           self.emit_ui_click_sfx()
           self.settings_menu.clear()
+          let script = self.script()
           let restored : Result[GameRunner[T], Error] = try? start_game_from_slot(
-            self.script(),
+            script,
             slot,
             self.ui_root_id,
             render_sync=self.render_sync,
@@ -928,10 +912,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             script_default_locale_json=self.script_default_locale_json.unwrap_or(
               "",
             ),
-            vocal_locale_json=self.vocal_locale_json.unwrap_or(""),
-            vocal_default_locale_json=self.vocal_default_locale_json.unwrap_or(
-              "",
-            ),
+            vocal_locale_dir=self.vocal_locale_dir,
             script_locale=self.locale,
             script_default_locale=self.default_locale,
           )

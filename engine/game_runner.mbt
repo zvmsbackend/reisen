@@ -556,7 +556,7 @@ async fn[T] GameRunner::apply_event_and_render(
 }
 
 ///|
-pub async fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit {
+pub async fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit noraise {
   self.ui.mark_all_dirty()
   self.render_ui()
   self.sync_canvas()
@@ -835,7 +835,7 @@ pub fn[T] GameRunner::jump_to_label(
 pub async fn[T] GameRunner::tick(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
-) -> Bool {
+) -> Bool noraise {
   let keep_running = try self.step(elapsed_ms~) catch {
     _ => false
   } noraise {
@@ -911,14 +911,13 @@ pub fn[T] GameRunner::set_script_localization(
   self : GameRunner[T],
   script_locale_json : String?,
   script_default_locale_json : String?,
-  vocal_locale_json : String?,
-  vocal_default_locale_json : String?,
+  vocal_locale_dir : String,
   script_locale : String,
   script_default_locale : String,
 ) -> Unit {
   self.ui.set_script_localization(
-    script_locale_json, script_default_locale_json, vocal_locale_json, vocal_default_locale_json,
-    script_locale, script_default_locale,
+    script_locale_json, script_default_locale_json, vocal_locale_dir, script_locale,
+    script_default_locale,
   )
   self.ui_dirty = true
 }
@@ -980,7 +979,7 @@ pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
-pub async fn[T] GameRunner::clear_presentation(self : GameRunner[T]) -> Unit {
+pub async fn[T] GameRunner::clear_presentation(self : GameRunner[T]) -> Unit noraise {
   self.ui.clear_game_ui()
   self.director.clear_render()
   self.sync_canvas()

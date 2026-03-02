@@ -304,13 +304,12 @@ async test "runner emits ui click sfx on midgame click advance" {
 ///|
 async test "runner emits selected localized vocal url" {
   let script : Script[Int] = script(builder => {
-    builder.say("n", "hello", voice="@voice.demo")
+    builder.say("n", "hello", voice="@demo/welcome.ogg")
   })
   let seen : Array[RuntimeEvent] = []
   let ui = UiDom::new(
     "app",
-    vocal_locale_json="{\"voice.demo\":\"assets/ja/demo.ogg\"}",
-    vocal_default_locale_json="{\"voice.demo\":\"assets/en/demo.ogg\"}",
+    vocal_locale_dir="assets/voice",
     script_locale="ja",
     script_default_locale="en",
   )
@@ -329,7 +328,7 @@ async test "runner emits selected localized vocal url" {
       text="hello",
       typewriter=true,
       append=false,
-      voice=Some("assets/ja/demo.ogg"),
+      voice=Some("assets/voice/ja/demo/welcome.ogg"),
     ),
   )
 }

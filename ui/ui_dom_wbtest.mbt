@@ -114,44 +114,41 @@ test "ui dom localizes script key fallback to key" {
 
 ///|
 test "ui dom localizes vocal key with selected locale" {
-  let vocal_locale_json = "{\"voice.demo\":\"assets/ja/demo.ogg\"}"
-  let vocal_default_json = "{\"voice.demo\":\"assets/en/demo.ogg\"}"
   let ui = UiDom::new(
     "ui-root",
-    vocal_locale_json~,
-    vocal_default_locale_json=vocal_default_json,
+    vocal_locale_dir="assets/voice",
     script_locale="ja",
     script_default_locale="en",
   )
-  assert_eq(ui.localize_vocal_url("@voice.demo"), "assets/ja/demo.ogg")
+  assert_eq(
+    ui.localize_vocal_url("@demo/welcome.ogg"),
+    "assets/voice/ja/demo/welcome.ogg",
+  )
 }
 
 ///|
-test "ui dom localizes vocal key with default locale fallback" {
-  let vocal_locale_json = "{}"
-  let vocal_default_json = "{\"voice.demo\":\"assets/en/demo.ogg\"}"
+test "ui dom localizes vocal key with default locale when locale unset" {
   let ui = UiDom::new(
     "ui-root",
-    vocal_locale_json~,
-    vocal_default_locale_json=vocal_default_json,
-    script_locale="ja",
+    vocal_locale_dir="assets/voice",
+    script_locale="",
     script_default_locale="en",
   )
-  assert_eq(ui.localize_vocal_url("@voice.demo"), "assets/en/demo.ogg")
+  assert_eq(
+    ui.localize_vocal_url("@demo/welcome.ogg"),
+    "assets/voice/en/demo/welcome.ogg",
+  )
 }
 
 ///|
 test "ui dom localizes vocal key fallback to key" {
-  let vocal_locale_json = "{}"
-  let vocal_default_json = "{}"
   let ui = UiDom::new(
     "ui-root",
-    vocal_locale_json~,
-    vocal_default_locale_json=vocal_default_json,
+    vocal_locale_dir="",
     script_locale="ja",
     script_default_locale="en",
   )
-  assert_eq(ui.localize_vocal_url("@voice.demo"), "voice.demo")
+  assert_eq(ui.localize_vocal_url("@demo/welcome.ogg"), "demo/welcome.ogg")
 }
 
 ///|
