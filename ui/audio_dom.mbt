@@ -67,6 +67,11 @@ extern "js" fn audio_dom_play_music(url : String, should_loop : Bool) -> Unit =
   #|     const gain = globalThis.__reisenBgmGain ?? 0.7;
   #|     if (bgm.volume !== undefined) bgm.volume = gain;
   #|     globalThis[key] = bgm;
+  #|   } else {
+  #|     try {
+  #|       bgm.pause?.();
+  #|       bgm.currentTime = 0;
+  #|     } catch (_) {}
   #|   }
   #|   bgm.loop = !!should_loop;
   #|   if (bgm.src !== url) bgm.src = url;
