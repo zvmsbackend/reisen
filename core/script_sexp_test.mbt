@@ -541,6 +541,28 @@ test "sexp say unknown option key is ignored" {
 }
 
 ///|
+test "sexp malformed input raises SexpParseError" {
+  let result : Result[Script[Unit], ScriptBuildError] = try? reisen_parse_sexp_script(
+    "(say guide \"unclosed",
+  )
+  assert_true(result is Err(ScriptBuildError::SexpParseError(_)))
+}
+
+///|
+test "sexp unclosed paren raises SexpParseError" {
+  let result : Result[Script[Unit], ScriptBuildError] = try? reisen_parse_sexp_script(
+    "(label start",
+  )
+  assert_true(result is Err(ScriptBuildError::SexpParseError(_)))
+}
+
+///|
+test "sexp empty input produces empty script" {
+  let script : Script[Unit] = reisen_parse_sexp_script("")
+  assert_eq(script.instructions.length(), 0)
+}
+
+///|
 test "sexp builtins int-var and equals work without manual registration" {
   let script : Script[Unit] = reisen_parse_sexp_script(
     "(jump-if good (= (int-var \"answer\") 42)) (say n \"bad\") (label good) (say n \"ok\")",

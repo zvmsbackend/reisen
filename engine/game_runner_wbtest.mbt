@@ -666,3 +666,36 @@ async test "runner can start log reconstruction asynchronously" {
     { speaker: DialogText::String("n"), text: DialogText::String("Right") },
   ])
 }
+
+///|
+async test "runner skip mode completes 200-step script without stack overflow" {
+  let compiled : Script[Int] = script(builder => {
+    let mut i = 0
+    while i < 200 {
+      builder.say("n", "line")
+      i = i + 1
+    }
+  })
+  let ui = UiDom::new("app")
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(compiled, GameState::new(0))),
+    ui,
+  )
+
+  ignore(runner.step())
+  ui.set_skip_mode(true)
+
+  let mut ticks = 0
+  let mut ended = false
+  while not(ended) {
+    let keep_going = runner.tick(elapsed_ms=100)
+    if not(keep_going) {
+      ended = true
+    }
+    ticks = ticks + 1
+    if ticks > 2000 {
+      fail("script did not end within expected tick budget")
+    }
+  }
+  assert_true(ended)
+}

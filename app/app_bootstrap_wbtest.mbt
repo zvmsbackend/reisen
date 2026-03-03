@@ -252,6 +252,25 @@ async test "start_game_from_slot respects save namespace" {
 }
 
 ///|
+async test "start_game_from_save raises on corrupt json" {
+  let script : Script[Int] = script(builder => builder.say("n", "hi"))
+  let result : Result[GameRunner[Int], Error] = try? start_game_from_save(
+    script, "{not valid json", "app",
+  )
+  assert_true(result is Err(_))
+}
+
+///|
+async test "start_game_from_save raises when ip is out of bounds in json" {
+  let script : Script[Int] = script(builder => builder.say("n", "hi"))
+  let bad_json = "{\"ip\":999,\"state\":{\"int_vars\":{},\"text_vars\":{},\"flags\":{},\"payload\":0},\"pending_choices\":[],\"pending_choice_ip\":null,\"pending_text_input\":null,\"wait_ms\":0,\"wait_for_click\":false,\"wait_for_click_can_skip\":true,\"wait_custom_name\":null,\"wait_video\":false,\"last_say_proceed_on_done\":false,\"ended\":false,\"flow_trace\":[]}"
+  let result : Result[GameRunner[Int], Error] = try? start_game_from_save(
+    script, bad_json, "app",
+  )
+  assert_true(result is Err(_))
+}
+
+///|
 test "validate_script_image_assets succeeds when all ids exist" {
   let script : Script[Int] = script(builder => {
     builder.scene(dummy_bg("bg_school"))
