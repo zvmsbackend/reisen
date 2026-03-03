@@ -35,12 +35,9 @@ fn next_choice_trace(
   trace : Array[ScriptFlowTrace],
   from : Int,
 ) -> (Int, Int, String)? {
-  for i, entry in trace {
-    if i < from {
-      continue
-    }
+  for i, entry in trace.iter().drop(from) {
     match entry {
-      ChoiceResolved(ip~, choice_id~) => return Some((i, ip, choice_id))
+      ChoiceResolved(ip~, choice_id~) => return Some((i + from, ip, choice_id))
       _ => ()
     }
   }
@@ -53,14 +50,11 @@ fn next_custom_jump_trace(
   from : Int,
   name : String,
 ) -> (Int, Int, String)? {
-  for i, entry in trace {
-    if i < from {
-      continue
-    }
+  for i, entry in trace.iter().drop(from) {
     match entry {
       CustomJumpResolved(ip~, name=entry_name, target~) =>
         if entry_name == name {
-          return Some((i, ip, target))
+          return Some((i + from, ip, target))
         }
       _ => ()
     }
