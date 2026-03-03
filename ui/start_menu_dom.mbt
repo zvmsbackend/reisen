@@ -9,6 +9,7 @@ pub(all) enum StartMenuAction {
   Load
   Settings
   Gallery
+  Credits
 }
 
 ///|
@@ -35,6 +36,7 @@ struct StartMenu {
   save_ns : String
   background : String
   mut ui_strings : UiStrings
+  mut show_credits : Bool
 }
 
 ///|
@@ -43,8 +45,9 @@ pub fn StartMenu::new(
   save_namespace? : String = "global",
   background? : String = "",
   ui_strings? : UiStrings = UiStrings::default(),
+  show_credits? : Bool = false,
 ) -> StartMenu {
-  { root_id, save_ns: save_namespace, background, ui_strings }
+  { root_id, save_ns: save_namespace, background, ui_strings, show_credits }
 }
 
 ///|
@@ -53,6 +56,14 @@ pub fn StartMenu::set_ui_strings(
   ui_strings : UiStrings,
 ) -> Unit {
   self.ui_strings = ui_strings
+}
+
+///|
+pub fn StartMenu::set_show_credits(
+  self : StartMenu,
+  show_credits : Bool,
+) -> Unit {
+  self.show_credits = show_credits
 }
 
 ///|
@@ -160,13 +171,15 @@ extern "js" fn start_menu_dom_render(
   continue_slot : String,
   background : String,
   has_gallery : Bool,
+  has_credits : Bool,
   new_game_label : String,
   continue_label : String,
   load_label : String,
   settings_label : String,
   gallery_label : String,
+  credits_label : String,
 ) -> Unit =
-  #| (root_id, has_continue, continue_slot, background, has_gallery, new_game_label, continue_label, load_label, settings_label, gallery_label) => {
+  #| (root_id, has_continue, continue_slot, background, has_gallery, has_credits, new_game_label, continue_label, load_label, settings_label, gallery_label, credits_label) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -210,6 +223,9 @@ extern "js" fn start_menu_dom_render(
   #|   actions.appendChild(mkButton(settings_label, 'settings'));
   #|   if (has_gallery) {
   #|     actions.appendChild(mkButton(gallery_label, 'gallery'));
+  #|   }
+  #|   if (has_credits) {
+  #|     actions.appendChild(mkButton(credits_label, 'credits'));
   #|   }
   #|   menu.appendChild(actions);
   #| }
@@ -447,6 +463,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
 pub fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_entries_in(self.save_ns)
   let has_gallery = @gallery.registered_images().length() > 0
+  let has_credits = self.show_credits && self.ui_strings.menu_credits != ""
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>
@@ -456,11 +473,13 @@ pub fn StartMenu::render(self : StartMenu) -> Unit {
         slot,
         self.background,
         has_gallery,
+        has_credits,
         self.ui_strings.start_menu_new_game,
         self.ui_strings.start_menu_continue,
         self.ui_strings.start_menu_load,
         self.ui_strings.start_menu_settings,
         self.ui_strings.start_menu_gallery,
+        self.ui_strings.menu_credits,
       )
     None =>
       start_menu_dom_render(
@@ -469,11 +488,13 @@ pub fn StartMenu::render(self : StartMenu) -> Unit {
         "",
         self.background,
         has_gallery,
+        has_credits,
         self.ui_strings.start_menu_new_game,
         self.ui_strings.start_menu_continue,
         self.ui_strings.start_menu_load,
         self.ui_strings.start_menu_settings,
         self.ui_strings.start_menu_gallery,
+        self.ui_strings.menu_credits,
       )
   }
 }
@@ -527,6 +548,10 @@ pub fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
     Some("gallery") => {
       start_menu_action_clear(self.root_id)
       Gallery
+    }
+    Some("credits") => {
+      start_menu_action_clear(self.root_id)
+      Credits
     }
     _ => NoAction
   }

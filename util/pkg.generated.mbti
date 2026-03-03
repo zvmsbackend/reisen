@@ -4,6 +4,10 @@ package "sennenki/reisen/util"
 // Values
 pub fn gensym(prefix? : String) -> String
 
+pub fn script_locale_lookup(String, String) -> String?
+
+pub fn script_locale_resolve_at(String, String?, String?) -> (String, String?, Bool)
+
 // Errors
 
 // Types and methods

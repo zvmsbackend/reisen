@@ -17,6 +17,7 @@ pub enum AppPhase {
   StartMenu
   Gallery
   Settings
+  Credits
   InGame
 } derive(Show, Eq)
 
@@ -63,6 +64,7 @@ struct AppController[T] {
   mut script_default_locale_json : String?
   vocal_locale_dir : String
   mut script_locale_load_attempted : Bool
+  credits : String?
   save_ns : String
   autosave_slot : String
   autosave_title : String
@@ -77,6 +79,8 @@ struct AppController[T] {
   start_menu : StartMenu
   gallery_menu : GalleryMenu
   settings_menu : SettingsMenu
+  credits_menu : CreditsMenu
+  mut credits_return_phase : AppPhase
   gallery_replay_state_factories : ReplayStateFactories[T]
   mut phase : AppPhase
   render_sync : RenderSyncHook[T]
@@ -98,6 +102,7 @@ pub fn[T] AppController::new(
   menu_background? : String = "",
   settings_background? : String = "",
   gallery_background? : String = "",
+  credits_background? : String = "",
   menu_music? : Music,
   ui_click_sfx_url? : String = "",
   menu_music_loop? : Bool = true,
@@ -106,6 +111,7 @@ pub fn[T] AppController::new(
   ui_locale_path? : String = "locales/ui.json",
   script_locale_dir? : String = "locales",
   vocal_locale_dir? : String = "",
+  credits? : String,
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = (_, _) => (),
@@ -155,6 +161,7 @@ pub fn[T] AppController::new(
     script_default_locale_json: None,
     vocal_locale_dir,
     script_locale_load_attempted: false,
+    credits,
     save_ns: save_namespace,
     autosave_slot,
     autosave_title,
@@ -171,6 +178,7 @@ pub fn[T] AppController::new(
       save_namespace~,
       background=menu_background,
       ui_strings~,
+      show_credits=credits is Some(_),
     ),
     gallery_menu: GalleryMenu::new(
       ui_root_id,
@@ -183,7 +191,14 @@ pub fn[T] AppController::new(
       save_namespace~,
       background=settings_background,
       ui_strings~,
+      show_credits=credits is Some(_),
     ),
+    credits_menu: CreditsMenu::new(
+      ui_root_id,
+      background=credits_background,
+      ui_strings~,
+    ),
+    credits_return_phase: AppPhase::StartMenu,
     phase: if !languages.is_empty() && !has_persisted {
       AppPhase::LocaleSelect
     } else {
@@ -279,7 +294,47 @@ fn[T] AppController::emit_ui_click_sfx(self : AppController[T]) -> Unit {
 }
 
 ///|
+fn[T] AppController::localize_credits_text(
+  self : AppController[T],
+  raw : String,
+) -> String {
+  let (localized, _, _) = script_locale_resolve_at(
+    raw,
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
+  localized
+}
+
+///|
+fn[T] AppController::credits_html(self : AppController[T]) -> String {
+  match self.credits {
+    Some(raw) => DialogText::new(self.localize_credits_text(raw)).render()
+    None => ""
+  }
+}
+
+///|
+fn[T] AppController::enter_credits(
+  self : AppController[T],
+  return_phase : AppPhase,
+) -> Unit {
+  match self.credits {
+    Some(_) => {
+      self.start_menu.clear()
+      self.settings_menu.clear()
+      self.gallery_menu.clear()
+      self.credits_return_phase = return_phase
+      self.credits_menu.render(self.credits_html())
+      self.phase = AppPhase::Credits
+    }
+    None => ()
+  }
+}
+
+///|
 fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
+  self.credits_menu.clear()
   self.gallery_menu.clear()
   self.start_menu.clear_logo()
   self.start_menu.clear_gate()
@@ -320,6 +375,7 @@ fn[T] AppController::sync_ui_strings(self : AppController[T]) -> Unit {
   self.start_menu.set_ui_strings(self.ui_strings)
   self.settings_menu.set_ui_strings(self.ui_strings)
   self.gallery_menu.set_ui_strings(self.ui_strings)
+  self.credits_menu.set_ui_strings(self.ui_strings)
 }
 
 ///|
@@ -682,6 +738,10 @@ async fn[T : FromJson] AppController::handle_menu_action(
         self.gallery_menu.render()
         self.phase = AppPhase::Gallery
       }
+    Credits => {
+      self.emit_ui_click_sfx()
+      self.enter_credits(AppPhase::StartMenu)
+    }
   }
 }
 
@@ -753,6 +813,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
       AppPhase::StartMenu => self.start_menu.render()
       AppPhase::Settings => self.settings_menu.render()
       AppPhase::Gallery => self.gallery_menu.render()
+      AppPhase::Credits => self.credits_menu.render(self.credits_html())
       AppPhase::InGame =>
         match self.runner {
           Some(runner) => runner.sync_ui()
@@ -910,6 +971,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.runner = None
           self.enter_start_menu()
         }
+        Credits => {
+          self.emit_ui_click_sfx()
+          self.enter_credits(AppPhase::Settings)
+        }
         Log => {
           self.emit_ui_click_sfx()
           self.settings_menu.clear()
@@ -986,6 +1051,26 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.start_gallery_replay(label)
         }
         NoAction => ()
+      }
+      true
+    }
+    AppPhase::Credits => {
+      match self.credits_menu.take_action() {
+        CreditsAction::Back => {
+          self.emit_ui_click_sfx()
+          self.credits_menu.clear()
+          match self.credits_return_phase {
+            AppPhase::Settings => {
+              self.settings_menu.render()
+              self.phase = AppPhase::Settings
+            }
+            _ => {
+              self.start_menu.render()
+              self.phase = AppPhase::StartMenu
+            }
+          }
+        }
+        CreditsAction::NoAction => ()
       }
       true
     }

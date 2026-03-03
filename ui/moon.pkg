@@ -5,6 +5,7 @@ import {
   "sennenki/reisen/gallery",
   "sennenki/reisen/storage",
   "sennenki/reisen/state",
+  "sennenki/reisen/util",
   "moonbitlang/core/json",
 }
 

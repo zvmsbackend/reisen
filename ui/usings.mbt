@@ -25,3 +25,6 @@ using @storage {
 
 ///|
 using @state {type DialogText}
+
+///|
+using @util {script_locale_resolve_at}

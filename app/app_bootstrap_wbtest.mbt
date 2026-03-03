@@ -10,9 +10,6 @@ using @storage {
 using @core {script}
 
 ///|
-using @state {type DialogText}
-
-///|
 fn dummy_bg(id : String) -> @assets.Background {
   @js.Object::from_iter([("id", id), ("url", "")].iter()).to_value().cast()
 }

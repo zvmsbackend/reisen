@@ -8,6 +8,7 @@ pub struct UiStrings {
   start_menu_load : String
   start_menu_settings : String
   start_menu_gallery : String
+  menu_credits : String
   settings_text_speed : String
   settings_language : String
   settings_bgm_volume : String
@@ -63,6 +64,7 @@ pub impl Default for UiStrings with default() {
     start_menu_load: "Load",
     start_menu_settings: "Settings",
     start_menu_gallery: "Gallery",
+    menu_credits: "Credits",
     settings_text_speed: "Text Speed",
     settings_language: "Language",
     settings_bgm_volume: "BGM Volume",
@@ -225,6 +227,13 @@ pub fn UiStrings::from_locales_json(
       default_locale,
       "start_menu_gallery",
       fallback.start_menu_gallery,
+    ),
+    menu_credits: ui_locale_resolve_string(
+      locales_json,
+      locale,
+      default_locale,
+      "menu_credits",
+      fallback.menu_credits,
     ),
     settings_text_speed: ui_locale_resolve_string(
       locales_json,

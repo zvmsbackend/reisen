@@ -15,7 +15,7 @@ using @storage {
 using @core {type EventHook, type Runtime, type Script}
 
 ///|
-using @state {type GameState}
+using @state {type GameState, type DialogText}
 
 ///|
 using @gallery {type GalleryImage, type ReplayStateFactories}
@@ -27,6 +27,9 @@ using @assets {type AssetStore, type AssetStoreError, type Music, load_text}
 using @pixi {type PixiBindingError}
 
 ///|
+using @util {script_locale_resolve_at}
+
+///|
 using @ui {
   type AudioDom,
   type UiStrings,
@@ -34,8 +37,10 @@ using @ui {
   type StartMenu,
   type GalleryMenu,
   type SettingsMenu,
+  type CreditsMenu,
   type StartMenuAction,
   type StartLocaleAction,
+  type CreditsAction,
 }
 
 ///|

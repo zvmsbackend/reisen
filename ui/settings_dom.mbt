@@ -20,6 +20,7 @@ pub enum SettingsAction {
   NoAction
   LanguageChanged(String)
   Back
+  Credits
   NewGame
   StartMenu
   Log
@@ -42,6 +43,7 @@ struct SettingsMenu {
   mut ui_strings : UiStrings
   mut languages : Array[(String, String)]
   mut locale : String
+  mut show_credits : Bool
   mut context : SettingsContext
   mut view_mode : SettingsViewMode
   mut save_slot_type : SaveSlotType
@@ -62,6 +64,7 @@ pub fn SettingsMenu::new(
   background? : String = "",
   context? : SettingsContext = SettingsContext::FromStartMenu,
   ui_strings? : UiStrings = UiStrings::default(),
+  show_credits? : Bool = false,
 ) -> SettingsMenu {
   {
     root_id,
@@ -70,6 +73,7 @@ pub fn SettingsMenu::new(
     ui_strings,
     languages: [],
     locale: "",
+    show_credits,
     context,
     view_mode: SettingsViewMode::Settings,
     save_slot_type: SaveSlotType::Normal,
@@ -96,6 +100,14 @@ pub fn SettingsMenu::set_languages(
 ///|
 pub fn SettingsMenu::set_locale(self : SettingsMenu, locale : String) -> Unit {
   self.locale = locale
+}
+
+///|
+pub fn SettingsMenu::set_show_credits(
+  self : SettingsMenu,
+  show_credits : Bool,
+) -> Unit {
+  self.show_credits = show_credits
 }
 
 ///|
@@ -191,6 +203,7 @@ extern "js" fn settings_dom_render(
   log_label : String,
   start_menu_label : String,
   new_game_label : String,
+  credits_label : String,
   defaults_label : String,
   back_label : String,
   confirm_start_menu_text : String,
@@ -199,7 +212,7 @@ extern "js" fn settings_dom_render(
   language_codes : Array[String],
   selected_locale : String,
 ) -> Unit =
-  #| (root_id, text_speed, bgm_volume, sfx_volume, background, context, text_speed_label, bgm_volume_label, sfx_volume_label, save_label, load_label, log_label, start_menu_label, new_game_label, defaults_label, back_label, confirm_start_menu_text, language_label, language_names, language_codes, selected_locale) => {
+  #| (root_id, text_speed, bgm_volume, sfx_volume, background, context, text_speed_label, bgm_volume_label, sfx_volume_label, save_label, load_label, log_label, start_menu_label, new_game_label, credits_label, defaults_label, back_label, confirm_start_menu_text, language_label, language_names, language_codes, selected_locale) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   if (globalThis.__reisenOpenConfirm == null) return;
@@ -323,6 +336,9 @@ extern "js" fn settings_dom_render(
   #|   } else {
   #|     actions.appendChild(mkButton(new_game_label, 'new_game'));
   #|     actions.appendChild(mkButton(load_label, 'load'));
+  #|   }
+  #|   if (credits_label && credits_label !== '') {
+  #|     actions.appendChild(mkButton(credits_label, 'credits'));
   #|   }
   #|   actions.appendChild(mkButton(defaults_label, 'defaults'));
   #|   actions.appendChild(mkButton(back_label, 'back'));
@@ -708,6 +724,11 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         self.ui_strings.settings_log,
         self.ui_strings.settings_start_menu,
         self.ui_strings.settings_new_game,
+        if self.show_credits {
+          self.ui_strings.menu_credits
+        } else {
+          ""
+        },
         self.ui_strings.settings_defaults,
         self.ui_strings.settings_back,
         self.ui_strings.settings_confirm_return_start_menu,
@@ -769,6 +790,10 @@ pub fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
         self.persist_settings()
       }
       SettingsAction::NewGame
+    }
+    Some("credits") => {
+      settings_action_clear(self.root_id)
+      SettingsAction::Credits
     }
     Some("log") => {
       settings_action_clear(self.root_id)

@@ -26,6 +26,18 @@ pub fn AudioDom::new_with_store(@assets.AssetStore) -> Self
 pub fn AudioDom::set_bgm_gain(Double) -> Unit
 pub fn AudioDom::set_sfx_gain(Double) -> Unit
 
+pub enum CreditsAction {
+  NoAction
+  Back
+}
+
+type CreditsMenu
+pub fn CreditsMenu::clear(Self) -> Unit
+pub fn CreditsMenu::new(String, background? : String, ui_strings? : UiStrings) -> Self
+pub fn CreditsMenu::render(Self, String) -> Unit
+pub fn CreditsMenu::set_ui_strings(Self, UiStrings) -> Unit
+pub fn CreditsMenu::take_action(Self) -> CreditsAction
+
 pub enum GalleryAction {
   NoAction
   Back
@@ -54,6 +66,7 @@ pub enum SettingsAction {
   NoAction
   LanguageChanged(String)
   Back
+  Credits
   NewGame
   StartMenu
   Log
@@ -70,11 +83,12 @@ pub impl Show for SettingsContext
 
 type SettingsMenu
 pub fn SettingsMenu::clear(Self) -> Unit
-pub fn SettingsMenu::new(String, save_namespace? : String, background? : String, context? : SettingsContext, ui_strings? : UiStrings) -> Self
+pub fn SettingsMenu::new(String, save_namespace? : String, background? : String, context? : SettingsContext, ui_strings? : UiStrings, show_credits? : Bool) -> Self
 pub fn SettingsMenu::render(Self) -> Unit
 pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
 pub fn SettingsMenu::set_languages(Self, Array[(String, String)]) -> Unit
 pub fn SettingsMenu::set_locale(Self, String) -> Unit
+pub fn SettingsMenu::set_show_credits(Self, Bool) -> Unit
 pub fn SettingsMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn SettingsMenu::set_view_mode(Self, SettingsViewMode) -> Unit
 pub fn SettingsMenu::take_action(Self) -> SettingsAction
@@ -105,11 +119,12 @@ pub fn StartMenu::clear(Self) -> Unit
 pub fn StartMenu::clear_gate(Self) -> Unit
 pub fn StartMenu::clear_locale_picker(Self) -> Unit
 pub fn StartMenu::clear_logo(Self) -> Unit
-pub fn StartMenu::new(String, save_namespace? : String, background? : String, ui_strings? : UiStrings) -> Self
+pub fn StartMenu::new(String, save_namespace? : String, background? : String, ui_strings? : UiStrings, show_credits? : Bool) -> Self
 pub fn StartMenu::render(Self) -> Unit
 pub fn StartMenu::render_gate(Self) -> Unit
 pub fn StartMenu::render_locale_picker(Self, Array[(String, String)]) -> Unit
 pub fn StartMenu::render_logo(Self, String, Int) -> Unit
+pub fn StartMenu::set_show_credits(Self, Bool) -> Unit
 pub fn StartMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn StartMenu::take_action(Self) -> StartMenuAction
 pub fn StartMenu::take_gate_action(Self) -> StartGateAction
@@ -123,6 +138,7 @@ pub(all) enum StartMenuAction {
   Load
   Settings
   Gallery
+  Credits
 }
 
 type UiChoiceView
@@ -195,6 +211,7 @@ pub struct UiStrings {
   start_menu_load : String
   start_menu_settings : String
   start_menu_gallery : String
+  menu_credits : String
   settings_text_speed : String
   settings_language : String
   settings_bgm_volume : String
