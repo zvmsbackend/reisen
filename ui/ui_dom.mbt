@@ -850,6 +850,7 @@ extern "js" fn dom_render_speaker_text(
   #|   }
   #|   nameEl.style.zIndex = '220';
   #|   nameEl.textContent = speaker;
+  #|   if (!speaker || speaker.trim() === '') nameEl.style.display = 'none';
   #|
   #|   let dialog = root.querySelector('[data-reisen="dialog"]');
   #|   if (!dialog) {
@@ -879,7 +880,14 @@ extern "js" fn dom_set_text_box_visible(
   #|   if (!root) return;
   #|   const display = visible ? '' : 'none';
   #|   const speaker = root.querySelector('[data-reisen="speaker"]');
-  #|   if (speaker) speaker.style.display = display;
+  #|   if (speaker) {
+  #|     if (!visible) {
+  #|       speaker.style.display = 'none';
+  #|     } else {
+  #|       const hasSpeaker = String(speaker.textContent || '').trim() !== '';
+  #|       speaker.style.display = hasSpeaker ? '' : 'none';
+  #|     }
+  #|   }
   #|   const dialog = root.querySelector('[data-reisen="dialog"]');
   #|   if (dialog) dialog.style.display = display;
   #| }
@@ -993,7 +1001,11 @@ extern "js" fn dom_clear_intro(root_id : String) -> Unit =
   #|     const el = root.querySelector(sel);
   #|     if (el) el.style.display = '';
   #|   };
-  #|   show('[data-reisen="speaker"]');
+  #|   const speaker = root.querySelector('[data-reisen="speaker"]');
+  #|   if (speaker) {
+  #|     const hasSpeaker = String(speaker.textContent || '').trim() !== '';
+  #|     speaker.style.display = hasSpeaker ? '' : 'none';
+  #|   }
   #|   show('[data-reisen="dialog"]');
   #|   show('[data-reisen="avatar"]');
   #|   show('[data-reisen="text-input"]');
@@ -1185,7 +1197,8 @@ extern "js" fn dom_clear_video(root_id : String) -> Unit =
   #|   if (host) host.remove();
   #|   const speaker = root.querySelector('[data-reisen="speaker"]');
   #|   if (speaker) {
-  #|     speaker.style.display = '';
+  #|     const hasSpeaker = String(speaker.textContent || '').trim() !== '';
+  #|     speaker.style.display = hasSpeaker ? '' : 'none';
   #|   }
   #|   const dialog = root.querySelector('[data-reisen="dialog"]');
   #|   if (dialog) {
