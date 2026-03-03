@@ -155,7 +155,11 @@ fn PixiPresenter::apply_effects_to_target(
         let (p, done) = animation_progress(
           self.timeline_ms,
           start_ms,
-          if self.skip_mode { 0 } else { duration },
+          if self.skip_mode {
+            0
+          } else {
+            duration
+          },
           spec.easing,
         )
         if done {

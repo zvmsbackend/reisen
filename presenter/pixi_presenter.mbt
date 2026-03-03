@@ -225,7 +225,11 @@ fn[T] PixiPresenter::pull_new_animations(
       Position => {
         self.position_anims.set(target, {
           start_ms: self.timeline_ms,
-          duration_ms: if self.skip_mode { 0 } else { spec.duration_ms },
+          duration_ms: if self.skip_mode {
+            0
+          } else {
+            spec.duration_ms
+          },
           easing: spec.easing,
           from_x: anim_value(spec.from, 0),
           from_y: anim_value(spec.from, 1),
@@ -238,7 +242,11 @@ fn[T] PixiPresenter::pull_new_animations(
         let (anchor_x, anchor_y) = anim_anchor(spec.anchor)
         self.scale_anims.set(target, {
           start_ms: self.timeline_ms,
-          duration_ms: if self.skip_mode { 0 } else { spec.duration_ms },
+          duration_ms: if self.skip_mode {
+            0
+          } else {
+            spec.duration_ms
+          },
           easing: spec.easing,
           from: anim_value(spec.from, 0),
           to: anim_value(spec.to, 0),
@@ -260,7 +268,11 @@ fn[T] PixiPresenter::pull_new_animations(
     }
     target_map[target] = {
       start_ms: self.timeline_ms,
-      duration_ms: if self.skip_mode { 0 } else { spec.duration_ms },
+      duration_ms: if self.skip_mode {
+        0
+      } else {
+        spec.duration_ms
+      },
       easing: spec.easing,
       from: anim_value(spec.from, 0),
       to: anim_value(spec.to, 0),
