@@ -105,7 +105,7 @@ async test "runner render sync hook is called on ui sync and step" {
     builder.say("narrator", "hello")
   })
   let calls : Array[Int] = []
-  let hook : RenderSyncHook[Int] = _ => calls.push(1)
+  let hook : RenderSyncHook[Int] = (_, _) => calls.push(1)
   let runner = GameRunner::new_with_render_sync(
     Director::new(Runtime::new(compiled, GameState::new(0))),
     UiDom::new("app"),
@@ -151,7 +151,7 @@ async test "runner event hook receives emitted events" {
   let runner = GameRunner::new_with_hooks(
     Director::new(Runtime::new(script, GameState::new(0))),
     UiDom::new("app"),
-    _ => (),
+    (_, _) => (),
     event => seen.push(event),
   )
   assert_eq(
@@ -319,7 +319,7 @@ async test "runner emits ui click sfx on midgame click advance" {
   let runner = GameRunner::new_with_hooks(
     Director::new(Runtime::new(script, GameState::new(0))),
     ui,
-    _ => (),
+    (_, _) => (),
     event => seen.push(event),
   )
   runner.set_ui_click_sfx(Some(click_sfx))
@@ -364,7 +364,7 @@ async test "runner emits selected localized vocal url" {
   let runner = GameRunner::new_with_hooks(
     Director::new(Runtime::new(script, GameState::new(0))),
     ui,
-    _ => (),
+    (_, _) => (),
     event => seen.push(event),
   )
 
@@ -390,7 +390,7 @@ async test "runner keeps literal vocal url unchanged" {
   let runner = GameRunner::new_with_hooks(
     Director::new(Runtime::new(script, GameState::new(0))),
     UiDom::new("app"),
-    _ => (),
+    (_, _) => (),
     event => seen.push(event),
   )
 
@@ -410,7 +410,7 @@ async test "runner keeps literal vocal url unchanged" {
 ///|
 async test "runner clear presentation resets render and syncs canvas" {
   let calls : Array[Int] = []
-  let hook : RenderSyncHook[Int] = _ => calls.push(1)
+  let hook : RenderSyncHook[Int] = (_, _) => calls.push(1)
   let runner = GameRunner::new_with_render_sync(
     Director::new(Runtime::new(script(_ => ()), GameState::new(0))),
     UiDom::new("app"),
@@ -556,7 +556,7 @@ async test "intro advances when display completes" {
 ///|
 async test "runner keeps rendering during animations" {
   let calls : Array[Int] = []
-  let hook : RenderSyncHook[Int] = _ => calls.push(1)
+  let hook : RenderSyncHook[Int] = (_, _) => calls.push(1)
   let script : Script[Int] = script(builder => {
     builder.animate_opacity(dummy_figure("hero"), 200, 1.0)
   })

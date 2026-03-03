@@ -435,6 +435,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
       continue
     }
     let (target, spec) = entry
+    let eff_duration = if self.is_skip_active() { 0 } else { spec.duration_ms }
     let dom_figures = snapshot.dom_figures
     match spec.prop {
       Position => {
@@ -448,7 +449,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to_y = anim_value(spec.to, 1).unwrap_or(from_y)
         self.dom_position_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from_x,
           from_y,
@@ -465,7 +466,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_opacity_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -480,7 +481,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_scale_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -495,7 +496,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_rotation_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -510,7 +511,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_blur_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -527,7 +528,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_brightness_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -542,7 +543,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_contrast_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -559,7 +560,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_saturation_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -574,7 +575,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_gamma_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -589,7 +590,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_color_r_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -604,7 +605,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_color_g_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -619,7 +620,7 @@ fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
         let to = anim_value(spec.to, 0).unwrap_or(from)
         self.dom_color_b_anims.set(target, {
           start_ms: self.dom_timeline_ms,
-          duration_ms: spec.duration_ms,
+          duration_ms: eff_duration,
           easing: spec.easing,
           from,
           to,
@@ -2035,14 +2036,14 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     dom_clear_intro(self.root_id)
   }
   if view.dialog_seq != self.last_dialog_seq && !localized_text.is_empty() {
-    if view.append && view.typewriter {
+    if view.append && view.typewriter && !self.is_skip_active() {
       let prev_len = self.typewriter_text.length()
       self.typewriter_text = localized_text
       if self.typewriter_visible < prev_len {
         self.typewriter_visible = prev_len
       }
       self.typewriter_last_update_ms = 0
-    } else if view.typewriter && !self.skip_mode {
+    } else if view.typewriter && !self.is_skip_active() {
       self.start_typewriter(localized_text)
     } else {
       self.typewriter_text = localized_text

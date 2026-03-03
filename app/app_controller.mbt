@@ -108,7 +108,7 @@ pub fn[T] AppController::new(
   vocal_locale_dir? : String = "",
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
-  render_sync? : RenderSyncHook[T] = _ => (),
+  render_sync? : RenderSyncHook[T] = (_, _) => (),
   event_hook? : EventHook = _ => (),
   gallery_replay_state_factories? : ReplayStateFactories[T] = ReplayStateFactories::new(),
 ) -> AppController[T] {

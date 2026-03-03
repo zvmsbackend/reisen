@@ -2,7 +2,7 @@
 /// Game loop glue between `Director` (state machine) and `UiDom` (HTML view).
 
 ///|
-pub type RenderSyncHook[T] = async (Director[T]) -> Unit noraise
+pub type RenderSyncHook[T] = async (Director[T], Bool) -> Unit noraise
 
 ///|
 pub(all) enum LogBuildState {
@@ -111,7 +111,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
   {
     director,
     ui,
-    render_sync: _ => (),
+    render_sync: (_, _) => (),
     event_hook: _ => (),
     ui_click_sfx_id: None,
     ui_dirty: true,
@@ -420,7 +420,7 @@ fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
 
 ///|
 async fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit noraise {
-  (self.render_sync)(self.director)
+  (self.render_sync)(self.director, self.ui.is_skip_active())
   self.render_sync_dirty = false
 }
 
@@ -485,16 +485,11 @@ fn[T] GameRunner::apply_event_effects(
     DomFigureShown(_, _, _)
     | DomFigureHidden(_)
     | DomFigureInteractiveSet(_, _) => self.ui_dirty = true
-    AnimatedPixi(_, spec) => {
+    AnimatedPixi(_, spec) | AnimatedDom(_, spec) => {
       self.ui_dirty = true
-      self.render_sync_dirty = true
-      self.bump_animation_timer(spec.duration_ms)
-      if spec.blocking {
-        self.bump_blocking_timer(spec.duration_ms)
+      if event is AnimatedPixi(_) {
+        self.render_sync_dirty = true
       }
-    }
-    AnimatedDom(_, spec) => {
-      self.ui_dirty = true
       self.bump_animation_timer(spec.duration_ms)
       if spec.blocking {
         self.bump_blocking_timer(spec.duration_ms)
@@ -514,15 +509,11 @@ fn[T] GameRunner::apply_event_effects(
         }
       }
     }
-    Live2dMotionPlayed(_, _, _) => {
+    Live2dMotionPlayed(_) | Live2dExpressionSet(_) => {
       self.ui_dirty = true
       self.render_sync_dirty = true
     }
-    Live2dExpressionSet(_, _) => {
-      self.ui_dirty = true
-      self.render_sync_dirty = true
-    }
-    SfxPlayed(_, blocking) => if blocking { self.blocking_wait_sfx = true }
+    SfxPlayed(_, blocking) if blocking => self.blocking_wait_sfx = true
     _ => ()
   }
 }

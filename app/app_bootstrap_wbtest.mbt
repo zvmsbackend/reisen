@@ -36,7 +36,7 @@ fn dummy_sfx(id : String) -> @assets.Sfx {
 async test "start_game wires runner and performs initial sync" {
   let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []
-  let hook : RenderSyncHook[Int] = _ => calls.push(1)
+  let hook : RenderSyncHook[Int] = (_, _) => calls.push(1)
   let runner = start_game(script, GameState::new(0), "app", render_sync=hook)
 
   // Initial sync in bootstrap.
@@ -63,7 +63,7 @@ async test "start_game supports optional hooks" {
     script,
     GameState::new(0),
     "app",
-    render_sync=_ => calls.push(1),
+    render_sync=(_, _) => calls.push(1),
     event_hook=event => events.push(event),
   )
 
