@@ -616,9 +616,7 @@ async test "runner reconstructs dialog history from trace" {
 
   runner.reconstruct_dialog_history(script, GameState::new(0))
   assert_eq(runner.log_build_state(), LogBuildState::Ready)
-  assert_eq(runner.dialog_history(), [
-    { speaker: DialogText::String("n"), text: DialogText::String("Right") },
-  ])
+  assert_eq(runner.dialog_history(), [{ speaker: "n", text: "Right" }])
 }
 
 ///|
@@ -662,9 +660,7 @@ async test "runner can start log reconstruction asynchronously" {
   }
 
   assert_eq(runner.log_build_state(), LogBuildState::Ready)
-  assert_eq(runner.dialog_history(), [
-    { speaker: DialogText::String("n"), text: DialogText::String("Right") },
-  ])
+  assert_eq(runner.dialog_history(), [{ speaker: "n", text: "Right" }])
 }
 
 ///|

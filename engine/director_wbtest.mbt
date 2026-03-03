@@ -225,12 +225,7 @@ test "director appends dialog text" {
       proceed_on_done: false,
     }),
   )
-  assert_eq(director.dialog_history(), [
-    {
-      speaker: DialogText::String("n"),
-      text: DialogText::String("Hello world"),
-    },
-  ])
+  assert_eq(director.dialog_history(), [{ speaker: "n", text: "Hello world" }])
 }
 
 ///|

@@ -129,8 +129,8 @@ pub impl ToJson for ChoiceOption
 pub impl @json.FromJson for ChoiceOption
 
 pub(all) struct DialogLogEntry {
-  speaker : @state.DialogText
-  text : @state.DialogText
+  speaker : String
+  text : String
 }
 pub impl Eq for DialogLogEntry
 pub impl Show for DialogLogEntry

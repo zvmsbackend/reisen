@@ -11,8 +11,8 @@ pub fn label(name? : String = @util.gensym(prefix="label")) -> Label {
 
 ///|
 pub(all) struct DialogLogEntry {
-  speaker : DialogText
-  text : DialogText
+  speaker : String
+  text : String
 } derive(Show, Eq, ToJson, FromJson)
 
 ///|

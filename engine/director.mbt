@@ -122,13 +122,13 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
       if append && self.ui.dialog_history.length() > 0 {
         let history_len = self.ui.dialog_history.length()
         self.ui.dialog_history[history_len - 1] = {
-          speaker: resolved_speaker,
-          text: resolved_text,
+          speaker: resolved_speaker.raw_text(),
+          text: resolved_text.raw_text(),
         }
       } else {
         self.ui.dialog_history.push({
-          speaker: resolved_speaker,
-          text: resolved_text,
+          speaker: resolved_speaker.raw_text(),
+          text: resolved_text.raw_text(),
         })
       }
       self.ui.dialog_seq = self.ui.dialog_seq + 1

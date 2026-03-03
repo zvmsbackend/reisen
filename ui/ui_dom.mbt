@@ -1965,8 +1965,8 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     None => None
   }
   let localized_dialog_history : Array[DialogLogEntry] = view.dialog_history.map(entry => {
-      speaker: self.localize_script_text(entry.speaker),
-      text: self.localize_script_text(entry.text),
+      speaker: self.localize_script_text_string(entry.speaker),
+      text: self.localize_script_text_string(entry.text),
     },
   )
   let dom_figures_json = view.dom_figures.to_json().stringify()

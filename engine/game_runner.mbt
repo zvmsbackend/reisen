@@ -73,10 +73,10 @@ fn append_dialog_history_from_event(
         let last_index = history.length() - 1
         history[last_index] = {
           speaker: history[last_index].speaker,
-          text: history[last_index].text + text,
+          text: history[last_index].text + text.raw_text(),
         }
       } else {
-        history.push({ speaker, text })
+        history.push({ speaker: speaker.raw_text(), text: text.raw_text() })
       }
     _ => ()
   }

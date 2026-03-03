@@ -11,12 +11,7 @@ test "ui view model reflects dialog and choices from snapshot" {
       (DialogText::String("guide"), DialogText::String("Pick one"), true, false),
     ),
     dialog_seq: 1,
-    dialog_history: [
-      {
-        speaker: DialogText::String("guide"),
-        text: DialogText::String("Pick one"),
-      },
-    ],
+    dialog_history: [{ speaker: "guide", text: "Pick one" }],
     choices: [option("Route A", a), option("Route B", b)],
   }
   let ui = UiDom::new("ui-root")
@@ -27,12 +22,7 @@ test "ui view model reflects dialog and choices from snapshot" {
   assert_eq(view.dialog_seq, 1)
   assert_eq(view.choices.length(), 2)
   assert_eq(view.choices[0].text, DialogText::String("Route A"))
-  assert_eq(view.dialog_history, [
-    {
-      speaker: DialogText::String("guide"),
-      text: DialogText::String("Pick one"),
-    },
-  ])
+  assert_eq(view.dialog_history, [{ speaker: "guide", text: "Pick one" }])
 }
 
 ///|
