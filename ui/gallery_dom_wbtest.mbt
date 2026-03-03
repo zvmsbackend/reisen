@@ -9,16 +9,45 @@ test "gallery tile views respect unlock and show_locked" {
   @gallery.lock_image_in(ns, locked)
   @gallery.unlock_image_in(ns, unlocked)
 
-  let all_tiles = gallery_tile_views(ns, true)
-  assert_true(all_tiles.contains(to_gallery_tile_view(ns, unlocked)))
-  assert_true(all_tiles.contains(to_gallery_tile_view(ns, locked)))
+  let menu_all = GalleryMenu::new("app", save_namespace=ns, show_locked=true)
+  let all_tiles = menu_all.gallery_tile_views()
+  assert_true(
+    all_tiles.contains(to_gallery_tile_view(ns, unlocked, "Unlocked")),
+  )
+  assert_true(all_tiles.contains(to_gallery_tile_view(ns, locked, "Locked")))
 
-  let unlocked_only = gallery_tile_views(ns, false)
-  assert_true(unlocked_only.contains(to_gallery_tile_view(ns, unlocked)))
-  assert_true(!unlocked_only.contains(to_gallery_tile_view(ns, locked)))
+  let menu_unlocked = GalleryMenu::new(
+    "app",
+    save_namespace=ns,
+    show_locked=false,
+  )
+  let unlocked_only = menu_unlocked.gallery_tile_views()
+  assert_true(
+    unlocked_only.contains(to_gallery_tile_view(ns, unlocked, "Unlocked")),
+  )
+  assert_true(
+    !unlocked_only.contains(to_gallery_tile_view(ns, locked, "Locked")),
+  )
 
   @gallery.lock_image_in(ns, unlocked)
   @gallery.lock_image_in(ns, locked)
+}
+
+///|
+test "gallery tile title resolves localized key" {
+  let ns = @util.gensym(prefix="wb_gallery_i18n")
+  let image = GalleryImage::new("img_i18n", title="@gallery.title.demo")
+  @gallery.register_image(image)
+  @gallery.unlock_image_in(ns, image)
+
+  let menu = GalleryMenu::new("app", save_namespace=ns, show_locked=true)
+  menu.set_script_localization(
+    Some("{\"gallery.title.demo\":\"已解锁图片\"}"),
+    Some("{\"gallery.title.demo\":\"Localized Title\"}"),
+  )
+  let tiles = menu.gallery_tile_views()
+  let tile = tiles.iter().find_first(t => t.id == image.id)
+  assert_eq(tile.map(t => t.title), Some("已解锁图片"))
 }
 
 ///|

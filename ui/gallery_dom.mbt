@@ -28,6 +28,8 @@ struct GalleryMenu {
   save_ns : String
   background : String
   mut ui_strings : UiStrings
+  mut script_locale_json : String?
+  mut script_default_locale_json : String?
   show_locked : Bool
   mut active_id : String?
 }
@@ -45,6 +47,8 @@ pub fn GalleryMenu::new(
     save_ns: save_namespace,
     background,
     ui_strings,
+    script_locale_json: None,
+    script_default_locale_json: None,
     show_locked,
     active_id: None,
   }
@@ -59,26 +63,56 @@ pub fn GalleryMenu::set_ui_strings(
 }
 
 ///|
-fn to_gallery_tile_view(ns : String, image : GalleryImage) -> GalleryTileView {
+pub fn GalleryMenu::set_script_localization(
+  self : GalleryMenu,
+  script_locale_json : String?,
+  script_default_locale_json : String?,
+) -> Unit {
+  self.script_locale_json = script_locale_json
+  self.script_default_locale_json = script_default_locale_json
+}
+
+///|
+fn GalleryMenu::localize_gallery_title(
+  self : GalleryMenu,
+  raw : String,
+) -> String {
+  let (localized, _, _) = script_locale_resolve_at(
+    raw,
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
+  localized
+}
+
+///|
+fn to_gallery_tile_view(
+  ns : String,
+  image : GalleryImage,
+  title : String,
+) -> GalleryTileView {
   {
     id: image.id,
     image_id: image.image_url,
     thumbnail_id: image.thumbnail_url,
-    title: image.title,
+    title,
     unlocked: @gallery.is_image_unlocked_in(ns, image),
     replay_label: image.replay_label,
   }
 }
 
 ///|
-fn gallery_tile_views(
-  ns : String,
-  show_locked : Bool,
+fn GalleryMenu::gallery_tile_views(
+  self : GalleryMenu,
 ) -> Array[GalleryTileView] {
   let out : Array[GalleryTileView] = []
   for image in @gallery.registered_images() {
-    let tile = to_gallery_tile_view(ns, image)
-    if tile.unlocked || show_locked {
+    let tile = to_gallery_tile_view(
+      self.save_ns,
+      image,
+      self.localize_gallery_title(image.title),
+    )
+    if tile.unlocked || self.show_locked {
       out.push(tile)
     }
   }
@@ -278,7 +312,7 @@ extern "js" fn gallery_dom_clear(root_id : String) -> Unit =
 
 ///|
 pub fn GalleryMenu::render(self : GalleryMenu) -> Unit {
-  let tiles = gallery_tile_views(self.save_ns, self.show_locked)
+  let tiles = self.gallery_tile_views()
   let tiles_json = tiles.to_json().stringify()
   gallery_dom_render(
     self.root_id,
@@ -320,7 +354,7 @@ pub fn GalleryMenu::take_action(self : GalleryMenu) -> GalleryAction {
     _ => GalleryAction::NoAction
   }
   gallery_action_clear(self.root_id)
-  let tiles = gallery_tile_views(self.save_ns, self.show_locked)
+  let tiles = self.gallery_tile_views()
   match action {
     Open(id) => {
       match find_tile(tiles, id) {

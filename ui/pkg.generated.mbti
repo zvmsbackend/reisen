@@ -52,6 +52,7 @@ type GalleryMenu
 pub fn GalleryMenu::clear(Self) -> Unit
 pub fn GalleryMenu::new(String, save_namespace? : String, background? : String, show_locked? : Bool, ui_strings? : UiStrings) -> Self
 pub fn GalleryMenu::render(Self) -> Unit
+pub fn GalleryMenu::set_script_localization(Self, String?, String?) -> Unit
 pub fn GalleryMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn GalleryMenu::take_action(Self) -> GalleryAction
 
