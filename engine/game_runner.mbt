@@ -756,7 +756,7 @@ pub async fn[T] GameRunner::step(
       _ => ()
     }
     let dialog_advance_click = self.ui.check_typewriter_click()
-    if !self.director.last_event_said || dialog_advance_click {
+    if !self.director.last_event_needs_click || dialog_advance_click {
       if dialog_advance_click {
         self.emit_ui_click_sfx()
       }

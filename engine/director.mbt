@@ -57,7 +57,7 @@ struct Director[T] {
   runtime : Runtime[T]
   ui : UiState
   render : RenderState
-  mut last_event_said : Bool
+  mut last_event_needs_click : Bool
 }
 
 ///|
@@ -89,16 +89,16 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       live2d_expressions: [],
       render_epoch: gensym(prefix="render"),
     },
-    last_event_said: false,
+    last_event_needs_click: false,
   }
 }
 
 ///|
 fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
-  if event is Said(_) {
-    self.last_event_said = true
+  if event is (Said(_) | TextBoxHidden | TextBoxShown) {
+    self.last_event_needs_click = true
   } else if !(event is Noop) {
-    self.last_event_said = false
+    self.last_event_needs_click = false
   }
   match event {
     Noop => ()
@@ -553,7 +553,7 @@ pub fn[T] Director::from_save(
       avatar_id: save.avatar_id,
     },
     render: save.render,
-    last_event_said: true,
+    last_event_needs_click: true,
   }
 }
 
