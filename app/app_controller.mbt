@@ -389,6 +389,10 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
     self.script_locale_json,
     self.script_default_locale_json,
   )
+  self.settings_menu.set_script_localization(
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
   match self.runner {
     Some(runner) => {
       runner.set_ui_click_sfx(self.ui_click_sfx_id)

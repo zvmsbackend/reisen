@@ -61,3 +61,26 @@ test "game_settings JSON roundtrip" {
   assert_eq(read.bgm_volume, settings.bgm_volume)
   assert_eq(read.sfx_volume, settings.sfx_volume)
 }
+
+///|
+test "settings menu localizes save preview key" {
+  let menu = SettingsMenu::new("app")
+  menu.set_script_localization(
+    Some("{\"save.preview.auto\":\"自动存档预览\"}"),
+    Some("{\"save.preview.auto\":\"Autosave preview\"}"),
+  )
+  assert_eq(
+    menu.localize_save_preview("@save.preview.auto"),
+    "自动存档预览",
+  )
+}
+
+///|
+test "settings menu save preview fallback to key" {
+  let menu = SettingsMenu::new("app")
+  menu.set_script_localization(Some("{}"), Some("{}"))
+  assert_eq(
+    menu.localize_save_preview("@save.preview.auto"),
+    "save.preview.auto",
+  )
+}

@@ -89,6 +89,7 @@ pub fn SettingsMenu::render(Self) -> Unit
 pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
 pub fn SettingsMenu::set_languages(Self, Array[(String, String)]) -> Unit
 pub fn SettingsMenu::set_locale(Self, String) -> Unit
+pub fn SettingsMenu::set_script_localization(Self, String?, String?) -> Unit
 pub fn SettingsMenu::set_show_credits(Self, Bool) -> Unit
 pub fn SettingsMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn SettingsMenu::set_view_mode(Self, SettingsViewMode) -> Unit

@@ -41,6 +41,8 @@ struct SettingsMenu {
   save_ns : String
   background : String
   mut ui_strings : UiStrings
+  mut script_locale_json : String?
+  mut script_default_locale_json : String?
   mut languages : Array[(String, String)]
   mut locale : String
   mut show_credits : Bool
@@ -71,6 +73,8 @@ pub fn SettingsMenu::new(
     save_ns: save_namespace,
     background,
     ui_strings,
+    script_locale_json: None,
+    script_default_locale_json: None,
     languages: [],
     locale: "",
     show_credits,
@@ -87,6 +91,31 @@ pub fn SettingsMenu::set_ui_strings(
   ui_strings : UiStrings,
 ) -> Unit {
   self.ui_strings = ui_strings
+}
+
+///|
+pub fn SettingsMenu::set_script_localization(
+  self : SettingsMenu,
+  script_locale_json : String?,
+  script_default_locale_json : String?,
+) -> Unit {
+  self.script_locale_json = script_locale_json
+  self.script_default_locale_json = script_default_locale_json
+}
+
+///|
+fn SettingsMenu::localize_save_preview(
+  self : SettingsMenu,
+  raw : String,
+) -> String {
+  println(raw)
+  let (localized, _, _) = script_locale_resolve_at(
+    raw,
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
+  println(localized)
+  localized
 }
 
 ///|
@@ -644,7 +673,7 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
             None => entry.slot
           }
           let preview = match entry.meta {
-            Some(meta) => meta.preview
+            Some(meta) => self.localize_save_preview(meta.preview)
             None => ""
           }
           slots.push(entry.slot)
