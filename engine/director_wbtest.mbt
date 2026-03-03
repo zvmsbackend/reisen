@@ -175,7 +175,7 @@ test "director save json resumes runtime position" {
   )
   let saved = director.save_json()
 
-  let restored : Director[Int] = director_from_save_json(script, saved)
+  let restored : Director[Int] = Director::from_save_json(script, saved)
   assert_eq(
     restored.step(),
     Said(

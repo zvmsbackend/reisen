@@ -29,6 +29,8 @@ pub fn unlock_image(GalleryImage) -> Unit
 
 pub fn unlock_image_by_id(String) -> Unit
 
+pub fn unlock_image_by_id_in(String, String) -> Unit
+
 pub fn unlock_image_in(String, GalleryImage) -> Unit
 
 pub fn unlocked_images() -> Array[GalleryImage]

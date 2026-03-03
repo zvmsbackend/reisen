@@ -354,9 +354,9 @@ pub fn GalleryMenu::take_action(self : GalleryMenu) -> GalleryAction {
     _ => GalleryAction::NoAction
   }
   gallery_action_clear(self.root_id)
-  let tiles = self.gallery_tile_views()
   match action {
     Open(id) => {
+      let tiles = self.gallery_tile_views()
       match find_tile(tiles, id) {
         Some(tile) =>
           self.active_id = if tile.unlocked { Some(id) } else { None }
@@ -369,10 +369,12 @@ pub fn GalleryMenu::take_action(self : GalleryMenu) -> GalleryAction {
       action
     }
     Prev => {
+      let tiles = self.gallery_tile_views()
       self.active_id = next_unlocked_tile_id(tiles, self.active_id, -1)
       action
     }
     Next => {
+      let tiles = self.gallery_tile_views()
       self.active_id = next_unlocked_tile_id(tiles, self.active_id, 1)
       action
     }

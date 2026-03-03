@@ -562,6 +562,7 @@ async fn[T] AppController::make_runner(
     vocal_locale_dir=self.vocal_locale_dir,
     script_locale=self.locale,
     script_default_locale=self.default_locale,
+    gallery_ns=self.save_ns,
   )
   runner.set_ui_click_sfx(self.ui_click_sfx_id)
   self.apply_settings_from_storage(runner)
@@ -590,6 +591,7 @@ async fn[T : FromJson] AppController::load_runner_from_slot(
     vocal_locale_dir=self.vocal_locale_dir,
     script_locale=self.locale,
     script_default_locale=self.default_locale,
+    gallery_ns=self.save_ns,
   )
   runner.set_ui_click_sfx(self.ui_click_sfx_id)
   self.apply_settings_from_storage(runner)
@@ -617,6 +619,7 @@ async fn[T : FromJson] AppController::resume_runner_from_json(
     vocal_locale_dir=self.vocal_locale_dir,
     script_locale=self.locale,
     script_default_locale=self.default_locale,
+    gallery_ns=self.save_ns,
   )
   runner.set_ui_click_sfx(self.ui_click_sfx_id)
   self.apply_settings_from_storage(runner)

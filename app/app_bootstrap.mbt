@@ -102,9 +102,10 @@ pub async fn[T] start_game(
   vocal_locale_dir? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
+  gallery_ns? : String = "global",
 ) -> GameRunner[T] noraise {
   let runtime = Runtime::new(script, state)
-  let director = Director::new(runtime)
+  let director = Director::new(runtime, gallery_ns~)
   let ui = UiDom::new(
     ui_root_id,
     ui_strings~,
@@ -137,8 +138,9 @@ pub async fn[T : FromJson] start_game_from_save(
   vocal_locale_dir? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
+  gallery_ns? : String = "global",
 ) -> GameRunner[T] {
-  let director = director_from_save_json(script, save_json)
+  let director = Director::from_save_json(script, save_json, gallery_ns~)
   let ui = UiDom::new(
     ui_root_id,
     ui_strings~,
@@ -219,6 +221,7 @@ pub async fn[T : FromJson] start_game_from_slot(
   vocal_locale_dir? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
+  gallery_ns? : String = "global",
 ) -> GameRunner[T] {
   match save_slot_read_in(save_namespace, slot) {
     Some(save_json) =>
@@ -235,6 +238,7 @@ pub async fn[T : FromJson] start_game_from_slot(
         vocal_locale_dir~,
         script_locale~,
         script_default_locale~,
+        gallery_ns~,
       )
     None => raise AppBootstrapError::MissingSaveSlot(slot~)
   }

@@ -133,8 +133,6 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
 }
 
 ///|
-
-///|
 pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
   {
     state: self.state,

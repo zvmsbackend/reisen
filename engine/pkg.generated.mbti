@@ -10,7 +10,6 @@ import {
 }
 
 // Values
-pub fn[T : @json.FromJson] director_from_save_json(@core.Script[T], String) -> Director[T] raise
 
 // Errors
 pub suberror LogReconstructionError {
@@ -56,7 +55,8 @@ pub fn[T] Director::effects(Self[T], String) -> Array[@core.EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> @core.FigurePlacement?
 pub fn[T] Director::figures(Self[T]) -> Map[String, @core.FigurePlacement]
 pub fn[T] Director::flow_trace(Self[T]) -> Array[@core.ScriptFlowTrace]
-pub fn[T] Director::from_save(@core.Script[T], DirectorSave[T]) -> Self[T] raise @core.ScriptRuntimeError
+pub fn[T] Director::from_save(@core.Script[T], DirectorSave[T], gallery_ns? : String) -> Self[T] raise @core.ScriptRuntimeError
+pub fn[T : @json.FromJson] Director::from_save_json(@core.Script[T], String, gallery_ns? : String) -> Self[T] raise
 pub fn[T] Director::intro_text(Self[T]) -> @state.DialogText?
 pub fn[T] Director::is_waiting(Self[T]) -> Bool
 pub fn[T] Director::is_waiting_video(Self[T]) -> Bool
@@ -65,7 +65,7 @@ pub fn[T] Director::last_sfx(Self[T]) -> String?
 pub fn[T] Director::live2d_expressions(Self[T]) -> Array[(String, String?)]
 pub fn[T] Director::live2d_motions(Self[T]) -> Array[(String, String, Int?)]
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
-pub fn[T] Director::new(@core.Runtime[T]) -> Self[T]
+pub fn[T] Director::new(@core.Runtime[T], gallery_ns? : String) -> Self[T]
 pub fn[T] Director::render_epoch(Self[T]) -> String
 pub fn[T] Director::runtime_ip(Self[T]) -> Int
 pub fn[T : ToJson] Director::save_json(Self[T]) -> String

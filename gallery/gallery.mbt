@@ -114,6 +114,11 @@ pub fn unlock_image_in(ns : String, image : GalleryImage) -> Unit {
 }
 
 ///|
+pub fn unlock_image_by_id_in(ns : String, id : String) -> Unit {
+  @storage.persistent_set_flag_in(ns, gallery_image_unlock_key(id), true)
+}
+
+///|
 pub fn lock_image(image : GalleryImage) -> Unit {
   @storage.persistent_delete(gallery_image_unlock_key(image.id))
 }

@@ -57,11 +57,15 @@ struct Director[T] {
   runtime : Runtime[T]
   ui : UiState
   render : RenderState
+  gallery_ns : String
   mut last_event_needs_click : Bool
 }
 
 ///|
-pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
+pub fn[T] Director::new(
+  runtime : Runtime[T],
+  gallery_ns? : String = "global",
+) -> Director[T] {
   {
     runtime,
     ui: {
@@ -89,6 +93,7 @@ pub fn[T] Director::new(runtime : Runtime[T]) -> Director[T] {
       live2d_expressions: [],
       render_epoch: gensym(prefix="render"),
     },
+    gallery_ns,
     last_event_needs_click: false,
   }
 }
@@ -187,7 +192,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     }
     SfxStopped =>
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
-    CgUnlocked(id) => @gallery.unlock_image_by_id(id)
+    CgUnlocked(id) => @gallery.unlock_image_by_id_in(self.gallery_ns, id)
     AnimatedPixi(target, spec) =>
       self.render.pixi_animations.push((target, spec))
     AnimatedDom(target, spec) => self.render.dom_animations.push((target, spec))
@@ -537,6 +542,7 @@ pub fn[T : ToJson] Director::save_json(self : Director[T]) -> String {
 pub fn[T] Director::from_save(
   script : Script[T],
   save : DirectorSave[T],
+  gallery_ns? : String = "global",
 ) -> Director[T] raise ScriptRuntimeError {
   let runtime = Runtime::from_save(script, save.runtime)
   {
@@ -553,20 +559,22 @@ pub fn[T] Director::from_save(
       avatar_id: save.avatar_id,
     },
     render: save.render,
+    gallery_ns,
     last_event_needs_click: true,
   }
 }
 
 ///|
-pub fn[T : FromJson] director_from_save_json(
+pub fn[T : FromJson] Director::from_save_json(
   script : Script[T],
   save_json : String,
+  gallery_ns? : String = "global",
 ) -> Director[T] raise {
   let parsed = @json.parse(save_json)
-  Director::from_save(script, @json.from_json(parsed)) catch {
+  Director::from_save(script, @json.from_json(parsed), gallery_ns~) catch {
     _ => {
       let runtime = Runtime::from_json_string(script, save_json)
-      Director::new(runtime)
+      Director::new(runtime, gallery_ns~)
     }
   }
 }
