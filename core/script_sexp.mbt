@@ -923,7 +923,7 @@ fn[T] lower_form(
                 } else {
                   anim_opacity(dur, None, to_value)
                 }
-                builder.instructions.push(AnimatePixi(t, spec))
+                builder.instructions.push(Animate(t, spec, Pixi))
               }
             }
             _ => ()

@@ -222,8 +222,7 @@ pub(all) enum Instruction[T] {
   StopMusic
   PlaySfx(String, Bool)
   UnlockCg(String)
-  AnimatePixi(String, AnimationSpec)
-  AnimateDom(String, AnimationSpec)
+  Animate(String, AnimationSpec, RenderableKind)
   ApplyEffect(String, EffectSpec)
   PlayLive2dMotion(String, String, Int?)
   SetLive2dExpression(String, String?)

@@ -193,10 +193,11 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     SfxStopped =>
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
     CgUnlocked(id) => @gallery.unlock_image_by_id_in(self.gallery_ns, id)
-    AnimatedPixi(target, spec) =>
-      self.render.pixi_animations.push_back((target, spec))
-    AnimatedDom(target, spec) =>
-      self.render.dom_animations.push_back((target, spec))
+    Animated(target, spec, kind) =>
+      match kind {
+        Pixi => self.render.pixi_animations.push_back((target, spec))
+        Dom => self.render.dom_animations.push_back((target, spec))
+      }
     EffectApplied(target, spec) => {
       let current = self.render.effects.get(target).unwrap_or([])
       let mut replaced = false

@@ -207,7 +207,7 @@ test "parse sexp effect and animate" {
     _ => fail("Expected ApplyEffect")
   }
   match script.instructions[1] {
-    AnimatePixi(target, spec) => {
+    Animate(target, spec, Pixi) => {
       assert_eq(target, "hero")
       assert_eq(spec.prop, Opacity)
       assert_eq(spec.duration_ms, 400)
@@ -444,7 +444,7 @@ test "sexp parse malformed arities hit fallbacks" {
   assert_true(script.instructions[2] is PlayMusic("bgm", false))
   assert_true(script.instructions[3] is PlaySfx("door", false))
   assert_true(script.instructions[4] is ApplyEffect("hero", _))
-  assert_true(script.instructions[5] is AnimatePixi("hero", _))
+  assert_true(script.instructions[5] is Animate("hero", _, Pixi))
 }
 
 ///|

@@ -772,10 +772,7 @@ fn[T, A : @assets.AnimationTarget] ScriptBuilder::emit_animation(
   target : A,
   spec : AnimationSpec,
 ) -> Unit {
-  match target.kind() {
-    @assets.Pixi => self.instructions.push(AnimatePixi(target.id(), spec))
-    @assets.Dom => self.instructions.push(AnimateDom(target.id(), spec))
-  }
+  self.instructions.push(Animate(target.id(), spec, target.kind()))
 }
 
 ///|
@@ -813,18 +810,11 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_position(
   easing? : Easing = Linear,
   blocking? : Bool = false,
 ) -> Unit {
-  match target.kind() {
-    @assets.Pixi =>
-      self.emit_animation(
-        target,
-        anim_position(duration_ms, from, to, easing~, blocking~),
-      )
-    @assets.Dom =>
-      self.emit_animation(
-        target,
-        anim_position_dom(duration_ms, from, to, easing, blocking),
-      )
+  let spec = match target.kind() {
+    Pixi => anim_position(duration_ms, from, to, easing~, blocking~)
+    Dom => anim_position_dom(duration_ms, from, to, easing, blocking)
   }
+  self.emit_animation(target, spec)
 }
 
 ///|

@@ -479,9 +479,9 @@ fn[T] GameRunner::apply_event_effects(
     DomFigureShown(_, _, _)
     | DomFigureHidden(_)
     | DomFigureInteractiveSet(_, _) => self.ui_dirty = true
-    AnimatedPixi(_, spec) | AnimatedDom(_, spec) => {
+    Animated(_, spec, kind) => {
       self.ui_dirty = true
-      if event is AnimatedPixi(_) {
+      if kind is Pixi {
         self.render_sync_dirty = true
       }
       self.bump_animation_timer(spec.duration_ms)
@@ -932,7 +932,6 @@ pub fn[T] GameRunner::start_reconstruct_dialog_history(
   self.ui.set_log_building(true)
   self.ui_dirty = true
   self.log_build_job = Some({
-    runtime: Runtime::new(script, initial_state),
     flow_trace: self.director.flow_trace(),
     stop_ip: self.director.runtime_ip(),
     max_steps,

@@ -241,23 +241,26 @@ test "scene/figure and animation shorthand helpers emit expected instructions" {
   }
   assert_true(
     built.instructions[2]
-    is AnimatePixi(
+    is Animate(
       "alice",
-      { prop: Opacity, duration_ms: 120, easing: Linear, .. }
+      { prop: Opacity, duration_ms: 120, easing: Linear, .. },
+      Pixi
     ),
   )
   assert_true(
     built.instructions[3]
-    is AnimatePixi(
+    is Animate(
       "alice",
-      { prop: Position, duration_ms: 180, easing: EaseInOut, .. }
+      { prop: Position, duration_ms: 180, easing: EaseInOut, .. },
+      Pixi
     ),
   )
   assert_true(
     built.instructions[4]
-    is AnimatePixi(
+    is Animate(
       "alice",
-      { prop: Scale, duration_ms: 240, easing: EaseOut, .. }
+      { prop: Scale, duration_ms: 240, easing: EaseOut, .. },
+      Pixi
     ),
   )
   assert_true(
@@ -315,9 +318,10 @@ test "dom figure animations emit dom animation instruction" {
   })
   assert_true(
     built.instructions[0]
-    is AnimateDom(
+    is Animate(
       "promo",
-      { prop: Opacity, duration_ms: 120, easing: Linear, .. }
+      { prop: Opacity, duration_ms: 120, easing: Linear, .. },
+      Dom
     ),
   )
 }

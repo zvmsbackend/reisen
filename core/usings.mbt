@@ -9,6 +9,7 @@ using @gallery {type GalleryImage}
 
 ///|
 using @assets {
+  type RenderableKind,
   type Background,
   type DomFigure,
   type Live2dFigure,
