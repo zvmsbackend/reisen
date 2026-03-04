@@ -62,6 +62,11 @@ pub impl Show for GalleryTileView
 pub impl ToJson for GalleryTileView
 pub impl @json.FromJson for GalleryTileView
 
+type LoadingMenu
+pub fn LoadingMenu::clear(Self) -> Unit
+pub fn LoadingMenu::new(String) -> Self
+pub fn LoadingMenu::render(Self, String) -> Unit
+
 pub enum SettingsAction {
   ViewChanged
   NoAction
@@ -187,7 +192,6 @@ pub fn UiDom::should_auto_skip_wait_click(Self) -> Bool
 pub fn UiDom::should_skip_advance(Self) -> Bool
 pub fn UiDom::simulate_click(Self) -> Unit
 pub fn UiDom::simulate_intro_done(Self) -> Unit
-pub fn UiDom::skip_mode(Self) -> Bool
 pub fn UiDom::start_typewriter(Self, @state.DialogText) -> Unit
 pub fn UiDom::take_action(Self) -> String?
 pub fn UiDom::take_selected_choice(Self) -> String?
@@ -257,6 +261,7 @@ pub struct UiStrings {
   game_toggle_off_prefix : String
   game_text_input_submit : String
   game_log_building : String
+  loading_text : String
 }
 pub fn UiStrings::from_locales_json(String, String, String, fallback? : Self) -> Self
 pub impl Default for UiStrings

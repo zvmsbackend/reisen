@@ -38,6 +38,7 @@ using @ui {
   type GalleryMenu,
   type SettingsMenu,
   type CreditsMenu,
+  type LoadingMenu,
   type StartMenuAction,
   type StartLocaleAction,
   type CreditsAction,

@@ -574,7 +574,7 @@ pub async fn[T] GameRunner::step(
           self.ui.mark_auto_advanced()
         }
       }
-      if self.ui.skip_mode() {
+      if self.ui.is_skip_active() {
         self.director.skip_wait()
       } else if self.ui.check_typewriter_click() {
         self.emit_ui_click_sfx()
@@ -597,8 +597,6 @@ pub async fn[T] GameRunner::step(
             self.ui.mark_dirty_text_and_speaker()
           }
           "log" => self.pending_action = Some("log")
-          "skip_on" => self.ui.set_skip_mode(true)
-          "skip_off" => self.ui.set_skip_mode(false)
           "skip_hold_on" => self.ui.set_skip_hold(true)
           "skip_hold_off" => self.ui.set_skip_hold(false)
           "settings" | "qsave" | "save" => self.pending_action = Some(action)

@@ -80,6 +80,7 @@ struct AppController[T] {
   gallery_menu : GalleryMenu
   settings_menu : SettingsMenu
   credits_menu : CreditsMenu
+  loading_menu : LoadingMenu
   mut credits_return_phase : AppPhase
   gallery_replay_state_factories : ReplayStateFactories[T]
   mut phase : AppPhase
@@ -198,6 +199,7 @@ pub fn[T] AppController::new(
       background=credits_background,
       ui_strings~,
     ),
+    loading_menu: LoadingMenu::new(ui_root_id),
     credits_return_phase: AppPhase::StartMenu,
     phase: if !languages.is_empty() && !has_persisted {
       AppPhase::LocaleSelect
@@ -227,20 +229,28 @@ async fn[T] AppController::script(
   match self.script {
     Some(script) => script
     None => {
+      self.loading_menu.render(self.ui_strings.loading_text)
       let script = (self.script_factory)() catch {
-        PixiBindingError::ResourceLoadFailed(message~) =>
+        PixiBindingError::ResourceLoadFailed(message~) => {
+          self.loading_menu.clear()
           raise ScriptLoadFailed(
             message="Pixi resource load failed: \{message}",
           )
-        AssetStoreError::ResourceLoadFailed(message~) =>
+        }
+        AssetStoreError::ResourceLoadFailed(message~) => {
+          self.loading_menu.clear()
           raise ScriptLoadFailed(
             message="Asset resource load failed: \{message}",
           )
-        error =>
+        }
+        error => {
+          self.loading_menu.clear()
           raise ScriptLoadFailed(
             message="Unknown script factory error \{error}",
           )
+        }
       }
+      self.loading_menu.clear()
       validate_script_assets(script, self.assets) catch {
         MissingImageAsset(id~) => raise ScriptValidationMissingImage(id~)
         MissingAudioAsset(id~) => raise ScriptValidationMissingAudio(id~)

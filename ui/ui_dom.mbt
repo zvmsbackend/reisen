@@ -717,11 +717,6 @@ pub fn UiDom::advance_auto_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
 }
 
 ///|
-pub fn UiDom::skip_mode(self : UiDom) -> Bool {
-  self.skip_mode
-}
-
-///|
 pub fn UiDom::set_skip_mode(self : UiDom, enabled : Bool) -> Unit {
   self.skip_mode = enabled
   if enabled {
@@ -1939,7 +1934,7 @@ pub fn UiViewModel::from_snapshot(
     dialog_history: snapshot.dialog_history,
     dom_figures,
     auto_mode: ui.auto_mode,
-    skip_mode: ui.skip_mode,
+    skip_mode: ui.is_skip_active(),
     log_visible: ui.log_visible,
     log_building: ui.log_building,
   }
