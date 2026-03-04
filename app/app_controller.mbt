@@ -891,6 +891,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                 self.saved_director_json = Some(runner.director().save_json())
                 runner.clear_ui()
                 self.settings_menu.set_context(FromMidgame)
+                self.settings_menu.set_view_mode(Settings)
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
               }
