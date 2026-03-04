@@ -6,6 +6,7 @@ import {
   "sennenki/reisen/state",
   "sennenki/reisen/ui",
   "moonbitlang/core/json",
+  "moonbitlang/core/deque",
 }
 
 import {

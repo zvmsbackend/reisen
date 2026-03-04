@@ -313,7 +313,13 @@ test "director tracks live2d motion and expression events" {
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_eq(director.step(), Live2dMotionPlayed("hero", "tap_body", Some(1)))
-  assert_eq(director.live2d_motions(), [("hero", "tap_body", Some(1))])
+  assert_eq(
+    director.live2d_motions(),
+    @deque.from_array([("hero", "tap_body", Some(1))]),
+  )
   assert_eq(director.step(), Live2dExpressionSet("hero", Some("smile")))
-  assert_eq(director.live2d_expressions(), [("hero", Some("smile"))])
+  assert_eq(
+    director.live2d_expressions(),
+    @deque.from_array([("hero", Some("smile"))]),
+  )
 }

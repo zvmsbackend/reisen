@@ -2,6 +2,7 @@
 package "sennenki/reisen/engine"
 
 import {
+  "moonbitlang/core/deque",
   "moonbitlang/core/json",
   "sennenki/reisen/core",
   "sennenki/reisen/state",
@@ -33,7 +34,7 @@ pub impl ToJson for DialogLine
 pub impl @json.FromJson for DialogLine
 
 type Director[T]
-pub fn[T] Director::animations(Self[T]) -> Array[(String, @core.AnimationSpec)]
+pub fn[T] Director::animations(Self[T]) -> @deque.Deque[(String, @core.AnimationSpec)]
 pub fn[T] Director::avatar_id(Self[T]) -> String?
 pub fn[T] Director::background(Self[T]) -> String?
 pub fn[T] Director::background_state(Self[T]) -> @core.BackgroundState?
@@ -45,11 +46,12 @@ pub fn[T] Director::clear_dialog(Self[T]) -> Unit
 pub fn[T] Director::clear_intro_text(Self[T]) -> Unit
 pub fn[T] Director::clear_render(Self[T]) -> Unit
 pub fn[T] Director::clear_text_input(Self[T]) -> Unit
+pub fn[T] Director::clear_transient_render_data(Self[T]) -> Unit
 pub fn[T] Director::complete_video_wait(Self[T], Bool) -> @core.RuntimeEvent
 pub fn[T] Director::dialog(Self[T]) -> DialogLine?
 pub fn[T] Director::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
 pub fn[T] Director::dialog_seq(Self[T]) -> Int
-pub fn[T] Director::dom_animations(Self[T]) -> Array[(String, @core.AnimationSpec)]
+pub fn[T] Director::dom_animations(Self[T]) -> @deque.Deque[(String, @core.AnimationSpec)]
 pub fn[T] Director::dom_figures(Self[T]) -> Map[String, @core.DomFigureState]
 pub fn[T] Director::effects(Self[T], String) -> Array[@core.EffectSpec]
 pub fn[T] Director::figure(Self[T], String) -> @core.FigurePlacement?
@@ -62,8 +64,8 @@ pub fn[T] Director::is_waiting(Self[T]) -> Bool
 pub fn[T] Director::is_waiting_video(Self[T]) -> Bool
 pub fn[T] Director::jump_to_label(Self[T], String) -> Unit raise @core.ScriptRuntimeError
 pub fn[T] Director::last_sfx(Self[T]) -> String?
-pub fn[T] Director::live2d_expressions(Self[T]) -> Array[(String, String?)]
-pub fn[T] Director::live2d_motions(Self[T]) -> Array[(String, String, Int?)]
+pub fn[T] Director::live2d_expressions(Self[T]) -> @deque.Deque[(String, String?)]
+pub fn[T] Director::live2d_motions(Self[T]) -> @deque.Deque[(String, String, Int?)]
 pub fn[T] Director::music(Self[T]) -> (String, Bool)?
 pub fn[T] Director::new(@core.Runtime[T], gallery_ns? : String) -> Self[T]
 pub fn[T] Director::render_epoch(Self[T]) -> String
@@ -143,11 +145,11 @@ pub struct RenderState {
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
-  pixi_animations : Array[(String, @core.AnimationSpec)]
-  dom_animations : Array[(String, @core.AnimationSpec)]
+  pixi_animations : @deque.Deque[(String, @core.AnimationSpec)]
+  dom_animations : @deque.Deque[(String, @core.AnimationSpec)]
   effects : Map[String, Array[@core.EffectSpec]]
-  live2d_motions : Array[(String, String, Int?)]
-  live2d_expressions : Array[(String, String?)]
+  live2d_motions : @deque.Deque[(String, String, Int?)]
+  live2d_expressions : @deque.Deque[(String, String?)]
   render_epoch : String
 }
 pub impl ToJson for RenderState

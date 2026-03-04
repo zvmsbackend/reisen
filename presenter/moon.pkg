@@ -4,4 +4,5 @@ import {
   "sennenki/reisen/pixi",
   "sennenki/reisen/engine",
   "moonbit-community/js-ffi/js",
+  "moonbitlang/core/deque",
 }

@@ -32,11 +32,11 @@ pub struct RenderState {
   mut music : (String, Bool)?
   mut last_sfx : String?
   mut last_sfx_interrupted : Bool
-  pixi_animations : Array[(String, AnimationSpec)]
-  dom_animations : Array[(String, AnimationSpec)]
+  pixi_animations : @deque.Deque[(String, AnimationSpec)]
+  dom_animations : @deque.Deque[(String, AnimationSpec)]
   effects : Map[String, Array[EffectSpec]]
-  live2d_motions : Array[(String, String, Int?)]
-  live2d_expressions : Array[(String, String?)]
+  live2d_motions : @deque.Deque[(String, String, Int?)]
+  live2d_expressions : @deque.Deque[(String, String?)]
   render_epoch : String
 } derive(ToJson, FromJson)
 
@@ -86,11 +86,11 @@ pub fn[T] Director::new(
       music: None,
       last_sfx: None,
       last_sfx_interrupted: false,
-      pixi_animations: [],
-      dom_animations: [],
+      pixi_animations: @deque.new(),
+      dom_animations: @deque.new(),
       effects: {},
-      live2d_motions: [],
-      live2d_expressions: [],
+      live2d_motions: @deque.new(),
+      live2d_expressions: @deque.new(),
       render_epoch: gensym(prefix="render"),
     },
     gallery_ns,
@@ -194,8 +194,9 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
       self.render.last_sfx_interrupted = self.render.last_sfx is Some(_)
     CgUnlocked(id) => @gallery.unlock_image_by_id_in(self.gallery_ns, id)
     AnimatedPixi(target, spec) =>
-      self.render.pixi_animations.push((target, spec))
-    AnimatedDom(target, spec) => self.render.dom_animations.push((target, spec))
+      self.render.pixi_animations.push_back((target, spec))
+    AnimatedDom(target, spec) =>
+      self.render.dom_animations.push_back((target, spec))
     EffectApplied(target, spec) => {
       let current = self.render.effects.get(target).unwrap_or([])
       let mut replaced = false
@@ -214,9 +215,9 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
       self.render.effects.set(target, updated)
     }
     Live2dMotionPlayed(target, group, index) =>
-      self.render.live2d_motions.push((target, group, index))
+      self.render.live2d_motions.push_back((target, group, index))
     Live2dExpressionSet(target, id) =>
-      self.render.live2d_expressions.push((target, id))
+      self.render.live2d_expressions.push_back((target, id))
     WaitStarted(_) => ()
     WaitForClickStarted => ()
     WaitCustomEventStarted(_) => ()
@@ -449,14 +450,14 @@ pub fn[T] Director::take_interrupted_sfx(self : Director[T]) -> String? {
 ///|
 pub fn[T] Director::animations(
   self : Director[T],
-) -> Array[(String, AnimationSpec)] {
+) -> @deque.Deque[(String, AnimationSpec)] {
   self.render.pixi_animations
 }
 
 ///|
 pub fn[T] Director::dom_animations(
   self : Director[T],
-) -> Array[(String, AnimationSpec)] {
+) -> @deque.Deque[(String, AnimationSpec)] {
   self.render.dom_animations
 }
 
@@ -477,7 +478,7 @@ pub fn[T] Director::ui_snapshot(self : Director[T]) -> UiSnapshot {
     text_box_visible: self.ui.text_box_visible,
     avatar_id: self.ui.avatar_id,
     dom_figures: self.render.dom_figures,
-    dom_animations: self.render.dom_animations,
+    dom_animations: self.render.dom_animations.iter().to_array(),
   }
 }
 
@@ -492,20 +493,28 @@ pub fn[T] Director::effects(
 ///|
 pub fn[T] Director::live2d_motions(
   self : Director[T],
-) -> Array[(String, String, Int?)] {
+) -> @deque.Deque[(String, String, Int?)] {
   self.render.live2d_motions
 }
 
 ///|
 pub fn[T] Director::live2d_expressions(
   self : Director[T],
-) -> Array[(String, String?)] {
+) -> @deque.Deque[(String, String?)] {
   self.render.live2d_expressions
 }
 
 ///|
 pub fn[T] Director::render_epoch(self : Director[T]) -> String {
   self.render.render_epoch
+}
+
+///|
+pub fn[T] Director::clear_transient_render_data(self : Director[T]) -> Unit {
+  self.render.pixi_animations.clear()
+  self.render.dom_animations.clear()
+  self.render.live2d_motions.clear()
+  self.render.live2d_expressions.clear()
 }
 
 ///|
