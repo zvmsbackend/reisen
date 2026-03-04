@@ -169,10 +169,7 @@ fn PixiPresenter::reset_render_state(self : PixiPresenter) -> Unit {
   }
   for id in live2d_ids {
     match self.figure_live2d.get(id) {
-      Some(model) => {
-        self.stage.remove_live2d(model)
-        model.destroy()
-      }
+      Some(model) => self.stage.remove_live2d(model)
       None => ()
     }
     self.figure_live2d.remove(id)
@@ -828,10 +825,7 @@ fn[T] PixiPresenter::sync_figures(
       None => ()
     }
     match self.figure_live2d.get(id) {
-      Some(model) => {
-        self.stage.remove_live2d(model)
-        model.destroy()
-      }
+      Some(model) => self.stage.remove_live2d(model)
       None => ()
     }
     self.figure_sprites.remove(id)
@@ -932,10 +926,7 @@ fn[T] PixiPresenter::sync_figures(
         match self.texture_for(id) {
           Some(texture) => {
             match self.figure_live2d.get(id) {
-              Some(model) => {
-                self.stage.remove_live2d(model)
-                model.destroy()
-              }
+              Some(model) => self.stage.remove_live2d(model)
               None => ()
             }
             self.figure_live2d.remove(id)
