@@ -54,6 +54,31 @@ pub fn local_save_slot_store() -> LocalSaveSlotStore {
 }
 
 ///|
+/// Composite backend with primary + fallback stores.
+///
+/// Read path:
+/// - Try primary first.
+/// - Fallback to secondary when primary misses.
+/// - Optionally migrate fallback value into primary on read.
+///
+/// Write path:
+/// - Writes go to primary only.
+pub struct MultiSaveSlotStore[P, F] {
+  primary : P
+  fallback : F
+  migrate_on_read : Bool
+}
+
+///|
+pub fn[P, F] MultiSaveSlotStore::new(
+  primary : P,
+  fallback : F,
+  migrate_on_read? : Bool = true,
+) -> MultiSaveSlotStore[P, F] {
+  { primary, fallback, migrate_on_read }
+}
+
+///|
 pub suberror StorageValidationError {
   InvalidSaveSlotName(slot~ : String)
   InvalidTextSpeed(text_speed~ : Int)
@@ -185,6 +210,22 @@ fn slot_meta_key(ns : String, slot : String) -> String {
 }
 
 ///|
+fn merge_unique_slots(
+  lhs : Array[String],
+  rhs : Array[String],
+) -> Array[String] {
+  let seen = Set::new()
+  let result = []
+  for slot in lhs.iter().concat(rhs.iter()) {
+    if !seen.contains(slot) {
+      seen.add(slot)
+      result.push(slot)
+    }
+  }
+  result
+}
+
+///|
 pub impl SaveSlotStore for LocalSaveSlotStore with read_slot(_, ns, slot) {
   save_slot_read_in(ns, slot)
 }
@@ -222,6 +263,79 @@ pub impl SaveSlotStore for LocalSaveSlotStore with write_slot_meta(
   meta,
 ) {
   save_slot_write_meta_in(ns, slot, meta)
+}
+
+///|
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[
+  P,
+  F,
+] with read_slot(self, ns, slot) {
+  match self.primary.read_slot(ns, slot) {
+    Some(value) => Some(value)
+    None =>
+      match self.fallback.read_slot(ns, slot) {
+        Some(value) => {
+          if self.migrate_on_read {
+            self.primary.write_slot(ns, slot, value)
+          }
+          Some(value)
+        }
+        None => None
+      }
+  }
+}
+
+///|
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[
+  P,
+  F,
+] with write_slot(self, ns, slot, value) {
+  self.primary.write_slot(ns, slot, value)
+}
+
+///|
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[
+  P,
+  F,
+] with delete_slot(self, ns, slot) {
+  self.primary.delete_slot(ns, slot)
+  self.fallback.delete_slot(ns, slot)
+}
+
+///|
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[
+  P,
+  F,
+] with list_slots(self, ns) {
+  merge_unique_slots(self.primary.list_slots(ns), self.fallback.list_slots(ns))
+}
+
+///|
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[
+  P,
+  F,
+] with read_slot_meta(self, ns, slot) {
+  match self.primary.read_slot_meta(ns, slot) {
+    Some(meta) => Some(meta)
+    None =>
+      match self.fallback.read_slot_meta(ns, slot) {
+        Some(meta) => {
+          if self.migrate_on_read {
+            self.primary.write_slot_meta(ns, slot, meta)
+          }
+          Some(meta)
+        }
+        None => None
+      }
+  }
+}
+
+///|
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[
+  P,
+  F,
+] with write_slot_meta(self, ns, slot, meta) {
+  self.primary.write_slot_meta(ns, slot, meta)
 }
 
 ///|

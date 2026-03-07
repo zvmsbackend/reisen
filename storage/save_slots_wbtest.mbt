@@ -88,3 +88,86 @@ test "persistent vars are stored outside save slots" {
   assert_true(persistent_keys_in("lap").contains("flag"))
   assert_true(persistent_keys_in("lap").contains("name"))
 }
+
+///|
+struct PrefixedStore {
+  prefix : String
+}
+
+///|
+fn ns_with_prefix(prefix : String, ns : String) -> String {
+  "\{prefix}.\{ns}"
+}
+
+///|
+impl SaveSlotStore for PrefixedStore with read_slot(self, ns, slot) {
+  save_slot_read_in(ns_with_prefix(self.prefix, ns), slot)
+}
+
+///|
+impl SaveSlotStore for PrefixedStore with write_slot(self, ns, slot, value) {
+  save_slot_write_in(ns_with_prefix(self.prefix, ns), slot, value)
+}
+
+///|
+impl SaveSlotStore for PrefixedStore with delete_slot(self, ns, slot) {
+  save_slot_delete_in(ns_with_prefix(self.prefix, ns), slot)
+}
+
+///|
+impl SaveSlotStore for PrefixedStore with list_slots(self, ns) {
+  save_slot_list_in(ns_with_prefix(self.prefix, ns))
+}
+
+///|
+impl SaveSlotStore for PrefixedStore with read_slot_meta(self, ns, slot) {
+  save_slot_read_meta_in(ns_with_prefix(self.prefix, ns), slot)
+}
+
+///|
+impl SaveSlotStore for PrefixedStore with write_slot_meta(self, ns, slot, meta) {
+  save_slot_write_meta_in(ns_with_prefix(self.prefix, ns), slot, meta)
+}
+
+///|
+test "store trait wrappers work with local backend" {
+  let store = default_save_slot_store()
+  save_slot_store_delete_in(store, "wb_store", "slot")
+  save_slot_store_write_in(store, "wb_store", "slot", "payload")
+  assert_eq(save_slot_store_read_in(store, "wb_store", "slot"), Some("payload"))
+  let meta = save_slot_meta("Title", "Preview", updated_at_ms=10.0)
+  save_slot_store_write_meta_in(store, "wb_store", "slot", meta)
+  assert_eq(save_slot_store_read_meta_in(store, "wb_store", "slot"), Some(meta))
+}
+
+///|
+test "multi backend reads fallback and migrates to primary" {
+  let primary : PrefixedStore = { prefix: "wb_primary" }
+  let fallback : PrefixedStore = { prefix: "wb_fallback" }
+  let multi = MultiSaveSlotStore::new(primary, fallback, migrate_on_read=true)
+
+  primary.delete_slot("ns", "slot")
+  fallback.delete_slot("ns", "slot")
+  fallback.write_slot("ns", "slot", "legacy")
+
+  assert_eq(multi.read_slot("ns", "slot"), Some("legacy"))
+  assert_eq(primary.read_slot("ns", "slot"), Some("legacy"))
+}
+
+///|
+test "multi backend list merges unique slots" {
+  let primary : PrefixedStore = { prefix: "wb_primary_list" }
+  let fallback : PrefixedStore = { prefix: "wb_fallback_list" }
+  let multi = MultiSaveSlotStore::new(primary, fallback, migrate_on_read=false)
+
+  primary.delete_slot("ns", "same")
+  fallback.delete_slot("ns", "same")
+  primary.write_slot("ns", "same", "p")
+  fallback.write_slot("ns", "same", "f")
+  fallback.write_slot("ns", "other", "o")
+
+  let slots = multi.list_slots("ns")
+  assert_true(slots.contains("same"))
+  assert_true(slots.contains("other"))
+  assert_eq(slots.filter(s => s == "same").length(), 1)
+}

@@ -6,6 +6,10 @@ import {
 }
 
 // Values
+pub fn default_save_slot_store() -> LocalSaveSlotStore
+
+pub fn local_save_slot_store() -> LocalSaveSlotStore
+
 pub fn persistent_delete(String) -> Unit
 
 pub fn persistent_delete_in(String, String) -> Unit
@@ -60,6 +64,20 @@ pub fn save_slot_read_meta(String) -> SaveSlotMeta?
 
 pub fn save_slot_read_meta_in(String, String) -> SaveSlotMeta?
 
+pub fn[S : SaveSlotStore] save_slot_store_delete_in(S, String, String) -> Unit
+
+pub fn[S : SaveSlotStore] save_slot_store_entries_in(S, String) -> Array[SaveSlotEntry]
+
+pub fn[S : SaveSlotStore] save_slot_store_list_in(S, String) -> Array[String]
+
+pub fn[S : SaveSlotStore] save_slot_store_read_in(S, String, String) -> String?
+
+pub fn[S : SaveSlotStore] save_slot_store_read_meta_in(S, String, String) -> SaveSlotMeta?
+
+pub fn[S : SaveSlotStore] save_slot_store_write_in(S, String, String, String) -> Unit
+
+pub fn[S : SaveSlotStore] save_slot_store_write_meta_in(S, String, String, SaveSlotMeta) -> Unit
+
 pub fn save_slot_write(String, String) -> Unit
 
 pub fn save_slot_write_in(String, String, String) -> Unit
@@ -97,6 +115,18 @@ pub impl Show for GameSettings
 pub impl ToJson for GameSettings
 pub impl @json.FromJson for GameSettings
 
+pub struct LocalSaveSlotStore {
+}
+pub impl SaveSlotStore for LocalSaveSlotStore
+
+pub struct MultiSaveSlotStore[P, F] {
+  primary : P
+  fallback : F
+  migrate_on_read : Bool
+}
+pub fn[P, F] MultiSaveSlotStore::new(P, F, migrate_on_read? : Bool) -> Self[P, F]
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[P, F]
+
 pub struct SaveSlotEntry {
   slot : String
   meta : SaveSlotMeta?
@@ -118,4 +148,12 @@ pub impl @json.FromJson for SaveSlotMeta
 // Type aliases
 
 // Traits
+pub trait SaveSlotStore {
+  read_slot(Self, String, String) -> String?
+  write_slot(Self, String, String, String) -> Unit
+  delete_slot(Self, String, String) -> Unit
+  list_slots(Self, String) -> Array[String]
+  read_slot_meta(Self, String, String) -> SaveSlotMeta?
+  write_slot_meta(Self, String, String, SaveSlotMeta) -> Unit
+}
 
