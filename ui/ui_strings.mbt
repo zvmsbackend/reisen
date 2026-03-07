@@ -51,7 +51,6 @@ pub struct UiStrings {
   game_toggle_on_prefix : String
   game_toggle_off_prefix : String
   game_text_input_submit : String
-  game_log_building : String
   loading_text : String
 }
 
@@ -108,7 +107,6 @@ pub impl Default for UiStrings with default() {
     game_toggle_on_prefix: "☑ ",
     game_toggle_off_prefix: "☐ ",
     game_text_input_submit: "Submit",
-    game_log_building: "Building log...",
     loading_text: "Loading...",
   }
 }
@@ -530,13 +528,6 @@ pub fn UiStrings::from_locales_json(
       default_locale,
       "game_text_input_submit",
       fallback.game_text_input_submit,
-    ),
-    game_log_building: ui_locale_resolve_string(
-      locales_json,
-      locale,
-      default_locale,
-      "game_log_building",
-      fallback.game_log_building,
     ),
     loading_text: ui_locale_resolve_string(
       locales_json,

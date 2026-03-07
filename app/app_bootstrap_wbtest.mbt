@@ -151,11 +151,38 @@ async test "save slot payload is wrapped with version" {
   match raw {
     Some(s) => {
       let payload : SaveSlotPayload = @json.from_json(@json.parse(s))
-      assert_eq(payload.version, 1)
+      assert_eq(payload.version, 2)
       assert_true(payload.director_json != "")
+      assert_eq(payload.dialog_history, [])
     }
     None => fail("missing payload")
   }
+}
+
+///|
+async test "start_game_from_slot restores dialog history from payload" {
+  let store = default_save_slot_storage()
+  store.delete_slot("global", "wb_slot_history")
+  let script : Script[Int] = script(builder => {
+    builder.say("n", "a")
+    builder.say("n", "b")
+  })
+
+  let runner = start_game(script, GameState::new(0), "app")
+  assert_eq(
+    runner.step(),
+    Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("a"),
+      typewriter=true,
+      append=false,
+      voice=None,
+    ),
+  )
+  save_runner_to_slot(runner, "wb_slot_history")
+
+  let resumed = start_game_from_slot(script, "wb_slot_history", "app")
+  assert_eq(resumed.dialog_history(), [{ speaker: "n", text: "a" }])
 }
 
 ///|
@@ -257,7 +284,7 @@ async test "start_game_from_save raises on corrupt json" {
 ///|
 async test "start_game_from_save raises when ip is out of bounds in json" {
   let script : Script[Int] = script(builder => builder.say("n", "hi"))
-  let bad_json = "{\"ip\":999,\"state\":{\"int_vars\":{},\"text_vars\":{},\"flags\":{},\"payload\":0},\"pending_choices\":[],\"pending_choice_ip\":null,\"pending_text_input\":null,\"wait_ms\":0,\"wait_for_click\":false,\"wait_for_click_can_skip\":true,\"wait_custom_name\":null,\"wait_video\":false,\"last_say_proceed_on_done\":false,\"ended\":false,\"flow_trace\":[]}"
+  let bad_json = "{\"ip\":999,\"state\":{\"int_vars\":{},\"text_vars\":{},\"flags\":{},\"payload\":0},\"pending_choices\":[],\"pending_text_input\":null,\"wait_ms\":0,\"wait_for_click\":false,\"wait_for_click_can_skip\":true,\"wait_custom_name\":null,\"wait_video\":false,\"last_say_proceed_on_done\":false,\"ended\":false}"
   let result : Result[GameRunner[Int], Error] = try? start_game_from_save(
     script, bad_json, "app",
   )

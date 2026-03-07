@@ -2,6 +2,9 @@
 using @core {label, option, script}
 
 ///|
+using @state {type GameState}
+
+///|
 extern "js" fn read_sfx_gain() -> Double =
   #| () => globalThis.__reisenSfxGain ?? -1
 
@@ -575,19 +578,7 @@ async test "runner keeps rendering during animations" {
 }
 
 ///|
-test "runner log build state transitions" {
-  let runtime = Runtime::new(script(_ => ()), GameState::new(0))
-  let runner = GameRunner::new(Director::new(runtime), UiDom::new("app"))
-
-  assert_eq(runner.log_build_state(), LogBuildState::NotBuilt)
-  runner.set_log_build_state(LogBuildState::Building)
-  assert_eq(runner.log_build_state(), LogBuildState::Building)
-  runner.set_log_build_state(LogBuildState::Ready)
-  assert_eq(runner.log_build_state(), LogBuildState::Ready)
-}
-
-///|
-async test "runner reconstructs dialog history from trace" {
+async test "runner keeps dialog history without reconstruction" {
   let left = label(name="left")
   let right = label(name="right")
   let script : Script[Int] = script(builder => {
@@ -613,53 +604,6 @@ async test "runner reconstructs dialog history from trace" {
       voice=None
     ),
   )
-
-  runner.reconstruct_dialog_history(script, GameState::new(0))
-  assert_eq(runner.log_build_state(), LogBuildState::Ready)
-  assert_eq(runner.dialog_history(), [{ speaker: "n", text: "Right" }])
-}
-
-///|
-async test "runner can start log reconstruction asynchronously" {
-  let left = label(name="left_async")
-  let right = label(name="right_async")
-  let script : Script[Int] = script(builder => {
-    builder.choice([option("L", left, id="l"), option("R", right, id="r")])
-    builder.label(left)
-    builder.say("n", "Left")
-    builder.label(right)
-    builder.say("n", "Right")
-  })
-  let runner = GameRunner::new(
-    Director::new(Runtime::new(script, GameState::new(0))),
-    UiDom::new("app"),
-  )
-
-  assert_true(runner.step() is ChoicePrompt(_))
-  assert_true(
-    runner.submit_choice("r")
-    is Said(
-      speaker=DialogText::String("n"),
-      text=DialogText::String("Right"),
-      typewriter=true,
-      append=false,
-      voice=None
-    ),
-  )
-
-  runner.start_reconstruct_dialog_history(script, GameState::new(0))
-  assert_eq(runner.log_build_state(), LogBuildState::Building)
-
-  let mut ticks = 0
-  while runner.log_build_state() == LogBuildState::Building {
-    ignore(runner.tick(elapsed_ms=0))
-    ticks = ticks + 1
-    if ticks > 50 {
-      fail("reconstruction did not complete")
-    }
-  }
-
-  assert_eq(runner.log_build_state(), LogBuildState::Ready)
   assert_eq(runner.dialog_history(), [{ speaker: "n", text: "Right" }])
 }
 

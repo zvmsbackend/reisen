@@ -219,8 +219,7 @@ pub(all) enum Instruction[T] {
   StopMusic
   PlaySfx(String, Bool)
   UnlockCg(String)
-  AnimatePixi(String, AnimationSpec)
-  AnimateDom(String, AnimationSpec)
+  Animate(String, AnimationSpec, @assets.RenderableKind)
   ApplyEffect(String, EffectSpec)
   PlayLive2dMotion(String, String, Int?)
   SetLive2dExpression(String, String?)
@@ -246,7 +245,6 @@ pub struct Runtime[T] {
   state : @state.GameState[T]
   mut ip : Int
   mut pending_choices : Array[ChoiceOption]
-  mut pending_choice_ip : Int?
   mut pending_text_input : (String, @state.DialogText)?
   mut wait_ms : Int
   mut wait_for_click : Bool
@@ -255,14 +253,11 @@ pub struct Runtime[T] {
   mut wait_video : Bool
   mut last_say_proceed_on_done : Bool
   mut ended : Bool
-  flow_trace : Array[ScriptFlowTrace]
 }
 pub fn[T] Runtime::can_auto_skip_wait_click(Self[T]) -> Bool
 pub fn[T] Runtime::can_skip_wait(Self[T]) -> Bool
 pub fn[T] Runtime::choose(Self[T], String) -> RuntimeEvent raise ScriptRuntimeError
 pub fn[T] Runtime::complete_video_wait(Self[T], Bool) -> RuntimeEvent
-pub fn[T] Runtime::flow_trace(Self[T]) -> Array[ScriptFlowTrace]
-pub fn[T] Runtime::force_custom_jump(Self[T], String, String) -> Unit raise ScriptRuntimeError
 pub fn[T : @json.FromJson] Runtime::from_json_string(Script[T], String) -> Self[T] raise
 pub fn[T] Runtime::from_save(Script[T], RuntimeSave[T]) -> Self[T] raise ScriptRuntimeError
 pub fn[T] Runtime::ip(Self[T]) -> Int
@@ -302,8 +297,7 @@ pub(all) enum RuntimeEvent {
   SfxPlayed(String, Bool)
   SfxStopped
   CgUnlocked(String)
-  AnimatedPixi(String, AnimationSpec)
-  AnimatedDom(String, AnimationSpec)
+  Animated(String, AnimationSpec, @assets.RenderableKind)
   EffectApplied(String, EffectSpec)
   Live2dMotionPlayed(String, String, Int?)
   Live2dExpressionSet(String, String?)
@@ -320,7 +314,6 @@ pub struct RuntimeSave[T] {
   state : @state.GameState[T]
   ip : Int
   pending_choices : Array[ChoiceOption]
-  pending_choice_ip : Int?
   pending_text_input : (String, @state.DialogText)?
   wait_ms : Int
   wait_for_click : Bool
@@ -329,7 +322,6 @@ pub struct RuntimeSave[T] {
   wait_video : Bool
   last_say_proceed_on_done : Bool
   ended : Bool
-  flow_trace : Array[ScriptFlowTrace]
 }
 pub impl[T : ToJson] ToJson for RuntimeSave[T]
 pub impl[T : @json.FromJson] @json.FromJson for RuntimeSave[T]
@@ -413,16 +405,6 @@ pub fn[T] ScriptBuilder::wait(Self[T], Int) -> Unit
 pub fn[T] ScriptBuilder::wait_click(Self[T], can_skip? : Bool) -> Unit
 pub fn[T] ScriptBuilder::wait_custom_event(Self[T], String, (@state.GameState[T], String) -> Bool) -> Unit
 pub fn[T] ScriptBuilder::wait_custom_event_jump(Self[T], String, (@state.GameState[T], String) -> Label) -> Unit
-
-pub enum ScriptFlowTrace {
-  ChoiceResolved(ip~ : Int, choice_id~ : String)
-  JumpIfResolved(ip~ : Int, target~ : String, taken~ : Bool)
-  CustomJumpResolved(ip~ : Int, name~ : String, target~ : String)
-}
-pub impl Eq for ScriptFlowTrace
-pub impl Show for ScriptFlowTrace
-pub impl ToJson for ScriptFlowTrace
-pub impl @json.FromJson for ScriptFlowTrace
 
 type SexpScriptParser[T]
 pub fn[T] SexpScriptParser::new() -> Self[T]

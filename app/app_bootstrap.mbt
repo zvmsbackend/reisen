@@ -6,37 +6,48 @@ pub suberror AppBootstrapError {
   MissingImageAsset(id~ : String)
   MissingAudioAsset(id~ : String)
   MissingSaveSlot(slot~ : String)
+  InvalidSavePayload(raw~ : String)
+  UnsupportedSavePayloadVersion(expected~ : Int, found~ : Int)
 }
 
 ///|
 struct SaveSlotPayload {
   version : Int
   director_json : String
+  dialog_history : Array[DialogLogEntry]
 } derive(ToJson, FromJson)
 
 ///|
-let save_slot_payload_version = 1
+let save_slot_payload_version = 2
 
 ///|
 fn encode_save_slot_payload(
   director_json : String,
-  payload_version : Int,
+  dialog_history : Array[DialogLogEntry],
 ) -> String {
-  SaveSlotPayload::{ version: payload_version, director_json }
+  SaveSlotPayload::{
+    version: save_slot_payload_version,
+    director_json,
+    dialog_history,
+  }
   .to_json()
   .stringify()
 }
 
 ///|
-fn decode_save_slot_payload(raw : String, payload_version : Int) -> String {
+fn decode_save_slot_payload(
+  raw : String,
+) -> SaveSlotPayload raise AppBootstrapError {
   let payload : SaveSlotPayload = @json.from_json(@json.parse(raw)) catch {
-    _ => return raw
+    _ => raise AppBootstrapError::InvalidSavePayload(raw~)
   }
-  if payload.version == payload_version {
-    payload.director_json
-  } else {
-    raw
+  if payload.version != save_slot_payload_version {
+    raise AppBootstrapError::UnsupportedSavePayloadVersion(
+      expected=save_slot_payload_version,
+      found=payload.version,
+    )
   }
+  payload
 }
 
 ///|
@@ -139,8 +150,10 @@ pub async fn[T : FromJson] start_game_from_save(
   script_locale? : String = "",
   script_default_locale? : String = "",
   gallery_ns? : String = "global",
+  dialog_history? : Array[DialogLogEntry] = [],
 ) -> GameRunner[T] {
   let director = Director::from_save_json(script, save_json, gallery_ns~)
+  director.set_dialog_history(dialog_history)
   let ui = UiDom::new(
     ui_root_id,
     ui_strings~,
@@ -169,12 +182,11 @@ pub fn[T : ToJson] save_director_to_slot(
   slot : String,
   save_namespace? : String = "global",
   save_store? : &SaveSlotStore = default_save_slot_storage(),
-  slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
   save_store.write_slot(
     save_namespace,
     slot,
-    encode_save_slot_payload(director.save_json(), slot_payload_version),
+    encode_save_slot_payload(director.save_json(), director.dialog_history()),
   )
 }
 
@@ -184,15 +196,8 @@ pub fn[T : ToJson] save_runner_to_slot(
   slot : String,
   save_namespace? : String = "global",
   save_store? : &SaveSlotStore = default_save_slot_storage(),
-  slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
-  save_director_to_slot(
-    runner.director(),
-    slot,
-    save_namespace~,
-    save_store~,
-    slot_payload_version~,
-  )
+  save_director_to_slot(runner.director(), slot, save_namespace~, save_store~)
 }
 
 ///|
@@ -203,15 +208,8 @@ pub fn[T : ToJson] save_runner_to_slot_with_meta(
   preview? : String = "",
   save_namespace? : String = "global",
   save_store? : &SaveSlotStore = default_save_slot_storage(),
-  slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
-  save_runner_to_slot(
-    runner,
-    slot,
-    save_namespace~,
-    save_store~,
-    slot_payload_version~,
-  )
+  save_runner_to_slot(runner, slot, save_namespace~, save_store~)
   save_store.write_slot_meta(
     save_namespace,
     slot,
@@ -229,7 +227,6 @@ pub async fn[T : FromJson] start_game_from_slot(
   save_namespace? : String = "global",
   save_store? : &SaveSlotStore = default_save_slot_storage(),
   settings? : GameSettings,
-  slot_payload_version? : Int = save_slot_payload_version,
   ui_strings? : UiStrings = UiStrings::default(),
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
@@ -239,10 +236,11 @@ pub async fn[T : FromJson] start_game_from_slot(
   gallery_ns? : String = "global",
 ) -> GameRunner[T] {
   match save_store.read_slot(save_namespace, slot) {
-    Some(save_json) =>
+    Some(save_json) => {
+      let payload = decode_save_slot_payload(save_json)
       start_game_from_save(
         script,
-        decode_save_slot_payload(save_json, slot_payload_version),
+        payload.director_json,
         ui_root_id,
         render_sync~,
         event_hook~,
@@ -254,7 +252,9 @@ pub async fn[T : FromJson] start_game_from_slot(
         script_locale~,
         script_default_locale~,
         gallery_ns~,
+        dialog_history=payload.dialog_history,
       )
+    }
     None => raise AppBootstrapError::MissingSaveSlot(slot~)
   }
 }

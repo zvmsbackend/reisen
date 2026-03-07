@@ -120,35 +120,6 @@ test "runtime custom event jump resumes at selected label" {
 }
 
 ///|
-test "runtime records flow trace" {
-  let script : Script[Int] = script_from_instructions([
-    JumpIf("target", _ => true),
-    Say(
-      speaker=DialogText::String("n"),
-      text=DialogText::String("skip"),
-      typewriter=true,
-      append=false,
-      voice=None,
-      proceed_on_done=false,
-    ),
-    Label("target"),
-    Say(
-      speaker=DialogText::String("n"),
-      text=DialogText::String("ok"),
-      typewriter=true,
-      append=false,
-      voice=None,
-      proceed_on_done=false,
-    ),
-  ])
-  let runtime = Runtime::new(script, GameState::new(0))
-  ignore(runtime.step())
-  assert_eq(runtime.flow_trace(), [
-    ScriptFlowTrace::JumpIfResolved(ip=0, target="target", taken=true),
-  ])
-}
-
-///|
 test "runtime jump_by resolves selector label" {
   let script : Script[Int] = script_from_instructions([
     JumpBy(state => if state.int_var("route") == 1 { "left" } else { "right" }),
@@ -245,7 +216,7 @@ test "runtime from_json_string rejects corrupt json" {
 ///|
 test "runtime from_json_string rejects out-of-range ip in json" {
   let script : Script[Int] = script_from_instructions([Wait(50)])
-  let bad_json = "{\"ip\":999,\"state\":{\"int_vars\":{},\"text_vars\":{},\"flags\":{},\"payload\":0},\"pending_choices\":[],\"pending_choice_ip\":null,\"pending_text_input\":null,\"wait_ms\":0,\"wait_for_click\":false,\"wait_for_click_can_skip\":true,\"wait_custom_name\":null,\"wait_video\":false,\"last_say_proceed_on_done\":false,\"ended\":false,\"flow_trace\":[]}"
+  let bad_json = "{\"ip\":999,\"state\":{\"int_vars\":{},\"text_vars\":{},\"flags\":{},\"payload\":0},\"pending_choices\":[],\"pending_text_input\":null,\"wait_ms\":0,\"wait_for_click\":false,\"wait_for_click_can_skip\":true,\"wait_custom_name\":null,\"wait_video\":false,\"last_say_proceed_on_done\":false,\"ended\":false}"
   let result : Result[Runtime[Int], Error] = try? Runtime::from_json_string(
     script, bad_json,
   )

@@ -163,7 +163,6 @@ pub fn UiDom::check_typewriter_click(Self) -> Bool
 pub fn UiDom::clear_game_ui(Self) -> Unit
 pub fn UiDom::complete_typewriter(Self) -> Unit
 pub fn UiDom::has_active_dom_animations(Self) -> Bool
-pub fn UiDom::is_log_building(Self) -> Bool
 pub fn UiDom::is_log_visible(Self) -> Bool
 pub fn UiDom::is_skip_active(Self) -> Bool
 pub fn UiDom::is_typewriter_done(Self) -> Bool
@@ -180,7 +179,6 @@ pub fn UiDom::new(String, ui_strings? : UiStrings, script_locale_json? : String,
 pub fn UiDom::render(Self, UiViewModel) -> Unit
 pub fn UiDom::reveal_intro_line(Self) -> Bool
 pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
-pub fn UiDom::set_log_building(Self, Bool) -> Unit
 pub fn UiDom::set_log_visible(Self, Bool) -> Unit
 pub fn UiDom::set_media_volume(Self, Double) -> Unit
 pub fn UiDom::set_script_localization(Self, String?, String?, String, String, String) -> Unit
@@ -261,7 +259,6 @@ pub struct UiStrings {
   game_toggle_on_prefix : String
   game_toggle_off_prefix : String
   game_text_input_submit : String
-  game_log_building : String
   loading_text : String
 }
 pub fn UiStrings::from_locales_json(String, String, String, fallback? : Self) -> Self

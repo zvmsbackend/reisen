@@ -73,7 +73,6 @@ struct UiViewModel {
   auto_mode : Bool
   skip_mode : Bool
   log_visible : Bool
-  log_building : Bool
 } derive(Show, Eq)
 
 ///|
@@ -116,7 +115,6 @@ struct UiDom {
   mut simulated_click : Bool
   mut simulated_intro_done : Bool
   mut log_visible : Bool
-  mut log_building : Bool
   mut dirty_speaker : Bool
   mut dirty_text : Bool
   mut dirty_choices : Bool
@@ -181,7 +179,6 @@ pub fn UiDom::new(
     simulated_click: false,
     simulated_intro_done: false,
     log_visible: false,
-    log_building: false,
     dirty_speaker: true,
     dirty_text: true,
     dirty_choices: true,
@@ -760,12 +757,6 @@ pub fn UiDom::is_log_visible(self : UiDom) -> Bool {
 }
 
 ///|
-pub fn UiDom::set_log_building(self : UiDom, building : Bool) -> Unit {
-  self.log_building = building
-  self.dirty_text = true
-}
-
-///|
 pub fn UiDom::set_ui_strings(self : UiDom, ui_strings : UiStrings) -> Unit {
   self.ui_strings = ui_strings
   self.mark_all_dirty()
@@ -786,11 +777,6 @@ pub fn UiDom::set_script_localization(
   self.script_locale = script_locale
   self.script_default_locale = script_default_locale
   self.mark_all_dirty()
-}
-
-///|
-pub fn UiDom::is_log_building(self : UiDom) -> Bool {
-  self.log_building
 }
 
 ///|
@@ -1484,13 +1470,8 @@ extern "js" fn dom_clear_text_input(root_id : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn dom_render_log(
-  root_id : String,
-  history_json : String,
-  building : Bool,
-  building_text : String,
-) -> Unit =
-  #| (root_id, history_json, building, building_text) => {
+extern "js" fn dom_render_log(root_id : String, history_json : String) -> Unit =
+  #| (root_id, history_json) => {
   #|   const doc = globalThis.document;
   #|   if (!doc) return;
   #|   const root = doc.getElementById(root_id);
@@ -1515,14 +1496,6 @@ extern "js" fn dom_render_log(
   #|     root.appendChild(panel);
   #|   }
   #|   panel.innerHTML = '';
-  #|   if (building) {
-  #|     const status = doc.createElement('div');
-  #|     status.style.fontWeight = '700';
-  #|     status.style.opacity = '0.9';
-  #|     status.style.marginBottom = '12px';
-  #|     status.textContent = building_text;
-  #|     panel.appendChild(status);
-  #|   }
   #|   let rows = [];
   #|   try {
   #|     const parsed = JSON.parse(history_json);
@@ -1936,7 +1909,6 @@ pub fn UiViewModel::from_snapshot(
     auto_mode: ui.auto_mode,
     skip_mode: ui.is_skip_active(),
     log_visible: ui.log_visible,
-    log_building: ui.log_building,
   }
 }
 
@@ -2048,12 +2020,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     self.dirty_action_buttons = false
   }
   if view.log_visible {
-    dom_render_log(
-      self.root_id,
-      localized_dialog_history.to_json().stringify(),
-      view.log_building,
-      self.ui_strings.game_log_building,
-    )
+    dom_render_log(self.root_id, localized_dialog_history.to_json().stringify())
   } else {
     dom_clear_log(self.root_id)
   }

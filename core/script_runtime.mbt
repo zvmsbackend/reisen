@@ -33,8 +33,7 @@ pub(all) enum RuntimeEvent {
   SfxPlayed(String, Bool)
   SfxStopped
   CgUnlocked(String)
-  AnimatedPixi(String, AnimationSpec)
-  AnimatedDom(String, AnimationSpec)
+  Animated(String, AnimationSpec, RenderableKind)
   EffectApplied(String, EffectSpec)
   Live2dMotionPlayed(String, String, Int?)
   Live2dExpressionSet(String, String?)
@@ -57,19 +56,11 @@ pub suberror ScriptRuntimeError {
 }
 
 ///|
-pub enum ScriptFlowTrace {
-  ChoiceResolved(ip~ : Int, choice_id~ : String)
-  JumpIfResolved(ip~ : Int, target~ : String, taken~ : Bool)
-  CustomJumpResolved(ip~ : Int, name~ : String, target~ : String)
-} derive(Show, Eq, ToJson, FromJson)
-
-///|
 pub struct Runtime[T] {
   script : Script[T]
   state : GameState[T]
   mut ip : Int
   mut pending_choices : Array[ChoiceOption]
-  mut pending_choice_ip : Int?
   mut pending_text_input : (String, DialogText)?
   mut wait_ms : Int
   mut wait_for_click : Bool
@@ -78,7 +69,6 @@ pub struct Runtime[T] {
   mut wait_video : Bool
   mut last_say_proceed_on_done : Bool
   mut ended : Bool
-  flow_trace : Array[ScriptFlowTrace]
 }
 
 ///|
@@ -86,7 +76,6 @@ pub struct RuntimeSave[T] {
   state : GameState[T]
   ip : Int
   pending_choices : Array[ChoiceOption]
-  pending_choice_ip : Int?
   pending_text_input : (String, DialogText)?
   wait_ms : Int
   wait_for_click : Bool
@@ -95,22 +84,7 @@ pub struct RuntimeSave[T] {
   wait_video : Bool
   last_say_proceed_on_done : Bool
   ended : Bool
-  flow_trace : Array[ScriptFlowTrace]
 } derive(ToJson, FromJson)
-
-///|
-priv struct RuntimeSaveLegacy[T] {
-  state : GameState[T]
-  ip : Int
-  pending_choices : Array[ChoiceOption]
-  pending_text_input : (String, DialogText)?
-  wait_ms : Int
-  wait_for_click : Bool
-  wait_custom_name : String?
-  wait_video : Bool
-  last_say_proceed_on_done : Bool
-  ended : Bool
-} derive(FromJson)
 
 ///|
 pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
@@ -119,7 +93,6 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
     state,
     ip: 0,
     pending_choices: [],
-    pending_choice_ip: None,
     pending_text_input: None,
     wait_ms: 0,
     wait_for_click: false,
@@ -128,7 +101,6 @@ pub fn[T] Runtime::new(script : Script[T], state : GameState[T]) -> Runtime[T] {
     wait_video: false,
     last_say_proceed_on_done: false,
     ended: false,
-    flow_trace: [],
   }
 }
 
@@ -138,7 +110,6 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     state: self.state,
     ip: self.ip,
     pending_choices: self.pending_choices,
-    pending_choice_ip: self.pending_choice_ip,
     pending_text_input: self.pending_text_input,
     wait_ms: self.wait_ms,
     wait_for_click: self.wait_for_click,
@@ -147,7 +118,6 @@ pub fn[T] Runtime::save(self : Runtime[T]) -> RuntimeSave[T] {
     wait_video: self.wait_video,
     last_say_proceed_on_done: self.last_say_proceed_on_done,
     ended: self.ended,
-    flow_trace: self.flow_trace,
   }
 }
 
@@ -164,7 +134,6 @@ pub fn[T] Runtime::from_save(
     state: save.state,
     ip: save.ip,
     pending_choices: save.pending_choices,
-    pending_choice_ip: save.pending_choice_ip,
     pending_text_input: save.pending_text_input,
     wait_ms: if save.wait_ms < 0 {
       0
@@ -177,7 +146,6 @@ pub fn[T] Runtime::from_save(
     wait_video: save.wait_video,
     last_say_proceed_on_done: save.last_say_proceed_on_done,
     ended: save.ended,
-    flow_trace: save.flow_trace,
   }
 }
 
@@ -192,26 +160,7 @@ pub fn[T : FromJson] Runtime::from_json_string(
   s : String,
 ) -> Runtime[T] raise {
   let json = @json.parse(s)
-  let save : RuntimeSave[T] = @json.from_json(json) catch {
-    _ => {
-      let legacy : RuntimeSaveLegacy[T] = @json.from_json(json)
-      {
-        state: legacy.state,
-        ip: legacy.ip,
-        pending_choices: legacy.pending_choices,
-        pending_choice_ip: None,
-        pending_text_input: legacy.pending_text_input,
-        wait_ms: legacy.wait_ms,
-        wait_for_click: legacy.wait_for_click,
-        wait_for_click_can_skip: true,
-        wait_custom_name: legacy.wait_custom_name,
-        wait_video: legacy.wait_video,
-        last_say_proceed_on_done: legacy.last_say_proceed_on_done,
-        ended: legacy.ended,
-        flow_trace: [],
-      }
-    }
-  }
+  let save : RuntimeSave[T] = @json.from_json(json)
   Runtime::from_save(script, save)
 }
 
@@ -241,24 +190,10 @@ fn[T] Runtime::run_inst(
       Noop
     }
     JumpIf(label, predicate) => {
-      let current_ip = self.ip
-      if predicate(self.state) {
-        self.flow_trace.push(
-          ScriptFlowTrace::JumpIfResolved(
-            ip=current_ip,
-            target=label,
-            taken=true,
-          ),
-        )
+      let taken = predicate(self.state)
+      if taken {
         self.jump_to_label(label)
       } else {
-        self.flow_trace.push(
-          ScriptFlowTrace::JumpIfResolved(
-            ip=current_ip,
-            target=label,
-            taken=false,
-          ),
-        )
         self.ip = self.ip + 1
       }
       Noop
@@ -327,7 +262,6 @@ fn[T] Runtime::run_inst(
       VideoStarted(url, can_skip)
     }
     Choice(options) => {
-      self.pending_choice_ip = Some(self.ip)
       self.ip = self.ip + 1
       self.pending_choices = options
       ChoicePrompt(options)
@@ -387,13 +321,9 @@ fn[T] Runtime::run_inst(
       self.ip = self.ip + 1
       CgUnlocked(id)
     }
-    AnimatePixi(target, spec) => {
+    Animate(target, spec, kind) => {
       self.ip = self.ip + 1
-      AnimatedPixi(target, spec)
-    }
-    AnimateDom(target, spec) => {
-      self.ip = self.ip + 1
-      AnimatedDom(target, spec)
+      Animated(target, spec, kind)
     }
     ApplyEffect(target, spec) => {
       self.ip = self.ip + 1
@@ -527,13 +457,6 @@ pub fn[T] Runtime::submit_custom_event(
             let selected = selector(self.state, payload)
             match self.script.labels.get(selected.0) {
               Some(idx) => {
-                self.flow_trace.push(
-                  ScriptFlowTrace::CustomJumpResolved(
-                    ip=self.ip,
-                    name~,
-                    target=selected.0,
-                  ),
-                )
                 self.wait_custom_name = None
                 self.ip = idx
               }
@@ -558,15 +481,7 @@ pub fn[T] Runtime::choose(
   }
   for opt in self.pending_choices {
     if opt.id == id {
-      match self.pending_choice_ip {
-        Some(choice_ip) =>
-          self.flow_trace.push(
-            ScriptFlowTrace::ChoiceResolved(ip=choice_ip, choice_id=id),
-          )
-        None => ()
-      }
       self.pending_choices = []
-      self.pending_choice_ip = None
       self.jump_to_label(opt.jump)
       return self.step()
     }
@@ -575,28 +490,8 @@ pub fn[T] Runtime::choose(
 }
 
 ///|
-pub fn[T] Runtime::flow_trace(self : Runtime[T]) -> Array[ScriptFlowTrace] {
-  self.flow_trace
-}
-
-///|
 pub fn[T] Runtime::ip(self : Runtime[T]) -> Int {
   self.ip
-}
-
-///|
-pub fn[T] Runtime::force_custom_jump(
-  self : Runtime[T],
-  name : String,
-  target : String,
-) -> Unit raise ScriptRuntimeError {
-  match self.wait_custom_name {
-    Some(waiting) if waiting == name => {
-      self.wait_custom_name = None
-      self.jump_to_label(target)
-    }
-    _ => ()
-  }
 }
 
 ///|

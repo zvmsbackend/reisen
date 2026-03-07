@@ -16,7 +16,6 @@ using @core {
   type RuntimeEvent,
   type RuntimeSave,
   type Script,
-  type ScriptFlowTrace,
   type ScalarState,
   type ScriptRuntimeError,
 }
@@ -25,7 +24,7 @@ using @core {
 using @storage {type GameSettings}
 
 ///|
-using @state {type GameState, type DialogText}
+using @state {type DialogText}
 
 ///|
 using @ui {type AudioDom, type UiDom, type UiViewModel, type UiStrings}

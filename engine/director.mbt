@@ -345,16 +345,6 @@ pub fn[T] Director::can_auto_skip_wait_click(self : Director[T]) -> Bool {
 }
 
 ///|
-pub fn[T] Director::flow_trace(self : Director[T]) -> Array[ScriptFlowTrace] {
-  self.runtime.flow_trace()
-}
-
-///|
-pub fn[T] Director::runtime_ip(self : Director[T]) -> Int {
-  self.runtime.ip()
-}
-
-///|
 pub fn[T] Director::is_waiting_video(self : Director[T]) -> Bool {
   self.runtime.is_waiting_video()
 }

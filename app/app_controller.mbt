@@ -29,7 +29,7 @@ pub suberror AppControllerError {
   ScriptLoadFailed(message~ : String)
   ScriptValidationMissingImage(id~ : String)
   ScriptValidationMissingAudio(id~ : String)
-  ScriptValidationMissingSaveSlot(slot~ : String)
+  SaveSlotMissing(slot~ : String)
 } derive(Show, Eq)
 
 ///|
@@ -40,8 +40,7 @@ pub fn AppControllerError::message(self : AppControllerError) -> String {
       "Script references missing image asset: \{id}"
     ScriptValidationMissingAudio(id~) =>
       "Script references missing audio asset: \{id}"
-    ScriptValidationMissingSaveSlot(slot~) =>
-      "Script references missing save slot: \{slot}"
+    SaveSlotMissing(slot~) => "Save slot missing: \{slot}"
   }
 }
 
@@ -90,6 +89,7 @@ struct AppController[T] {
   event_hook : EventHook
   mut runner : GameRunner[T]?
   mut saved_director_json : String?
+  mut saved_dialog_history : Array[DialogLogEntry]?
   assets : AssetStore
 }
 
@@ -217,6 +217,7 @@ pub fn[T] AppController::new(
     event_hook,
     runner: None,
     saved_director_json: None,
+    saved_dialog_history: None,
     gallery_replay_state_factories,
     assets,
   }
@@ -261,7 +262,13 @@ async fn[T] AppController::script(
       validate_script_assets(script, self.assets) catch {
         MissingImageAsset(id~) => raise ScriptValidationMissingImage(id~)
         MissingAudioAsset(id~) => raise ScriptValidationMissingAudio(id~)
-        MissingSaveSlot(slot~) => raise ScriptValidationMissingSaveSlot(slot~)
+        MissingSaveSlot(slot~) => raise SaveSlotMissing(slot~)
+        InvalidSavePayload(raw~) =>
+          raise ScriptLoadFailed(message="Invalid save payload: \{raw}")
+        UnsupportedSavePayloadVersion(expected~, found~) =>
+          raise ScriptLoadFailed(
+            message="Unsupported save payload version: expected \{expected}, found \{found}",
+          )
       }
       self.script = Some(script)
       script
@@ -628,6 +635,7 @@ async fn[T : FromJson] AppController::resume_runner_from_json(
   self : AppController[T],
   script : Script[T],
   director_json : String,
+  dialog_history : Array[DialogLogEntry],
 ) -> GameRunner[T] {
   let runner = start_game_from_save(
     script,
@@ -642,6 +650,7 @@ async fn[T : FromJson] AppController::resume_runner_from_json(
     script_locale=self.locale,
     script_default_locale=self.default_locale,
     gallery_ns=self.save_ns,
+    dialog_history~,
   )
   runner.set_ui_click_sfx(self.ui_click_sfx_id)
   self.apply_settings_from_storage(runner)
@@ -912,6 +921,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
             match runner.take_pending_action() {
               Some("settings") => {
                 self.saved_director_json = Some(runner.director().save_json())
+                self.saved_dialog_history = Some(runner.dialog_history())
                 runner.clear_ui()
                 self.settings_menu.set_context(FromMidgame)
                 self.settings_menu.set_view_mode(Settings)
@@ -928,21 +938,14 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                 )
               Some("save") => {
                 self.saved_director_json = Some(runner.director().save_json())
+                self.saved_dialog_history = Some(runner.dialog_history())
                 runner.clear_ui()
                 self.settings_menu.set_context(FromMidgame)
                 self.settings_menu.set_view_mode(SaveList)
                 self.settings_menu.render()
                 self.phase = AppPhase::Settings
               }
-              Some("log") => {
-                if runner.log_build_state() == LogBuildState::NotBuilt {
-                  runner.start_reconstruct_dialog_history(
-                    self.script(),
-                    (self.new_state)(),
-                  )
-                }
-                runner.toggle_log_visible()
-              }
+              Some("log") => runner.toggle_log_visible()
               _ => ()
             }
             true
@@ -973,9 +976,13 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           match self.saved_director_json {
             Some(json) => {
               self.saved_director_json = None
+              let dialog_history = self.saved_dialog_history.unwrap_or([])
+              self.saved_dialog_history = None
               let script = self.script()
               try {
-                let runner = self.resume_runner_from_json(script, json)
+                let runner = self.resume_runner_from_json(
+                  script, json, dialog_history,
+                )
                 runner.sync_ui()
                 self.runner = Some(runner)
                 self.phase = AppPhase::InGame
@@ -988,13 +995,17 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                 }
               }
             }
-            None => self.enter_start_menu()
+            None => {
+              self.saved_dialog_history = None
+              self.enter_start_menu()
+            }
           }
         }
         NewGame => {
           self.emit_ui_click_sfx()
           self.settings_menu.clear()
           self.saved_director_json = None
+          self.saved_dialog_history = None
           self.start_menu_music_stop()
           let runner = self.make_runner(self.script(), (self.new_state)())
           self.runner = Some(runner)
@@ -1014,6 +1025,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           (self.event_hook)(SfxStopped)
           self.settings_menu.clear()
           self.saved_director_json = None
+          self.saved_dialog_history = None
           self.runner = None
           self.enter_start_menu()
         }
@@ -1026,12 +1038,6 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
           self.settings_menu.clear()
           match self.runner {
             Some(runner) => {
-              if runner.log_build_state() == LogBuildState::NotBuilt {
-                runner.start_reconstruct_dialog_history(
-                  self.script(),
-                  (self.new_state)(),
-                )
-              }
               runner.set_log_visible(true)
               self.phase = AppPhase::InGame
             }

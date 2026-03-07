@@ -10,7 +10,7 @@ using @storage {
 }
 
 ///|
-using @core {type EventHook, type Runtime, type Script}
+using @core {type DialogLogEntry, type EventHook, type Runtime, type Script}
 
 ///|
 using @state {type GameState, type DialogText}
@@ -43,9 +43,4 @@ using @ui {
 }
 
 ///|
-using @engine {
-  type Director,
-  type GameRunner,
-  type RenderSyncHook,
-  type LogBuildState,
-}
+using @engine {type Director, type GameRunner, type RenderSyncHook}
