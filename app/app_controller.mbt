@@ -84,6 +84,7 @@ struct AppController[T] {
   mut credits_return_phase : AppPhase
   gallery_replay_state_factories : ReplayStateFactories[T]
   mut phase : AppPhase
+  mut save_store_preloaded : Bool
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
   mut runner : GameRunner[T]?
@@ -206,6 +207,7 @@ pub fn[T] AppController::new(
     } else {
       AppPhase::StartGate
     },
+    save_store_preloaded: false,
     render_sync,
     event_hook,
     runner: None,
@@ -824,6 +826,12 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
 ) -> Bool raise AppControllerError {
+  if !self.save_store_preloaded {
+    preload_default_save_slot_store_namespace(self.save_ns) catch {
+      _ => ()
+    }
+    self.save_store_preloaded = true
+  }
   let ui_locale_changed = self.ensure_ui_locales_loaded()
   let script_locale_changed = self.ensure_script_locales_loaded()
   if ui_locale_changed || script_locale_changed {

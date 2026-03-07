@@ -8,6 +8,7 @@ using @storage {
   save_slot_read_in,
   save_slot_write_in,
   save_slot_write_meta_in,
+  preload_default_save_slot_store_namespace,
   settings_read_in,
 }
 

@@ -94,6 +94,12 @@ pub struct MultiSaveSlotStore[P, F] {
 }
 
 ///|
+pub type DefaultSaveSlotStore = MultiSaveSlotStore[
+  IndexedDbSaveSlotStore,
+  LocalSaveSlotStore,
+]
+
+///|
 pub fn[P, F] MultiSaveSlotStore::new(
   primary : P,
   fallback : F,
@@ -638,7 +644,7 @@ fn merge_unique_slots(
 
 ///|
 pub impl SaveSlotStore for LocalSaveSlotStore with read_slot(_, ns, slot) {
-  save_slot_read_in(ns, slot)
+  local_save_slot_read_in(ns, slot)
 }
 
 ///|
@@ -648,22 +654,22 @@ pub impl SaveSlotStore for LocalSaveSlotStore with write_slot(
   slot,
   value,
 ) {
-  save_slot_write_in(ns, slot, value)
+  local_save_slot_write_in(ns, slot, value)
 }
 
 ///|
 pub impl SaveSlotStore for LocalSaveSlotStore with delete_slot(_, ns, slot) {
-  save_slot_delete_in(ns, slot)
+  local_save_slot_delete_in(ns, slot)
 }
 
 ///|
 pub impl SaveSlotStore for LocalSaveSlotStore with list_slots(_, ns) {
-  save_slot_list_in(ns)
+  local_save_slot_list_in(ns)
 }
 
 ///|
 pub impl SaveSlotStore for LocalSaveSlotStore with read_slot_meta(_, ns, slot) {
-  save_slot_read_meta_in(ns, slot)
+  local_save_slot_read_meta_in(ns, slot)
 }
 
 ///|
@@ -673,7 +679,7 @@ pub impl SaveSlotStore for LocalSaveSlotStore with write_slot_meta(
   slot,
   meta,
 ) {
-  save_slot_write_meta_in(ns, slot, meta)
+  local_save_slot_write_meta_in(ns, slot, meta)
 }
 
 ///|
@@ -833,8 +839,18 @@ pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotSt
 }
 
 ///|
-pub fn default_save_slot_store() -> LocalSaveSlotStore {
-  local_save_slot_store()
+pub fn default_save_slot_store() -> DefaultSaveSlotStore {
+  MultiSaveSlotStore::new(
+    indexeddb_save_slot_store(),
+    local_save_slot_store(),
+    migrate_on_read=true,
+  )
+}
+
+///|
+pub async fn preload_default_save_slot_store_namespace(ns : String) -> Unit {
+  let store = default_save_slot_store()
+  store.primary.preload_namespace(ns)
 }
 
 ///|
@@ -903,28 +919,28 @@ pub fn[S : SaveSlotStore] save_slot_store_entries_in(
 }
 
 ///|
-pub fn save_slot_write_in(ns : String, slot : String, value : String) -> Unit {
+fn local_save_slot_write_in(ns : String, slot : String, value : String) -> Unit {
   storage_set_item(slot_key(ns, slot), value)
 }
 
 ///|
-pub fn save_slot_read_in(ns : String, slot : String) -> String? {
+fn local_save_slot_read_in(ns : String, slot : String) -> String? {
   storage_get_item(slot_key(ns, slot)).to_option()
 }
 
 ///|
-pub fn save_slot_delete_in(ns : String, slot : String) -> Unit {
+fn local_save_slot_delete_in(ns : String, slot : String) -> Unit {
   storage_remove_item(slot_key(ns, slot))
   storage_remove_item(slot_meta_key(ns, slot))
 }
 
 ///|
-pub fn save_slot_list_in(ns : String) -> Array[String] {
+fn local_save_slot_list_in(ns : String) -> Array[String] {
   storage_list_slots(namespaced_prefix(ns))
 }
 
 ///|
-pub fn save_slot_write_meta_in(
+fn local_save_slot_write_meta_in(
   ns : String,
   slot : String,
   meta : SaveSlotMeta,
@@ -933,7 +949,7 @@ pub fn save_slot_write_meta_in(
 }
 
 ///|
-pub fn save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
+fn local_save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
   match storage_get_item(slot_meta_key(ns, slot)).to_option() {
     Some(raw) => Some(@json.from_json(@json.parse(raw))) catch { _ => None }
     None => None
@@ -941,11 +957,42 @@ pub fn save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
 }
 
 ///|
+pub fn save_slot_write_in(ns : String, slot : String, value : String) -> Unit {
+  save_slot_store_write_in(default_save_slot_store(), ns, slot, value)
+}
+
+///|
+pub fn save_slot_read_in(ns : String, slot : String) -> String? {
+  save_slot_store_read_in(default_save_slot_store(), ns, slot)
+}
+
+///|
+pub fn save_slot_delete_in(ns : String, slot : String) -> Unit {
+  save_slot_store_delete_in(default_save_slot_store(), ns, slot)
+}
+
+///|
+pub fn save_slot_list_in(ns : String) -> Array[String] {
+  save_slot_store_list_in(default_save_slot_store(), ns)
+}
+
+///|
+pub fn save_slot_write_meta_in(
+  ns : String,
+  slot : String,
+  meta : SaveSlotMeta,
+) -> Unit {
+  save_slot_store_write_meta_in(default_save_slot_store(), ns, slot, meta)
+}
+
+///|
+pub fn save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
+  save_slot_store_read_meta_in(default_save_slot_store(), ns, slot)
+}
+
+///|
 pub fn save_slot_entries_in(ns : String) -> Array[SaveSlotEntry] {
-  save_slot_list_in(ns).map(slot => {
-    slot,
-    meta: save_slot_read_meta_in(ns, slot),
-  })
+  save_slot_store_entries_in(default_save_slot_store(), ns)
 }
 
 ///|

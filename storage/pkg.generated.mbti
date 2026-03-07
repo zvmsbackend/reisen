@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn default_save_slot_store() -> LocalSaveSlotStore
+pub fn default_save_slot_store() -> MultiSaveSlotStore[IndexedDbSaveSlotStore, LocalSaveSlotStore]
 
 pub fn indexeddb_save_slot_store(db_name? : String) -> IndexedDbSaveSlotStore
 
@@ -43,6 +43,8 @@ pub fn persistent_set_int_in(String, String, Int) -> Unit
 pub fn persistent_set_text(String, String) -> Unit
 
 pub fn persistent_set_text_in(String, String, String) -> Unit
+
+pub async fn preload_default_save_slot_store_namespace(String) -> Unit
 
 pub fn save_slot_delete(String) -> Unit
 
@@ -156,6 +158,7 @@ pub impl ToJson for SaveSlotMeta
 pub impl @json.FromJson for SaveSlotMeta
 
 // Type aliases
+pub type DefaultSaveSlotStore = MultiSaveSlotStore[IndexedDbSaveSlotStore, LocalSaveSlotStore]
 
 // Traits
 pub trait SaveSlotStore {
