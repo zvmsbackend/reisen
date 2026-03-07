@@ -8,6 +8,8 @@ import {
 // Values
 pub fn default_save_slot_store() -> LocalSaveSlotStore
 
+pub fn indexeddb_save_slot_store(db_name? : String) -> IndexedDbSaveSlotStore
+
 pub fn local_save_slot_store() -> LocalSaveSlotStore
 
 pub fn persistent_delete(String) -> Unit
@@ -114,6 +116,14 @@ pub impl Eq for GameSettings
 pub impl Show for GameSettings
 pub impl ToJson for GameSettings
 pub impl @json.FromJson for GameSettings
+
+pub struct IndexedDbSaveSlotStore {
+  db_name : String
+}
+pub fn IndexedDbSaveSlotStore::new(db_name? : String) -> Self
+pub async fn IndexedDbSaveSlotStore::preload_all(Self) -> Unit
+pub async fn IndexedDbSaveSlotStore::preload_namespace(Self, String) -> Unit
+pub impl SaveSlotStore for IndexedDbSaveSlotStore
 
 pub struct LocalSaveSlotStore {
 }

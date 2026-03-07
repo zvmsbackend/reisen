@@ -54,6 +54,30 @@ pub fn local_save_slot_store() -> LocalSaveSlotStore {
 }
 
 ///|
+/// IndexedDB-backed store with synchronous cache reads.
+///
+/// Reads and list operations are served from an in-memory cache.
+/// Writes/deletes update cache immediately and flush to IndexedDB asynchronously.
+/// Use `preload_namespace`/`preload_all` to hydrate cache on startup.
+pub struct IndexedDbSaveSlotStore {
+  db_name : String
+}
+
+///|
+pub fn IndexedDbSaveSlotStore::new(
+  db_name? : String = "reisen.save.indexeddb",
+) -> IndexedDbSaveSlotStore {
+  { db_name, }
+}
+
+///|
+pub fn indexeddb_save_slot_store(
+  db_name? : String = "reisen.save.indexeddb",
+) -> IndexedDbSaveSlotStore {
+  IndexedDbSaveSlotStore::new(db_name~)
+}
+
+///|
 /// Composite backend with primary + fallback stores.
 ///
 /// Read path:
@@ -190,6 +214,393 @@ extern "js" fn storage_list_slots(prefix : String) -> Array[String] =
   #| }
 
 ///|
+extern "js" fn idb_cache_set_slot(
+  db_name : String,
+  key : String,
+  value : String,
+) -> Unit =
+  #| (db_name, key, value) => {
+  #|   const root = globalThis;
+  #|   if (!root.__reisenIdbSlotCache) root.__reisenIdbSlotCache = new Map();
+  #|   let dbCache = root.__reisenIdbSlotCache.get(db_name);
+  #|   if (!dbCache) {
+  #|     dbCache = new Map();
+  #|     root.__reisenIdbSlotCache.set(db_name, dbCache);
+  #|   }
+  #|   dbCache.set(key, value);
+  #| }
+
+///|
+extern "js" fn idb_cache_get_slot(
+  db_name : String,
+  key : String,
+) -> @js.Nullable[String] =
+  #| (db_name, key) => {
+  #|   const cacheRoot = globalThis.__reisenIdbSlotCache;
+  #|   if (!cacheRoot) return null;
+  #|   const dbCache = cacheRoot.get(db_name);
+  #|   if (!dbCache) return null;
+  #|   return dbCache.has(key) ? dbCache.get(key) : null;
+  #| }
+
+///|
+extern "js" fn idb_cache_delete_slot(db_name : String, key : String) -> Unit =
+  #| (db_name, key) => {
+  #|   const cacheRoot = globalThis.__reisenIdbSlotCache;
+  #|   if (!cacheRoot) return;
+  #|   const dbCache = cacheRoot.get(db_name);
+  #|   if (!dbCache) return;
+  #|   dbCache.delete(key);
+  #| }
+
+///|
+extern "js" fn idb_cache_list_slots(
+  db_name : String,
+  prefix : String,
+) -> Array[String] =
+  #| (db_name, prefix) => {
+  #|   const out = [];
+  #|   const cacheRoot = globalThis.__reisenIdbSlotCache;
+  #|   if (!cacheRoot) return out;
+  #|   const dbCache = cacheRoot.get(db_name);
+  #|   if (!dbCache) return out;
+  #|   for (const key of dbCache.keys()) {
+  #|     if (key.startsWith(prefix)) {
+  #|       out.push(key.slice(prefix.length));
+  #|     }
+  #|   }
+  #|   return out;
+  #| }
+
+///|
+extern "js" fn idb_cache_set_meta(
+  db_name : String,
+  key : String,
+  value : String,
+) -> Unit =
+  #| (db_name, key, value) => {
+  #|   const root = globalThis;
+  #|   if (!root.__reisenIdbMetaCache) root.__reisenIdbMetaCache = new Map();
+  #|   let dbCache = root.__reisenIdbMetaCache.get(db_name);
+  #|   if (!dbCache) {
+  #|     dbCache = new Map();
+  #|     root.__reisenIdbMetaCache.set(db_name, dbCache);
+  #|   }
+  #|   dbCache.set(key, value);
+  #| }
+
+///|
+extern "js" fn idb_cache_get_meta(
+  db_name : String,
+  key : String,
+) -> @js.Nullable[String] =
+  #| (db_name, key) => {
+  #|   const cacheRoot = globalThis.__reisenIdbMetaCache;
+  #|   if (!cacheRoot) return null;
+  #|   const dbCache = cacheRoot.get(db_name);
+  #|   if (!dbCache) return null;
+  #|   return dbCache.has(key) ? dbCache.get(key) : null;
+  #| }
+
+///|
+extern "js" fn idb_cache_delete_meta(db_name : String, key : String) -> Unit =
+  #| (db_name, key) => {
+  #|   const cacheRoot = globalThis.__reisenIdbMetaCache;
+  #|   if (!cacheRoot) return;
+  #|   const dbCache = cacheRoot.get(db_name);
+  #|   if (!dbCache) return;
+  #|   dbCache.delete(key);
+  #| }
+
+///|
+extern "js" fn idb_flush_put_slot(
+  db_name : String,
+  key : String,
+  value : String,
+) -> Unit =
+  #| (db_name, key, value) => {
+  #|   (async () => {
+  #|     const openDb = async () => {
+  #|       const root = globalThis;
+  #|       const idb = root.indexedDB;
+  #|       if (!idb) return null;
+  #|       if (!root.__reisenIdbOpenPromises) root.__reisenIdbOpenPromises = new Map();
+  #|       if (root.__reisenIdbOpenPromises.has(db_name)) {
+  #|         return root.__reisenIdbOpenPromises.get(db_name);
+  #|       }
+  #|       const promise = new Promise((resolve) => {
+  #|         try {
+  #|           const req = idb.open(db_name, 1);
+  #|           req.onupgradeneeded = () => {
+  #|             const db = req.result;
+  #|             if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots');
+  #|             if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+  #|           };
+  #|           req.onsuccess = () => resolve(req.result);
+  #|           req.onerror = () => resolve(null);
+  #|         } catch (_) {
+  #|           resolve(null);
+  #|         }
+  #|       });
+  #|       root.__reisenIdbOpenPromises.set(db_name, promise);
+  #|       return promise;
+  #|     };
+  #|     const db = await openDb();
+  #|     if (!db) return;
+  #|     await new Promise((resolve) => {
+  #|       try {
+  #|         const tx = db.transaction('slots', 'readwrite');
+  #|         tx.objectStore('slots').put(value, key);
+  #|         tx.oncomplete = () => resolve();
+  #|         tx.onerror = () => resolve();
+  #|         tx.onabort = () => resolve();
+  #|       } catch (_) {
+  #|         resolve();
+  #|       }
+  #|     });
+  #|   })();
+  #| }
+
+///|
+extern "js" fn idb_flush_put_meta(
+  db_name : String,
+  key : String,
+  value : String,
+) -> Unit =
+  #| (db_name, key, value) => {
+  #|   (async () => {
+  #|     const openDb = async () => {
+  #|       const root = globalThis;
+  #|       const idb = root.indexedDB;
+  #|       if (!idb) return null;
+  #|       if (!root.__reisenIdbOpenPromises) root.__reisenIdbOpenPromises = new Map();
+  #|       if (root.__reisenIdbOpenPromises.has(db_name)) {
+  #|         return root.__reisenIdbOpenPromises.get(db_name);
+  #|       }
+  #|       const promise = new Promise((resolve) => {
+  #|         try {
+  #|           const req = idb.open(db_name, 1);
+  #|           req.onupgradeneeded = () => {
+  #|             const db = req.result;
+  #|             if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots');
+  #|             if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+  #|           };
+  #|           req.onsuccess = () => resolve(req.result);
+  #|           req.onerror = () => resolve(null);
+  #|         } catch (_) {
+  #|           resolve(null);
+  #|         }
+  #|       });
+  #|       root.__reisenIdbOpenPromises.set(db_name, promise);
+  #|       return promise;
+  #|     };
+  #|     const db = await openDb();
+  #|     if (!db) return;
+  #|     await new Promise((resolve) => {
+  #|       try {
+  #|         const tx = db.transaction('meta', 'readwrite');
+  #|         tx.objectStore('meta').put(value, key);
+  #|         tx.oncomplete = () => resolve();
+  #|         tx.onerror = () => resolve();
+  #|         tx.onabort = () => resolve();
+  #|       } catch (_) {
+  #|         resolve();
+  #|       }
+  #|     });
+  #|   })();
+  #| }
+
+///|
+extern "js" fn idb_flush_delete_slot(
+  db_name : String,
+  value_key : String,
+  meta_key : String,
+) -> Unit =
+  #| (db_name, value_key, meta_key) => {
+  #|   (async () => {
+  #|     const openDb = async () => {
+  #|       const root = globalThis;
+  #|       const idb = root.indexedDB;
+  #|       if (!idb) return null;
+  #|       if (!root.__reisenIdbOpenPromises) root.__reisenIdbOpenPromises = new Map();
+  #|       if (root.__reisenIdbOpenPromises.has(db_name)) {
+  #|         return root.__reisenIdbOpenPromises.get(db_name);
+  #|       }
+  #|       const promise = new Promise((resolve) => {
+  #|         try {
+  #|           const req = idb.open(db_name, 1);
+  #|           req.onupgradeneeded = () => {
+  #|             const db = req.result;
+  #|             if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots');
+  #|             if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+  #|           };
+  #|           req.onsuccess = () => resolve(req.result);
+  #|           req.onerror = () => resolve(null);
+  #|         } catch (_) {
+  #|           resolve(null);
+  #|         }
+  #|       });
+  #|       root.__reisenIdbOpenPromises.set(db_name, promise);
+  #|       return promise;
+  #|     };
+  #|     const db = await openDb();
+  #|     if (!db) return;
+  #|     await new Promise((resolve) => {
+  #|       try {
+  #|         const tx = db.transaction(['slots', 'meta'], 'readwrite');
+  #|         tx.objectStore('slots').delete(value_key);
+  #|         tx.objectStore('meta').delete(meta_key);
+  #|         tx.oncomplete = () => resolve();
+  #|         tx.onerror = () => resolve();
+  #|         tx.onabort = () => resolve();
+  #|       } catch (_) {
+  #|         resolve();
+  #|       }
+  #|     });
+  #|   })();
+  #| }
+
+///|
+extern "js" fn idb_preload_namespace_into_cache(
+  db_name : String,
+  slot_prefix : String,
+  meta_prefix : String,
+) -> @js.Promise =
+  #| async (db_name, slot_prefix, meta_prefix) => {
+  #|   const openDb = async () => {
+  #|     const root = globalThis;
+  #|     const idb = root.indexedDB;
+  #|     if (!idb) return null;
+  #|     if (!root.__reisenIdbOpenPromises) root.__reisenIdbOpenPromises = new Map();
+  #|     if (root.__reisenIdbOpenPromises.has(db_name)) {
+  #|       return root.__reisenIdbOpenPromises.get(db_name);
+  #|     }
+  #|     const promise = new Promise((resolve) => {
+  #|       try {
+  #|         const req = idb.open(db_name, 1);
+  #|         req.onupgradeneeded = () => {
+  #|           const db = req.result;
+  #|           if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots');
+  #|           if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+  #|         };
+  #|         req.onsuccess = () => resolve(req.result);
+  #|         req.onerror = () => resolve(null);
+  #|       } catch (_) {
+  #|         resolve(null);
+  #|       }
+  #|     });
+  #|     root.__reisenIdbOpenPromises.set(db_name, promise);
+  #|     return promise;
+  #|   };
+  #|   const db = await openDb();
+  #|   if (!db) return;
+  #|   if (!globalThis.__reisenIdbSlotCache) globalThis.__reisenIdbSlotCache = new Map();
+  #|   if (!globalThis.__reisenIdbMetaCache) globalThis.__reisenIdbMetaCache = new Map();
+  #|   let slotCache = globalThis.__reisenIdbSlotCache.get(db_name);
+  #|   if (!slotCache) {
+  #|     slotCache = new Map();
+  #|     globalThis.__reisenIdbSlotCache.set(db_name, slotCache);
+  #|   }
+  #|   let metaCache = globalThis.__reisenIdbMetaCache.get(db_name);
+  #|   if (!metaCache) {
+  #|     metaCache = new Map();
+  #|     globalThis.__reisenIdbMetaCache.set(db_name, metaCache);
+  #|   }
+  #|   const loadStore = (storeName, prefix, target) => new Promise((resolve) => {
+  #|     try {
+  #|       const tx = db.transaction(storeName, 'readonly');
+  #|       const req = tx.objectStore(storeName).openCursor();
+  #|       req.onsuccess = () => {
+  #|         const cur = req.result;
+  #|         if (!cur) {
+  #|           resolve();
+  #|           return;
+  #|         }
+  #|         const key = String(cur.key ?? '');
+  #|         if (key.startsWith(prefix)) {
+  #|           const value = cur.value;
+  #|           if (typeof value === 'string') target.set(key, value);
+  #|         }
+  #|         cur.continue();
+  #|       };
+  #|       req.onerror = () => resolve();
+  #|       tx.onabort = () => resolve();
+  #|     } catch (_) {
+  #|       resolve();
+  #|     }
+  #|   });
+  #|   await loadStore('slots', slot_prefix, slotCache);
+  #|   await loadStore('meta', meta_prefix, metaCache);
+  #| }
+
+///|
+extern "js" fn idb_preload_all_into_cache(db_name : String) -> @js.Promise =
+  #| async (db_name) => {
+  #|   const openDb = async () => {
+  #|     const root = globalThis;
+  #|     const idb = root.indexedDB;
+  #|     if (!idb) return null;
+  #|     if (!root.__reisenIdbOpenPromises) root.__reisenIdbOpenPromises = new Map();
+  #|     if (root.__reisenIdbOpenPromises.has(db_name)) {
+  #|       return root.__reisenIdbOpenPromises.get(db_name);
+  #|     }
+  #|     const promise = new Promise((resolve) => {
+  #|       try {
+  #|         const req = idb.open(db_name, 1);
+  #|         req.onupgradeneeded = () => {
+  #|           const db = req.result;
+  #|           if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots');
+  #|           if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+  #|         };
+  #|         req.onsuccess = () => resolve(req.result);
+  #|         req.onerror = () => resolve(null);
+  #|       } catch (_) {
+  #|         resolve(null);
+  #|       }
+  #|     });
+  #|     root.__reisenIdbOpenPromises.set(db_name, promise);
+  #|     return promise;
+  #|   };
+  #|   const db = await openDb();
+  #|   if (!db) return;
+  #|   if (!globalThis.__reisenIdbSlotCache) globalThis.__reisenIdbSlotCache = new Map();
+  #|   if (!globalThis.__reisenIdbMetaCache) globalThis.__reisenIdbMetaCache = new Map();
+  #|   let slotCache = globalThis.__reisenIdbSlotCache.get(db_name);
+  #|   if (!slotCache) {
+  #|     slotCache = new Map();
+  #|     globalThis.__reisenIdbSlotCache.set(db_name, slotCache);
+  #|   }
+  #|   let metaCache = globalThis.__reisenIdbMetaCache.get(db_name);
+  #|   if (!metaCache) {
+  #|     metaCache = new Map();
+  #|     globalThis.__reisenIdbMetaCache.set(db_name, metaCache);
+  #|   }
+  #|   const loadStore = (storeName, target) => new Promise((resolve) => {
+  #|     try {
+  #|       const tx = db.transaction(storeName, 'readonly');
+  #|       const req = tx.objectStore(storeName).openCursor();
+  #|       req.onsuccess = () => {
+  #|         const cur = req.result;
+  #|         if (!cur) {
+  #|           resolve();
+  #|           return;
+  #|         }
+  #|         const key = String(cur.key ?? '');
+  #|         const value = cur.value;
+  #|         if (typeof value === 'string') target.set(key, value);
+  #|         cur.continue();
+  #|       };
+  #|       req.onerror = () => resolve();
+  #|       tx.onabort = () => resolve();
+  #|     } catch (_) {
+  #|       resolve();
+  #|     }
+  #|   });
+  #|   await loadStore('slots', slotCache);
+  #|   await loadStore('meta', metaCache);
+  #| }
+
+///|
 fn namespaced_prefix(ns : String) -> String {
   save_slot_prefix + ns + "."
 }
@@ -263,6 +674,89 @@ pub impl SaveSlotStore for LocalSaveSlotStore with write_slot_meta(
   meta,
 ) {
   save_slot_write_meta_in(ns, slot, meta)
+}
+
+///|
+pub impl SaveSlotStore for IndexedDbSaveSlotStore with read_slot(self, ns, slot) {
+  idb_cache_get_slot(self.db_name, slot_key(ns, slot)).to_option()
+}
+
+///|
+pub impl SaveSlotStore for IndexedDbSaveSlotStore with write_slot(
+  self,
+  ns,
+  slot,
+  value,
+) {
+  let key = slot_key(ns, slot)
+  idb_cache_set_slot(self.db_name, key, value)
+  idb_flush_put_slot(self.db_name, key, value)
+}
+
+///|
+pub impl SaveSlotStore for IndexedDbSaveSlotStore with delete_slot(
+  self,
+  ns,
+  slot,
+) {
+  let value_key = slot_key(ns, slot)
+  let meta_key = slot_meta_key(ns, slot)
+  idb_cache_delete_slot(self.db_name, value_key)
+  idb_cache_delete_meta(self.db_name, meta_key)
+  idb_flush_delete_slot(self.db_name, value_key, meta_key)
+}
+
+///|
+pub impl SaveSlotStore for IndexedDbSaveSlotStore with list_slots(self, ns) {
+  idb_cache_list_slots(self.db_name, namespaced_prefix(ns))
+}
+
+///|
+pub impl SaveSlotStore for IndexedDbSaveSlotStore with read_slot_meta(
+  self,
+  ns,
+  slot,
+) {
+  match idb_cache_get_meta(self.db_name, slot_meta_key(ns, slot)).to_option() {
+    Some(raw) => Some(@json.from_json(@json.parse(raw))) catch { _ => None }
+    None => None
+  }
+}
+
+///|
+pub impl SaveSlotStore for IndexedDbSaveSlotStore with write_slot_meta(
+  self,
+  ns,
+  slot,
+  meta,
+) {
+  let key = slot_meta_key(ns, slot)
+  let raw = meta.to_json().stringify()
+  idb_cache_set_meta(self.db_name, key, raw)
+  idb_flush_put_meta(self.db_name, key, raw)
+}
+
+///|
+pub async fn IndexedDbSaveSlotStore::preload_namespace(
+  self : IndexedDbSaveSlotStore,
+  ns : String,
+) -> Unit {
+  ignore(
+    @js.Promise::wait(
+      idb_preload_namespace_into_cache(
+        self.db_name,
+        namespaced_prefix(ns),
+        namespaced_meta_prefix(ns),
+      ),
+    ),
+  )
+}
+
+///|
+pub async fn IndexedDbSaveSlotStore::preload_all(
+  self : IndexedDbSaveSlotStore,
+) -> Unit {
+  ignore(@js.Promise::wait(idb_preload_all_into_cache(self.db_name)))
 }
 
 ///|

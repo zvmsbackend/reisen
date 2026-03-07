@@ -171,3 +171,20 @@ test "multi backend list merges unique slots" {
   assert_true(slots.contains("other"))
   assert_eq(slots.filter(s => s == "same").length(), 1)
 }
+
+///|
+test "indexeddb store cache read write list" {
+  let store = IndexedDbSaveSlotStore::new(db_name="wb.indexed.cache")
+  store.delete_slot("ns", "a")
+  store.write_slot("ns", "a", "payload")
+  assert_eq(store.read_slot("ns", "a"), Some("payload"))
+  assert_true(store.list_slots("ns").contains("a"))
+}
+
+///|
+test "indexeddb store cache metadata roundtrip" {
+  let store = IndexedDbSaveSlotStore::new(db_name="wb.indexed.meta")
+  let meta = save_slot_meta("T", "P", updated_at_ms=11.0)
+  store.write_slot_meta("ns", "a", meta)
+  assert_eq(store.read_slot_meta("ns", "a"), Some(meta))
+}
