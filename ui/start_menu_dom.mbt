@@ -34,6 +34,7 @@ pub enum StartLocaleAction {
 struct StartMenu {
   root_id : String
   save_ns : String
+  save_store : &@storage.SaveSlotStore
   background : String
   mut ui_strings : UiStrings
   mut show_credits : Bool
@@ -43,11 +44,19 @@ struct StartMenu {
 pub fn StartMenu::new(
   root_id : String,
   save_namespace? : String = "global",
+  save_store? : &@storage.SaveSlotStore = default_save_slot_storage(),
   background? : String = "",
   ui_strings? : UiStrings = UiStrings::default(),
   show_credits? : Bool = false,
 ) -> StartMenu {
-  { root_id, save_ns: save_namespace, background, ui_strings, show_credits }
+  {
+    root_id,
+    save_ns: save_namespace,
+    save_store,
+    background,
+    ui_strings,
+    show_credits,
+  }
 }
 
 ///|
@@ -461,7 +470,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
 
 ///|
 pub fn StartMenu::render(self : StartMenu) -> Unit {
-  let entries = save_slot_entries_in(self.save_ns)
+  let entries = save_slot_store_entries_in(self.save_store, self.save_ns)
   let has_gallery = @gallery.registered_images().length() > 0
   let has_credits = self.show_credits && self.ui_strings.menu_credits != ""
   let continue_slot = choose_continue_slot(entries)

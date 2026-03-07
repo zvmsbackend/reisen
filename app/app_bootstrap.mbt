@@ -168,9 +168,10 @@ pub fn[T : ToJson] save_director_to_slot(
   director : Director[T],
   slot : String,
   save_namespace? : String = "global",
+  save_store? : &SaveSlotStore = default_save_slot_storage(),
   slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
-  save_slot_write_in(
+  save_store.write_slot(
     save_namespace,
     slot,
     encode_save_slot_payload(director.save_json(), slot_payload_version),
@@ -182,12 +183,14 @@ pub fn[T : ToJson] save_runner_to_slot(
   runner : GameRunner[T],
   slot : String,
   save_namespace? : String = "global",
+  save_store? : &SaveSlotStore = default_save_slot_storage(),
   slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
   save_director_to_slot(
     runner.director(),
     slot,
     save_namespace~,
+    save_store~,
     slot_payload_version~,
   )
 }
@@ -199,10 +202,21 @@ pub fn[T : ToJson] save_runner_to_slot_with_meta(
   title? : String = "",
   preview? : String = "",
   save_namespace? : String = "global",
+  save_store? : &SaveSlotStore = default_save_slot_storage(),
   slot_payload_version? : Int = save_slot_payload_version,
 ) -> Unit {
-  save_runner_to_slot(runner, slot, save_namespace~, slot_payload_version~)
-  save_slot_write_meta_in(save_namespace, slot, save_slot_meta(title, preview))
+  save_runner_to_slot(
+    runner,
+    slot,
+    save_namespace~,
+    save_store~,
+    slot_payload_version~,
+  )
+  save_store.write_slot_meta(
+    save_namespace,
+    slot,
+    save_slot_meta(title, preview),
+  )
 }
 
 ///|
@@ -213,6 +227,7 @@ pub async fn[T : FromJson] start_game_from_slot(
   render_sync? : RenderSyncHook[T] = (_, _) => (),
   event_hook? : EventHook = _ => (),
   save_namespace? : String = "global",
+  save_store? : &SaveSlotStore = default_save_slot_storage(),
   settings? : GameSettings,
   slot_payload_version? : Int = save_slot_payload_version,
   ui_strings? : UiStrings = UiStrings::default(),
@@ -223,7 +238,7 @@ pub async fn[T : FromJson] start_game_from_slot(
   script_default_locale? : String = "",
   gallery_ns? : String = "global",
 ) -> GameRunner[T] {
-  match save_slot_read_in(save_namespace, slot) {
+  match save_store.read_slot(save_namespace, slot) {
     Some(save_json) =>
       start_game_from_save(
         script,

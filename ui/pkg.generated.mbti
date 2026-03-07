@@ -6,6 +6,7 @@ import {
   "sennenki/reisen/assets",
   "sennenki/reisen/core",
   "sennenki/reisen/state",
+  "sennenki/reisen/storage",
 }
 
 // Values
@@ -89,7 +90,7 @@ pub impl Show for SettingsContext
 
 type SettingsMenu
 pub fn SettingsMenu::clear(Self) -> Unit
-pub fn SettingsMenu::new(String, save_namespace? : String, background? : String, context? : SettingsContext, ui_strings? : UiStrings, show_credits? : Bool) -> Self
+pub fn SettingsMenu::new(String, save_namespace? : String, save_store? : &@storage.SaveSlotStore, background? : String, context? : SettingsContext, ui_strings? : UiStrings, show_credits? : Bool) -> Self
 pub fn SettingsMenu::render(Self) -> Unit
 pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
 pub fn SettingsMenu::set_languages(Self, Array[(String, String)]) -> Unit
@@ -126,7 +127,7 @@ pub fn StartMenu::clear(Self) -> Unit
 pub fn StartMenu::clear_gate(Self) -> Unit
 pub fn StartMenu::clear_locale_picker(Self) -> Unit
 pub fn StartMenu::clear_logo(Self) -> Unit
-pub fn StartMenu::new(String, save_namespace? : String, background? : String, ui_strings? : UiStrings, show_credits? : Bool) -> Self
+pub fn StartMenu::new(String, save_namespace? : String, save_store? : &@storage.SaveSlotStore, background? : String, ui_strings? : UiStrings, show_credits? : Bool) -> Self
 pub fn StartMenu::render(Self) -> Unit
 pub fn StartMenu::render_gate(Self) -> Unit
 pub fn StartMenu::render_locale_picker(Self, Array[(String, String)]) -> Unit

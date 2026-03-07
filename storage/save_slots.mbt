@@ -42,6 +42,7 @@ pub trait SaveSlotStore {
   list_slots(Self, ns : String) -> Array[String]
   read_slot_meta(Self, ns : String, slot : String) -> SaveSlotMeta?
   write_slot_meta(Self, ns : String, slot : String, meta : SaveSlotMeta) -> Unit
+  preload_namespace(Self, ns : String) -> Unit
 }
 
 ///|
@@ -607,6 +608,81 @@ extern "js" fn idb_preload_all_into_cache(db_name : String) -> @js.Promise =
   #| }
 
 ///|
+extern "js" fn idb_preload_namespace_fire_and_forget(
+  db_name : String,
+  slot_prefix : String,
+  meta_prefix : String,
+) -> Unit =
+  #| (db_name, slot_prefix, meta_prefix) => {
+  #|   const root = globalThis;
+  #|   const idb = root.indexedDB;
+  #|   if (!idb) return;
+  #|   if (!root.__reisenIdbOpenPromises) root.__reisenIdbOpenPromises = new Map();
+  #|   const openDb = async () => {
+  #|     if (root.__reisenIdbOpenPromises.has(db_name)) {
+  #|       return root.__reisenIdbOpenPromises.get(db_name);
+  #|     }
+  #|     const promise = new Promise((resolve) => {
+  #|       try {
+  #|         const req = idb.open(db_name, 1);
+  #|         req.onupgradeneeded = () => {
+  #|           const db = req.result;
+  #|           if (!db.objectStoreNames.contains('slots')) db.createObjectStore('slots');
+  #|           if (!db.objectStoreNames.contains('meta')) db.createObjectStore('meta');
+  #|         };
+  #|         req.onsuccess = () => resolve(req.result);
+  #|         req.onerror = () => resolve(null);
+  #|       } catch (_) {
+  #|         resolve(null);
+  #|       }
+  #|     });
+  #|     root.__reisenIdbOpenPromises.set(db_name, promise);
+  #|     return promise;
+  #|   };
+  #|   (async () => {
+  #|     const db = await openDb();
+  #|     if (!db) return;
+  #|     if (!root.__reisenIdbSlotCache) root.__reisenIdbSlotCache = new Map();
+  #|     if (!root.__reisenIdbMetaCache) root.__reisenIdbMetaCache = new Map();
+  #|     let slotCache = root.__reisenIdbSlotCache.get(db_name);
+  #|     if (!slotCache) {
+  #|       slotCache = new Map();
+  #|       root.__reisenIdbSlotCache.set(db_name, slotCache);
+  #|     }
+  #|     let metaCache = root.__reisenIdbMetaCache.get(db_name);
+  #|     if (!metaCache) {
+  #|       metaCache = new Map();
+  #|       root.__reisenIdbMetaCache.set(db_name, metaCache);
+  #|     }
+  #|     const loadStore = (storeName, prefix, target) => new Promise((resolve) => {
+  #|       try {
+  #|         const tx = db.transaction(storeName, 'readonly');
+  #|         const req = tx.objectStore(storeName).openCursor();
+  #|         req.onsuccess = () => {
+  #|           const cur = req.result;
+  #|           if (!cur) {
+  #|             resolve();
+  #|             return;
+  #|           }
+  #|           const key = String(cur.key ?? '');
+  #|           if (key.startsWith(prefix)) {
+  #|             const value = cur.value;
+  #|             if (typeof value === 'string') target.set(key, value);
+  #|           }
+  #|           cur.continue();
+  #|         };
+  #|         req.onerror = () => resolve();
+  #|         tx.onabort = () => resolve();
+  #|       } catch (_) {
+  #|         resolve();
+  #|       }
+  #|     });
+  #|     await loadStore('slots', slot_prefix, slotCache);
+  #|     await loadStore('meta', meta_prefix, metaCache);
+  #|   })();
+  #| }
+
+///|
 fn namespaced_prefix(ns : String) -> String {
   save_slot_prefix + ns + "."
 }
@@ -683,6 +759,11 @@ pub impl SaveSlotStore for LocalSaveSlotStore with write_slot_meta(
 }
 
 ///|
+pub impl SaveSlotStore for LocalSaveSlotStore with preload_namespace(_, _) {
+  ()
+}
+
+///|
 pub impl SaveSlotStore for IndexedDbSaveSlotStore with read_slot(self, ns, slot) {
   idb_cache_get_slot(self.db_name, slot_key(ns, slot)).to_option()
 }
@@ -740,6 +821,18 @@ pub impl SaveSlotStore for IndexedDbSaveSlotStore with write_slot_meta(
   let raw = meta.to_json().stringify()
   idb_cache_set_meta(self.db_name, key, raw)
   idb_flush_put_meta(self.db_name, key, raw)
+}
+
+///|
+pub impl SaveSlotStore for IndexedDbSaveSlotStore with preload_namespace(
+  self,
+  ns,
+) {
+  idb_preload_namespace_fire_and_forget(
+    self.db_name,
+    namespaced_prefix(ns),
+    namespaced_meta_prefix(ns),
+  )
 }
 
 ///|
@@ -839,12 +932,26 @@ pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotSt
 }
 
 ///|
+pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotStore[
+  P,
+  F,
+] with preload_namespace(self, ns) {
+  self.primary.preload_namespace(ns)
+  self.fallback.preload_namespace(ns)
+}
+
+///|
 pub fn default_save_slot_store() -> DefaultSaveSlotStore {
   MultiSaveSlotStore::new(
     indexeddb_save_slot_store(),
     local_save_slot_store(),
     migrate_on_read=true,
   )
+}
+
+///|
+pub fn default_save_slot_storage() -> &SaveSlotStore {
+  default_save_slot_store()
 }
 
 ///|
@@ -957,75 +1064,92 @@ fn local_save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_write_in(ns : String, slot : String, value : String) -> Unit {
-  save_slot_store_write_in(default_save_slot_store(), ns, slot, value)
+  default_save_slot_storage().write_slot(ns, slot, value)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_read_in(ns : String, slot : String) -> String? {
-  save_slot_store_read_in(default_save_slot_store(), ns, slot)
+  default_save_slot_storage().read_slot(ns, slot)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_delete_in(ns : String, slot : String) -> Unit {
-  save_slot_store_delete_in(default_save_slot_store(), ns, slot)
+  default_save_slot_storage().delete_slot(ns, slot)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_list_in(ns : String) -> Array[String] {
-  save_slot_store_list_in(default_save_slot_store(), ns)
+  default_save_slot_storage().list_slots(ns)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_write_meta_in(
   ns : String,
   slot : String,
   meta : SaveSlotMeta,
 ) -> Unit {
-  save_slot_store_write_meta_in(default_save_slot_store(), ns, slot, meta)
+  default_save_slot_storage().write_slot_meta(ns, slot, meta)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
-  save_slot_store_read_meta_in(default_save_slot_store(), ns, slot)
+  default_save_slot_storage().read_slot_meta(ns, slot)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_entries_in(ns : String) -> Array[SaveSlotEntry] {
-  save_slot_store_entries_in(default_save_slot_store(), ns)
+  let store = default_save_slot_storage()
+  store
+  .list_slots(ns)
+  .map(slot => { slot, meta: store.read_slot_meta(ns, slot) })
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_write(slot : String, value : String) -> Unit {
   save_slot_write_in(default_save_namespace, slot, value)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_read(slot : String) -> String? {
   save_slot_read_in(default_save_namespace, slot)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_delete(slot : String) -> Unit {
   save_slot_delete_in(default_save_namespace, slot)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_list() -> Array[String] {
   save_slot_list_in(default_save_namespace)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_write_meta(slot : String, meta : SaveSlotMeta) -> Unit {
   save_slot_write_meta_in(default_save_namespace, slot, meta)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_read_meta(slot : String) -> SaveSlotMeta? {
   save_slot_read_meta_in(default_save_namespace, slot)
 }
 
 ///|
+#deprecated("Use SaveSlotStore DI APIs instead (save_slot_store_* or &SaveSlotStore).", skip_current_package=true)
 pub fn save_slot_entries() -> Array[SaveSlotEntry] {
   save_slot_entries_in(default_save_namespace)
 }

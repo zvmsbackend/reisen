@@ -83,6 +83,7 @@ struct AppController[T] {
   loading_menu : LoadingMenu
   mut credits_return_phase : AppPhase
   gallery_replay_state_factories : ReplayStateFactories[T]
+  save_store : &SaveSlotStore
   mut phase : AppPhase
   mut save_store_preloaded : Bool
   render_sync : RenderSyncHook[T]
@@ -114,6 +115,7 @@ pub fn[T] AppController::new(
   script_locale_dir? : String = "locales",
   vocal_locale_dir? : String = "",
   credits? : String,
+  save_store? : &SaveSlotStore = default_save_slot_storage(),
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
   render_sync? : RenderSyncHook[T] = (_, _) => (),
@@ -178,6 +180,7 @@ pub fn[T] AppController::new(
     start_menu: StartMenu::new(
       ui_root_id,
       save_namespace~,
+      save_store~,
       background=menu_background,
       ui_strings~,
       show_credits=credits is Some(_),
@@ -191,6 +194,7 @@ pub fn[T] AppController::new(
     settings_menu: SettingsMenu::new(
       ui_root_id,
       save_namespace~,
+      save_store~,
       background=settings_background,
       ui_strings~,
       show_credits=credits is Some(_),
@@ -202,6 +206,7 @@ pub fn[T] AppController::new(
     ),
     loading_menu: LoadingMenu::new(ui_root_id),
     credits_return_phase: AppPhase::StartMenu,
+    save_store,
     phase: if !languages.is_empty() && !has_persisted {
       AppPhase::LocaleSelect
     } else {
@@ -601,6 +606,7 @@ async fn[T : FromJson] AppController::load_runner_from_slot(
     render_sync=self.render_sync,
     event_hook=self.event_hook,
     save_namespace=self.save_ns,
+    save_store=self.save_store,
     ui_strings=self.ui_strings,
     script_locale_json=self.script_locale_json.unwrap_or(""),
     script_default_locale_json=self.script_default_locale_json.unwrap_or(""),
@@ -777,7 +783,12 @@ fn[T : ToJson] AppController::save_autosave_if_enabled(
   }
   match self.runner {
     Some(runner) => {
-      let slot = next_save_slot(self.save_ns, self.autosave_slot, 6)
+      let slot = next_save_slot(
+        self.save_store,
+        self.save_ns,
+        self.autosave_slot,
+        6,
+      )
       let preview = dialog_preview(runner)
       save_runner_to_slot_with_meta(
         runner,
@@ -785,6 +796,7 @@ fn[T : ToJson] AppController::save_autosave_if_enabled(
         title=self.autosave_title,
         preview~,
         save_namespace=self.save_ns,
+        save_store=self.save_store,
       )
     }
     None => ()
@@ -800,8 +812,13 @@ fn[T] dialog_preview(runner : GameRunner[T]) -> String {
 }
 
 ///|
-fn next_save_slot(ns : String, prefix : String, total : Int) -> String {
-  let existing = save_slot_list_in(ns)
+fn next_save_slot(
+  save_store : &SaveSlotStore,
+  ns : String,
+  prefix : String,
+  total : Int,
+) -> String {
+  let existing = save_store.list_slots(ns)
   for i in 1..<=total {
     let slot = "\{prefix}\{i}"
     if !slot_exists(existing, slot) {
@@ -827,9 +844,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   elapsed_ms? : Int = 0,
 ) -> Bool raise AppControllerError {
   if !self.save_store_preloaded {
-    preload_default_save_slot_store_namespace(self.save_ns) catch {
-      _ => ()
-    }
+    self.save_store.preload_namespace(self.save_ns)
     self.save_store_preloaded = true
   }
   let ui_locale_changed = self.ensure_ui_locales_loaded()
@@ -906,9 +921,10 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
               Some("qsave") =>
                 save_runner_to_slot_with_meta(
                   runner,
-                  next_save_slot(self.save_ns, "quicksave", 6),
+                  next_save_slot(self.save_store, self.save_ns, "quicksave", 6),
                   preview=dialog_preview(runner),
                   save_namespace=self.save_ns,
+                  save_store=self.save_store,
                 )
               Some("save") => {
                 self.saved_director_json = Some(runner.director().save_json())
@@ -1031,6 +1047,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
                 slot,
                 preview=dialog_preview(runner),
                 save_namespace=self.save_ns,
+                save_store=self.save_store,
               )
             None => ()
           }

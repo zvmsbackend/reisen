@@ -39,6 +39,7 @@ priv enum SaveSlotType {
 struct SettingsMenu {
   root_id : String
   save_ns : String
+  save_store : &@storage.SaveSlotStore
   background : String
   mut ui_strings : UiStrings
   mut script_locale_json : String?
@@ -63,6 +64,7 @@ priv struct SettingsView {
 pub fn SettingsMenu::new(
   root_id : String,
   save_namespace? : String = "global",
+  save_store? : &@storage.SaveSlotStore = default_save_slot_storage(),
   background? : String = "",
   context? : SettingsContext = SettingsContext::FromStartMenu,
   ui_strings? : UiStrings = UiStrings::default(),
@@ -71,6 +73,7 @@ pub fn SettingsMenu::new(
   {
     root_id,
     save_ns: save_namespace,
+    save_store,
     background,
     ui_strings,
     script_locale_json: None,
@@ -108,13 +111,11 @@ fn SettingsMenu::localize_save_preview(
   self : SettingsMenu,
   raw : String,
 ) -> String {
-  println(raw)
   let (localized, _, _) = script_locale_resolve_at(
     raw,
     self.script_locale_json,
     self.script_default_locale_json,
   )
-  println(localized)
   localized
 }
 
@@ -656,7 +657,7 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         SaveSlotType::Quicksave => "quicksave"
         SaveSlotType::Normal => "normal"
       }
-      let entries = save_slot_entries_in(self.save_ns)
+      let entries = save_slot_store_entries_in(self.save_store, self.save_ns)
       let filtered = filter_entries_by_type(entries, self.save_slot_type)
       let total_slots = 6
       let current_page = self.page
@@ -877,7 +878,7 @@ pub fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
       settings_action_clear(self.root_id)
       match slot {
         Some(s) => {
-          @storage.save_slot_delete_in(self.save_ns, s)
+          self.save_store.delete_slot(self.save_ns, s)
           SettingsAction::ViewChanged
         }
         None => SettingsAction::NoAction

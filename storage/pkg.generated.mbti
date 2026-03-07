@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn default_save_slot_storage() -> &SaveSlotStore
+
 pub fn default_save_slot_store() -> MultiSaveSlotStore[IndexedDbSaveSlotStore, LocalSaveSlotStore]
 
 pub fn indexeddb_save_slot_store(db_name? : String) -> IndexedDbSaveSlotStore
@@ -46,26 +48,36 @@ pub fn persistent_set_text_in(String, String, String) -> Unit
 
 pub async fn preload_default_save_slot_store_namespace(String) -> Unit
 
+#deprecated
 pub fn save_slot_delete(String) -> Unit
 
+#deprecated
 pub fn save_slot_delete_in(String, String) -> Unit
 
+#deprecated
 pub fn save_slot_entries() -> Array[SaveSlotEntry]
 
+#deprecated
 pub fn save_slot_entries_in(String) -> Array[SaveSlotEntry]
 
+#deprecated
 pub fn save_slot_list() -> Array[String]
 
+#deprecated
 pub fn save_slot_list_in(String) -> Array[String]
 
 pub fn save_slot_meta(String, String, updated_at_ms? : Double) -> SaveSlotMeta
 
+#deprecated
 pub fn save_slot_read(String) -> String?
 
+#deprecated
 pub fn save_slot_read_in(String, String) -> String?
 
+#deprecated
 pub fn save_slot_read_meta(String) -> SaveSlotMeta?
 
+#deprecated
 pub fn save_slot_read_meta_in(String, String) -> SaveSlotMeta?
 
 pub fn[S : SaveSlotStore] save_slot_store_delete_in(S, String, String) -> Unit
@@ -82,12 +94,16 @@ pub fn[S : SaveSlotStore] save_slot_store_write_in(S, String, String, String) ->
 
 pub fn[S : SaveSlotStore] save_slot_store_write_meta_in(S, String, String, SaveSlotMeta) -> Unit
 
+#deprecated
 pub fn save_slot_write(String, String) -> Unit
 
+#deprecated
 pub fn save_slot_write_in(String, String, String) -> Unit
 
+#deprecated
 pub fn save_slot_write_meta(String, SaveSlotMeta) -> Unit
 
+#deprecated
 pub fn save_slot_write_meta_in(String, String, SaveSlotMeta) -> Unit
 
 pub fn settings_read() -> GameSettings?
@@ -168,5 +184,6 @@ pub trait SaveSlotStore {
   list_slots(Self, String) -> Array[String]
   read_slot_meta(Self, String, String) -> SaveSlotMeta?
   write_slot_meta(Self, String, String, SaveSlotMeta) -> Unit
+  preload_namespace(Self, String) -> Unit
 }
 

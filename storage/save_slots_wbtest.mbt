@@ -130,6 +130,11 @@ impl SaveSlotStore for PrefixedStore with write_slot_meta(self, ns, slot, meta) 
 }
 
 ///|
+impl SaveSlotStore for PrefixedStore with preload_namespace(_, _) {
+  ()
+}
+
+///|
 test "store trait wrappers work with local backend" {
   let store = default_save_slot_store()
   save_slot_store_delete_in(store, "wb_store", "slot")

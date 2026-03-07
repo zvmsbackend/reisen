@@ -18,7 +18,8 @@ using @gallery {type GalleryImage}
 using @storage {
   type GameSettings,
   type SaveSlotEntry,
-  save_slot_entries_in,
+  default_save_slot_storage,
+  save_slot_store_entries_in,
   settings_read_in,
   settings_write_in,
 }
