@@ -28,7 +28,7 @@ async test "app controller enters game on new game action" {
 
 ///|
 async test "app controller stays in menu when loading missing slot" {
-  save_slot_delete_in("app_test_ns_missing", "slot1")
+  default_save_slot_storage().delete_slot("app_test_ns_missing", "slot1")
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(
     () => script,
@@ -44,7 +44,7 @@ async test "app controller stays in menu when loading missing slot" {
 
 ///|
 async test "app controller can continue from saved slot" {
-  save_slot_delete_in("app_test_ns_continue", "slot1")
+  default_save_slot_storage().delete_slot("app_test_ns_continue", "slot1")
   let script : Script[Int] = script(builder => {
     builder.say("n", "a")
     builder.say("n", "b")

@@ -1,12 +1,4 @@
 ///|
-using @storage {
-  save_slot_delete,
-  save_slot_read,
-  save_slot_read_meta,
-  save_slot_delete_in,
-}
-
-///|
 using @core {script}
 
 ///|
@@ -113,7 +105,8 @@ async test "start_game_from_save resumes script" {
 
 ///|
 async test "save_runner_to_slot and start_game_from_slot roundtrip" {
-  save_slot_delete("wb_slot_roundtrip")
+  let store = default_save_slot_storage()
+  store.delete_slot("global", "wb_slot_roundtrip")
   let script : Script[Int] = script(builder => {
     builder.say("n", "a")
     builder.say("n", "b")
@@ -147,12 +140,13 @@ async test "save_runner_to_slot and start_game_from_slot roundtrip" {
 
 ///|
 async test "save slot payload is wrapped with version" {
-  save_slot_delete("wb_slot_payload")
+  let store = default_save_slot_storage()
+  store.delete_slot("global", "wb_slot_payload")
   let script : Script[Int] = script(builder => builder.say("n", "a"))
   let runner = start_game(script, GameState::new(0), "app")
   save_runner_to_slot(runner, "wb_slot_payload")
 
-  let raw = save_slot_read("wb_slot_payload")
+  let raw = store.read_slot("global", "wb_slot_payload")
   assert_true(raw is Some(_))
   match raw {
     Some(s) => {
@@ -166,7 +160,8 @@ async test "save slot payload is wrapped with version" {
 
 ///|
 async test "save_runner_to_slot_with_meta writes slot metadata" {
-  save_slot_delete("wb_slot_meta")
+  let store = default_save_slot_storage()
+  store.delete_slot("global", "wb_slot_meta")
   let script : Script[Int] = script(builder => builder.say("n", "line"))
   let runner = start_game(script, GameState::new(0), "app")
   save_runner_to_slot_with_meta(
@@ -176,7 +171,7 @@ async test "save_runner_to_slot_with_meta writes slot metadata" {
     preview="line",
   )
 
-  let meta = save_slot_read_meta("wb_slot_meta")
+  let meta = store.read_slot_meta("global", "wb_slot_meta")
   assert_true(meta is Some(_))
   match meta {
     Some(m) => {
@@ -189,7 +184,8 @@ async test "save_runner_to_slot_with_meta writes slot metadata" {
 
 ///|
 async test "start_game_from_slot raises on missing slot" {
-  save_slot_delete("wb_slot_missing")
+  let store = default_save_slot_storage()
+  store.delete_slot("global", "wb_slot_missing")
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let result : Result[GameRunner[Int], Error] = try? start_game_from_slot(
     script, "wb_slot_missing", "app",
@@ -201,8 +197,9 @@ async test "start_game_from_slot raises on missing slot" {
 
 ///|
 async test "start_game_from_slot respects save namespace" {
-  save_slot_delete_in("game_a", "shared_slot")
-  save_slot_delete_in("game_b", "shared_slot")
+  let store = default_save_slot_storage()
+  store.delete_slot("game_a", "shared_slot")
+  store.delete_slot("game_b", "shared_slot")
   let script : Script[Int] = script(builder => {
     builder.say("n", "a")
     builder.say("n", "b")
