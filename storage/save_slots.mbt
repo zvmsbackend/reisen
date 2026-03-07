@@ -31,6 +31,29 @@ pub struct SaveSlotEntry {
 } derive(Show, Eq)
 
 ///|
+/// Storage interface for save slot payloads + metadata.
+///
+/// This trait is backend-agnostic and is the migration target for multi-backend
+/// implementations (for example localStorage + IndexedDB).
+pub trait SaveSlotStore {
+  read_slot(Self, ns : String, slot : String) -> String?
+  write_slot(Self, ns : String, slot : String, value : String) -> Unit
+  delete_slot(Self, ns : String, slot : String) -> Unit
+  list_slots(Self, ns : String) -> Array[String]
+  read_slot_meta(Self, ns : String, slot : String) -> SaveSlotMeta?
+  write_slot_meta(Self, ns : String, slot : String, meta : SaveSlotMeta) -> Unit
+}
+
+///|
+/// Current built-in backend (localStorage + test fallback mirror).
+pub struct LocalSaveSlotStore {}
+
+///|
+pub fn local_save_slot_store() -> LocalSaveSlotStore {
+  LocalSaveSlotStore::{  }
+}
+
+///|
 pub suberror StorageValidationError {
   InvalidSaveSlotName(slot~ : String)
   InvalidTextSpeed(text_speed~ : Int)
@@ -159,6 +182,116 @@ fn slot_key(ns : String, slot : String) -> String {
 ///|
 fn slot_meta_key(ns : String, slot : String) -> String {
   namespaced_meta_prefix(ns) + slot
+}
+
+///|
+pub impl SaveSlotStore for LocalSaveSlotStore with read_slot(_, ns, slot) {
+  save_slot_read_in(ns, slot)
+}
+
+///|
+pub impl SaveSlotStore for LocalSaveSlotStore with write_slot(
+  _,
+  ns,
+  slot,
+  value,
+) {
+  save_slot_write_in(ns, slot, value)
+}
+
+///|
+pub impl SaveSlotStore for LocalSaveSlotStore with delete_slot(_, ns, slot) {
+  save_slot_delete_in(ns, slot)
+}
+
+///|
+pub impl SaveSlotStore for LocalSaveSlotStore with list_slots(_, ns) {
+  save_slot_list_in(ns)
+}
+
+///|
+pub impl SaveSlotStore for LocalSaveSlotStore with read_slot_meta(_, ns, slot) {
+  save_slot_read_meta_in(ns, slot)
+}
+
+///|
+pub impl SaveSlotStore for LocalSaveSlotStore with write_slot_meta(
+  _,
+  ns,
+  slot,
+  meta,
+) {
+  save_slot_write_meta_in(ns, slot, meta)
+}
+
+///|
+pub fn default_save_slot_store() -> LocalSaveSlotStore {
+  local_save_slot_store()
+}
+
+///|
+pub fn[S : SaveSlotStore] save_slot_store_write_in(
+  store : S,
+  ns : String,
+  slot : String,
+  value : String,
+) -> Unit {
+  store.write_slot(ns, slot, value)
+}
+
+///|
+pub fn[S : SaveSlotStore] save_slot_store_read_in(
+  store : S,
+  ns : String,
+  slot : String,
+) -> String? {
+  store.read_slot(ns, slot)
+}
+
+///|
+pub fn[S : SaveSlotStore] save_slot_store_delete_in(
+  store : S,
+  ns : String,
+  slot : String,
+) -> Unit {
+  store.delete_slot(ns, slot)
+}
+
+///|
+pub fn[S : SaveSlotStore] save_slot_store_list_in(
+  store : S,
+  ns : String,
+) -> Array[String] {
+  store.list_slots(ns)
+}
+
+///|
+pub fn[S : SaveSlotStore] save_slot_store_write_meta_in(
+  store : S,
+  ns : String,
+  slot : String,
+  meta : SaveSlotMeta,
+) -> Unit {
+  store.write_slot_meta(ns, slot, meta)
+}
+
+///|
+pub fn[S : SaveSlotStore] save_slot_store_read_meta_in(
+  store : S,
+  ns : String,
+  slot : String,
+) -> SaveSlotMeta? {
+  store.read_slot_meta(ns, slot)
+}
+
+///|
+pub fn[S : SaveSlotStore] save_slot_store_entries_in(
+  store : S,
+  ns : String,
+) -> Array[SaveSlotEntry] {
+  store
+  .list_slots(ns)
+  .map(slot => { slot, meta: store.read_slot_meta(ns, slot) })
 }
 
 ///|

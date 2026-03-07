@@ -109,10 +109,12 @@ pub impl AnimationTarget for PixiFigure
 pub impl Figure for PixiFigure
 pub impl PixiTarget for PixiFigure
 
-pub enum RenderableKind {
+pub(all) enum RenderableKind {
   Pixi
   Dom
 }
+pub impl Eq for RenderableKind
+pub impl Show for RenderableKind
 
 pub struct Sfx(String)
 #deprecated
