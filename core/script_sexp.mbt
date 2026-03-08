@@ -732,6 +732,83 @@ fn build_scalar_anim(
 }
 
 ///|
+fn parse_anim_spec(
+  prop : String,
+  duration_ms : Int,
+  parts : Array[@sexp.Sexp],
+  value_start : Int,
+) -> AnimationSpec? {
+  if prop == "position" {
+    if parts.length() <= value_start {
+      return None
+    }
+    let mut from : Position? = None
+    let mut to_index = value_start
+    let mut option_start = value_start + 1
+    if parts.length() > value_start + 1 &&
+      !is_keyword_token(parts[value_start + 1]) {
+      from = Some(parse_position(parts[value_start]))
+      to_index = value_start + 1
+      option_start = value_start + 2
+    }
+    if is_keyword_token(parts[to_index]) {
+      return None
+    }
+    let (easing, blocking, _) = parse_anim_options(parts, option_start)
+    return Some(
+      anim_position(
+        duration_ms,
+        parse_position(parts[to_index]),
+        from?,
+        easing~,
+        blocking~,
+      ),
+    )
+  }
+  if parts.length() <= value_start {
+    return None
+  }
+  let mut from : Double? = None
+  let mut to_index = value_start
+  let mut option_start = value_start + 1
+  if parts.length() > value_start + 1 &&
+    !is_keyword_token(parts[value_start + 1]) {
+    from = Some(sexp_as_double(parts[value_start]).unwrap_or(0.0))
+    to_index = value_start + 1
+    option_start = value_start + 2
+  }
+  if is_keyword_token(parts[to_index]) {
+    return None
+  }
+  let (easing, blocking, anchor) = parse_anim_options(parts, option_start)
+  build_scalar_anim(
+    prop,
+    duration_ms,
+    from,
+    sexp_as_double(parts[to_index]).unwrap_or(0.0),
+    easing,
+    blocking,
+    anchor,
+  )
+}
+
+///|
+fn parse_group_animation_step(item : @sexp.Sexp) -> GroupStep? {
+  match item {
+    @sexp.List([prop, duration, .. rest]) => {
+      let parts = [prop, duration, ..rest.to_array()]
+      let p = sexp_as_string(prop).unwrap_or("").to_lower()
+      let dur = sexp_as_int(duration).unwrap_or(0)
+      match parse_anim_spec(p, dur, parts, 2) {
+        Some(spec) => Some(GroupStep::Animate(spec))
+        None => None
+      }
+    }
+    _ => None
+  }
+}
+
+///|
 fn parse_choice_options(items : Array[@sexp.Sexp]) -> Array[ChoiceOption] {
   let out : Array[ChoiceOption] = []
   for item in items {
@@ -1098,59 +1175,30 @@ fn[T] lower_form(
               let t = sexp_as_string(target).unwrap_or("")
               let p = sexp_as_string(prop).unwrap_or("").to_lower()
               let dur = sexp_as_int(duration).unwrap_or(0)
-              if t != "" && p == "position" {
-                if parts.length() >= 4 {
-                  let mut from : Position? = None
-                  let mut to_index = 3
-                  let mut option_start = 4
-                  if parts.length() >= 5 && !is_keyword_token(parts[4]) {
-                    from = Some(parse_position(parts[3]))
-                    to_index = 4
-                    option_start = 5
-                  }
-                  if !is_keyword_token(parts[to_index]) {
-                    let (easing, blocking, _) = parse_anim_options(
-                      parts, option_start,
-                    )
-                    let spec = anim_position(
-                      dur,
-                      parse_position(parts[to_index]),
-                      from?,
-                      easing~,
-                      blocking~,
-                    )
+              if t != "" {
+                match parse_anim_spec(p, dur, parts, 3) {
+                  Some(spec) =>
                     builder.instructions.push(Animate(t, spec, Pixi))
+                  None => ()
+                }
+              }
+            }
+            _ => ()
+          }
+        "animate-group" =>
+          match args.to_array() {
+            [target, .. step_items] => {
+              let t = sexp_as_string(target).unwrap_or("")
+              if t != "" {
+                let steps : Array[GroupStep] = []
+                for item in step_items {
+                  match parse_group_animation_step(item) {
+                    Some(step) => steps.push(step)
+                    None => ()
                   }
                 }
-              } else if t != "" {
-                if parts.length() >= 4 {
-                  let mut from : Double? = None
-                  let mut to_index = 3
-                  let mut option_start = 4
-                  if parts.length() >= 5 && !is_keyword_token(parts[4]) {
-                    from = Some(sexp_as_double(parts[3]).unwrap_or(0.0))
-                    to_index = 4
-                    option_start = 5
-                  }
-                  if !is_keyword_token(parts[to_index]) {
-                    let (easing, blocking, anchor) = parse_anim_options(
-                      parts, option_start,
-                    )
-                    let spec = build_scalar_anim(
-                      p,
-                      dur,
-                      from,
-                      sexp_as_double(parts[to_index]).unwrap_or(0.0),
-                      easing,
-                      blocking,
-                      anchor,
-                    )
-                    match spec {
-                      Some(spec) =>
-                        builder.instructions.push(Animate(t, spec, Pixi))
-                      None => ()
-                    }
-                  }
+                if !steps.is_empty() {
+                  builder.instructions.push(AnimateGroup(t, steps, Pixi))
                 }
               }
             }

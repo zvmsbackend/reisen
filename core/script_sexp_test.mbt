@@ -279,6 +279,43 @@ test "parse sexp animate scale supports anchor option" {
 }
 
 ///|
+test "parse sexp animate-group with mixed animation props" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(animate-group hero (opacity 200 0.2 0.8 :easing ease-out) (position 300 (left) (custom 0.1 0.2)))",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    AnimateGroup(target, steps, Pixi) => {
+      assert_eq(target, "hero")
+      assert_eq(steps.length(), 2)
+      assert_true(
+        steps[0]
+        is GroupStep::Animate(
+          {
+            prop: Opacity,
+            duration_ms: 200,
+            easing: EaseOut,
+            from: Some([0.2]),
+            to: Some([0.8]),
+            ..,
+          }
+        ),
+      )
+      match steps[1] {
+        GroupStep::Animate(spec) => {
+          assert_eq(spec.prop, Position)
+          assert_eq(spec.duration_ms, 300)
+          assert_true(spec.from is Some(_))
+          assert_true(spec.to is Some(_))
+        }
+        _ => fail("Expected animate position step")
+      }
+    }
+    _ => fail("Expected AnimateGroup")
+  }
+}
+
+///|
 test "parse sexp run-code emits runtime hook" {
   let parser = SexpScriptParser::new()
   parser.register_function("int-var", host_int_var)
