@@ -148,6 +148,8 @@ fn apply_position_animation(
   offset_ratio : Double,
   viewport_h : Double,
   viewport_w : Double,
+  rect_w : Double,
+  rect_h : Double,
   now_ms : Int,
   anim : PositionAnim,
 ) -> (Double, Double, Bool) {
@@ -168,10 +170,48 @@ fn apply_position_animation(
       }
     }
     _ => {
-      let start_x = anim.from_x.map(v => v * viewport_w).unwrap_or(x)
-      let start_y = anim.from_y.map(v => v * viewport_h).unwrap_or(y)
-      let end_x = anim.to_x.map(v => v * viewport_w).unwrap_or(x)
-      let end_y = anim.to_y.map(v => v * viewport_h).unwrap_or(y)
+      let custom_bias = 1000.0
+      let custom_threshold = 900.0
+      let (start_x, start_y) = match (anim.from_x, anim.from_y) {
+        (Some(raw_x), Some(raw_y)) =>
+          if raw_x >= custom_threshold && raw_y >= custom_threshold {
+            custom_to_canvas_pos(
+              raw_x - custom_bias,
+              raw_y - custom_bias,
+              viewport_w,
+              viewport_h,
+              rect_w,
+              rect_h,
+            )
+          } else {
+            (raw_x * viewport_w, raw_y * viewport_h)
+          }
+        _ =>
+          (
+            anim.from_x.map(v => v * viewport_w).unwrap_or(x),
+            anim.from_y.map(v => v * viewport_h).unwrap_or(y),
+          )
+      }
+      let (end_x, end_y) = match (anim.to_x, anim.to_y) {
+        (Some(raw_x), Some(raw_y)) =>
+          if raw_x >= custom_threshold && raw_y >= custom_threshold {
+            custom_to_canvas_pos(
+              raw_x - custom_bias,
+              raw_y - custom_bias,
+              viewport_w,
+              viewport_h,
+              rect_w,
+              rect_h,
+            )
+          } else {
+            (raw_x * viewport_w, raw_y * viewport_h)
+          }
+        _ =>
+          (
+            anim.to_x.map(v => v * viewport_w).unwrap_or(x),
+            anim.to_y.map(v => v * viewport_h).unwrap_or(y),
+          )
+      }
       let animated_x = start_x + (end_x - start_x) * p
       let animated_y = start_y + (end_y - start_y) * p
       if done {

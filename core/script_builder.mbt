@@ -15,6 +15,9 @@ let pixi_pos_center_x : Double = 0.30
 ///|
 let pixi_pos_right_x : Double = 0.55
 
+///|
+let pixi_custom_anim_coord_bias : Double = 1000.0
+
 // DOM figure x-positions (fraction of viewport width)
 
 ///|
@@ -96,7 +99,8 @@ fn position_to_anim_coords(pos : Position) -> (Double, Double) {
     Left => (pixi_pos_left_x, 0.0)
     Center => (pixi_pos_center_x, 0.0)
     Right => (pixi_pos_right_x, 0.0)
-    Custom(x, y) => (x, y)
+    Custom(x, y) =>
+      (x + pixi_custom_anim_coord_bias, y + pixi_custom_anim_coord_bias)
   }
 }
 

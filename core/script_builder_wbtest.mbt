@@ -115,7 +115,7 @@ test "animation helpers produce expected animation specs" {
     duration_ms: 240,
     easing: EaseInOut,
     from: None,
-    to: Some([0.0, 0.0]),
+    to: Some([1000.0, 1000.0]),
     anchor: None,
     blocking: false,
   })
@@ -141,8 +141,8 @@ test "animation helpers produce expected animation specs" {
     prop: Position,
     duration_ms: 200,
     easing: Linear,
-    from: Some([-0.1, 0.0]),
-    to: Some([0.0, 0.0]),
+    from: Some([999.9, 1000.0]),
+    to: Some([1000.0, 1000.0]),
     anchor: None,
     blocking: false,
   })

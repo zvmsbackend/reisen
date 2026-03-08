@@ -55,9 +55,9 @@ fn custom_to_canvas_pos(
   rect_w : Double,
   rect_h : Double,
 ) -> (Double, Double) {
-  let free_w = if viewport_w - rect_w > 0.0 { viewport_w - rect_w } else { 0.0 }
-  let free_h = if viewport_h - rect_h > 0.0 { viewport_h - rect_h } else { 0.0 }
-  ((custom_x + 1.0) * 0.5 * free_w, (custom_y + 1.0) * 0.5 * free_h)
+  let center_x = (custom_x + 1.0) * 0.5 * viewport_w
+  let center_y = (custom_y + 1.0) * 0.5 * viewport_h
+  (center_x - rect_w / 2.0, center_y - rect_h / 2.0)
 }
 
 ///|
@@ -69,10 +69,18 @@ fn canvas_to_custom_pos(
   rect_w : Double,
   rect_h : Double,
 ) -> (Double, Double) {
-  let free_w = viewport_w - rect_w
-  let free_h = viewport_h - rect_h
-  let custom_x = if free_w <= 0.0 { 0.0 } else { x / free_w * 2.0 - 1.0 }
-  let custom_y = if free_h <= 0.0 { 0.0 } else { y / free_h * 2.0 - 1.0 }
+  let center_x = x + rect_w / 2.0
+  let center_y = y + rect_h / 2.0
+  let custom_x = if viewport_w <= 0.0 {
+    0.0
+  } else {
+    center_x / viewport_w * 2.0 - 1.0
+  }
+  let custom_y = if viewport_h <= 0.0 {
+    0.0
+  } else {
+    center_y / viewport_h * 2.0 - 1.0
+  }
   (custom_x, custom_y)
 }
 
