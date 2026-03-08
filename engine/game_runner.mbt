@@ -488,7 +488,14 @@ pub async fn[T] GameRunner::step(
       self.emit_runtime_event(event)
       match event {
         ChoicePrompt(_) | TextInputPrompt(_, _) | ScriptEnded => {
-          self.ui.mark_dirty_choices()
+          match event {
+            ChoicePrompt(_) => self.ui.mark_dirty_choices()
+            TextInputPrompt(_, _) => self.ui.mark_dirty_text_input()
+            ScriptEnded => self.ui.mark_all_dirty()
+            _ => ()
+          }
+          self.ui_dirty = true
+          self.render_ui()
           return event
         }
         _ => {
