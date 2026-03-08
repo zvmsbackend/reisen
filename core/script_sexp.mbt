@@ -575,6 +575,32 @@ fn parse_anchor(value : @sexp.Sexp) -> (Double, Double)? {
 }
 
 ///|
+fn parse_render_kind(value : @sexp.Sexp) -> RenderableKind {
+  match sexp_as_string(value).unwrap_or("").to_lower() {
+    "dom" => @assets.Dom
+    _ => @assets.Pixi
+  }
+}
+
+///|
+fn parse_render_kind_option(
+  parts : Array[@sexp.Sexp],
+  start : Int,
+) -> RenderableKind {
+  let mut kind = @assets.Pixi
+  let mut i = start
+  while i + 1 < parts.length() {
+    match parts[i] {
+      @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
+        kind = parse_render_kind(parts[i + 1])
+      _ => ()
+    }
+    i = i + 1
+  }
+  kind
+}
+
+///|
 fn parse_anim_options(
   parts : Array[@sexp.Sexp],
   start : Int,
@@ -887,6 +913,98 @@ fn parse_mixed_group_step(item : @sexp.Sexp) -> GroupStep? {
 }
 
 ///|
+fn parse_scalar_key(key : String) -> String {
+  key.to_lower()
+}
+
+///|
+fn parse_show_figure_options(
+  rest : Array[@sexp.Sexp],
+) -> (Int, ScalarState, Bool, RenderableKind) {
+  let mut layer = 0
+  let mut interactive = false
+  let mut kind = @assets.Pixi
+  let mut scalars = ScalarState::default()
+  let mut i = 0
+  while i + 1 < rest.length() {
+    match rest[i] {
+      @sexp.Symbol(k) => {
+        let key = parse_scalar_key(k.to_string())
+        if key == ":layer" {
+          layer = sexp_as_int(rest[i + 1]).unwrap_or(layer)
+        } else if key == ":interactive" {
+          interactive = sexp_as_bool(rest[i + 1]).unwrap_or(interactive)
+        } else if key == ":kind" {
+          kind = parse_render_kind(rest[i + 1])
+        } else if key == ":opacity" {
+          scalars = {
+            ..scalars,
+            opacity: sexp_as_double(rest[i + 1]).unwrap_or(scalars.opacity),
+          }
+        } else if key == ":scale" {
+          scalars = {
+            ..scalars,
+            scale: sexp_as_double(rest[i + 1]).unwrap_or(scalars.scale),
+          }
+        } else if key == ":rotation" {
+          scalars = {
+            ..scalars,
+            rotation: sexp_as_double(rest[i + 1]).unwrap_or(scalars.rotation),
+          }
+        } else if key == ":blur" {
+          scalars = {
+            ..scalars,
+            blur: sexp_as_double(rest[i + 1]).unwrap_or(scalars.blur),
+          }
+        } else if key == ":brightness" {
+          scalars = {
+            ..scalars,
+            brightness: sexp_as_double(rest[i + 1]).unwrap_or(
+              scalars.brightness,
+            ),
+          }
+        } else if key == ":contrast" {
+          scalars = {
+            ..scalars,
+            contrast: sexp_as_double(rest[i + 1]).unwrap_or(scalars.contrast),
+          }
+        } else if key == ":saturation" {
+          scalars = {
+            ..scalars,
+            saturation: sexp_as_double(rest[i + 1]).unwrap_or(
+              scalars.saturation,
+            ),
+          }
+        } else if key == ":gamma" {
+          scalars = {
+            ..scalars,
+            gamma: sexp_as_double(rest[i + 1]).unwrap_or(scalars.gamma),
+          }
+        } else if key == ":color-r" || key == ":color-red" {
+          scalars = {
+            ..scalars,
+            color_r: sexp_as_double(rest[i + 1]).unwrap_or(scalars.color_r),
+          }
+        } else if key == ":color-g" || key == ":color-green" {
+          scalars = {
+            ..scalars,
+            color_g: sexp_as_double(rest[i + 1]).unwrap_or(scalars.color_g),
+          }
+        } else if key == ":color-b" || key == ":color-blue" {
+          scalars = {
+            ..scalars,
+            color_b: sexp_as_double(rest[i + 1]).unwrap_or(scalars.color_b),
+          }
+        }
+      }
+      _ => ()
+    }
+    i = i + 2
+  }
+  (layer, scalars, interactive, kind)
+}
+
+///|
 fn parse_choice_options(items : Array[@sexp.Sexp]) -> Array[ChoiceOption] {
   let out : Array[ChoiceOption] = []
   for item in items {
@@ -948,6 +1066,20 @@ fn[T] lower_form(
               let label_name = sexp_as_string(target).unwrap_or("")
               if label_name != "" {
                 builder.jump_if(label(name=label_name), state => {
+                  let value = sexp_to_js_value(predicate, state, host_functions)
+                  js_value_to_bool(value)
+                })
+              }
+            }
+            _ => ()
+          }
+        "branch" =>
+          match args {
+            [then_target, else_target, predicate] => {
+              let then_name = sexp_as_string(then_target).unwrap_or("")
+              let else_name = sexp_as_string(else_target).unwrap_or("")
+              if then_name != "" && else_name != "" {
+                builder.branch(label(name=then_name), label(name=else_name), state => {
                   let value = sexp_to_js_value(predicate, state, host_functions)
                   js_value_to_bool(value)
                 })
@@ -1071,6 +1203,39 @@ fn[T] lower_form(
             }
             _ => ()
           }
+        "say-many" =>
+          match args {
+            [speaker, @sexp.List(text_items), .. rest] => {
+              let sp = sexp_as_string(speaker).unwrap_or("")
+              let texts : Array[String] = []
+              for item in text_items {
+                match sexp_as_string(item) {
+                  Some(s) => texts.push(s)
+                  None => ()
+                }
+              }
+              let mut typewriter = true
+              let mut append = false
+              let mut voice = ""
+              let mut i = 0
+              while i + 1 < rest.length() {
+                match rest[i] {
+                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":typewriter") =>
+                    typewriter = sexp_as_bool(rest[i + 1]).unwrap_or(typewriter)
+                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":append") =>
+                    append = sexp_as_bool(rest[i + 1]).unwrap_or(append)
+                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":voice") =>
+                    voice = sexp_as_string(rest[i + 1]).unwrap_or(voice)
+                  _ => ()
+                }
+                i = i + 2
+              }
+              if !texts.is_empty() {
+                builder.say_many(sp, texts, typewriter~, append~, voice~)
+              }
+            }
+            _ => ()
+          }
         "narrate" =>
           match args {
             [text] => builder.narrate(sexp_as_string(text).unwrap_or(""))
@@ -1088,15 +1253,34 @@ fn[T] lower_form(
           }
         "show-figure" =>
           match args {
-            [id, pos] => {
+            [id, pos, .. rest] => {
+              let target = sexp_as_string(id).unwrap_or("")
+              if target != "" {
+                let (layer, scalars, interactive, kind) = parse_show_figure_options(
+                  rest.to_array(),
+                )
+                let placement = { pos: parse_position(pos), layer, scalars }
+                if kind is @assets.Dom {
+                  builder.instructions.push(
+                    ShowDomFigure(target, placement, interactive),
+                  )
+                } else {
+                  builder.instructions.push(ShowFigure(target, placement))
+                }
+              }
+            }
+            _ => ()
+          }
+        "set-figure-interactive" =>
+          match args {
+            [id, interactive] => {
               let target = sexp_as_string(id).unwrap_or("")
               if target != "" {
                 builder.instructions.push(
-                  ShowFigure(target, {
-                    pos: parse_position(pos),
-                    layer: 0,
-                    scalars: ScalarState::default(),
-                  }),
+                  SetDomFigureInteractive(
+                    target,
+                    sexp_as_bool(interactive).unwrap_or(false),
+                  ),
                 )
               }
             }
@@ -1235,9 +1419,10 @@ fn[T] lower_form(
               let p = sexp_as_string(prop).unwrap_or("").to_lower()
               let dur = sexp_as_int(duration).unwrap_or(0)
               if t != "" {
+                let kind = parse_render_kind_option(parts, 3)
                 match parse_anim_spec(p, dur, parts, 3) {
                   Some(spec) =>
-                    builder.instructions.push(Animate(t, spec, Pixi))
+                    builder.instructions.push(Animate(t, spec, kind))
                   None => ()
                 }
               }
@@ -1249,15 +1434,29 @@ fn[T] lower_form(
             [target, .. step_items] => {
               let t = sexp_as_string(target).unwrap_or("")
               if t != "" {
+                let mut kind = @assets.Pixi
                 let steps : Array[GroupStep] = []
                 for item in step_items {
-                  match parse_group_animation_step(item) {
-                    Some(step) => steps.push(step)
-                    None => ()
+                  if !(item is @sexp.Symbol(k) &&
+                    k == @sexp.Symbol::new(":kind")) {
+                    match parse_group_animation_step(item) {
+                      Some(step) => steps.push(step)
+                      None => ()
+                    }
                   }
                 }
+                let items = step_items.to_array()
+                let mut i = 0
+                while i + 1 < items.length() {
+                  match items[i] {
+                    @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
+                      kind = parse_render_kind(items[i + 1])
+                    _ => ()
+                  }
+                  i = i + 2
+                }
                 if !steps.is_empty() {
-                  builder.instructions.push(AnimateGroup(t, steps, Pixi))
+                  builder.instructions.push(AnimateGroup(t, steps, kind))
                 }
               }
             }
@@ -1268,15 +1467,29 @@ fn[T] lower_form(
             [target, .. step_items] => {
               let t = sexp_as_string(target).unwrap_or("")
               if t != "" {
+                let mut kind = @assets.Pixi
                 let steps : Array[GroupStep] = []
                 for item in step_items {
-                  match parse_mixed_group_step(item) {
-                    Some(step) => steps.push(step)
-                    None => ()
+                  if !(item is @sexp.Symbol(k) &&
+                    k == @sexp.Symbol::new(":kind")) {
+                    match parse_mixed_group_step(item) {
+                      Some(step) => steps.push(step)
+                      None => ()
+                    }
                   }
                 }
+                let items = step_items.to_array()
+                let mut i = 0
+                while i + 1 < items.length() {
+                  match items[i] {
+                    @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
+                      kind = parse_render_kind(items[i + 1])
+                    _ => ()
+                  }
+                  i = i + 2
+                }
                 if !steps.is_empty() {
-                  builder.instructions.push(AnimateGroup(t, steps, Pixi))
+                  builder.instructions.push(AnimateGroup(t, steps, kind))
                 }
               }
             }

@@ -193,6 +193,24 @@ test "parse sexp show and hide figure" {
 }
 
 ///|
+test "parse sexp show-figure supports options and dom kind" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(show-figure miko (right) :kind dom :layer 3 :interactive #t :opacity 0.5)",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    ShowDomFigure(id, placement, interactive) => {
+      assert_eq(id, "miko")
+      assert_eq(placement.pos, Right)
+      assert_eq(placement.layer, 3)
+      assert_eq(placement.scalars.opacity, 0.5)
+      assert_eq(interactive, true)
+    }
+    _ => fail("Expected ShowDomFigure")
+  }
+}
+
+///|
 test "parse sexp effect and animate" {
   let script : Script[Unit] = reisen_parse_sexp_script(
     "(effect hero glow (intensity 0.6) (radius 8)) (animate hero opacity 400 0.2 0.8)",
@@ -256,6 +274,15 @@ test "parse sexp animate supports non-opacity props" {
     }
     _ => fail("Expected AnimatePixi rotation")
   }
+}
+
+///|
+test "parse sexp animate supports dom kind option" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(animate hero opacity 180 0.3 0.9 :kind dom)",
+  )
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is Animate("hero", _, Dom))
 }
 
 ///|
@@ -370,6 +397,42 @@ test "parse sexp mixed-group supports effect and animation steps" {
     }
     _ => fail("Expected mixed AnimateGroup")
   }
+}
+
+///|
+test "parse sexp animate-group supports dom kind option" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(animate-group hero :kind dom (opacity 120 0.2 0.6))",
+  )
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is AnimateGroup("hero", _, Dom))
+}
+
+///|
+test "parse sexp set-figure-interactive" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(set-figure-interactive hero #t)",
+  )
+  assert_eq(script.instructions.length(), 1)
+  assert_true(script.instructions[0] is SetDomFigureInteractive("hero", true))
+}
+
+///|
+test "parse sexp branch and say-many" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(branch yes no (eq 1 1)) (say-many n (\"a\" \"b\") :append #t) (label yes) (label no)",
+  )
+  assert_eq(script.instructions.length(), 6)
+  assert_true(script.instructions[0] is JumpIf("yes", _))
+  assert_true(script.instructions[1] is Jump("no"))
+  assert_true(
+    script.instructions[2]
+    is Say(text=@state.DialogText::String("a"), append=true, ..),
+  )
+  assert_true(
+    script.instructions[3]
+    is Say(text=@state.DialogText::String("b"), append=true, ..),
+  )
 }
 
 ///|
