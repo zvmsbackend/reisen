@@ -2,13 +2,32 @@
 using @util {gensym}
 
 ///|
-using @storage {persistent_delete_in}
+using @storage {persistent_delete_in, settings_write_in}
 
 ///|
 using @core {label, type RuntimeEvent}
 
 ///|
+extern "js" fn read_bgm_gain() -> Double =
+  #| () => globalThis.__reisenBgmGain ?? -1
+
+///|
 let dummy_assets : AssetStore = AssetStore::new()
+
+///|
+test "app controller applies stored bgm gain on startup" {
+  settings_write_in("app_test_bgm_init", try! GameSettings::new(50, 0.37, 0.91))
+  ignore(
+    AppController::new(
+      () => script(builder => builder.say("n", "hello")),
+      () => GameState::new(0),
+      "app",
+      dummy_assets,
+      save_namespace="app_test_bgm_init",
+    ),
+  )
+  assert_eq(read_bgm_gain(), 0.37)
+}
 
 ///|
 async test "app controller enters game on new game action" {

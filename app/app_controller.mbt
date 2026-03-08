@@ -222,8 +222,15 @@ pub fn[T] AppController::new(
     assets,
   }
   match settings_read_in(save_namespace) {
-    Some(settings) => AudioDom::set_sfx_gain(settings.sfx_volume)
-    None => ()
+    Some(settings) => {
+      AudioDom::set_bgm_gain(settings.bgm_volume)
+      AudioDom::set_sfx_gain(settings.sfx_volume)
+    }
+    None => {
+      let defaults = GameSettings::default()
+      AudioDom::set_bgm_gain(defaults.bgm_volume)
+      AudioDom::set_sfx_gain(defaults.sfx_volume)
+    }
   }
   app.settings_menu.set_languages(languages)
   app.settings_menu.set_locale(selected_locale)
