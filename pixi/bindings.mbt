@@ -5,6 +5,9 @@
 /// consumed by a Pixi-backed presenter without coupling script/runtime layers.
 
 ///|
+using @util {load_result_error, load_result_ok, load_result_value}
+
+///|
 #external
 pub type PixiCanvas
 
@@ -96,24 +99,6 @@ fn js_load_live2d_model_promise(source : String) -> @js.Promise = "loadLive2dMod
 pub suberror PixiBindingError {
   ResourceLoadFailed(message~ : String)
 }
-
-///|
-extern "js" fn load_result_ok(result : @js.Value) -> Bool =
-  #| (result) => !!(result && result.ok === true)
-
-///|
-extern "js" fn load_result_value(result : @js.Value) -> @js.Value =
-  #| (result) => result?.value
-
-///|
-extern "js" fn load_result_error(
-  result : @js.Value,
-  fallback : String,
-) -> String =
-  #| (result, fallback) => {
-  #|   const message = result && typeof result.error === 'string' ? result.error : '';
-  #|   return message || fallback;
-  #| }
 
 ///|
 pub async fn PixiLive2dModel::load(

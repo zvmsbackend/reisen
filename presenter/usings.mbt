@@ -1,5 +1,6 @@
 ///|
 using @core {
+  animation_progress,
   type EffectSpec,
   type FigurePlacement,
   type ScalarState,

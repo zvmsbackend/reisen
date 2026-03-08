@@ -3,6 +3,7 @@ using @assets {type AssetStore}
 
 ///|
 using @core {
+  animation_progress,
   type DomFigureState,
   type DialogLogEntry,
   type Easing,

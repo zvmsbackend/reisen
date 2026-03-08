@@ -1,8 +1,18 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "sennenki/reisen/util"
 
+import {
+  "moonbit-community/js-ffi/js",
+}
+
 // Values
 pub fn gensym(prefix? : String) -> String
+
+pub fn load_result_error(@js.Value, String) -> String
+
+pub fn load_result_ok(@js.Value) -> Bool
+
+pub fn load_result_value(@js.Value) -> @js.Value
 
 pub fn script_locale_lookup(String, String) -> String?
 

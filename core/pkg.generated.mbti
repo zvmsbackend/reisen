@@ -12,6 +12,14 @@ import {
 }
 
 // Values
+pub const DOM_POS_CENTER_X : Double = 0.5
+
+pub const DOM_POS_LEFT_X : Double = 0.18
+
+pub const DOM_POS_MID_Y : Double = 0.5
+
+pub const DOM_POS_RIGHT_X : Double = 0.82
+
 pub const PIXI_CUSTOM_ANIM_COORD_BIAS : Double = 1000.0
 
 pub const PIXI_SLOT_CENTER_X : Double = 0.30
@@ -45,6 +53,10 @@ pub fn anim_rotation(Int, from? : Double, Double, easing? : Easing, blocking? : 
 pub fn anim_saturation(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
 pub fn anim_scale(Int, from? : Double, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> AnimationSpec
+
+pub fn animation_progress(Int, Int, Int, Easing) -> (Double, Bool)
+
+pub fn easing_apply(Easing, Double) -> Double
 
 pub fn effect_spec(@pixi.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
 

@@ -2,18 +2,6 @@
 /// HTML UI bridge for dialogs and choice buttons.
 /// Figures/backgrounds stay in PIXI; this module only updates DOM nodes.
 
-// DOM figure x-positions (fraction of viewport width, matches core/script_builder constants)
-let dom_pos_left_x : Double = 0.18
-
-///|
-let dom_pos_center_x : Double = 0.5
-
-///|
-let dom_pos_right_x : Double = 0.82
-
-///|
-let dom_pos_mid_y : Double = 0.5
-
 ///|
 struct UiChoiceView {
   id : String
@@ -208,46 +196,8 @@ priv struct DomPositionAnim {
 }
 
 ///|
-fn dom_ease(p : Double, easing : Easing) -> Double {
-  let t = if p < 0.0 { 0.0 } else if p > 1.0 { 1.0 } else { p }
-  match easing {
-    Linear => t
-    EaseIn => t * t
-    EaseOut => 1.0 - (1.0 - t) * (1.0 - t)
-    EaseInOut =>
-      if t < 0.5 {
-        2.0 * t * t
-      } else {
-        1.0 - (-2.0 * t + 2.0) * (-2.0 * t + 2.0) / 2.0
-      }
-  }
-}
-
-///|
-fn dom_anim_progress(
-  now_ms : Int,
-  start_ms : Int,
-  duration_ms : Int,
-  easing : Easing,
-) -> (Double, Bool) {
-  let duration = if duration_ms <= 0 { 0 } else { duration_ms }
-  if duration == 0 {
-    return (1.0, true)
-  }
-  let elapsed = now_ms - start_ms
-  if elapsed <= 0 {
-    return (0.0, false)
-  }
-  if elapsed >= duration {
-    return (1.0, true)
-  }
-  let raw = elapsed.to_double() / duration.to_double()
-  (dom_ease(raw, easing), false)
-}
-
-///|
 fn scalar_at(now_ms : Int, anim : DomScalarAnim) -> (Double, Bool) {
-  let (p, done) = dom_anim_progress(
+  let (p, done) = animation_progress(
     now_ms,
     anim.start_ms,
     anim.duration_ms,
@@ -258,7 +208,7 @@ fn scalar_at(now_ms : Int, anim : DomScalarAnim) -> (Double, Bool) {
 
 ///|
 fn pos_at(now_ms : Int, anim : DomPositionAnim) -> (Double, Double, Bool) {
-  let (p, done) = dom_anim_progress(
+  let (p, done) = animation_progress(
     now_ms,
     anim.start_ms,
     anim.duration_ms,
@@ -333,9 +283,9 @@ pub fn UiDom::localize_vocal_url(self : UiDom, raw : String) -> String {
 ///|
 fn dom_pos_tuple(pos : Position) -> (Double, Double) {
   match pos {
-    Left => (dom_pos_left_x, dom_pos_mid_y)
-    Center => (dom_pos_center_x, dom_pos_mid_y)
-    Right => (dom_pos_right_x, dom_pos_mid_y)
+    Left => (@core.DOM_POS_LEFT_X, @core.DOM_POS_MID_Y)
+    Center => (@core.DOM_POS_CENTER_X, @core.DOM_POS_MID_Y)
+    Right => (@core.DOM_POS_RIGHT_X, @core.DOM_POS_MID_Y)
     Custom(x, y) => (x, y)
   }
 }

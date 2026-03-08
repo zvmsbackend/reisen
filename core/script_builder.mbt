@@ -4,22 +4,6 @@
 ///|
 using @pixi {type Effect}
 
-// DOM figure x-positions (fraction of viewport width)
-
-///|
-let dom_pos_left_x : Double = 0.18
-
-///|
-let dom_pos_center_x : Double = 0.5
-
-///|
-let dom_pos_right_x : Double = 0.82
-
-// Vertical mid-point for DOM figures
-
-///|
-let dom_pos_mid_y : Double = 0.5
-
 ///|
 struct ScriptBuilder[T] {
   instructions : Array[Instruction[T]]
@@ -93,9 +77,9 @@ fn position_to_anim_coords(pos : Position) -> (Double, Double) {
 ///|
 fn position_to_dom_anim_coords(pos : Position) -> (Double, Double) {
   match pos {
-    Left => (dom_pos_left_x, dom_pos_mid_y)
-    Center => (dom_pos_center_x, dom_pos_mid_y)
-    Right => (dom_pos_right_x, dom_pos_mid_y)
+    Left => (DOM_POS_LEFT_X, DOM_POS_MID_Y)
+    Center => (DOM_POS_CENTER_X, DOM_POS_MID_Y)
+    Right => (DOM_POS_RIGHT_X, DOM_POS_MID_Y)
     Custom(x, y) => (x, y)
   }
 }
