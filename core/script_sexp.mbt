@@ -817,6 +817,51 @@ fn parse_effect_phase(value : @sexp.Sexp) -> EffectPhase {
 }
 
 ///|
+fn parse_effect_spec(
+  effect_id : String,
+  raw_items : Array[@sexp.Sexp],
+) -> EffectSpec? {
+  if effect_id == "" {
+    return None
+  }
+  let params : Array[EffectParam] = []
+  let mut phase = Post
+  let mut duration_ms : Int? = None
+  let mut easing = Linear
+  let mut blocking = false
+  let mut i = 0
+  while i < raw_items.length() {
+    match raw_items[i] {
+      @sexp.List([k, v]) => {
+        let key = sexp_as_string(k).unwrap_or("")
+        if key != "" {
+          params.push((key, sexp_as_double(v).unwrap_or(0.0)))
+        }
+        i = i + 1
+      }
+      @sexp.Symbol(k) if i + 1 < raw_items.length() =>
+        if k == @sexp.Symbol::new(":phase") {
+          phase = parse_effect_phase(raw_items[i + 1])
+          i = i + 2
+        } else if k == @sexp.Symbol::new(":duration") {
+          duration_ms = Some(sexp_as_int(raw_items[i + 1]).unwrap_or(0))
+          i = i + 2
+        } else if k == @sexp.Symbol::new(":easing") {
+          easing = parse_easing(raw_items[i + 1]).unwrap_or(easing)
+          i = i + 2
+        } else if k == @sexp.Symbol::new(":blocking") {
+          blocking = sexp_as_bool(raw_items[i + 1]).unwrap_or(blocking)
+          i = i + 2
+        } else {
+          i = i + 1
+        }
+      _ => i = i + 1
+    }
+  }
+  Some({ id: effect_id, params, phase, duration_ms, easing, blocking })
+}
+
+///|
 fn parse_mixed_group_effect_step(item : @sexp.Sexp) -> GroupStep? {
   match item {
     @sexp.List([@sexp.Symbol(tag), effect_id, .. rest]) => {
@@ -824,47 +869,10 @@ fn parse_mixed_group_effect_step(item : @sexp.Sexp) -> GroupStep? {
         return None
       }
       let id = sexp_as_string(effect_id).unwrap_or("")
-      if id == "" {
-        return None
+      match parse_effect_spec(id, rest.to_array()) {
+        Some(spec) => Some(GroupStep::Effect(spec))
+        None => None
       }
-      let params : Array[EffectParam] = []
-      let mut phase = Post
-      let mut duration_ms : Int? = None
-      let mut easing = Linear
-      let mut blocking = false
-      let rest = rest.to_array()
-      let mut i = 0
-      while i < rest.length() {
-        match rest[i] {
-          @sexp.List([k, v]) => {
-            let key = sexp_as_string(k).unwrap_or("")
-            if key != "" {
-              params.push((key, sexp_as_double(v).unwrap_or(0.0)))
-            }
-            i = i + 1
-          }
-          @sexp.Symbol(k) if i + 1 < rest.length() =>
-            if k == @sexp.Symbol::new(":phase") {
-              phase = parse_effect_phase(rest[i + 1])
-              i = i + 2
-            } else if k == @sexp.Symbol::new(":duration") {
-              duration_ms = Some(sexp_as_int(rest[i + 1]).unwrap_or(0))
-              i = i + 2
-            } else if k == @sexp.Symbol::new(":easing") {
-              easing = parse_easing(rest[i + 1]).unwrap_or(easing)
-              i = i + 2
-            } else if k == @sexp.Symbol::new(":blocking") {
-              blocking = sexp_as_bool(rest[i + 1]).unwrap_or(blocking)
-              i = i + 2
-            } else {
-              i = i + 1
-            }
-          _ => i = i + 1
-        }
-      }
-      Some(
-        GroupStep::Effect({ id, params, phase, duration_ms, easing, blocking }),
-      )
     }
     _ => None
   }
@@ -1210,30 +1218,11 @@ fn[T] lower_form(
             [target, effect_id, .. rest] => {
               let t = sexp_as_string(target).unwrap_or("")
               let e = sexp_as_string(effect_id).unwrap_or("")
-              if t != "" && e != "" {
-                let params : Array[EffectParam] = []
-                for item in rest {
-                  match item {
-                    @sexp.List([k, v]) => {
-                      let key = sexp_as_string(k).unwrap_or("")
-                      let value = sexp_as_double(v).unwrap_or(0.0)
-                      if key != "" {
-                        params.push((key, value))
-                      }
-                    }
-                    _ => ()
-                  }
+              if t != "" {
+                match parse_effect_spec(e, rest.to_array()) {
+                  Some(spec) => builder.instructions.push(ApplyEffect(t, spec))
+                  None => ()
                 }
-                builder.instructions.push(
-                  ApplyEffect(t, {
-                    id: e,
-                    params,
-                    phase: Post,
-                    duration_ms: None,
-                    easing: Linear,
-                    blocking: false,
-                  }),
-                )
               }
             }
             _ => ()

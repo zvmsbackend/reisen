@@ -219,6 +219,26 @@ test "parse sexp effect and animate" {
 }
 
 ///|
+test "parse sexp effect supports phase duration easing blocking" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(effect hero glow (intensity 0.6) :phase pre :duration 180 :easing ease-out :blocking #t)",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    ApplyEffect(target, spec) => {
+      assert_eq(target, "hero")
+      assert_eq(spec.id, "glow")
+      assert_eq(spec.params, [("intensity", 0.6)])
+      assert_eq(spec.phase, Pre)
+      assert_eq(spec.duration_ms, Some(180))
+      assert_eq(spec.easing, EaseOut)
+      assert_eq(spec.blocking, true)
+    }
+    _ => fail("Expected ApplyEffect")
+  }
+}
+
+///|
 test "parse sexp animate supports non-opacity props" {
   let script : Script[Unit] = reisen_parse_sexp_script(
     "(animate hero rotation 180 0.0 1.57 :easing ease-out :blocking #t)",
