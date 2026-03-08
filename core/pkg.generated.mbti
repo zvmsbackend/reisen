@@ -105,6 +105,22 @@ pub impl Show for AnimProp
 pub impl ToJson for AnimProp
 pub impl @json.FromJson for AnimProp
 
+pub struct AnimationGroup[K] {
+  target : String
+  render_kind : @assets.RenderableKind
+  kind_marker : K?
+  steps : Array[AnimationSpec]
+}
+pub fn[K] AnimationGroup::animate(Self[K], AnimationSpec) -> Self[K]
+pub fn AnimationGroup::effect(Self[PixiGroupKind], EffectSpec) -> MixedGroup
+pub fn AnimationGroup::new_dom(String) -> Self[DomGroupKind]
+pub fn AnimationGroup::new_pixi(String) -> Self[PixiGroupKind]
+pub fn[K] AnimationGroup::render_kind(Self[K]) -> @assets.RenderableKind
+pub fn[K] AnimationGroup::steps(Self[K]) -> Array[AnimationSpec]
+pub fn[K] AnimationGroup::target(Self[K]) -> String
+pub impl[K : Eq] Eq for AnimationGroup[K]
+pub impl[K : Show] Show for AnimationGroup[K]
+
 pub(all) struct AnimationSpec {
   prop : AnimProp
   duration_ms : Int
@@ -155,6 +171,10 @@ pub impl Eq for DomFigureState
 pub impl Show for DomFigureState
 pub impl ToJson for DomFigureState
 pub impl @json.FromJson for DomFigureState
+
+pub enum DomGroupKind {
+}
+pub impl AnimationGroupKind for DomGroupKind
 
 pub(all) enum Easing {
   Linear
@@ -238,6 +258,29 @@ pub(all) enum Instruction[T] {
 pub struct Label(String)
 #deprecated
 pub fn Label::inner(Self) -> String
+
+pub struct MixedGroup {
+  target : String
+  steps : Array[MixedGroupStep]
+}
+pub fn MixedGroup::animate(Self, AnimationSpec) -> Self
+pub fn MixedGroup::effect(Self, EffectSpec) -> Self
+pub fn MixedGroup::new(String) -> Self
+pub fn MixedGroup::steps(Self) -> Array[MixedGroupStep]
+pub fn MixedGroup::target(Self) -> String
+pub impl Eq for MixedGroup
+pub impl Show for MixedGroup
+
+pub enum MixedGroupStep {
+  Animate(AnimationSpec)
+  Effect(EffectSpec)
+}
+pub impl Eq for MixedGroupStep
+pub impl Show for MixedGroupStep
+
+pub enum PixiGroupKind {
+}
+pub impl AnimationGroupKind for PixiGroupKind
 
 pub(all) enum Position {
   Left
@@ -455,4 +498,7 @@ pub type ScriptPredicate[T] = (@state.GameState[T]) -> Bool
 pub type SexpHostFunction[T] = (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value
 
 // Traits
+pub trait AnimationGroupKind {
+  render_kind(Self) -> @assets.RenderableKind
+}
 
