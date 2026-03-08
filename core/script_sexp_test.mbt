@@ -219,6 +219,66 @@ test "parse sexp effect and animate" {
 }
 
 ///|
+test "parse sexp animate supports non-opacity props" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(animate hero rotation 180 0.0 1.57 :easing ease-out :blocking #t)",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    Animate(target, spec, Pixi) => {
+      assert_eq(target, "hero")
+      assert_eq(spec.prop, Rotation)
+      assert_eq(spec.duration_ms, 180)
+      assert_eq(spec.from, Some([0.0]))
+      assert_eq(spec.to, Some([1.57]))
+      assert_eq(spec.easing, EaseOut)
+      assert_eq(spec.blocking, true)
+    }
+    _ => fail("Expected AnimatePixi rotation")
+  }
+}
+
+///|
+test "parse sexp animate position supports optional from" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(animate hero position 240 (custom 0.1 0.2) :easing ease-in-out)",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    Animate(target, spec, Pixi) => {
+      assert_eq(target, "hero")
+      assert_eq(spec.prop, Position)
+      assert_eq(spec.duration_ms, 240)
+      assert_eq(spec.from, None)
+      assert_eq(spec.to, Some([1000.1, 1000.2]))
+      assert_eq(spec.easing, EaseInOut)
+      assert_eq(spec.blocking, false)
+    }
+    _ => fail("Expected AnimatePixi position")
+  }
+}
+
+///|
+test "parse sexp animate scale supports anchor option" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(animate hero scale 240 1.1 :anchor (0.2 0.8) :easing ease-in)",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    Animate(target, spec, Pixi) => {
+      assert_eq(target, "hero")
+      assert_eq(spec.prop, Scale)
+      assert_eq(spec.duration_ms, 240)
+      assert_eq(spec.from, None)
+      assert_eq(spec.to, Some([1.1]))
+      assert_eq(spec.anchor, Some([0.2, 0.8]))
+      assert_eq(spec.easing, EaseIn)
+    }
+    _ => fail("Expected AnimatePixi scale")
+  }
+}
+
+///|
 test "parse sexp run-code emits runtime hook" {
   let parser = SexpScriptParser::new()
   parser.register_function("int-var", host_int_var)
@@ -438,13 +498,12 @@ test "sexp parse malformed arities hit fallbacks" {
   let script : Script[Unit] = reisen_parse_sexp_script(
     "(jump-if) (run-code) (wait-custom-event route) (wait-custom-event-jump route) (wait) (wait-click) (unlock-cg) (intro) (show-avatar) (say onlyspeaker) (scene) (show-figure x) (hide-figure) (play-live2d-motion hero) (play-live2d-motion hero tap) (play-live2d-motion hero tap 1 2) (set-live2d-expression) (play-music bgm) (play-music) (play-sfx door) (play-sfx) (effect hero glow garbage) (animate hero x 200 0 1) (animate hero) (input-text)",
   )
-  assert_eq(script.instructions.length(), 6)
+  assert_eq(script.instructions.length(), 5)
   assert_true(script.instructions[0] is WaitForClick(true))
   assert_true(script.instructions[1] is PlayLive2dMotion("hero", "tap", None))
   assert_true(script.instructions[2] is PlayMusic("bgm", false))
   assert_true(script.instructions[3] is PlaySfx("door", false))
   assert_true(script.instructions[4] is ApplyEffect("hero", _))
-  assert_true(script.instructions[5] is Animate("hero", _, Pixi))
 }
 
 ///|

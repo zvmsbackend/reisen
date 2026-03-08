@@ -550,6 +550,188 @@ fn parse_position(value : @sexp.Sexp) -> Position {
 }
 
 ///|
+fn is_keyword_token(value : @sexp.Sexp) -> Bool {
+  value is @sexp.Symbol(sym) && sym.to_string().has_prefix(":")
+}
+
+///|
+fn parse_easing(value : @sexp.Sexp) -> Easing? {
+  match sexp_as_string(value).unwrap_or("").to_lower() {
+    "linear" => Some(Linear)
+    "ease-in" | "easein" => Some(EaseIn)
+    "ease-out" | "easeout" => Some(EaseOut)
+    "ease-in-out" | "easeinout" => Some(EaseInOut)
+    _ => None
+  }
+}
+
+///|
+fn parse_anchor(value : @sexp.Sexp) -> (Double, Double)? {
+  match value {
+    @sexp.List([x, y]) =>
+      Some((sexp_as_double(x).unwrap_or(0.5), sexp_as_double(y).unwrap_or(0.5)))
+    _ => None
+  }
+}
+
+///|
+fn parse_anim_options(
+  parts : Array[@sexp.Sexp],
+  start : Int,
+) -> (Easing, Bool, (Double, Double)?) {
+  let mut easing = Linear
+  let mut blocking = false
+  let mut anchor : (Double, Double)? = None
+  let mut i = start
+  while i + 1 < parts.length() {
+    match parts[i] {
+      @sexp.Symbol(k) if k == @sexp.Symbol::new(":easing") =>
+        easing = parse_easing(parts[i + 1]).unwrap_or(easing)
+      @sexp.Symbol(k) if k == @sexp.Symbol::new(":blocking") =>
+        blocking = sexp_as_bool(parts[i + 1]).unwrap_or(blocking)
+      @sexp.Symbol(k) if k == @sexp.Symbol::new(":anchor") =>
+        match parse_anchor(parts[i + 1]) {
+          Some(parsed) => anchor = Some(parsed)
+          None => ()
+        }
+      _ => ()
+    }
+    i = i + 2
+  }
+  (easing, blocking, anchor)
+}
+
+///|
+fn build_scalar_anim(
+  prop : String,
+  duration_ms : Int,
+  from : Double?,
+  to : Double,
+  easing : Easing,
+  blocking : Bool,
+  anchor : (Double, Double)?,
+) -> AnimationSpec? {
+  fn with_from(
+    from : Double?,
+    mk : (Double) -> AnimationSpec,
+    mk_no_from : () -> AnimationSpec,
+  ) -> AnimationSpec {
+    match from {
+      Some(v) => mk(v)
+      None => mk_no_from()
+    }
+  }
+  match prop {
+    "opacity" =>
+      Some(
+        with_from(
+          from,
+          v => anim_opacity(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_opacity(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "scale" =>
+      Some(
+        with_from(
+          from,
+          v => {
+            anim_scale(
+              duration_ms,
+              from=v,
+              to,
+              anchor=anchor.unwrap_or((0.5, 0.5)),
+              easing~,
+              blocking~,
+            )
+          },
+          () => {
+            anim_scale(
+              duration_ms,
+              to,
+              anchor=anchor.unwrap_or((0.5, 0.5)),
+              easing~,
+              blocking~,
+            )
+          },
+        ),
+      )
+    "rotation" =>
+      Some(
+        with_from(
+          from,
+          v => anim_rotation(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_rotation(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "blur" =>
+      Some(
+        with_from(
+          from,
+          v => anim_blur(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_blur(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "brightness" =>
+      Some(
+        with_from(
+          from,
+          v => anim_brightness(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_brightness(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "contrast" =>
+      Some(
+        with_from(
+          from,
+          v => anim_contrast(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_contrast(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "saturation" =>
+      Some(
+        with_from(
+          from,
+          v => anim_saturation(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_saturation(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "gamma" =>
+      Some(
+        with_from(
+          from,
+          v => anim_gamma(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_gamma(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "color-red" =>
+      Some(
+        with_from(
+          from,
+          v => anim_color_red(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_color_red(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "color-green" =>
+      Some(
+        with_from(
+          from,
+          v => anim_color_green(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_color_green(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    "color-blue" =>
+      Some(
+        with_from(
+          from,
+          v => anim_color_blue(duration_ms, from=v, to, easing~, blocking~),
+          () => anim_color_blue(duration_ms, to, easing~, blocking~),
+        ),
+      )
+    _ => None
+  }
+}
+
+///|
 fn parse_choice_options(items : Array[@sexp.Sexp]) -> Array[ChoiceOption] {
   let out : Array[ChoiceOption] = []
   for item in items {
@@ -910,20 +1092,66 @@ fn[T] lower_form(
             _ => ()
           }
         "animate" =>
-          match args {
-            [target, prop, duration, from, to] => {
+          match args.to_array() {
+            [target, prop, duration, ..] => {
+              let parts = args.to_array()
               let t = sexp_as_string(target).unwrap_or("")
               let p = sexp_as_string(prop).unwrap_or("").to_lower()
               let dur = sexp_as_int(duration).unwrap_or(0)
-              let from_value = sexp_as_double(from).unwrap_or(0.0)
-              let to_value = sexp_as_double(to).unwrap_or(0.0)
-              if t != "" {
-                let spec = if p == "opacity" {
-                  anim_opacity(dur, from=from_value, to_value)
-                } else {
-                  anim_opacity(dur, to_value)
+              if t != "" && p == "position" {
+                if parts.length() >= 4 {
+                  let mut from : Position? = None
+                  let mut to_index = 3
+                  let mut option_start = 4
+                  if parts.length() >= 5 && !is_keyword_token(parts[4]) {
+                    from = Some(parse_position(parts[3]))
+                    to_index = 4
+                    option_start = 5
+                  }
+                  if !is_keyword_token(parts[to_index]) {
+                    let (easing, blocking, _) = parse_anim_options(
+                      parts, option_start,
+                    )
+                    let spec = anim_position(
+                      dur,
+                      parse_position(parts[to_index]),
+                      from?,
+                      easing~,
+                      blocking~,
+                    )
+                    builder.instructions.push(Animate(t, spec, Pixi))
+                  }
                 }
-                builder.instructions.push(Animate(t, spec, Pixi))
+              } else if t != "" {
+                if parts.length() >= 4 {
+                  let mut from : Double? = None
+                  let mut to_index = 3
+                  let mut option_start = 4
+                  if parts.length() >= 5 && !is_keyword_token(parts[4]) {
+                    from = Some(sexp_as_double(parts[3]).unwrap_or(0.0))
+                    to_index = 4
+                    option_start = 5
+                  }
+                  if !is_keyword_token(parts[to_index]) {
+                    let (easing, blocking, anchor) = parse_anim_options(
+                      parts, option_start,
+                    )
+                    let spec = build_scalar_anim(
+                      p,
+                      dur,
+                      from,
+                      sexp_as_double(parts[to_index]).unwrap_or(0.0),
+                      easing,
+                      blocking,
+                      anchor,
+                    )
+                    match spec {
+                      Some(spec) =>
+                        builder.instructions.push(Animate(t, spec, Pixi))
+                      None => ()
+                    }
+                  }
+                }
               }
             }
             _ => ()
