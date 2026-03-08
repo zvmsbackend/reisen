@@ -1031,6 +1031,561 @@ fn parse_choice_options(items : Array[@sexp.Sexp]) -> Array[ChoiceOption] {
 }
 
 ///|
+fn[T] lower_scene_figure_command(
+  cmd : String,
+  args : ArrayView[@sexp.Sexp],
+  builder : ScriptBuilder[T],
+) -> Unit {
+  match cmd {
+    "scene" =>
+      match args {
+        [bg_id] => {
+          let id = sexp_as_string(bg_id).unwrap_or("")
+          if id != "" {
+            builder.instructions.push(ShowBackground(id))
+          }
+        }
+        _ => ()
+      }
+    "show-figure" =>
+      match args {
+        [id, pos, .. rest] => {
+          let target = sexp_as_string(id).unwrap_or("")
+          if target != "" {
+            let (layer, scalars, interactive, kind) = parse_show_figure_options(
+              rest.to_array(),
+            )
+            let placement = { pos: parse_position(pos), layer, scalars }
+            if kind is @assets.Dom {
+              builder.instructions.push(
+                ShowDomFigure(target, placement, interactive),
+              )
+            } else {
+              builder.instructions.push(ShowFigure(target, placement))
+            }
+          }
+        }
+        _ => ()
+      }
+    "set-figure-interactive" =>
+      match args {
+        [id, interactive] => {
+          let target = sexp_as_string(id).unwrap_or("")
+          if target != "" {
+            builder.instructions.push(
+              SetDomFigureInteractive(
+                target,
+                sexp_as_bool(interactive).unwrap_or(false),
+              ),
+            )
+          }
+        }
+        _ => ()
+      }
+    "hide-figure" =>
+      match args {
+        [id] => {
+          let target = sexp_as_string(id).unwrap_or("")
+          if target != "" {
+            builder.instructions.push(HideFigure(target))
+          }
+        }
+        _ => ()
+      }
+    _ => ()
+  }
+}
+
+///|
+fn[T] lower_effect_animation_command(
+  cmd : String,
+  args : ArrayView[@sexp.Sexp],
+  builder : ScriptBuilder[T],
+) -> Unit {
+  match cmd {
+    "effect" =>
+      match args {
+        [target, effect_id, .. rest] => {
+          let t = sexp_as_string(target).unwrap_or("")
+          let e = sexp_as_string(effect_id).unwrap_or("")
+          if t != "" {
+            match parse_effect_spec(e, rest.to_array()) {
+              Some(spec) => builder.instructions.push(ApplyEffect(t, spec))
+              None => ()
+            }
+          }
+        }
+        _ => ()
+      }
+    "animate" =>
+      match args.to_array() {
+        [target, prop, duration, ..] => {
+          let parts = args.to_array()
+          let t = sexp_as_string(target).unwrap_or("")
+          let p = sexp_as_string(prop).unwrap_or("").to_lower()
+          let dur = sexp_as_int(duration).unwrap_or(0)
+          if t != "" {
+            let kind = parse_render_kind_option(parts, 3)
+            match parse_anim_spec(p, dur, parts, 3) {
+              Some(spec) => builder.instructions.push(Animate(t, spec, kind))
+              None => ()
+            }
+          }
+        }
+        _ => ()
+      }
+    "animate-group" =>
+      match args.to_array() {
+        [target, .. step_items] => {
+          let t = sexp_as_string(target).unwrap_or("")
+          if t != "" {
+            let mut kind = @assets.Pixi
+            let steps : Array[GroupStep] = []
+            for item in step_items {
+              if !(item is @sexp.Symbol(k) && k == @sexp.Symbol::new(":kind")) {
+                match parse_group_animation_step(item) {
+                  Some(step) => steps.push(step)
+                  None => ()
+                }
+              }
+            }
+            let items = step_items.to_array()
+            let mut i = 0
+            while i + 1 < items.length() {
+              match items[i] {
+                @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
+                  kind = parse_render_kind(items[i + 1])
+                _ => ()
+              }
+              i = i + 2
+            }
+            if !steps.is_empty() {
+              builder.instructions.push(AnimateGroup(t, steps, kind))
+            }
+          }
+        }
+        _ => ()
+      }
+    "mixed-group" =>
+      match args.to_array() {
+        [target, .. step_items] => {
+          let t = sexp_as_string(target).unwrap_or("")
+          if t != "" {
+            let mut kind = @assets.Pixi
+            let steps : Array[GroupStep] = []
+            for item in step_items {
+              if !(item is @sexp.Symbol(k) && k == @sexp.Symbol::new(":kind")) {
+                match parse_mixed_group_step(item) {
+                  Some(step) => steps.push(step)
+                  None => ()
+                }
+              }
+            }
+            let items = step_items.to_array()
+            let mut i = 0
+            while i + 1 < items.length() {
+              match items[i] {
+                @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
+                  kind = parse_render_kind(items[i + 1])
+                _ => ()
+              }
+              i = i + 2
+            }
+            if !steps.is_empty() {
+              builder.instructions.push(AnimateGroup(t, steps, kind))
+            }
+          }
+        }
+        _ => ()
+      }
+    _ => ()
+  }
+}
+
+///|
+fn[T] lower_flow_command(
+  cmd : String,
+  args : ArrayView[@sexp.Sexp],
+  builder : ScriptBuilder[T],
+  host_functions : Map[String, SexpHostFunction[T]],
+) -> Unit {
+  match cmd {
+    "label" =>
+      match args {
+        [name] => {
+          let s = sexp_as_string(name).unwrap_or("")
+          if s != "" {
+            builder.label(label(name=s))
+          }
+        }
+        _ => ()
+      }
+    "jump" =>
+      match args {
+        [name] => {
+          let s = sexp_as_string(name).unwrap_or("")
+          if s != "" {
+            builder.jump(label(name=s))
+          }
+        }
+        _ => ()
+      }
+    "jump-if" =>
+      match args {
+        [target, predicate] => {
+          let label_name = sexp_as_string(target).unwrap_or("")
+          if label_name != "" {
+            builder.jump_if(label(name=label_name), state => {
+              let value = sexp_to_js_value(predicate, state, host_functions)
+              js_value_to_bool(value)
+            })
+          }
+        }
+        _ => ()
+      }
+    "branch" =>
+      match args {
+        [then_target, else_target, predicate] => {
+          let then_name = sexp_as_string(then_target).unwrap_or("")
+          let else_name = sexp_as_string(else_target).unwrap_or("")
+          if then_name != "" && else_name != "" {
+            builder.branch(label(name=then_name), label(name=else_name), state => {
+              let value = sexp_to_js_value(predicate, state, host_functions)
+              js_value_to_bool(value)
+            })
+          }
+        }
+        _ => ()
+      }
+    "jump-by" =>
+      match args {
+        [selector] =>
+          builder.jump_by(state => {
+            let value = sexp_to_js_value(selector, state, host_functions)
+            let target = js_value_to_string(value).unwrap_or("")
+            label(name=target)
+          })
+        _ => ()
+      }
+    "run-code" =>
+      match args {
+        [expr] =>
+          builder.run_code(state => {
+            ignore(sexp_to_js_value(expr, state, host_functions))
+          })
+        _ => ()
+      }
+    "wait-custom-event" =>
+      match args {
+        [name, predicate] => {
+          let event_name = sexp_as_string(name).unwrap_or("")
+          if event_name != "" {
+            builder.wait_custom_event(event_name, (state, payload_text) => {
+              let payload = @js.Cast::from(payload_text)
+              let value = sexp_to_js_value(
+                predicate,
+                state,
+                host_functions,
+                payload~,
+              )
+              js_value_to_bool(value)
+            })
+          }
+        }
+        _ => ()
+      }
+    "wait-custom-event-jump" =>
+      match args {
+        [name, selector] => {
+          let event_name = sexp_as_string(name).unwrap_or("")
+          if event_name != "" {
+            builder.wait_custom_event_jump(event_name, (state, payload_text) => {
+              let payload = @js.Cast::from(payload_text)
+              let value = sexp_to_js_value(
+                selector,
+                state,
+                host_functions,
+                payload~,
+              )
+              let target = js_value_to_string(value).unwrap_or("")
+              label(name=target)
+            })
+          }
+        }
+        _ => ()
+      }
+    "wait" =>
+      match args {
+        [ms] => builder.wait(sexp_as_int(ms).unwrap_or(0))
+        _ => ()
+      }
+    "wait-click" =>
+      match args {
+        [flag] =>
+          builder.wait_click(can_skip=sexp_as_bool(flag).unwrap_or(true))
+        _ => builder.wait_click()
+      }
+    "unlock-cg" =>
+      match args {
+        [id] => {
+          let cg_id = sexp_as_string(id).unwrap_or("")
+          if cg_id != "" {
+            builder.instructions.push(UnlockCg(cg_id))
+          }
+        }
+        _ => ()
+      }
+    "intro" =>
+      match args {
+        [text] => builder.intro(sexp_as_string(text).unwrap_or(""))
+        _ => ()
+      }
+    _ => ()
+  }
+}
+
+///|
+fn[T] lower_dialog_command(
+  cmd : String,
+  args : ArrayView[@sexp.Sexp],
+  builder : ScriptBuilder[T],
+) -> Unit {
+  match cmd {
+    "say" =>
+      match args {
+        [speaker, text, .. rest] => {
+          let sp = sexp_as_string(speaker).unwrap_or("")
+          let tx = sexp_as_string(text).unwrap_or("")
+          let mut typewriter = true
+          let mut append = false
+          let mut voice = ""
+          let mut i = 0
+          while i + 1 < rest.length() {
+            match rest[i] {
+              @sexp.Symbol(k) if k == @sexp.Symbol::new(":typewriter") =>
+                typewriter = sexp_as_bool(rest[i + 1]).unwrap_or(typewriter)
+              @sexp.Symbol(k) if k == @sexp.Symbol::new(":append") =>
+                append = sexp_as_bool(rest[i + 1]).unwrap_or(append)
+              @sexp.Symbol(k) if k == @sexp.Symbol::new(":voice") =>
+                voice = sexp_as_string(rest[i + 1]).unwrap_or(voice)
+              _ => ()
+            }
+            i = i + 2
+          }
+          builder.say(sp, tx, typewriter~, append~, voice~)
+        }
+        _ => ()
+      }
+    "say-many" =>
+      match args {
+        [speaker, @sexp.List(text_items), .. rest] => {
+          let sp = sexp_as_string(speaker).unwrap_or("")
+          let texts : Array[String] = []
+          for item in text_items {
+            match sexp_as_string(item) {
+              Some(s) => texts.push(s)
+              None => ()
+            }
+          }
+          let mut typewriter = true
+          let mut append = false
+          let mut voice = ""
+          let mut i = 0
+          while i + 1 < rest.length() {
+            match rest[i] {
+              @sexp.Symbol(k) if k == @sexp.Symbol::new(":typewriter") =>
+                typewriter = sexp_as_bool(rest[i + 1]).unwrap_or(typewriter)
+              @sexp.Symbol(k) if k == @sexp.Symbol::new(":append") =>
+                append = sexp_as_bool(rest[i + 1]).unwrap_or(append)
+              @sexp.Symbol(k) if k == @sexp.Symbol::new(":voice") =>
+                voice = sexp_as_string(rest[i + 1]).unwrap_or(voice)
+              _ => ()
+            }
+            i = i + 2
+          }
+          if !texts.is_empty() {
+            builder.say_many(sp, texts, typewriter~, append~, voice~)
+          }
+        }
+        _ => ()
+      }
+    "narrate" =>
+      match args {
+        [text] => builder.narrate(sexp_as_string(text).unwrap_or(""))
+        _ => ()
+      }
+    _ => ()
+  }
+}
+
+///|
+fn[T] lower_media_command(
+  cmd : String,
+  args : ArrayView[@sexp.Sexp],
+  builder : ScriptBuilder[T],
+) -> Unit {
+  match cmd {
+    "play-live2d-motion" =>
+      match args {
+        [target, group] => {
+          let id = sexp_as_string(target).unwrap_or("")
+          let motion = sexp_as_string(group).unwrap_or("")
+          if id != "" && motion != "" {
+            builder.instructions.push(PlayLive2dMotion(id, motion, None))
+          }
+        }
+        [target, group, index] => {
+          let id = sexp_as_string(target).unwrap_or("")
+          let motion = sexp_as_string(group).unwrap_or("")
+          if id != "" && motion != "" {
+            builder.instructions.push(
+              PlayLive2dMotion(
+                id,
+                motion,
+                Some(sexp_as_int(index).unwrap_or(0)),
+              ),
+            )
+          }
+        }
+        _ => ()
+      }
+    "set-live2d-expression" =>
+      match args {
+        [target] => {
+          let id = sexp_as_string(target).unwrap_or("")
+          if id != "" {
+            builder.instructions.push(SetLive2dExpression(id, None))
+          }
+        }
+        [target, expr] => {
+          let id = sexp_as_string(target).unwrap_or("")
+          if id != "" {
+            builder.instructions.push(
+              SetLive2dExpression(id, Some(sexp_as_string(expr).unwrap_or(""))),
+            )
+          }
+        }
+        _ => ()
+      }
+    "play-music" =>
+      match args {
+        [id] => {
+          let track = sexp_as_string(id).unwrap_or("")
+          if track != "" {
+            builder.instructions.push(PlayMusic(track, false))
+          }
+        }
+        [id, loop_flag] => {
+          let track = sexp_as_string(id).unwrap_or("")
+          if track != "" {
+            builder.instructions.push(
+              PlayMusic(track, sexp_as_bool(loop_flag).unwrap_or(false)),
+            )
+          }
+        }
+        _ => ()
+      }
+    "stop-music" => builder.stop_music()
+    "play-sfx" =>
+      match args {
+        [id] => {
+          let sfx_id = sexp_as_string(id).unwrap_or("")
+          if sfx_id != "" {
+            builder.instructions.push(PlaySfx(sfx_id, false))
+          }
+        }
+        [id, blocking] => {
+          let sfx_id = sexp_as_string(id).unwrap_or("")
+          if sfx_id != "" {
+            builder.instructions.push(
+              PlaySfx(sfx_id, sexp_as_bool(blocking).unwrap_or(false)),
+            )
+          }
+        }
+        _ => ()
+      }
+    "play-video" =>
+      match args {
+        [url] => {
+          let video_url = sexp_as_string(url).unwrap_or("")
+          if video_url != "" {
+            builder.play_video(video_url)
+          }
+        }
+        [url, can_skip] => {
+          let video_url = sexp_as_string(url).unwrap_or("")
+          if video_url != "" {
+            builder.play_video(
+              video_url,
+              can_skip=sexp_as_bool(can_skip).unwrap_or(false),
+            )
+          }
+        }
+        _ => ()
+      }
+    _ => ()
+  }
+}
+
+///|
+fn[T] lower_ui_command(
+  cmd : String,
+  args : ArrayView[@sexp.Sexp],
+  builder : ScriptBuilder[T],
+) -> Unit {
+  match cmd {
+    "show-text-box" => builder.show_text_box()
+    "hide-text-box" => builder.hide_text_box()
+    "show-avatar" =>
+      match args {
+        [url] => builder.show_avatar(sexp_as_string(url).unwrap_or(""))
+        _ => ()
+      }
+    "hide-avatar" => builder.hide_avatar()
+    _ => ()
+  }
+}
+
+///|
+fn[T] lower_choice_input_command(
+  cmd : String,
+  args : ArrayView[@sexp.Sexp],
+  builder : ScriptBuilder[T],
+) -> Unit {
+  match cmd {
+    "choice" => {
+      let options = parse_choice_options(args.to_array())
+      if !options.is_empty() {
+        builder.choice(options)
+      }
+    }
+    "menu" =>
+      match args {
+        [speaker, prompt, .. items] => {
+          let sp = sexp_as_string(speaker).unwrap_or("")
+          let pr = sexp_as_string(prompt).unwrap_or("")
+          let options = parse_choice_options(items.to_array())
+          if !options.is_empty() {
+            builder.menu(sp, pr, options)
+          }
+        }
+        _ => ()
+      }
+    "input-text" =>
+      match args {
+        [var_name, prompt] => {
+          let vn = sexp_as_string(var_name).unwrap_or("")
+          if vn != "" {
+            builder.input_text(vn, sexp_as_string(prompt).unwrap_or(""))
+          }
+        }
+        _ => ()
+      }
+    _ => ()
+  }
+}
+
+///|
 fn[T] lower_form(
   form : @sexp.Sexp,
   builder : ScriptBuilder[T],
@@ -1040,489 +1595,34 @@ fn[T] lower_form(
     @sexp.List([@sexp.Symbol(head), .. args]) => {
       let cmd = head.to_string()
       match cmd {
-        "label" =>
-          match args {
-            [name] => {
-              let s = sexp_as_string(name).unwrap_or("")
-              if s != "" {
-                builder.label(label(name=s))
-              }
-            }
-            _ => ()
-          }
-        "jump" =>
-          match args {
-            [name] => {
-              let s = sexp_as_string(name).unwrap_or("")
-              if s != "" {
-                builder.jump(label(name=s))
-              }
-            }
-            _ => ()
-          }
-        "jump-if" =>
-          match args {
-            [target, predicate] => {
-              let label_name = sexp_as_string(target).unwrap_or("")
-              if label_name != "" {
-                builder.jump_if(label(name=label_name), state => {
-                  let value = sexp_to_js_value(predicate, state, host_functions)
-                  js_value_to_bool(value)
-                })
-              }
-            }
-            _ => ()
-          }
-        "branch" =>
-          match args {
-            [then_target, else_target, predicate] => {
-              let then_name = sexp_as_string(then_target).unwrap_or("")
-              let else_name = sexp_as_string(else_target).unwrap_or("")
-              if then_name != "" && else_name != "" {
-                builder.branch(label(name=then_name), label(name=else_name), state => {
-                  let value = sexp_to_js_value(predicate, state, host_functions)
-                  js_value_to_bool(value)
-                })
-              }
-            }
-            _ => ()
-          }
-        "jump-by" =>
-          match args {
-            [selector] =>
-              builder.jump_by(state => {
-                let value = sexp_to_js_value(selector, state, host_functions)
-                let target = js_value_to_string(value).unwrap_or("")
-                label(name=target)
-              })
-            _ => ()
-          }
-        "run-code" =>
-          match args {
-            [expr] =>
-              builder.run_code(state => {
-                ignore(sexp_to_js_value(expr, state, host_functions))
-              })
-            _ => ()
-          }
-        "wait-custom-event" =>
-          match args {
-            [name, predicate] => {
-              let event_name = sexp_as_string(name).unwrap_or("")
-              if event_name != "" {
-                builder.wait_custom_event(event_name, (state, payload_text) => {
-                  let payload = @js.Cast::from(payload_text)
-                  let value = sexp_to_js_value(
-                    predicate,
-                    state,
-                    host_functions,
-                    payload~,
-                  )
-                  js_value_to_bool(value)
-                })
-              }
-            }
-            _ => ()
-          }
-        "wait-custom-event-jump" =>
-          match args {
-            [name, selector] => {
-              let event_name = sexp_as_string(name).unwrap_or("")
-              if event_name != "" {
-                builder.wait_custom_event_jump(event_name, (state, payload_text) => {
-                  let payload = @js.Cast::from(payload_text)
-                  let value = sexp_to_js_value(
-                    selector,
-                    state,
-                    host_functions,
-                    payload~,
-                  )
-                  let target = js_value_to_string(value).unwrap_or("")
-                  label(name=target)
-                })
-              }
-            }
-            _ => ()
-          }
-        "wait" =>
-          match args {
-            [ms] => builder.wait(sexp_as_int(ms).unwrap_or(0))
-            _ => ()
-          }
-        "wait-click" =>
-          match args {
-            [flag] =>
-              builder.wait_click(can_skip=sexp_as_bool(flag).unwrap_or(true))
-            _ => builder.wait_click()
-          }
-        "unlock-cg" =>
-          match args {
-            [id] => {
-              let cg_id = sexp_as_string(id).unwrap_or("")
-              if cg_id != "" {
-                builder.instructions.push(UnlockCg(cg_id))
-              }
-            }
-            _ => ()
-          }
-        "intro" =>
-          match args {
-            [text] => builder.intro(sexp_as_string(text).unwrap_or(""))
-            _ => ()
-          }
-        "show-text-box" => builder.show_text_box()
-        "hide-text-box" => builder.hide_text_box()
-        "show-avatar" =>
-          match args {
-            [url] => builder.show_avatar(sexp_as_string(url).unwrap_or(""))
-            _ => ()
-          }
-        "hide-avatar" => builder.hide_avatar()
-        "say" =>
-          match args {
-            [speaker, text, .. rest] => {
-              let sp = sexp_as_string(speaker).unwrap_or("")
-              let tx = sexp_as_string(text).unwrap_or("")
-              let mut typewriter = true
-              let mut append = false
-              let mut voice = ""
-              let mut i = 0
-              while i + 1 < rest.length() {
-                match rest[i] {
-                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":typewriter") =>
-                    typewriter = sexp_as_bool(rest[i + 1]).unwrap_or(typewriter)
-                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":append") =>
-                    append = sexp_as_bool(rest[i + 1]).unwrap_or(append)
-                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":voice") =>
-                    voice = sexp_as_string(rest[i + 1]).unwrap_or(voice)
-                  _ => ()
-                }
-                i = i + 2
-              }
-              builder.say(sp, tx, typewriter~, append~, voice~)
-            }
-            _ => ()
-          }
-        "say-many" =>
-          match args {
-            [speaker, @sexp.List(text_items), .. rest] => {
-              let sp = sexp_as_string(speaker).unwrap_or("")
-              let texts : Array[String] = []
-              for item in text_items {
-                match sexp_as_string(item) {
-                  Some(s) => texts.push(s)
-                  None => ()
-                }
-              }
-              let mut typewriter = true
-              let mut append = false
-              let mut voice = ""
-              let mut i = 0
-              while i + 1 < rest.length() {
-                match rest[i] {
-                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":typewriter") =>
-                    typewriter = sexp_as_bool(rest[i + 1]).unwrap_or(typewriter)
-                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":append") =>
-                    append = sexp_as_bool(rest[i + 1]).unwrap_or(append)
-                  @sexp.Symbol(k) if k == @sexp.Symbol::new(":voice") =>
-                    voice = sexp_as_string(rest[i + 1]).unwrap_or(voice)
-                  _ => ()
-                }
-                i = i + 2
-              }
-              if !texts.is_empty() {
-                builder.say_many(sp, texts, typewriter~, append~, voice~)
-              }
-            }
-            _ => ()
-          }
-        "narrate" =>
-          match args {
-            [text] => builder.narrate(sexp_as_string(text).unwrap_or(""))
-            _ => ()
-          }
-        "scene" =>
-          match args {
-            [bg_id] => {
-              let id = sexp_as_string(bg_id).unwrap_or("")
-              if id != "" {
-                builder.instructions.push(ShowBackground(id))
-              }
-            }
-            _ => ()
-          }
-        "show-figure" =>
-          match args {
-            [id, pos, .. rest] => {
-              let target = sexp_as_string(id).unwrap_or("")
-              if target != "" {
-                let (layer, scalars, interactive, kind) = parse_show_figure_options(
-                  rest.to_array(),
-                )
-                let placement = { pos: parse_position(pos), layer, scalars }
-                if kind is @assets.Dom {
-                  builder.instructions.push(
-                    ShowDomFigure(target, placement, interactive),
-                  )
-                } else {
-                  builder.instructions.push(ShowFigure(target, placement))
-                }
-              }
-            }
-            _ => ()
-          }
-        "set-figure-interactive" =>
-          match args {
-            [id, interactive] => {
-              let target = sexp_as_string(id).unwrap_or("")
-              if target != "" {
-                builder.instructions.push(
-                  SetDomFigureInteractive(
-                    target,
-                    sexp_as_bool(interactive).unwrap_or(false),
-                  ),
-                )
-              }
-            }
-            _ => ()
-          }
-        "hide-figure" =>
-          match args {
-            [id] => {
-              let target = sexp_as_string(id).unwrap_or("")
-              if target != "" {
-                builder.instructions.push(HideFigure(target))
-              }
-            }
-            _ => ()
-          }
-        "play-live2d-motion" =>
-          match args {
-            [target, group] => {
-              let id = sexp_as_string(target).unwrap_or("")
-              let motion = sexp_as_string(group).unwrap_or("")
-              if id != "" && motion != "" {
-                builder.instructions.push(PlayLive2dMotion(id, motion, None))
-              }
-            }
-            [target, group, index] => {
-              let id = sexp_as_string(target).unwrap_or("")
-              let motion = sexp_as_string(group).unwrap_or("")
-              if id != "" && motion != "" {
-                builder.instructions.push(
-                  PlayLive2dMotion(
-                    id,
-                    motion,
-                    Some(sexp_as_int(index).unwrap_or(0)),
-                  ),
-                )
-              }
-            }
-            _ => ()
-          }
-        "set-live2d-expression" =>
-          match args {
-            [target] => {
-              let id = sexp_as_string(target).unwrap_or("")
-              if id != "" {
-                builder.instructions.push(SetLive2dExpression(id, None))
-              }
-            }
-            [target, expr] => {
-              let id = sexp_as_string(target).unwrap_or("")
-              if id != "" {
-                builder.instructions.push(
-                  SetLive2dExpression(
-                    id,
-                    Some(sexp_as_string(expr).unwrap_or("")),
-                  ),
-                )
-              }
-            }
-            _ => ()
-          }
-        "play-music" =>
-          match args {
-            [id] => {
-              let track = sexp_as_string(id).unwrap_or("")
-              if track != "" {
-                builder.instructions.push(PlayMusic(track, false))
-              }
-            }
-            [id, loop_flag] => {
-              let track = sexp_as_string(id).unwrap_or("")
-              if track != "" {
-                builder.instructions.push(
-                  PlayMusic(track, sexp_as_bool(loop_flag).unwrap_or(false)),
-                )
-              }
-            }
-            _ => ()
-          }
-        "stop-music" => builder.stop_music()
-        "play-sfx" =>
-          match args {
-            [id] => {
-              let sfx_id = sexp_as_string(id).unwrap_or("")
-              if sfx_id != "" {
-                builder.instructions.push(PlaySfx(sfx_id, false))
-              }
-            }
-            [id, blocking] => {
-              let sfx_id = sexp_as_string(id).unwrap_or("")
-              if sfx_id != "" {
-                builder.instructions.push(
-                  PlaySfx(sfx_id, sexp_as_bool(blocking).unwrap_or(false)),
-                )
-              }
-            }
-            _ => ()
-          }
-        "play-video" =>
-          match args {
-            [url] => {
-              let video_url = sexp_as_string(url).unwrap_or("")
-              if video_url != "" {
-                builder.play_video(video_url)
-              }
-            }
-            [url, can_skip] => {
-              let video_url = sexp_as_string(url).unwrap_or("")
-              if video_url != "" {
-                builder.play_video(
-                  video_url,
-                  can_skip=sexp_as_bool(can_skip).unwrap_or(false),
-                )
-              }
-            }
-            _ => ()
-          }
-        "effect" =>
-          match args {
-            [target, effect_id, .. rest] => {
-              let t = sexp_as_string(target).unwrap_or("")
-              let e = sexp_as_string(effect_id).unwrap_or("")
-              if t != "" {
-                match parse_effect_spec(e, rest.to_array()) {
-                  Some(spec) => builder.instructions.push(ApplyEffect(t, spec))
-                  None => ()
-                }
-              }
-            }
-            _ => ()
-          }
-        "animate" =>
-          match args.to_array() {
-            [target, prop, duration, ..] => {
-              let parts = args.to_array()
-              let t = sexp_as_string(target).unwrap_or("")
-              let p = sexp_as_string(prop).unwrap_or("").to_lower()
-              let dur = sexp_as_int(duration).unwrap_or(0)
-              if t != "" {
-                let kind = parse_render_kind_option(parts, 3)
-                match parse_anim_spec(p, dur, parts, 3) {
-                  Some(spec) =>
-                    builder.instructions.push(Animate(t, spec, kind))
-                  None => ()
-                }
-              }
-            }
-            _ => ()
-          }
-        "animate-group" =>
-          match args.to_array() {
-            [target, .. step_items] => {
-              let t = sexp_as_string(target).unwrap_or("")
-              if t != "" {
-                let mut kind = @assets.Pixi
-                let steps : Array[GroupStep] = []
-                for item in step_items {
-                  if !(item is @sexp.Symbol(k) &&
-                    k == @sexp.Symbol::new(":kind")) {
-                    match parse_group_animation_step(item) {
-                      Some(step) => steps.push(step)
-                      None => ()
-                    }
-                  }
-                }
-                let items = step_items.to_array()
-                let mut i = 0
-                while i + 1 < items.length() {
-                  match items[i] {
-                    @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
-                      kind = parse_render_kind(items[i + 1])
-                    _ => ()
-                  }
-                  i = i + 2
-                }
-                if !steps.is_empty() {
-                  builder.instructions.push(AnimateGroup(t, steps, kind))
-                }
-              }
-            }
-            _ => ()
-          }
-        "mixed-group" =>
-          match args.to_array() {
-            [target, .. step_items] => {
-              let t = sexp_as_string(target).unwrap_or("")
-              if t != "" {
-                let mut kind = @assets.Pixi
-                let steps : Array[GroupStep] = []
-                for item in step_items {
-                  if !(item is @sexp.Symbol(k) &&
-                    k == @sexp.Symbol::new(":kind")) {
-                    match parse_mixed_group_step(item) {
-                      Some(step) => steps.push(step)
-                      None => ()
-                    }
-                  }
-                }
-                let items = step_items.to_array()
-                let mut i = 0
-                while i + 1 < items.length() {
-                  match items[i] {
-                    @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
-                      kind = parse_render_kind(items[i + 1])
-                    _ => ()
-                  }
-                  i = i + 2
-                }
-                if !steps.is_empty() {
-                  builder.instructions.push(AnimateGroup(t, steps, kind))
-                }
-              }
-            }
-            _ => ()
-          }
-        "choice" => {
-          let options = parse_choice_options(args.to_array())
-          if !options.is_empty() {
-            builder.choice(options)
-          }
-        }
-        "menu" =>
-          match args {
-            [speaker, prompt, .. items] => {
-              let sp = sexp_as_string(speaker).unwrap_or("")
-              let pr = sexp_as_string(prompt).unwrap_or("")
-              let options = parse_choice_options(items.to_array())
-              if !options.is_empty() {
-                builder.menu(sp, pr, options)
-              }
-            }
-            _ => ()
-          }
-        "input-text" =>
-          match args {
-            [var_name, prompt] => {
-              let vn = sexp_as_string(var_name).unwrap_or("")
-              if vn != "" {
-                builder.input_text(vn, sexp_as_string(prompt).unwrap_or(""))
-              }
-            }
-            _ => ()
-          }
+        "label"
+        | "jump"
+        | "jump-if"
+        | "branch"
+        | "jump-by"
+        | "run-code"
+        | "wait-custom-event"
+        | "wait-custom-event-jump"
+        | "wait"
+        | "wait-click"
+        | "unlock-cg"
+        | "intro" => lower_flow_command(cmd, args, builder, host_functions)
+        "show-text-box" | "hide-text-box" | "show-avatar" | "hide-avatar" =>
+          lower_ui_command(cmd, args, builder)
+        "say" | "say-many" | "narrate" =>
+          lower_dialog_command(cmd, args, builder)
+        "scene" | "show-figure" | "set-figure-interactive" | "hide-figure" =>
+          lower_scene_figure_command(cmd, args, builder)
+        "play-live2d-motion"
+        | "set-live2d-expression"
+        | "play-music"
+        | "stop-music"
+        | "play-sfx"
+        | "play-video" => lower_media_command(cmd, args, builder)
+        "effect" | "animate" | "animate-group" | "mixed-group" =>
+          lower_effect_animation_command(cmd, args, builder)
+        "choice" | "menu" | "input-text" =>
+          lower_choice_input_command(cmd, args, builder)
         _ => ()
       }
     }

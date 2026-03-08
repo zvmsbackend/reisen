@@ -855,6 +855,318 @@ fn slot_exists(existing : Array[String], slot : String) -> Bool {
 }
 
 ///|
+fn[T] AppController::render_phase_on_locale_change(
+  self : AppController[T],
+) -> Unit {
+  match self.phase {
+    AppPhase::LocaleSelect =>
+      self.start_menu.render_locale_picker(self.languages)
+    AppPhase::StartGate => self.start_menu.render_gate()
+    AppPhase::StartMenu => self.start_menu.render()
+    AppPhase::Settings => self.settings_menu.render()
+    AppPhase::Gallery => self.gallery_menu.render()
+    AppPhase::Credits => self.credits_menu.render(self.credits_html())
+    AppPhase::InGame => ()
+    _ => ()
+  }
+}
+
+///|
+fn[T] AppController::tick_locale_select(self : AppController[T]) -> Bool {
+  match self.start_menu.take_locale_action() {
+    StartLocaleAction::Select(code) => {
+      self.emit_ui_click_sfx()
+      self.apply_locale(code)
+      self.start_menu.clear_locale_picker()
+      self.start_menu.render_gate()
+      self.phase = AppPhase::StartGate
+    }
+    StartLocaleAction::NoAction => ()
+  }
+  true
+}
+
+///|
+fn[T] AppController::tick_start_gate(self : AppController[T]) -> Bool {
+  match self.start_menu.take_gate_action() {
+    Start => {
+      self.emit_ui_click_sfx()
+      if self.start_logo_urls.is_empty() {
+        self.enter_start_menu()
+      } else {
+        self.enter_start_logo()
+      }
+    }
+    NoAction => ()
+  }
+  true
+}
+
+///|
+fn[T] AppController::tick_start_logo(
+  self : AppController[T],
+  elapsed_ms : Int,
+) -> Bool {
+  self.start_logo_elapsed_ms += elapsed_ms
+  match self.start_menu.take_logo_action() {
+    Done => self.advance_start_logo()
+    NoAction =>
+      if self.start_logo_elapsed_ms >= self.start_logo_duration_ms {
+        self.advance_start_logo()
+      }
+  }
+  true
+}
+
+///|
+async fn[T : ToJson] AppController::tick_in_game(
+  self : AppController[T],
+  elapsed_ms : Int,
+) -> Bool {
+  match self.runner {
+    Some(runner) =>
+      if runner.tick(elapsed_ms~) {
+        match runner.take_pending_action() {
+          Some(action) => self.handle_in_game_pending_action(runner, action)
+          None => ()
+        }
+        true
+      } else {
+        runner.apply_runtime_event(SfxStopped)
+        (self.event_hook)(MusicStopped)
+        (self.event_hook)(SfxStopped)
+        runner.clear_presentation()
+        self.runner = None
+        self.enter_start_menu()
+        true
+      }
+    None => {
+      self.enter_start_menu()
+      true
+    }
+  }
+}
+
+///|
+fn[T : ToJson] AppController::handle_in_game_pending_action(
+  self : AppController[T],
+  runner : GameRunner[T],
+  action : String,
+) -> Unit {
+  match action {
+    "settings" => {
+      self.saved_director_json = Some(runner.director().save_json())
+      self.saved_dialog_history = Some(runner.dialog_history())
+      runner.clear_ui()
+      self.settings_menu.set_context(FromMidgame)
+      self.settings_menu.set_view_mode(Settings)
+      self.settings_menu.render()
+      self.phase = AppPhase::Settings
+    }
+    "qsave" =>
+      save_runner_to_slot_with_meta(
+        runner,
+        next_save_slot(self.save_store, self.save_ns, "quicksave", 6),
+        preview=dialog_preview(runner),
+        save_namespace=self.save_ns,
+        save_store=self.save_store,
+      )
+    "save" => {
+      self.saved_director_json = Some(runner.director().save_json())
+      self.saved_dialog_history = Some(runner.dialog_history())
+      runner.clear_ui()
+      self.settings_menu.set_context(FromMidgame)
+      self.settings_menu.set_view_mode(SaveList)
+      self.settings_menu.render()
+      self.phase = AppPhase::Settings
+    }
+    "log" => runner.toggle_log_visible()
+    _ => ()
+  }
+}
+
+///|
+async fn[T : FromJson + ToJson] AppController::tick_settings(
+  self : AppController[T],
+) -> Bool raise AppControllerError {
+  match self.settings_menu.take_action() {
+    LanguageChanged(code) => {
+      self.emit_ui_click_sfx()
+      self.apply_locale(code)
+      self.settings_menu.render()
+    }
+    Back => {
+      self.emit_ui_click_sfx()
+      self.settings_menu.clear()
+      match self.saved_director_json {
+        Some(json) => {
+          self.saved_director_json = None
+          let dialog_history = self.saved_dialog_history.unwrap_or([])
+          self.saved_dialog_history = None
+          let script = self.script()
+          try {
+            let runner = self.resume_runner_from_json(
+              script, json, dialog_history,
+            )
+            runner.sync_ui()
+            self.runner = Some(runner)
+            self.phase = AppPhase::InGame
+          } catch {
+            _ => {
+              log_app_warn("resume from saved state failed (corrupt save data)")
+              self.enter_start_menu()
+            }
+          }
+        }
+        None => {
+          self.saved_dialog_history = None
+          self.enter_start_menu()
+        }
+      }
+    }
+    NewGame => {
+      self.emit_ui_click_sfx()
+      self.settings_menu.clear()
+      self.saved_director_json = None
+      self.saved_dialog_history = None
+      self.start_menu_music_stop()
+      let runner = self.make_runner(self.script(), (self.new_state)())
+      self.runner = Some(runner)
+      self.phase = AppPhase::InGame
+    }
+    StartMenu => {
+      self.emit_ui_click_sfx()
+      self.save_autosave_if_enabled()
+      match self.runner {
+        Some(runner) => {
+          runner.apply_runtime_event(SfxStopped)
+          runner.clear_presentation()
+        }
+        None => ()
+      }
+      (self.event_hook)(MusicStopped)
+      (self.event_hook)(SfxStopped)
+      self.settings_menu.clear()
+      self.saved_director_json = None
+      self.saved_dialog_history = None
+      self.runner = None
+      self.enter_start_menu()
+    }
+    Credits => {
+      self.emit_ui_click_sfx()
+      self.enter_credits(AppPhase::Settings)
+    }
+    Log => {
+      self.emit_ui_click_sfx()
+      self.settings_menu.clear()
+      match self.runner {
+        Some(runner) => {
+          runner.set_log_visible(true)
+          self.phase = AppPhase::InGame
+        }
+        None => self.enter_start_menu()
+      }
+    }
+    SaveSlot(slot) => {
+      self.emit_ui_click_sfx()
+      match self.runner {
+        Some(runner) =>
+          save_runner_to_slot_with_meta(
+            runner,
+            slot,
+            preview=dialog_preview(runner),
+            save_namespace=self.save_ns,
+            save_store=self.save_store,
+          )
+        None => ()
+      }
+      self.settings_menu.render()
+    }
+    LoadSlot(slot) => {
+      self.emit_ui_click_sfx()
+      self.settings_menu.clear()
+      let script = self.script()
+      let restored : Result[GameRunner[T], Error] = try? self.load_runner_from_slot(
+        script, slot,
+      )
+      match restored {
+        Ok(runner) => {
+          self.start_menu_music_stop()
+          self.runner = Some(runner)
+          self.phase = AppPhase::InGame
+        }
+        Err(_) => {
+          log_app_warn(
+            "load from slot '\{slot}' failed (slot missing or corrupt)",
+          )
+          self.settings_menu.render()
+        }
+      }
+    }
+    ViewChanged => {
+      self.emit_ui_click_sfx()
+      self.settings_menu.render()
+    }
+    NoAction => ()
+  }
+  true
+}
+
+///|
+async fn[T] AppController::tick_gallery(
+  self : AppController[T],
+) -> Bool raise AppControllerError {
+  match self.gallery_menu.take_action() {
+    Back => {
+      self.emit_ui_click_sfx()
+      self.gallery_menu.clear()
+      self.enter_start_menu()
+    }
+    Open(_) | Close | Prev | Next => {
+      self.emit_ui_click_sfx()
+      self.gallery_menu.render()
+    }
+    Replay(label) => {
+      self.emit_ui_click_sfx()
+      self.start_gallery_replay(label)
+    }
+    NoAction => ()
+  }
+  true
+}
+
+///|
+fn[T] AppController::tick_credits(self : AppController[T]) -> Bool {
+  match self.credits_menu.take_action() {
+    CreditsAction::Back => {
+      self.emit_ui_click_sfx()
+      self.credits_menu.clear()
+      match self.credits_return_phase {
+        AppPhase::Settings => {
+          self.settings_menu.render()
+          self.phase = AppPhase::Settings
+        }
+        _ => {
+          self.start_menu.render()
+          self.phase = AppPhase::StartMenu
+        }
+      }
+    }
+    CreditsAction::NoAction => ()
+  }
+  true
+}
+
+///|
+async fn[T : FromJson] AppController::tick_start_menu(
+  self : AppController[T],
+) -> Bool raise AppControllerError {
+  self.start_menu_music_start()
+  self.handle_menu_action(self.start_menu.take_action())
+  true
+}
+
+///|
 pub async fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
@@ -866,278 +1178,26 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   let ui_locale_changed = self.ensure_ui_locales_loaded()
   let script_locale_changed = self.ensure_script_locales_loaded()
   if ui_locale_changed || script_locale_changed {
-    match self.phase {
-      AppPhase::LocaleSelect =>
-        self.start_menu.render_locale_picker(self.languages)
-      AppPhase::StartGate => self.start_menu.render_gate()
-      AppPhase::StartMenu => self.start_menu.render()
-      AppPhase::Settings => self.settings_menu.render()
-      AppPhase::Gallery => self.gallery_menu.render()
-      AppPhase::Credits => self.credits_menu.render(self.credits_html())
-      AppPhase::InGame =>
-        match self.runner {
-          Some(runner) => runner.sync_ui()
-          None => ()
-        }
-      _ => ()
+    if self.phase == AppPhase::InGame {
+      match self.runner {
+        Some(runner) => runner.sync_ui()
+        None => ()
+      }
+    } else {
+      self.render_phase_on_locale_change()
     }
   }
   match self.phase {
-    AppPhase::LocaleSelect => {
-      match self.start_menu.take_locale_action() {
-        StartLocaleAction::Select(code) => {
-          self.emit_ui_click_sfx()
-          self.apply_locale(code)
-          self.start_menu.clear_locale_picker()
-          self.start_menu.render_gate()
-          self.phase = AppPhase::StartGate
-        }
-        StartLocaleAction::NoAction => ()
-      }
-      true
-    }
-    AppPhase::StartGate => {
-      match self.start_menu.take_gate_action() {
-        Start => {
-          self.emit_ui_click_sfx()
-          if self.start_logo_urls.is_empty() {
-            self.enter_start_menu()
-          } else {
-            self.enter_start_logo()
-          }
-        }
-        NoAction => ()
-      }
-      true
-    }
-    AppPhase::StartLogo => {
-      self.start_logo_elapsed_ms += elapsed_ms
-      match self.start_menu.take_logo_action() {
-        Done => self.advance_start_logo()
-        NoAction =>
-          if self.start_logo_elapsed_ms >= self.start_logo_duration_ms {
-            self.advance_start_logo()
-          }
-      }
-      true
-    }
+    AppPhase::LocaleSelect => self.tick_locale_select()
+    AppPhase::StartGate => self.tick_start_gate()
+    AppPhase::StartLogo => self.tick_start_logo(elapsed_ms)
     AppPhase::InGame =>
-      match self.runner {
-        Some(runner) =>
-          if runner.tick(elapsed_ms~) {
-            match runner.take_pending_action() {
-              Some("settings") => {
-                self.saved_director_json = Some(runner.director().save_json())
-                self.saved_dialog_history = Some(runner.dialog_history())
-                runner.clear_ui()
-                self.settings_menu.set_context(FromMidgame)
-                self.settings_menu.set_view_mode(Settings)
-                self.settings_menu.render()
-                self.phase = AppPhase::Settings
-              }
-              Some("qsave") =>
-                save_runner_to_slot_with_meta(
-                  runner,
-                  next_save_slot(self.save_store, self.save_ns, "quicksave", 6),
-                  preview=dialog_preview(runner),
-                  save_namespace=self.save_ns,
-                  save_store=self.save_store,
-                )
-              Some("save") => {
-                self.saved_director_json = Some(runner.director().save_json())
-                self.saved_dialog_history = Some(runner.dialog_history())
-                runner.clear_ui()
-                self.settings_menu.set_context(FromMidgame)
-                self.settings_menu.set_view_mode(SaveList)
-                self.settings_menu.render()
-                self.phase = AppPhase::Settings
-              }
-              Some("log") => runner.toggle_log_visible()
-              _ => ()
-            }
-            true
-          } else {
-            runner.apply_runtime_event(SfxStopped)
-            (self.event_hook)(MusicStopped)
-            (self.event_hook)(SfxStopped)
-            runner.clear_presentation()
-            self.runner = None
-            self.enter_start_menu()
-            true
-          }
-        None => {
-          self.enter_start_menu()
-          true
-        }
+      self.tick_in_game(elapsed_ms) catch {
+        err => raise ScriptLoadFailed(message=err.to_string())
       }
-    AppPhase::Settings => {
-      match self.settings_menu.take_action() {
-        LanguageChanged(code) => {
-          self.emit_ui_click_sfx()
-          self.apply_locale(code)
-          self.settings_menu.render()
-        }
-        Back => {
-          self.emit_ui_click_sfx()
-          self.settings_menu.clear()
-          match self.saved_director_json {
-            Some(json) => {
-              self.saved_director_json = None
-              let dialog_history = self.saved_dialog_history.unwrap_or([])
-              self.saved_dialog_history = None
-              let script = self.script()
-              try {
-                let runner = self.resume_runner_from_json(
-                  script, json, dialog_history,
-                )
-                runner.sync_ui()
-                self.runner = Some(runner)
-                self.phase = AppPhase::InGame
-              } catch {
-                _ => {
-                  log_app_warn(
-                    "resume from saved state failed (corrupt save data)",
-                  )
-                  self.enter_start_menu()
-                }
-              }
-            }
-            None => {
-              self.saved_dialog_history = None
-              self.enter_start_menu()
-            }
-          }
-        }
-        NewGame => {
-          self.emit_ui_click_sfx()
-          self.settings_menu.clear()
-          self.saved_director_json = None
-          self.saved_dialog_history = None
-          self.start_menu_music_stop()
-          let runner = self.make_runner(self.script(), (self.new_state)())
-          self.runner = Some(runner)
-          self.phase = AppPhase::InGame
-        }
-        StartMenu => {
-          self.emit_ui_click_sfx()
-          self.save_autosave_if_enabled()
-          match self.runner {
-            Some(runner) => {
-              runner.apply_runtime_event(SfxStopped)
-              runner.clear_presentation()
-            }
-            None => ()
-          }
-          (self.event_hook)(MusicStopped)
-          (self.event_hook)(SfxStopped)
-          self.settings_menu.clear()
-          self.saved_director_json = None
-          self.saved_dialog_history = None
-          self.runner = None
-          self.enter_start_menu()
-        }
-        Credits => {
-          self.emit_ui_click_sfx()
-          self.enter_credits(AppPhase::Settings)
-        }
-        Log => {
-          self.emit_ui_click_sfx()
-          self.settings_menu.clear()
-          match self.runner {
-            Some(runner) => {
-              runner.set_log_visible(true)
-              self.phase = AppPhase::InGame
-            }
-            None => self.enter_start_menu()
-          }
-        }
-        SaveSlot(slot) => {
-          self.emit_ui_click_sfx()
-          match self.runner {
-            Some(runner) =>
-              save_runner_to_slot_with_meta(
-                runner,
-                slot,
-                preview=dialog_preview(runner),
-                save_namespace=self.save_ns,
-                save_store=self.save_store,
-              )
-            None => ()
-          }
-          self.settings_menu.render()
-        }
-        LoadSlot(slot) => {
-          self.emit_ui_click_sfx()
-          self.settings_menu.clear()
-          let script = self.script()
-          let restored : Result[GameRunner[T], Error] = try? self.load_runner_from_slot(
-            script, slot,
-          )
-          match restored {
-            Ok(runner) => {
-              self.start_menu_music_stop()
-              self.runner = Some(runner)
-              self.phase = AppPhase::InGame
-            }
-            Err(_) => {
-              log_app_warn(
-                "load from slot '\{slot}' failed (slot missing or corrupt)",
-              )
-              self.settings_menu.render()
-            }
-          }
-        }
-        ViewChanged => {
-          self.emit_ui_click_sfx()
-          self.settings_menu.render()
-        }
-        NoAction => ()
-      }
-      true
-    }
-    AppPhase::Gallery => {
-      match self.gallery_menu.take_action() {
-        Back => {
-          self.emit_ui_click_sfx()
-          self.gallery_menu.clear()
-          self.enter_start_menu()
-        }
-        Open(_) | Close | Prev | Next => {
-          self.emit_ui_click_sfx()
-          self.gallery_menu.render()
-        }
-        Replay(label) => {
-          self.emit_ui_click_sfx()
-          self.start_gallery_replay(label)
-        }
-        NoAction => ()
-      }
-      true
-    }
-    AppPhase::Credits => {
-      match self.credits_menu.take_action() {
-        CreditsAction::Back => {
-          self.emit_ui_click_sfx()
-          self.credits_menu.clear()
-          match self.credits_return_phase {
-            AppPhase::Settings => {
-              self.settings_menu.render()
-              self.phase = AppPhase::Settings
-            }
-            _ => {
-              self.start_menu.render()
-              self.phase = AppPhase::StartMenu
-            }
-          }
-        }
-        CreditsAction::NoAction => ()
-      }
-      true
-    }
-    AppPhase::StartMenu => {
-      self.start_menu_music_start()
-      self.handle_menu_action(self.start_menu.take_action())
-      true
-    }
+    AppPhase::Settings => self.tick_settings()
+    AppPhase::Gallery => self.tick_gallery()
+    AppPhase::Credits => self.tick_credits()
+    AppPhase::StartMenu => self.tick_start_menu()
   }
 }
