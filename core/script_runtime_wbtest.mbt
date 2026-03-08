@@ -224,6 +224,26 @@ test "runtime from_json_string rejects out-of-range ip in json" {
 }
 
 ///|
+test "runtime emits animation group start event" {
+  let script : Script[Int] = script_from_instructions([
+    AnimateGroup(
+      "hero",
+      [GroupStep::Animate(anim_opacity(120, 0.7, easing=EaseIn))],
+      Pixi,
+    ),
+  ])
+  let runtime = Runtime::new(script, GameState::new(0))
+  assert_true(
+    runtime.step()
+    is AnimationGroupStarted(
+      "hero",
+      [GroupStep::Animate({ duration_ms: 120, easing: EaseIn, .. })],
+      Pixi
+    ),
+  )
+}
+
+///|
 test "runtime choose raises when no choice is active" {
   let script : Script[Int] = script_from_instructions([
     Say(

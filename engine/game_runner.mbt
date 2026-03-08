@@ -5,6 +5,16 @@
 pub type RenderSyncHook[T] = async (Director[T], Bool) -> Unit noraise
 
 ///|
+priv struct SequenceJob {
+  target : String
+  is_pixi : Bool
+  steps : Array[GroupStep]
+  mut cursor : Int
+  mut step_started : Bool
+  mut remaining_ms : Int
+}
+
+///|
 struct GameRunner[T] {
   director : Director[T]
   ui : UiDom
@@ -18,6 +28,7 @@ struct GameRunner[T] {
   mut blocking_remaining_ms : Int
   mut blocking_wait_sfx : Bool
   mut blocking_until_click : Bool
+  mut sequence_jobs : Array[SequenceJob]
 }
 
 ///|
@@ -35,6 +46,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     blocking_remaining_ms: 0,
     blocking_wait_sfx: false,
     blocking_until_click: false,
+    sequence_jobs: [],
   }
 }
 
@@ -57,6 +69,7 @@ pub fn[T] GameRunner::new_with_render_sync(
     blocking_remaining_ms: 0,
     blocking_wait_sfx: false,
     blocking_until_click: false,
+    sequence_jobs: [],
   }
 }
 
@@ -80,6 +93,7 @@ pub fn[T] GameRunner::new_with_hooks(
     blocking_remaining_ms: 0,
     blocking_wait_sfx: false,
     blocking_until_click: false,
+    sequence_jobs: [],
   }
 }
 
@@ -193,6 +207,108 @@ fn[T] GameRunner::is_blocking_active(self : GameRunner[T]) -> Bool {
 }
 
 ///|
+fn group_step_duration_ms(step : GroupStep) -> Int {
+  match step {
+    Animate(spec) => spec.duration_ms
+    Effect(spec) => spec.duration_ms.unwrap_or(0)
+  }
+}
+
+///|
+fn[T] GameRunner::dispatch_group_step(
+  self : GameRunner[T],
+  target : String,
+  is_pixi : Bool,
+  step : GroupStep,
+) -> Unit {
+  let event = match step {
+    Animate(spec) => {
+      let spec = { ..spec, blocking: false }
+      if is_pixi {
+        @core.Animated(target, spec, Pixi)
+      } else {
+        @core.Animated(target, spec, Dom)
+      }
+    }
+    Effect(spec) => {
+      let spec = { ..spec, blocking: false }
+      @core.EffectApplied(target, spec)
+    }
+  }
+  self.emit_runtime_event(event)
+  self.director.apply_event(event)
+  self.apply_event_effects(event, false)
+}
+
+///|
+fn[T] GameRunner::advance_sequence_jobs(
+  self : GameRunner[T],
+  elapsed_ms : Int,
+) -> Unit {
+  if self.sequence_jobs.is_empty() {
+    return
+  }
+  let kept : Array[SequenceJob] = []
+  for job in self.sequence_jobs {
+    let mut budget = if elapsed_ms < 0 { 0 } else { elapsed_ms }
+    for {
+      if job.cursor >= job.steps.length() {
+        break
+      } else {
+        if !job.step_started {
+          let step = job.steps[job.cursor]
+          self.dispatch_group_step(job.target, job.is_pixi, step)
+          job.step_started = true
+          job.remaining_ms = if group_step_duration_ms(step) < 0 {
+            0
+          } else {
+            group_step_duration_ms(step)
+          }
+        }
+        if job.remaining_ms <= 0 {
+          job.cursor = job.cursor + 1
+          job.step_started = false
+        } else if budget <= 0 {
+          break
+        } else if budget >= job.remaining_ms {
+          budget = budget - job.remaining_ms
+          job.remaining_ms = 0
+        } else {
+          job.remaining_ms = job.remaining_ms - budget
+          budget = 0
+          break
+        }
+      }
+    }
+    if job.cursor < job.steps.length() {
+      kept.push(job)
+    }
+  }
+  self.sequence_jobs = kept
+}
+
+///|
+fn[T] GameRunner::enqueue_animation_group(
+  self : GameRunner[T],
+  target : String,
+  steps : Array[GroupStep],
+  is_pixi : Bool,
+) -> Unit {
+  if steps.is_empty() {
+    return
+  }
+  self.sequence_jobs.push({
+    target,
+    is_pixi,
+    steps,
+    cursor: 0,
+    step_started: false,
+    remaining_ms: 0,
+  })
+  self.advance_sequence_jobs(0)
+}
+
+///|
 fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
   self.ui.render(
     UiViewModel::from_snapshot(self.director.ui_snapshot(), self.ui),
@@ -291,6 +407,8 @@ fn[T] GameRunner::apply_event_effects(
         }
       }
     }
+    AnimationGroupStarted(target, steps, kind) =>
+      self.enqueue_animation_group(target, steps, kind is Pixi)
     Live2dMotionPlayed(_) | Live2dExpressionSet(_) => {
       self.ui_dirty = true
       self.render_sync_dirty = true
@@ -335,6 +453,7 @@ pub async fn[T] GameRunner::step(
   for elapsed_ms = elapsed_ms {
     self.advance_animation_timer(elapsed_ms)
     self.advance_blocking_timer(elapsed_ms)
+    self.advance_sequence_jobs(elapsed_ms)
     self.ui.advance_dom_animation_timer(elapsed_ms)
     if self.ui.has_active_dom_animations() {
       self.ui_dirty = true

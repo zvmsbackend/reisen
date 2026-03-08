@@ -1,26 +1,12 @@
 ///|
-struct TimedAnimationStep {
-  duration_ms : Int
-  spec : AnimationSpec
-  easing : Easing
-} derive(Show, Eq)
-
-///|
-struct TimedEffectStep {
-  duration_ms : Int
-  effect_spec : EffectSpec
-  easing : Easing
-} derive(Show, Eq)
-
-///|
-enum GroupStep {
-  Animate(TimedAnimationStep)
-  Effect(TimedEffectStep)
+pub(all) enum GroupStep {
+  Animate(AnimationSpec)
+  Effect(EffectSpec)
 } derive(Show, Eq)
 
 ///|
 pub struct AnimationGroup {
-  steps : Array[TimedAnimationStep]
+  steps : Array[AnimationSpec]
 } derive(Show, Eq)
 
 ///|
@@ -41,43 +27,41 @@ pub fn MixedGroup::new() -> MixedGroup {
 ///|
 pub fn AnimationGroup::animate(
   self : AnimationGroup,
-  duration_ms : Int,
   spec : AnimationSpec,
-  easing? : Easing = Linear,
 ) -> AnimationGroup {
-  { steps: self.steps + [{duration_ms, spec, easing}] }
+  { steps: self.steps + [spec] }
 }
 
 ///|
 pub fn AnimationGroup::effect(
   self : AnimationGroup,
-  duration_ms : Int,
   effect_spec : EffectSpec,
-  easing? : Easing = Linear,
-  ) -> MixedGroup {
-  {
-    steps: self.steps.map(step => Animate(step)) + [
-      Effect({ duration_ms, effect_spec, easing }),
-    ],
-  }
+) -> MixedGroup {
+  { steps: self.steps.map(step => Animate(step)) + [Effect(effect_spec)] }
 }
 
 ///|
 pub fn MixedGroup::animate(
   self : MixedGroup,
-  duration_ms : Int,
   spec : AnimationSpec,
-  easing? : Easing = Linear,
 ) -> MixedGroup {
-  { steps: self.steps + [Animate({ duration_ms, spec, easing })] }
+  { steps: self.steps + [Animate(spec)] }
 }
 
 ///|
 pub fn MixedGroup::effect(
   self : MixedGroup,
-  duration_ms : Int,
   effect_spec : EffectSpec,
-  easing? : Easing = Linear,
 ) -> MixedGroup {
-  { steps: self.steps + [Effect({ duration_ms, effect_spec, easing })] }
+  { steps: self.steps + [Effect(effect_spec)] }
+}
+
+///|
+pub fn AnimationGroup::to_steps(self : AnimationGroup) -> Array[GroupStep] {
+  self.steps.map(step => GroupStep::Animate(step))
+}
+
+///|
+pub fn MixedGroup::to_steps(self : MixedGroup) -> Array[GroupStep] {
+  self.steps
 }

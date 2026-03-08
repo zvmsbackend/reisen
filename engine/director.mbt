@@ -198,6 +198,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
         Pixi => self.render.pixi_animations.push_back((target, spec))
         Dom => self.render.dom_animations.push_back((target, spec))
       }
+    AnimationGroupStarted(_, _, _) => ()
     EffectApplied(target, spec) => {
       let current = self.render.effects.get(target).unwrap_or([])
       let mut replaced = false

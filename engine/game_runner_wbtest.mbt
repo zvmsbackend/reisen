@@ -1,5 +1,5 @@
 ///|
-using @core {label, option, script}
+using @core {label, option, script, anim_opacity, type AnimationGroup}
 
 ///|
 using @state {type GameState}
@@ -575,6 +575,31 @@ async test "runner keeps rendering during animations" {
   let after = calls.length()
 
   assert_true(after > before)
+}
+
+///|
+async test "animation groups run alongside script flow" {
+  let script : Script[Int] = script(builder => {
+    let group = AnimationGroup::new().animate(anim_opacity(500, 0.5))
+    builder.animate_group(dummy_figure("hero"), group)
+    builder.say("n", "next")
+  })
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    UiDom::new("app"),
+  )
+
+  assert_true(runner.step() is AnimationGroupStarted(_, _, _))
+  assert_true(
+    runner.step()
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("next"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
 }
 
 ///|

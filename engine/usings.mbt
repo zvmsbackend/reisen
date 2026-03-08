@@ -4,6 +4,7 @@ using @util {gensym}
 ///|
 using @core {
   type EventHook,
+  type GroupStep,
   type UiSnapshot,
   type AnimationSpec,
   type BackgroundState,

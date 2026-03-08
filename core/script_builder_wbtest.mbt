@@ -101,7 +101,7 @@ test "placement helpers produce expected placement values" {
 
 ///|
 test "animation helpers produce expected animation specs" {
-  assert_eq(anim_opacity(120, None, 1.0), {
+  assert_eq(anim_opacity(120, 1.0), {
     prop: Opacity,
     duration_ms: 120,
     easing: Linear,
@@ -110,7 +110,7 @@ test "animation helpers produce expected animation specs" {
     anchor: None,
     blocking: false,
   })
-  assert_eq(anim_position(240, None, Custom(0.0, 0.0), easing=EaseInOut), {
+  assert_eq(anim_position(240, Custom(0.0, 0.0), easing=EaseInOut), {
     prop: Position,
     duration_ms: 240,
     easing: EaseInOut,
@@ -119,7 +119,7 @@ test "animation helpers produce expected animation specs" {
     anchor: None,
     blocking: false,
   })
-  assert_eq(anim_scale(360, None, 1.0, easing=EaseOut), {
+  assert_eq(anim_scale(360, 1.0, easing=EaseOut), {
     prop: Scale,
     duration_ms: 360,
     easing: EaseOut,
@@ -128,7 +128,7 @@ test "animation helpers produce expected animation specs" {
     anchor: Some([0.5, 0.5]),
     blocking: false,
   })
-  assert_eq(anim_opacity(100, Some(0.1), 0.9), {
+  assert_eq(anim_opacity(100, from=0.1, 0.9), {
     prop: Opacity,
     duration_ms: 100,
     easing: Linear,
@@ -137,7 +137,7 @@ test "animation helpers produce expected animation specs" {
     anchor: None,
     blocking: false,
   })
-  assert_eq(anim_position(200, Some(Custom(-0.1, 0.0)), Custom(0.0, 0.0)), {
+  assert_eq(anim_position(200, from=Custom(-0.1, 0.0), Custom(0.0, 0.0)), {
     prop: Position,
     duration_ms: 200,
     easing: Linear,
@@ -146,7 +146,7 @@ test "animation helpers produce expected animation specs" {
     anchor: None,
     blocking: false,
   })
-  assert_eq(anim_scale(150, Some(0.5), 1.0), {
+  assert_eq(anim_scale(150, from=0.5, 1.0), {
     prop: Scale,
     duration_ms: 150,
     easing: Linear,
@@ -322,6 +322,47 @@ test "dom figure animations emit dom animation instruction" {
       "promo",
       { prop: Opacity, duration_ms: 120, easing: Linear, .. },
       Dom
+    ),
+  )
+}
+
+///|
+test "animation group helpers emit animate-group instruction" {
+  let built : Script[Int] = script(builder => {
+    let group = AnimationGroup::new().animate(
+      anim_opacity(120, 0.4, easing=EaseInOut),
+    )
+    builder.animate_group(dummy_figure("hero"), group)
+  })
+  assert_true(
+    built.instructions[0]
+    is AnimateGroup(
+      "hero",
+      [GroupStep::Animate({ duration_ms: 120, easing: EaseInOut, .. })],
+      Pixi
+    ),
+  )
+}
+
+///|
+test "mixed group helpers emit animate-group instruction" {
+  let built : Script[Int] = script(builder => {
+    let group = AnimationGroup::new()
+      .animate(anim_opacity(90, 0.8))
+      .effect(
+        effect_spec(dummy_effect("glow"), [("intensity", 0.6)], duration_ms=200),
+      )
+    builder.animate_mixed_group(dummy_figure("hero"), group)
+  })
+  assert_true(
+    built.instructions[0]
+    is AnimateGroup(
+      "hero",
+      [
+        GroupStep::Animate({ duration_ms: 90, .. }),
+        GroupStep::Effect({ duration_ms: Some(200), .. }),
+      ],
+      Pixi
     ),
   )
 }

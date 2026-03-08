@@ -919,9 +919,9 @@ fn[T] lower_form(
               let to_value = sexp_as_double(to).unwrap_or(0.0)
               if t != "" {
                 let spec = if p == "opacity" {
-                  anim_opacity(dur, Some(from_value), to_value)
+                  anim_opacity(dur, from=from_value, to_value)
                 } else {
-                  anim_opacity(dur, None, to_value)
+                  anim_opacity(dur, to_value)
                 }
                 builder.instructions.push(Animate(t, spec, Pixi))
               }

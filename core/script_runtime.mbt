@@ -34,6 +34,7 @@ pub(all) enum RuntimeEvent {
   SfxStopped
   CgUnlocked(String)
   Animated(String, AnimationSpec, RenderableKind)
+  AnimationGroupStarted(String, Array[GroupStep], RenderableKind)
   EffectApplied(String, EffectSpec)
   Live2dMotionPlayed(String, String, Int?)
   Live2dExpressionSet(String, String?)
@@ -324,6 +325,10 @@ fn[T] Runtime::run_inst(
     Animate(target, spec, kind) => {
       self.ip = self.ip + 1
       Animated(target, spec, kind)
+    }
+    AnimateGroup(target, steps, kind) => {
+      self.ip = self.ip + 1
+      AnimationGroupStarted(target, steps, kind)
     }
     ApplyEffect(target, spec) => {
       self.ip = self.ip + 1

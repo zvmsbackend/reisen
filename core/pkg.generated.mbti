@@ -22,29 +22,29 @@ pub const PIXI_SLOT_RIGHT_X : Double = 0.55
 
 pub const PIXI_SLOT_Y_RATIO : Double = 0.1
 
-pub fn anim_blur(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_blur(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_brightness(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_brightness(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_color_blue(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_color_blue(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_color_green(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_color_green(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_color_red(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_color_red(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_contrast(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_contrast(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_gamma(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_gamma(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_opacity(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_opacity(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_position(Int, Position?, Position, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_position(Int, from? : Position, Position, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_rotation(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_rotation(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_saturation(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_saturation(Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
-pub fn anim_scale(Int, Double?, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> AnimationSpec
+pub fn anim_scale(Int, from? : Double, Double, anchor? : (Double, Double), easing? : Easing, blocking? : Bool) -> AnimationSpec
 
 pub fn effect_spec(@pixi.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
 
@@ -105,21 +105,15 @@ pub impl Show for AnimProp
 pub impl ToJson for AnimProp
 pub impl @json.FromJson for AnimProp
 
-pub struct AnimationGroup[K] {
-  target : String
-  render_kind : @assets.RenderableKind
-  kind_marker : K?
+pub struct AnimationGroup {
   steps : Array[AnimationSpec]
 }
-pub fn[K] AnimationGroup::animate(Self[K], AnimationSpec) -> Self[K]
-pub fn AnimationGroup::effect(Self[PixiGroupKind], EffectSpec) -> MixedGroup
-pub fn AnimationGroup::new_dom(String) -> Self[DomGroupKind]
-pub fn AnimationGroup::new_pixi(String) -> Self[PixiGroupKind]
-pub fn[K] AnimationGroup::render_kind(Self[K]) -> @assets.RenderableKind
-pub fn[K] AnimationGroup::steps(Self[K]) -> Array[AnimationSpec]
-pub fn[K] AnimationGroup::target(Self[K]) -> String
-pub impl[K : Eq] Eq for AnimationGroup[K]
-pub impl[K : Show] Show for AnimationGroup[K]
+pub fn AnimationGroup::animate(Self, AnimationSpec) -> Self
+pub fn AnimationGroup::effect(Self, EffectSpec) -> MixedGroup
+pub fn AnimationGroup::new() -> Self
+pub fn AnimationGroup::to_steps(Self) -> Array[GroupStep]
+pub impl Eq for AnimationGroup
+pub impl Show for AnimationGroup
 
 pub(all) struct AnimationSpec {
   prop : AnimProp
@@ -172,10 +166,6 @@ pub impl Show for DomFigureState
 pub impl ToJson for DomFigureState
 pub impl @json.FromJson for DomFigureState
 
-pub enum DomGroupKind {
-}
-pub impl AnimationGroupKind for DomGroupKind
-
 pub(all) enum Easing {
   Linear
   EaseIn
@@ -219,6 +209,13 @@ pub impl Show for FigurePlacement
 pub impl ToJson for FigurePlacement
 pub impl @json.FromJson for FigurePlacement
 
+pub(all) enum GroupStep {
+  Animate(AnimationSpec)
+  Effect(EffectSpec)
+}
+pub impl Eq for GroupStep
+pub impl Show for GroupStep
+
 pub(all) enum Instruction[T] {
   Label(String)
   Jump(String)
@@ -250,6 +247,7 @@ pub(all) enum Instruction[T] {
   PlaySfx(String, Bool)
   UnlockCg(String)
   Animate(String, AnimationSpec, @assets.RenderableKind)
+  AnimateGroup(String, Array[GroupStep], @assets.RenderableKind)
   ApplyEffect(String, EffectSpec)
   PlayLive2dMotion(String, String, Int?)
   SetLive2dExpression(String, String?)
@@ -260,27 +258,14 @@ pub struct Label(String)
 pub fn Label::inner(Self) -> String
 
 pub struct MixedGroup {
-  target : String
-  steps : Array[MixedGroupStep]
+  steps : Array[GroupStep]
 }
 pub fn MixedGroup::animate(Self, AnimationSpec) -> Self
 pub fn MixedGroup::effect(Self, EffectSpec) -> Self
-pub fn MixedGroup::new(String) -> Self
-pub fn MixedGroup::steps(Self) -> Array[MixedGroupStep]
-pub fn MixedGroup::target(Self) -> String
+pub fn MixedGroup::new() -> Self
+pub fn MixedGroup::to_steps(Self) -> Array[GroupStep]
 pub impl Eq for MixedGroup
 pub impl Show for MixedGroup
-
-pub enum MixedGroupStep {
-  Animate(AnimationSpec)
-  Effect(EffectSpec)
-}
-pub impl Eq for MixedGroupStep
-pub impl Show for MixedGroupStep
-
-pub enum PixiGroupKind {
-}
-pub impl AnimationGroupKind for PixiGroupKind
 
 pub(all) enum Position {
   Left
@@ -351,6 +336,7 @@ pub(all) enum RuntimeEvent {
   SfxStopped
   CgUnlocked(String)
   Animated(String, AnimationSpec, @assets.RenderableKind)
+  AnimationGroupStarted(String, Array[GroupStep], @assets.RenderableKind)
   EffectApplied(String, EffectSpec)
   Live2dMotionPlayed(String, String, Int?)
   Live2dExpressionSet(String, String?)
@@ -412,6 +398,8 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_green(Self[T
 pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_red(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_contrast(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_gamma(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_group(Self[T], A, AnimationGroup) -> Unit
+pub fn[T, A : @assets.PixiTarget] ScriptBuilder::animate_mixed_group(Self[T], A, MixedGroup) -> Unit
 pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_opacity(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_position(Self[T], A, Int, from? : Position, Position, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_rotation(Self[T], A, Int, from? : Double, Double, easing? : Easing, blocking? : Bool) -> Unit
@@ -498,7 +486,4 @@ pub type ScriptPredicate[T] = (@state.GameState[T]) -> Bool
 pub type SexpHostFunction[T] = (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value
 
 // Traits
-pub trait AnimationGroupKind {
-  render_kind(Self) -> @assets.RenderableKind
-}
 

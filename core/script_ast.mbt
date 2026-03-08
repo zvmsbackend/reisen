@@ -223,6 +223,7 @@ pub(all) enum Instruction[T] {
   PlaySfx(String, Bool)
   UnlockCg(String)
   Animate(String, AnimationSpec, RenderableKind)
+  AnimateGroup(String, Array[GroupStep], RenderableKind)
   ApplyEffect(String, EffectSpec)
   PlayLive2dMotion(String, String, Int?)
   SetLive2dExpression(String, String?)

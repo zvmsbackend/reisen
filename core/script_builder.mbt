@@ -103,7 +103,7 @@ fn position_to_dom_anim_coords(pos : Position) -> (Double, Double) {
 ///|
 pub fn anim_opacity(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -122,7 +122,7 @@ pub fn anim_opacity(
 ///|
 pub fn anim_position(
   duration_ms : Int,
-  from : Position?,
+  from? : Position,
   to : Position,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -145,7 +145,7 @@ pub fn anim_position(
 ///|
 fn anim_position_dom(
   duration_ms : Int,
-  from : Position?,
+  from? : Position,
   to : Position,
   easing : Easing,
   blocking : Bool,
@@ -168,7 +168,7 @@ fn anim_position_dom(
 ///|
 pub fn anim_scale(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   anchor? : (Double, Double) = (0.5, 0.5),
   easing? : Easing = Linear,
@@ -188,7 +188,7 @@ pub fn anim_scale(
 ///|
 pub fn anim_rotation(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -207,7 +207,7 @@ pub fn anim_rotation(
 ///|
 pub fn anim_blur(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -226,7 +226,7 @@ pub fn anim_blur(
 ///|
 pub fn anim_brightness(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -245,7 +245,7 @@ pub fn anim_brightness(
 ///|
 pub fn anim_contrast(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -264,7 +264,7 @@ pub fn anim_contrast(
 ///|
 pub fn anim_saturation(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -283,7 +283,7 @@ pub fn anim_saturation(
 ///|
 pub fn anim_gamma(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -302,7 +302,7 @@ pub fn anim_gamma(
 ///|
 pub fn anim_color_red(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -321,7 +321,7 @@ pub fn anim_color_red(
 ///|
 pub fn anim_color_green(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -340,7 +340,7 @@ pub fn anim_color_green(
 ///|
 pub fn anim_color_blue(
   duration_ms : Int,
-  from : Double?,
+  from? : Double,
   to : Double,
   easing? : Easing = Linear,
   blocking? : Bool = false,
@@ -766,12 +766,39 @@ fn[T, A : @assets.AnimationTarget] ScriptBuilder::emit_animation(
 }
 
 ///|
+fn[T, A : @assets.AnimationTarget] ScriptBuilder::emit_animation_group(
+  self : ScriptBuilder[T],
+  target : A,
+  steps : Array[GroupStep],
+) -> Unit {
+  self.instructions.push(AnimateGroup(target.id(), steps, target.kind()))
+}
+
+///|
 pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate(
   self : ScriptBuilder[T],
   target : A,
   spec : AnimationSpec,
 ) -> Unit {
   self.emit_animation(target, spec)
+}
+
+///|
+pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_group(
+  self : ScriptBuilder[T],
+  target : A,
+  group : AnimationGroup,
+) -> Unit {
+  self.emit_animation_group(target, group.to_steps())
+}
+
+///|
+pub fn[T, A : @assets.PixiTarget] ScriptBuilder::animate_mixed_group(
+  self : ScriptBuilder[T],
+  target : A,
+  group : MixedGroup,
+) -> Unit {
+  self.emit_animation_group(target, group.to_steps())
 }
 
 ///|
@@ -786,7 +813,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_opacity(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_opacity(duration_ms, from, to, easing~, blocking~),
+    anim_opacity(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -801,8 +828,8 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_position(
   blocking? : Bool = false,
 ) -> Unit {
   let spec = match target.kind() {
-    Pixi => anim_position(duration_ms, from, to, easing~, blocking~)
-    Dom => anim_position_dom(duration_ms, from, to, easing, blocking)
+    Pixi => anim_position(duration_ms, from?, to, easing~, blocking~)
+    Dom => anim_position_dom(duration_ms, from?, to, easing, blocking)
   }
   self.emit_animation(target, spec)
 }
@@ -820,7 +847,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_scale(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_scale(duration_ms, from, to, anchor~, easing~, blocking~),
+    anim_scale(duration_ms, from?, to, anchor~, easing~, blocking~),
   )
 }
 
@@ -836,7 +863,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_rotation(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_rotation(duration_ms, from, to, easing~, blocking~),
+    anim_rotation(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -852,7 +879,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_blur(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_blur(duration_ms, from, to, easing~, blocking~),
+    anim_blur(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -868,7 +895,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_brightness(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_brightness(duration_ms, from, to, easing~, blocking~),
+    anim_brightness(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -884,7 +911,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_contrast(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_contrast(duration_ms, from, to, easing~, blocking~),
+    anim_contrast(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -900,7 +927,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_saturation(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_saturation(duration_ms, from, to, easing~, blocking~),
+    anim_saturation(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -916,7 +943,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_gamma(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_gamma(duration_ms, from, to, easing~, blocking~),
+    anim_gamma(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -932,7 +959,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_red(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_color_red(duration_ms, from, to, easing~, blocking~),
+    anim_color_red(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -948,7 +975,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_green(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_color_green(duration_ms, from, to, easing~, blocking~),
+    anim_color_green(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
@@ -964,7 +991,7 @@ pub fn[T, A : @assets.AnimationTarget] ScriptBuilder::animate_color_blue(
 ) -> Unit {
   self.emit_animation(
     target,
-    anim_color_blue(duration_ms, from, to, easing~, blocking~),
+    anim_color_blue(duration_ms, from?, to, easing~, blocking~),
   )
 }
 
