@@ -809,6 +809,76 @@ fn parse_group_animation_step(item : @sexp.Sexp) -> GroupStep? {
 }
 
 ///|
+fn parse_effect_phase(value : @sexp.Sexp) -> EffectPhase {
+  match sexp_as_string(value).unwrap_or("").to_lower() {
+    "pre" => Pre
+    _ => Post
+  }
+}
+
+///|
+fn parse_mixed_group_effect_step(item : @sexp.Sexp) -> GroupStep? {
+  match item {
+    @sexp.List([@sexp.Symbol(tag), effect_id, .. rest]) => {
+      if tag != @sexp.Symbol::new("effect") {
+        return None
+      }
+      let id = sexp_as_string(effect_id).unwrap_or("")
+      if id == "" {
+        return None
+      }
+      let params : Array[EffectParam] = []
+      let mut phase = Post
+      let mut duration_ms : Int? = None
+      let mut easing = Linear
+      let mut blocking = false
+      let rest = rest.to_array()
+      let mut i = 0
+      while i < rest.length() {
+        match rest[i] {
+          @sexp.List([k, v]) => {
+            let key = sexp_as_string(k).unwrap_or("")
+            if key != "" {
+              params.push((key, sexp_as_double(v).unwrap_or(0.0)))
+            }
+            i = i + 1
+          }
+          @sexp.Symbol(k) if i + 1 < rest.length() =>
+            if k == @sexp.Symbol::new(":phase") {
+              phase = parse_effect_phase(rest[i + 1])
+              i = i + 2
+            } else if k == @sexp.Symbol::new(":duration") {
+              duration_ms = Some(sexp_as_int(rest[i + 1]).unwrap_or(0))
+              i = i + 2
+            } else if k == @sexp.Symbol::new(":easing") {
+              easing = parse_easing(rest[i + 1]).unwrap_or(easing)
+              i = i + 2
+            } else if k == @sexp.Symbol::new(":blocking") {
+              blocking = sexp_as_bool(rest[i + 1]).unwrap_or(blocking)
+              i = i + 2
+            } else {
+              i = i + 1
+            }
+          _ => i = i + 1
+        }
+      }
+      Some(
+        GroupStep::Effect({ id, params, phase, duration_ms, easing, blocking }),
+      )
+    }
+    _ => None
+  }
+}
+
+///|
+fn parse_mixed_group_step(item : @sexp.Sexp) -> GroupStep? {
+  match parse_mixed_group_effect_step(item) {
+    Some(step) => Some(step)
+    None => parse_group_animation_step(item)
+  }
+}
+
+///|
 fn parse_choice_options(items : Array[@sexp.Sexp]) -> Array[ChoiceOption] {
   let out : Array[ChoiceOption] = []
   for item in items {
@@ -1193,6 +1263,25 @@ fn[T] lower_form(
                 let steps : Array[GroupStep] = []
                 for item in step_items {
                   match parse_group_animation_step(item) {
+                    Some(step) => steps.push(step)
+                    None => ()
+                  }
+                }
+                if !steps.is_empty() {
+                  builder.instructions.push(AnimateGroup(t, steps, Pixi))
+                }
+              }
+            }
+            _ => ()
+          }
+        "mixed-group" =>
+          match args.to_array() {
+            [target, .. step_items] => {
+              let t = sexp_as_string(target).unwrap_or("")
+              if t != "" {
+                let steps : Array[GroupStep] = []
+                for item in step_items {
+                  match parse_mixed_group_step(item) {
                     Some(step) => steps.push(step)
                     None => ()
                   }

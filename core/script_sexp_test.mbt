@@ -316,6 +316,43 @@ test "parse sexp animate-group with mixed animation props" {
 }
 
 ///|
+test "parse sexp mixed-group supports effect and animation steps" {
+  let script : Script[Unit] = reisen_parse_sexp_script(
+    "(mixed-group hero (opacity 120 0.3 0.9) (effect glow (intensity 0.6) :duration 240 :phase pre :easing ease-in :blocking #t) (scale 100 1.2 :anchor (0.2 0.8)))",
+  )
+  assert_eq(script.instructions.length(), 1)
+  match script.instructions[0] {
+    AnimateGroup(target, steps, Pixi) => {
+      assert_eq(target, "hero")
+      assert_eq(steps.length(), 3)
+      assert_true(
+        steps[0] is GroupStep::Animate({ prop: Opacity, duration_ms: 120, .. }),
+      )
+      assert_true(
+        steps[1]
+        is GroupStep::Effect(
+          {
+            id: "glow",
+            phase: Pre,
+            duration_ms: Some(240),
+            easing: EaseIn,
+            blocking: true,
+            ..,
+          }
+        ),
+      )
+      assert_true(
+        steps[2]
+        is GroupStep::Animate(
+          { prop: Scale, duration_ms: 100, anchor: Some([0.2, 0.8]), .. }
+        ),
+      )
+    }
+    _ => fail("Expected mixed AnimateGroup")
+  }
+}
+
+///|
 test "parse sexp run-code emits runtime hook" {
   let parser = SexpScriptParser::new()
   parser.register_function("int-var", host_int_var)
