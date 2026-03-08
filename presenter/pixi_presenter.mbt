@@ -271,6 +271,9 @@ fn[T] PixiPresenter::pull_new_animations(
 }
 
 ///|
+extern "js" fn noop() -> Unit = "() => {}"
+
+///|
 async fn[T] PixiPresenter::pull_new_live2d_actions(
   self : PixiPresenter,
   director : Director[T],
@@ -278,13 +281,11 @@ async fn[T] PixiPresenter::pull_new_live2d_actions(
   let motions = director.live2d_motions()
   for {
     match motions.pop_front() {
-      Some(entry) => {
-        let (target, group, index) = entry
+      Some((target, group, index)) =>
         match self.figure_live2d.get(target) {
           Some(model) => model.motion(group, index?) |> ignore
           None => ()
         }
-      }
       None => break
     }
   }
@@ -292,16 +293,17 @@ async fn[T] PixiPresenter::pull_new_live2d_actions(
   let expressions = director.live2d_expressions()
   for {
     match expressions.pop_front() {
-      Some(entry) => {
-        let (target, id) = entry
+      Some((target, id)) =>
         match self.figure_live2d.get(target) {
           Some(model) => model.set_expression(@js.Optional::from_option(id))
           None => ()
         }
-      }
       None => break
     }
   }
+  // Due to a bug in the implementation of MoonBit async functions, if we don't
+  // put any code at the end of the loop, the function will not halt
+  noop()
 }
 
 ///|
@@ -491,6 +493,8 @@ fn PixiPresenter::resolve_figure_frame(
         self.config.position_entry_offset_ratio,
         viewport_h,
         viewport_w,
+        base_scaled_w,
+        base_scaled_h,
         self.timeline_ms,
         anim,
       )
@@ -641,6 +645,8 @@ fn[T] PixiPresenter::sync_background(
                 self.config.position_entry_offset_ratio,
                 viewport_h,
                 viewport_w,
+                w,
+                h,
                 self.timeline_ms,
                 anim,
               )
