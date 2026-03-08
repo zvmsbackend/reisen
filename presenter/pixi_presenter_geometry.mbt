@@ -25,12 +25,6 @@ let figure_slot_width_ratio : Double = 0.40
 let figure_slot_height_ratio : Double = 0.90
 
 ///|
-let figure_left_x_ratio : Double = 0.05
-
-///|
-let figure_right_x_ratio : Double = 0.55
-
-///|
 fn figure_rect(
   pos : Position,
   viewport_w : Double,
@@ -38,10 +32,11 @@ fn figure_rect(
 ) -> (Double, Double, Double, Double) {
   let w = viewport_w * figure_slot_width_ratio
   let h = viewport_h * figure_slot_height_ratio
+  let y = viewport_h * @core.PIXI_SLOT_Y_RATIO
   match pos {
-    Left => (viewport_w * figure_left_x_ratio, 0.0, w, h)
-    Center => ((viewport_w - w) / 2.0, 0.0, w, h)
-    Right => (viewport_w * figure_right_x_ratio, 0.0, w, h)
+    Left => (viewport_w * @core.PIXI_SLOT_LEFT_X, y, w, h)
+    Center => ((viewport_w - w) / 2.0, y, w, h)
+    Right => (viewport_w * @core.PIXI_SLOT_RIGHT_X, y, w, h)
     Custom(x, y) => (x * viewport_w, y * viewport_h, w, h)
   }
 }

@@ -12,6 +12,16 @@ import {
 }
 
 // Values
+pub const PIXI_CUSTOM_ANIM_COORD_BIAS : Double = 1000.0
+
+pub const PIXI_SLOT_CENTER_X : Double = 0.30
+
+pub const PIXI_SLOT_LEFT_X : Double = 0.05
+
+pub const PIXI_SLOT_RIGHT_X : Double = 0.55
+
+pub const PIXI_SLOT_Y_RATIO : Double = 0.1
+
 pub fn anim_blur(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec
 
 pub fn anim_brightness(Int, Double?, Double, easing? : Easing, blocking? : Bool) -> AnimationSpec

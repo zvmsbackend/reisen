@@ -4,20 +4,6 @@
 ///|
 using @pixi {type Effect}
 
-// Pixi figure slot x-positions (fraction of viewport width, matching pixi_presenter_geometry)
-
-///|
-let pixi_pos_left_x : Double = 0.05
-
-///|
-let pixi_pos_center_x : Double = 0.30
-
-///|
-let pixi_pos_right_x : Double = 0.55
-
-///|
-let pixi_custom_anim_coord_bias : Double = 1000.0
-
 // DOM figure x-positions (fraction of viewport width)
 
 ///|
@@ -96,11 +82,11 @@ pub fn place_custom(
 ///|
 fn position_to_anim_coords(pos : Position) -> (Double, Double) {
   match pos {
-    Left => (pixi_pos_left_x, 0.0)
-    Center => (pixi_pos_center_x, 0.0)
-    Right => (pixi_pos_right_x, 0.0)
+    Left => (PIXI_SLOT_LEFT_X, PIXI_SLOT_Y_RATIO)
+    Center => (PIXI_SLOT_CENTER_X, PIXI_SLOT_Y_RATIO)
+    Right => (PIXI_SLOT_RIGHT_X, PIXI_SLOT_Y_RATIO)
     Custom(x, y) =>
-      (x + pixi_custom_anim_coord_bias, y + pixi_custom_anim_coord_bias)
+      (x + PIXI_CUSTOM_ANIM_COORD_BIAS, y + PIXI_CUSTOM_ANIM_COORD_BIAS)
   }
 }
 
