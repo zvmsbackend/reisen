@@ -251,7 +251,7 @@ fn[T] GameRunner::advance_sequence_jobs(
   let kept : Array[SequenceJob] = []
   for job in self.sequence_jobs {
     let mut budget = if elapsed_ms < 0 { 0 } else { elapsed_ms }
-    for {
+    for ;; {
       if job.cursor >= job.steps.length() {
         break
       } else {

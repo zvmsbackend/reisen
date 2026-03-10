@@ -36,7 +36,7 @@ pub fn script_locale_resolve_at(
   if !raw.has_prefix("@") {
     return (raw, None, true)
   }
-  let key = raw[1:].to_string() catch { _ => "" }
+  let key = if raw == "" { "" } else { raw[1:].to_string() }
   if key == "" {
     return (raw, None, true)
   }

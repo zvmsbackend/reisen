@@ -204,7 +204,7 @@ fn[T] PixiPresenter::pull_new_animations(
   director : Director[T],
 ) -> Unit {
   let all = director.animations()
-  for {
+  for ;; {
     match all.pop_front() {
       Some(entry) => {
         let (target, spec) = entry
@@ -279,7 +279,7 @@ async fn[T] PixiPresenter::pull_new_live2d_actions(
   director : Director[T],
 ) -> Unit noraise {
   let motions = director.live2d_motions()
-  for {
+  for ;; {
     match motions.pop_front() {
       Some((target, group, index)) =>
         match self.figure_live2d.get(target) {
@@ -291,7 +291,7 @@ async fn[T] PixiPresenter::pull_new_live2d_actions(
   }
 
   let expressions = director.live2d_expressions()
-  for {
+  for ;; {
     match expressions.pop_front() {
       Some((target, id)) =>
         match self.figure_live2d.get(target) {

@@ -379,7 +379,7 @@ pub fn[T] Runtime::step(
   if self.wait_video {
     return Noop
   }
-  for {
+  for ;; {
     if self.ip >= self.script.instructions.length() {
       self.ended = true
       return ScriptEnded

@@ -188,15 +188,13 @@ pub fn DialogText::render(self : DialogText) -> String {
 pub fn DialogText::slice(self : DialogText, end : Int) -> DialogText {
   let mut remaining = end
   fn slice_string(s : String) {
-    try {
+    if remaining > s.length() {
+      remaining -= s.length()
+      s
+    } else {
       let result = s[:remaining].to_string()
       remaining = 0
       result
-    } catch {
-      _ => {
-        remaining -= s.length()
-        s
-      }
     }
   }
   fn walk(text : DialogText) -> DialogText {

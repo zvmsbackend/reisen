@@ -38,7 +38,7 @@ pub fn UiDom::localize_vocal_url(self : UiDom, raw : String) -> String {
   if !raw.has_prefix("@") {
     return raw
   }
-  let key = try! raw[1:].to_string()
+  let key = raw[1:].to_string()
   if key == "" {
     return raw
   }
