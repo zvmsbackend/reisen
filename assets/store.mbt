@@ -17,7 +17,9 @@ pub type Image
 pub type Video
 
 ///|
-extern "js" fn load_image_result_promise(url : String) -> @js.Promise =
+extern "js" fn load_image_result_promise(
+  url : String,
+) -> @js_async.Promise[@js.Value] =
   #| (url) => new Promise((resolve) => {
   #|   const img = new Image();
   #|   img.onload = () => resolve({ ok: true, value: img });
@@ -30,7 +32,9 @@ extern "js" fn load_image_result_promise(url : String) -> @js.Promise =
   #| })
 
 ///|
-extern "js" fn load_video_result_promise(url : String) -> @js.Promise =
+extern "js" fn load_video_result_promise(
+  url : String,
+) -> @js_async.Promise[@js.Value] =
   #| (url) => new Promise((resolve) => {
   #|   const video = document.createElement('video');
   #|   video.preload = 'auto';
@@ -54,7 +58,9 @@ extern "js" fn load_video_result_promise(url : String) -> @js.Promise =
   #| })
 
 ///|
-extern "js" fn load_text_result_promise(url : String) -> @js.Promise =
+extern "js" fn load_text_result_promise(
+  url : String,
+) -> @js_async.Promise[@js.Value] =
   #| (url) => fetch(url).then(r => {
   #|   if (!r.ok) {
   #|     throw new Error(`HTTP ${r.status}`);
@@ -65,7 +71,9 @@ extern "js" fn load_text_result_promise(url : String) -> @js.Promise =
   #|   .catch(error => ({ ok: false, error: String(error?.message ?? error ?? '') }))
 
 ///|
-extern "js" fn load_arraybuffer_result_promise(url : String) -> @js.Promise =
+extern "js" fn load_arraybuffer_result_promise(
+  url : String,
+) -> @js_async.Promise[@js.Value] =
   #| (url) => fetch(url).then(r => {
   #|   if (!r.ok) {
   #|     throw new Error(`HTTP ${r.status}`);
@@ -90,7 +98,7 @@ fn int_array_to_bytes(xs : Array[Int]) -> Bytes {
 
 ///|
 pub async fn load_image(url : String) -> Image raise AssetStoreError {
-  let result = @js.Promise::wait(load_image_result_promise(url)) catch {
+  let result = @js_async.Promise::wait(load_image_result_promise(url)) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load image: \{url}"),
@@ -106,7 +114,7 @@ pub async fn load_image(url : String) -> Image raise AssetStoreError {
 
 ///|
 pub async fn load_video(url : String) -> Video raise AssetStoreError {
-  let result = @js.Promise::wait(load_video_result_promise(url)) catch {
+  let result = @js_async.Promise::wait(load_video_result_promise(url)) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load video: \{url}"),
@@ -122,7 +130,7 @@ pub async fn load_video(url : String) -> Video raise AssetStoreError {
 
 ///|
 pub async fn load_text(url : String) -> String raise AssetStoreError {
-  let result = @js.Promise::wait(load_text_result_promise(url)) catch {
+  let result = @js_async.Promise::wait(load_text_result_promise(url)) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load text: \{url}"),
@@ -138,7 +146,7 @@ pub async fn load_text(url : String) -> String raise AssetStoreError {
 
 ///|
 pub async fn load_bytes(url : String) -> Bytes raise AssetStoreError {
-  let result = @js.Promise::wait(load_arraybuffer_result_promise(url)) catch {
+  let result = @js_async.Promise::wait(load_arraybuffer_result_promise(url)) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load bytes: \{url}"),
@@ -181,13 +189,15 @@ extern "js" fn promise_error_message(err : Error, fallback : String) -> String =
 
 ///|
 #module("/pixi-bridge.js")
-fn js_load_live2d_model_promise(source : String) -> @js.Promise = "loadLive2dModel"
+fn js_load_live2d_model_promise(
+  source : String,
+) -> @js_async.Promise[@js.Value] = "loadLive2dModel"
 
 ///|
 pub async fn load_live2d_model(
   source : String,
 ) -> PixiLive2dModel raise AssetStoreError {
-  let result = @js.Promise::wait(js_load_live2d_model_promise(source)) catch {
+  let result = @js_async.Promise::wait(js_load_live2d_model_promise(source)) catch {
     _ =>
       raise AssetStoreError::ResourceLoadFailed(
         message="Failed to load Live2D model: \{source}",

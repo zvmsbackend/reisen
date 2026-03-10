@@ -93,7 +93,9 @@ pub fn PixiColorMatrixFilter::new() -> PixiColorMatrixFilter = "newColorMatrixFi
 
 ///|
 #module("/pixi-bridge.js")
-fn js_load_live2d_model_promise(source : String) -> @js.Promise = "loadLive2dModel"
+fn js_load_live2d_model_promise(
+  source : String,
+) -> @js_async.Promise[@js.Value] = "loadLive2dModel"
 
 ///|
 pub suberror PixiBindingError {
@@ -104,7 +106,7 @@ pub suberror PixiBindingError {
 pub async fn PixiLive2dModel::load(
   source : String,
 ) -> PixiLive2dModel raise PixiBindingError {
-  let result = @js.Promise::wait(js_load_live2d_model_promise(source)) catch {
+  let result = @js_async.Promise::wait(js_load_live2d_model_promise(source)) catch {
     _ =>
       raise PixiBindingError::ResourceLoadFailed(
         message="Failed to load Live2D model: \{source}",
@@ -123,13 +125,13 @@ pub async fn PixiLive2dModel::load(
 
 ///|
 #module("/pixi-bridge.js")
-fn js_assets_load_promise(source : String) -> @js.Promise = "loadTexturePromise"
+fn js_assets_load_promise(source : String) -> @js_async.Promise[@js.Value] = "loadTexturePromise"
 
 ///|
 pub async fn assets_load_texture(
   source : String,
 ) -> PixiTexture raise PixiBindingError {
-  let result = @js.Promise::wait(js_assets_load_promise(source)) catch {
+  let result = @js_async.Promise::wait(js_assets_load_promise(source)) catch {
     _ =>
       raise PixiBindingError::ResourceLoadFailed(
         message="Failed to load Pixi texture: \{source}",
@@ -156,7 +158,7 @@ extern "js" fn PixiApplication::init_with_canvas_promise(
   background_alpha : Double,
   resolution : Double,
   auto_density : Bool,
-) -> @js.Promise =
+) -> @js_async.Promise[Unit] =
   #| (app, canvas, width, height, antialias, background_alpha, resolution, auto_density) =>
   #|   app.init({
   #|     canvas,
@@ -179,12 +181,11 @@ pub async fn PixiApplication::init_with_canvas(
   resolution? : Double = 1.0,
   auto_density? : Bool = true,
 ) -> Unit {
-  @js.Promise::wait(
+  @js_async.Promise::wait(
     self.init_with_canvas_promise(
       canvas, width, height, antialias, background_alpha, resolution, auto_density,
     ),
   )
-  |> ignore
 }
 
 ///|
@@ -449,7 +450,7 @@ extern "js" fn js_live2d_motion_promise(
   model : PixiLive2dModel,
   group : String,
   index : @js.Optional[Int],
-) -> @js.Promise = "live2dMotion"
+) -> @js_async.Promise[Bool] = "live2dMotion"
 
 ///|
 pub async fn PixiLive2dModel::motion(
@@ -457,10 +458,9 @@ pub async fn PixiLive2dModel::motion(
   group : String,
   index? : Int,
 ) -> Bool noraise {
-  let v = try! @js.Promise::wait(
+  try! @js_async.Promise::wait(
     js_live2d_motion_promise(self, group, @js.Optional::from_option(index)),
   )
-  v.cast()
 }
 
 ///|
@@ -468,17 +468,16 @@ pub async fn PixiLive2dModel::motion(
 extern "js" fn js_live2d_expression_promise(
   model : PixiLive2dModel,
   id : @js.Optional[String],
-) -> @js.Promise = "live2dExpression"
+) -> @js_async.Promise[Bool] = "live2dExpression"
 
 ///|
 pub async fn PixiLive2dModel::expression(
   self : PixiLive2dModel,
   id? : String,
 ) -> Bool {
-  let v = try! @js.Promise::wait(
+  try! @js_async.Promise::wait(
     js_live2d_expression_promise(self, @js.Optional::from_option(id)),
   )
-  v.cast()
 }
 
 ///|

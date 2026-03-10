@@ -156,13 +156,11 @@ pub async fn IndexedDbSaveSlotStore::preload_namespace(
   self : IndexedDbSaveSlotStore,
   ns : String,
 ) -> Unit {
-  ignore(
-    @js.Promise::wait(
-      idb_preload_namespace_into_cache(
-        self.db_name,
-        namespaced_prefix(ns),
-        namespaced_meta_prefix(ns),
-      ),
+  @js_async.Promise::wait(
+    idb_preload_namespace_into_cache(
+      self.db_name,
+      namespaced_prefix(ns),
+      namespaced_meta_prefix(ns),
     ),
   )
 }
@@ -171,7 +169,7 @@ pub async fn IndexedDbSaveSlotStore::preload_namespace(
 pub async fn IndexedDbSaveSlotStore::preload_all(
   self : IndexedDbSaveSlotStore,
 ) -> Unit {
-  ignore(@js.Promise::wait(idb_preload_all_into_cache(self.db_name)))
+  @js_async.Promise::wait(idb_preload_all_into_cache(self.db_name))
 }
 
 ///|

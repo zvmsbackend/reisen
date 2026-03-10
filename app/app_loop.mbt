@@ -1,5 +1,5 @@
 ///|
-extern "js" fn raf_promise() -> @js.Promise =
+extern "js" fn raf_promise() -> @js_async.Promise[Double] =
   #| () => new Promise(resolve => {
   #|   requestAnimationFrame(resolve);
   #| })
@@ -18,7 +18,7 @@ async fn[E : Error] run_browser_loop_impl(
   on_tick : async (Int) -> Bool raise E,
 ) -> Unit raise E {
   for last = 0.0 {
-    let ts = @js.Promise::wait(raf_promise()).cast() catch {
+    let ts = @js_async.Promise::wait(raf_promise()) catch {
       @js.Error_(msg) => abort(msg.to_string())
       _ => panic()
     }

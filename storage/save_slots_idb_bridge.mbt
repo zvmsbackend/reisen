@@ -250,7 +250,7 @@ extern "js" fn idb_preload_namespace_into_cache(
   db_name : String,
   slot_prefix : String,
   meta_prefix : String,
-) -> @js.Promise =
+) -> @js_async.Promise[Unit] =
   #| async (db_name, slot_prefix, meta_prefix) => {
   #|   const openDb = async () => {
   #|     const root = globalThis;
@@ -319,7 +319,9 @@ extern "js" fn idb_preload_namespace_into_cache(
   #| }
 
 ///|
-extern "js" fn idb_preload_all_into_cache(db_name : String) -> @js.Promise =
+extern "js" fn idb_preload_all_into_cache(
+  db_name : String,
+) -> @js_async.Promise[Unit] =
   #| async (db_name) => {
   #|   const openDb = async () => {
   #|     const root = globalThis;

@@ -1,5 +1,6 @@
 import {
   "moonbit-community/js-ffi/js",
+  "moonbitlang/async/js_async",
   "sennenki/reisen/util",
   "sennenki/reisen/pixi",
   "moonbitlang/core/json",
