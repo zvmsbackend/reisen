@@ -19,12 +19,13 @@ fn effect_signature(spec : EffectSpec) -> String {
     EaseOut => "easeout"
     EaseInOut => "easeinout"
   }
-  let params : Array[String] = []
-  for entry in spec.params {
-    let (name, value) = entry
-    params.push(name + "=" + value.to_string())
-  }
-  spec.id + "|" + phase + "|" + duration + "|" + easing + "|" + params.join(";")
+  let params = spec.params
+    .map(entry => {
+      let (name, value) = entry
+      "\{name}=\{value}"
+    })
+    .join(";")
+  "\{spec.id}|\{phase}|\{duration}|\{easing}|\{params}"
 }
 
 ///|

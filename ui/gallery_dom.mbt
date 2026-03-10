@@ -130,28 +130,23 @@ fn next_unlocked_tile_id(
   current_id : String?,
   step : Int,
 ) -> String? {
-  if tiles.length() == 0 {
+  if tiles.is_empty() {
     return None
   }
-  let unlocked : Array[GalleryTileView] = []
-  for tile in tiles {
-    if tile.unlocked {
-      unlocked.push(tile)
-    }
-  }
-  if unlocked.length() == 0 {
+  let unlocked = tiles.filter(tile => tile.unlocked)
+  if unlocked.is_empty() {
     return None
   }
-  let mut current_idx = 0
-  match current_id {
+  let current_idx = match current_id {
     Some(id) =>
       for i, tile in unlocked {
         if tile.id == id {
-          current_idx = i
-          break
+          break i
         }
+      } nobreak {
+        0
       }
-    None => ()
+    None => 0
   }
   let dir = if step < 0 { -1 } else { 1 }
   let size = unlocked.length()

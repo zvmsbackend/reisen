@@ -173,24 +173,12 @@ fn[T] std_and(
   _ : @state.GameState[T],
   args : ArrayView[@js.Value],
 ) -> @js.Value {
-  let mut all_true = true
-  for arg in args {
-    if !js_to_bool(arg) {
-      all_true = false
-    }
-  }
-  @js.Cast::from(all_true)
+  @js.Cast::from(args.all(js_to_bool))
 }
 
 ///|
 fn[T] std_or(_ : @state.GameState[T], args : ArrayView[@js.Value]) -> @js.Value {
-  let mut any_true = false
-  for arg in args {
-    if js_to_bool(arg) {
-      any_true = true
-    }
-  }
-  @js.Cast::from(any_true)
+  @js.Cast::from(args.any(js_to_bool))
 }
 
 ///|
@@ -236,11 +224,7 @@ fn[T] std_add(
   _ : @state.GameState[T],
   args : ArrayView[@js.Value],
 ) -> @js.Value {
-  let mut sum = 0.0
-  for arg in args {
-    sum = sum + js_to_double(arg)
-  }
-  @js.Cast::from(sum)
+  @js.Cast::from(args.fold(init=0.0, (acc, arg) => acc + js_to_double(arg)))
 }
 
 ///|
@@ -251,13 +235,12 @@ fn[T] std_sub(
   match args {
     [] => js_undefined()
     [x] => @js.Cast::from(-js_to_double(x))
-    [head, .. rest] => {
-      let mut out = js_to_double(head)
-      for v in rest {
-        out = out - js_to_double(v)
+    [head, .. rest] =>
+      for v in rest; out = js_to_double(head) {
+        continue out - js_to_double(v)
+      } nobreak {
+        @js.Cast::from(out)
       }
-      @js.Cast::from(out)
-    }
   }
 }
 
@@ -266,7 +249,7 @@ fn[T] std_mul(
   _ : @state.GameState[T],
   args : ArrayView[@js.Value],
 ) -> @js.Value {
-  if args.length() == 0 {
+  if args.is_empty() {
     return js_undefined()
   }
   let mut out = 1.0
@@ -317,11 +300,7 @@ fn[T] std_concat(
   _ : @state.GameState[T],
   args : ArrayView[@js.Value],
 ) -> @js.Value {
-  let mut out = ""
-  for arg in args {
-    out = out + js_to_string(arg)
-  }
-  @js.Cast::from(out)
+  @js.Cast::from(args.iter().map(js_to_string).join(""))
 }
 
 ///|
@@ -497,12 +476,9 @@ fn[T] sexp_to_js_value(
           let name = fn_name.to_string()
           match host_functions.get(name) {
             Some(f) => {
-              let evaluated : Array[@js.Value] = []
-              for arg in args {
-                evaluated.push(
-                  sexp_to_js_value(arg, state, host_functions, payload?),
-                )
-              }
+              let evaluated = args.map(arg => {
+                sexp_to_js_value(arg, state, host_functions, payload?)
+              })
               f(state, evaluated)
             }
             None => js_undefined()
@@ -584,7 +560,7 @@ fn parse_render_kind(value : @sexp.Sexp) -> RenderableKind {
 
 ///|
 fn parse_render_kind_option(
-  parts : Array[@sexp.Sexp],
+  parts : ArrayView[@sexp.Sexp],
   start : Int,
 ) -> RenderableKind {
   let mut kind = @assets.Pixi
@@ -602,7 +578,7 @@ fn parse_render_kind_option(
 
 ///|
 fn parse_anim_options(
-  parts : Array[@sexp.Sexp],
+  parts : ArrayView[@sexp.Sexp],
   start : Int,
 ) -> (Easing, Bool, (Double, Double)?) {
   let mut easing = Linear
@@ -761,7 +737,7 @@ fn build_scalar_anim(
 fn parse_anim_spec(
   prop : String,
   duration_ms : Int,
-  parts : Array[@sexp.Sexp],
+  parts : ArrayView[@sexp.Sexp],
   value_start : Int,
 ) -> AnimationSpec? {
   if prop == "position" {
@@ -822,7 +798,7 @@ fn parse_anim_spec(
 fn parse_group_animation_step(item : @sexp.Sexp) -> GroupStep? {
   match item {
     @sexp.List([prop, duration, .. rest]) => {
-      let parts = [prop, duration, ..rest.to_array()]
+      let parts = [prop, duration, ..rest]
       let p = sexp_as_string(prop).unwrap_or("").to_lower()
       let dur = sexp_as_int(duration).unwrap_or(0)
       match parse_anim_spec(p, dur, parts, 2) {
@@ -845,7 +821,7 @@ fn parse_effect_phase(value : @sexp.Sexp) -> EffectPhase {
 ///|
 fn parse_effect_spec(
   effect_id : String,
-  raw_items : Array[@sexp.Sexp],
+  raw_items : ArrayView[@sexp.Sexp],
 ) -> EffectSpec? {
   if effect_id == "" {
     return None
@@ -895,7 +871,7 @@ fn parse_mixed_group_effect_step(item : @sexp.Sexp) -> GroupStep? {
         return None
       }
       let id = sexp_as_string(effect_id).unwrap_or("")
-      match parse_effect_spec(id, rest.to_array()) {
+      match parse_effect_spec(id, rest) {
         Some(spec) => Some(GroupStep::Effect(spec))
         None => None
       }
@@ -919,7 +895,7 @@ fn parse_scalar_key(key : String) -> String {
 
 ///|
 fn parse_show_figure_options(
-  rest : Array[@sexp.Sexp],
+  rest : ArrayView[@sexp.Sexp],
 ) -> (Int, ScalarState, Bool, RenderableKind) {
   let mut layer = 0
   let mut interactive = false
@@ -1005,7 +981,7 @@ fn parse_show_figure_options(
 }
 
 ///|
-fn parse_choice_options(items : Array[@sexp.Sexp]) -> Array[ChoiceOption] {
+fn parse_choice_options(items : ArrayView[@sexp.Sexp]) -> Array[ChoiceOption] {
   let out : Array[ChoiceOption] = []
   for item in items {
     match item {
@@ -1053,7 +1029,7 @@ fn[T] lower_scene_figure_command(
           let target = sexp_as_string(id).unwrap_or("")
           if target != "" {
             let (layer, scalars, interactive, kind) = parse_show_figure_options(
-              rest.to_array(),
+              rest,
             )
             let placement = { pos: parse_position(pos), layer, scalars }
             if kind is @assets.Dom {
@@ -1097,6 +1073,44 @@ fn[T] lower_scene_figure_command(
 }
 
 ///|
+fn[T] lower_group_command(
+  args : ArrayView[@sexp.Sexp],
+  parse_step : (@sexp.Sexp) -> GroupStep?,
+  builder : ScriptBuilder[T],
+) -> Unit {
+  match args {
+    [target, .. step_items] => {
+      let t = sexp_as_string(target).unwrap_or("")
+      if t != "" {
+        let mut kind = @assets.Pixi
+        let steps : Array[GroupStep] = []
+        for item in step_items {
+          if !(item is @sexp.Symbol(k) && k == @sexp.Symbol::new(":kind")) {
+            match parse_step(item) {
+              Some(step) => steps.push(step)
+              None => ()
+            }
+          }
+        }
+        let mut i = 0
+        while i + 1 < step_items.length() {
+          match step_items[i] {
+            @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
+              kind = parse_render_kind(step_items[i + 1])
+            _ => ()
+          }
+          i = i + 2
+        }
+        if !steps.is_empty() {
+          builder.instructions.push(AnimateGroup(t, steps, kind))
+        }
+      }
+    }
+    _ => ()
+  }
+}
+
+///|
 fn[T] lower_effect_animation_command(
   cmd : String,
   args : ArrayView[@sexp.Sexp],
@@ -1109,7 +1123,7 @@ fn[T] lower_effect_animation_command(
           let t = sexp_as_string(target).unwrap_or("")
           let e = sexp_as_string(effect_id).unwrap_or("")
           if t != "" {
-            match parse_effect_spec(e, rest.to_array()) {
+            match parse_effect_spec(e, rest) {
               Some(spec) => builder.instructions.push(ApplyEffect(t, spec))
               None => ()
             }
@@ -1118,15 +1132,14 @@ fn[T] lower_effect_animation_command(
         _ => ()
       }
     "animate" =>
-      match args.to_array() {
+      match args {
         [target, prop, duration, ..] => {
-          let parts = args.to_array()
           let t = sexp_as_string(target).unwrap_or("")
           let p = sexp_as_string(prop).unwrap_or("").to_lower()
           let dur = sexp_as_int(duration).unwrap_or(0)
           if t != "" {
-            let kind = parse_render_kind_option(parts, 3)
-            match parse_anim_spec(p, dur, parts, 3) {
+            let kind = parse_render_kind_option(args, 3)
+            match parse_anim_spec(p, dur, args, 3) {
               Some(spec) => builder.instructions.push(Animate(t, spec, kind))
               None => ()
             }
@@ -1135,69 +1148,8 @@ fn[T] lower_effect_animation_command(
         _ => ()
       }
     "animate-group" =>
-      match args.to_array() {
-        [target, .. step_items] => {
-          let t = sexp_as_string(target).unwrap_or("")
-          if t != "" {
-            let mut kind = @assets.Pixi
-            let steps : Array[GroupStep] = []
-            for item in step_items {
-              if !(item is @sexp.Symbol(k) && k == @sexp.Symbol::new(":kind")) {
-                match parse_group_animation_step(item) {
-                  Some(step) => steps.push(step)
-                  None => ()
-                }
-              }
-            }
-            let items = step_items.to_array()
-            let mut i = 0
-            while i + 1 < items.length() {
-              match items[i] {
-                @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
-                  kind = parse_render_kind(items[i + 1])
-                _ => ()
-              }
-              i = i + 2
-            }
-            if !steps.is_empty() {
-              builder.instructions.push(AnimateGroup(t, steps, kind))
-            }
-          }
-        }
-        _ => ()
-      }
-    "mixed-group" =>
-      match args.to_array() {
-        [target, .. step_items] => {
-          let t = sexp_as_string(target).unwrap_or("")
-          if t != "" {
-            let mut kind = @assets.Pixi
-            let steps : Array[GroupStep] = []
-            for item in step_items {
-              if !(item is @sexp.Symbol(k) && k == @sexp.Symbol::new(":kind")) {
-                match parse_mixed_group_step(item) {
-                  Some(step) => steps.push(step)
-                  None => ()
-                }
-              }
-            }
-            let items = step_items.to_array()
-            let mut i = 0
-            while i + 1 < items.length() {
-              match items[i] {
-                @sexp.Symbol(k) if k == @sexp.Symbol::new(":kind") =>
-                  kind = parse_render_kind(items[i + 1])
-                _ => ()
-              }
-              i = i + 2
-            }
-            if !steps.is_empty() {
-              builder.instructions.push(AnimateGroup(t, steps, kind))
-            }
-          }
-        }
-        _ => ()
-      }
+      lower_group_command(args, parse_group_animation_step, builder)
+    "mixed-group" => lower_group_command(args, parse_mixed_group_step, builder)
     _ => ()
   }
 }
@@ -1380,13 +1332,7 @@ fn[T] lower_dialog_command(
       match args {
         [speaker, @sexp.List(text_items), .. rest] => {
           let sp = sexp_as_string(speaker).unwrap_or("")
-          let texts : Array[String] = []
-          for item in text_items {
-            match sexp_as_string(item) {
-              Some(s) => texts.push(s)
-              None => ()
-            }
-          }
+          let texts = text_items.filter_map(sexp_as_string)
           let mut typewriter = true
           let mut append = false
           let mut voice = ""
@@ -1554,7 +1500,7 @@ fn[T] lower_choice_input_command(
 ) -> Unit {
   match cmd {
     "choice" => {
-      let options = parse_choice_options(args.to_array())
+      let options = parse_choice_options(args)
       if !options.is_empty() {
         builder.choice(options)
       }
@@ -1564,7 +1510,7 @@ fn[T] lower_choice_input_command(
         [speaker, prompt, .. items] => {
           let sp = sexp_as_string(speaker).unwrap_or("")
           let pr = sexp_as_string(prompt).unwrap_or("")
-          let options = parse_choice_options(items.to_array())
+          let options = parse_choice_options(items)
           if !options.is_empty() {
             builder.menu(sp, pr, options)
           }

@@ -158,19 +158,17 @@ pub fn StartMenu::take_locale_action(self : StartMenu) -> StartLocaleAction {
 
 ///|
 fn choose_continue_slot(entries : Array[SaveSlotEntry]) -> String? {
-  let mut best_slot : String? = None
-  let mut best_ts = -1.0
-  for entry in entries {
+  for entry in entries; best_slot = None, best_ts = -1.0 {
     let ts = match entry.meta {
       Some(meta) => meta.updated_at_ms
       None => -1.0
     }
     if ts > best_ts || best_slot is None {
-      best_slot = Some(entry.slot)
-      best_ts = ts
+      continue Some(entry.slot), ts
     }
+  } nobreak {
+    best_slot
   }
-  best_slot
 }
 
 ///|
@@ -471,7 +469,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
 ///|
 pub fn StartMenu::render(self : StartMenu) -> Unit {
   let entries = save_slot_store_entries_in(self.save_store, self.save_ns)
-  let has_gallery = @gallery.registered_images().length() > 0
+  let has_gallery = !@gallery.registered_images().is_empty()
   let has_credits = self.show_credits && self.ui_strings.menu_credits != ""
   let continue_slot = choose_continue_slot(entries)
   match continue_slot {

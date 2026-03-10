@@ -119,7 +119,7 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
         append,
         proceed_on_done: self.runtime.last_say_proceed_on_done(),
       })
-      if append && self.ui.dialog_history.length() > 0 {
+      if append && !self.ui.dialog_history.is_empty() {
         let history_len = self.ui.dialog_history.length()
         self.ui.dialog_history[history_len - 1] = {
           speaker: resolved_speaker.raw_text(),
@@ -470,7 +470,7 @@ pub fn[T] Director::ui_snapshot(self : Director[T]) -> UiSnapshot {
     text_box_visible: self.ui.text_box_visible,
     avatar_id: self.ui.avatar_id,
     dom_figures: self.render.dom_figures,
-    dom_animations: self.render.dom_animations.iter().to_array(),
+    dom_animations: self.render.dom_animations.to_array(),
   }
 }
 

@@ -297,18 +297,18 @@ pub fn UiDom::advance_dom_animation_timer(
 
 ///|
 pub fn UiDom::has_active_dom_animations(self : UiDom) -> Bool {
-  self.dom_position_anims.length() > 0 ||
-  self.dom_opacity_anims.length() > 0 ||
-  self.dom_scale_anims.length() > 0 ||
-  self.dom_rotation_anims.length() > 0 ||
-  self.dom_blur_anims.length() > 0 ||
-  self.dom_brightness_anims.length() > 0 ||
-  self.dom_contrast_anims.length() > 0 ||
-  self.dom_saturation_anims.length() > 0 ||
-  self.dom_gamma_anims.length() > 0 ||
-  self.dom_color_r_anims.length() > 0 ||
-  self.dom_color_g_anims.length() > 0 ||
-  self.dom_color_b_anims.length() > 0
+  !self.dom_position_anims.is_empty() ||
+  !self.dom_opacity_anims.is_empty() ||
+  !self.dom_scale_anims.is_empty() ||
+  !self.dom_rotation_anims.is_empty() ||
+  !self.dom_blur_anims.is_empty() ||
+  !self.dom_brightness_anims.is_empty() ||
+  !self.dom_contrast_anims.is_empty() ||
+  !self.dom_saturation_anims.is_empty() ||
+  !self.dom_gamma_anims.is_empty() ||
+  !self.dom_color_r_anims.is_empty() ||
+  !self.dom_color_g_anims.is_empty() ||
+  !self.dom_color_b_anims.is_empty()
 }
 
 ///|

@@ -652,9 +652,9 @@ async test "runner skip mode completes 200-step script without stack overflow" {
 
   let mut ticks = 0
   let mut ended = false
-  while not(ended) {
+  while !ended {
     let keep_going = runner.tick(elapsed_ms=100)
-    if not(keep_going) {
+    if !keep_going {
       ended = true
     }
     ticks = ticks + 1

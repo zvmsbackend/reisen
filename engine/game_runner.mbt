@@ -664,7 +664,7 @@ async fn[T] GameRunner::step_handle_dialog_flow(
       }
     }
   }
-  if not(self.ui.is_typewriter_done()) {
+  if !self.ui.is_typewriter_done() {
     if self.ui.check_typewriter_click() {
       self.emit_ui_click_sfx()
       self.ui.complete_typewriter()

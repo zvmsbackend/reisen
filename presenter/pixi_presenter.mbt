@@ -143,10 +143,7 @@ fn PixiPresenter::reset_render_state(self : PixiPresenter) -> Unit {
     Some(sprite) => sprite.set_visible(false)
     None => ()
   }
-  let ids : Array[String] = []
-  for id in self.figure_sprites.keys() {
-    ids.push(id)
-  }
+  let ids = self.figure_sprites.keys().collect()
   for id in ids {
     match self.figure_sprites.get(id) {
       Some(sprite) => self.stage.remove_sprite(sprite)
@@ -154,10 +151,7 @@ fn PixiPresenter::reset_render_state(self : PixiPresenter) -> Unit {
     }
     self.figure_sprites.remove(id)
   }
-  let live2d_ids : Array[String] = []
-  for id in self.figure_live2d.keys() {
-    live2d_ids.push(id)
-  }
+  let live2d_ids = self.figure_live2d.keys().collect()
   for id in live2d_ids {
     match self.figure_live2d.get(id) {
       Some(model) => self.stage.remove_live2d(model)

@@ -88,14 +88,7 @@ pub fn image_by_id(id : String) -> GalleryImage? {
 
 ///|
 pub fn registered_images() -> Array[GalleryImage] {
-  let out : Array[GalleryImage] = []
-  for id in gallery_image_order {
-    match gallery_images.get(id) {
-      Some(image) => out.push(image)
-      None => ()
-    }
-  }
-  out
+  gallery_image_order.filter_map(id => gallery_images.get(id))
 }
 
 ///|
@@ -147,44 +140,20 @@ pub fn is_image_unlocked_in(ns : String, image : GalleryImage) -> Bool {
 
 ///|
 pub fn unlocked_images() -> Array[GalleryImage] {
-  let out : Array[GalleryImage] = []
-  for image in registered_images() {
-    if is_image_unlocked(image) {
-      out.push(image)
-    }
-  }
-  out
+  registered_images().filter(is_image_unlocked)
 }
 
 ///|
 pub fn unlocked_images_in(ns : String) -> Array[GalleryImage] {
-  let out : Array[GalleryImage] = []
-  for image in registered_images() {
-    if is_image_unlocked_in(ns, image) {
-      out.push(image)
-    }
-  }
-  out
+  registered_images().filter(image => is_image_unlocked_in(ns, image))
 }
 
 ///|
 pub fn replayable_images() -> Array[GalleryImage] {
-  let out : Array[GalleryImage] = []
-  for image in registered_images() {
-    if image.replay_label is Some(_) {
-      out.push(image)
-    }
-  }
-  out
+  registered_images().filter(image => image.replay_label is Some(_))
 }
 
 ///|
 pub fn replayable_images_in(ns : String) -> Array[GalleryImage] {
-  let out : Array[GalleryImage] = []
-  for image in unlocked_images_in(ns) {
-    if image.replay_label is Some(_) {
-      out.push(image)
-    }
-  }
-  out
+  unlocked_images_in(ns).filter(image => image.replay_label is Some(_))
 }

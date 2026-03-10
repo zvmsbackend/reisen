@@ -76,15 +76,15 @@ pub fn UiDom::set_media_volume(self : UiDom, volume : Double) -> Unit {
 
 ///|
 pub fn UiDom::toggle_auto_mode(self : UiDom) -> Unit {
-  self.set_auto_mode(not(self.auto_mode))
+  self.set_auto_mode(!self.auto_mode)
 }
 
 ///|
 pub fn UiDom::should_auto_advance(self : UiDom) -> Bool {
-  if not(self.auto_mode) {
+  if !self.auto_mode {
     return false
   }
-  if not(self.is_typewriter_done()) {
+  if !self.is_typewriter_done() {
     return false
   }
   self.auto_mode_last_advance_ms >= self.auto_mode_delay_ms
@@ -97,7 +97,7 @@ pub fn UiDom::mark_auto_advanced(self : UiDom) -> Unit {
 
 ///|
 pub fn UiDom::should_auto_skip_wait_click(self : UiDom) -> Bool {
-  if not(self.auto_mode) {
+  if !self.auto_mode {
     return false
   }
   self.auto_mode_last_advance_ms >= self.wait_click_auto_skip_delay_ms
@@ -105,10 +105,10 @@ pub fn UiDom::should_auto_skip_wait_click(self : UiDom) -> Bool {
 
 ///|
 pub fn UiDom::advance_auto_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
-  if not(self.auto_mode) {
+  if !self.auto_mode {
     return
   }
-  if not(self.is_typewriter_done()) {
+  if !self.is_typewriter_done() {
     return
   }
   self.auto_mode_last_advance_ms += elapsed_ms
@@ -137,7 +137,7 @@ pub fn UiDom::is_skip_active(self : UiDom) -> Bool {
 
 ///|
 pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
-  self.set_skip_mode(not(self.skip_mode))
+  self.set_skip_mode(!self.skip_mode)
 }
 
 ///|
@@ -149,7 +149,7 @@ pub fn UiDom::set_log_visible(self : UiDom, visible : Bool) -> Unit {
 
 ///|
 pub fn UiDom::toggle_log_visible(self : UiDom) -> Unit {
-  self.set_log_visible(not(self.log_visible))
+  self.set_log_visible(!self.log_visible)
 }
 
 ///|
@@ -182,10 +182,10 @@ pub fn UiDom::set_script_localization(
 
 ///|
 pub fn UiDom::should_skip_advance(self : UiDom) -> Bool {
-  if not(self.is_skip_active()) {
+  if !self.is_skip_active() {
     return false
   }
-  if not(self.is_typewriter_done()) {
+  if !self.is_typewriter_done() {
     return false
   }
   self.skip_mode_last_advance_ms >= self.skip_mode_delay_ms
@@ -193,10 +193,10 @@ pub fn UiDom::should_skip_advance(self : UiDom) -> Bool {
 
 ///|
 pub fn UiDom::advance_skip_mode_timer(self : UiDom, elapsed_ms~ : Int) -> Unit {
-  if not(self.is_skip_active()) {
+  if !self.is_skip_active() {
     return
   }
-  if not(self.is_typewriter_done()) {
+  if !self.is_typewriter_done() {
     return
   }
   self.skip_mode_last_advance_ms += elapsed_ms

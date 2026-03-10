@@ -353,7 +353,7 @@ pub fn[T] Runtime::step(
   if self.ended {
     return ScriptEnded
   }
-  if self.pending_choices.length() > 0 {
+  if !self.pending_choices.is_empty() {
     return ChoicePrompt(self.pending_choices)
   }
   if self.pending_text_input is Some(_) {
@@ -481,7 +481,7 @@ pub fn[T] Runtime::choose(
   self : Runtime[T],
   id : String,
 ) -> RuntimeEvent raise ScriptRuntimeError {
-  if self.pending_choices.length() == 0 {
+  if self.pending_choices.is_empty() {
     raise ScriptRuntimeError::ChoiceNotActive
   }
   for opt in self.pending_choices {

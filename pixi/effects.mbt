@@ -53,7 +53,7 @@ pub fn pixi_effect_defaults_for(
   fallback : Array[EffectParam],
 ) -> Array[EffectParam] {
   match pixi_effect_defaults.get(id) {
-    Some(list) if list.length() > 0 => list
+    Some(list) if !list.is_empty() => list
     _ => fallback
   }
 }

@@ -22,7 +22,7 @@ pub fn DialogText::new(text : String) -> DialogText {
 
   fn flush_buf() {
     let s = buf.to_string()
-    if not(s.is_empty()) {
+    if !s.is_empty() {
       parts.push(String(s))
       buf.reset()
     }
@@ -202,7 +202,7 @@ pub fn DialogText::slice(self : DialogText, end : Int) -> DialogText {
     match text {
       String(s) => String(slice_string(s))
       Concat(parts) => {
-        let result_parts = Array::new()
+        let result_parts = []
         for part in parts {
           if remaining <= 0 {
             break

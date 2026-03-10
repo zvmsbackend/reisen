@@ -777,7 +777,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
       self.phase = AppPhase::Settings
     }
     Gallery =>
-      if @gallery.registered_images().length() > 0 {
+      if !@gallery.registered_images().is_empty() {
         self.emit_ui_click_sfx()
         self.start_menu.clear()
         self.gallery_menu.render()
@@ -837,21 +837,11 @@ fn next_save_slot(
   let existing = save_store.list_slots(ns)
   for i in 1..<=total {
     let slot = "\{prefix}\{i}"
-    if !slot_exists(existing, slot) {
+    if !existing.contains(slot) {
       return slot
     }
   }
   "\{prefix}\{total}"
-}
-
-///|
-fn slot_exists(existing : Array[String], slot : String) -> Bool {
-  for s in existing {
-    if s == slot {
-      return true
-    }
-  }
-  false
 }
 
 ///|

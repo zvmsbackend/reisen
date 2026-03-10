@@ -634,7 +634,7 @@ fn filter_entries_by_type(
       SaveSlotType::Autosave => slot.has_prefix("autosave")
       SaveSlotType::Quicksave => slot.has_prefix("quicksave")
       SaveSlotType::Normal =>
-        not(slot.has_prefix("autosave") || slot.has_prefix("quicksave"))
+        !(slot.has_prefix("autosave") || slot.has_prefix("quicksave"))
     }
   })
 }
