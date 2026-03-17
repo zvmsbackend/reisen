@@ -1,6 +1,6 @@
 {
   "name": "sennenki/reisen",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "deps": {
     "moonbit-community/js-ffi": "0.4.2",
     "moonbitlang/async": "0.16.6",
