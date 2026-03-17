@@ -106,7 +106,9 @@ pub suberror PixiBindingError {
 pub async fn PixiLive2dModel::load(
   source : String,
 ) -> PixiLive2dModel raise PixiBindingError {
-  let result = @js_async.Promise::wait(js_load_live2d_model_promise(source)) catch {
+  let result = (source
+  |> js_load_live2d_model_promise
+  |> @js_async.Promise::wait) catch {
     _ =>
       raise PixiBindingError::ResourceLoadFailed(
         message="Failed to load Live2D model: \{source}",
@@ -131,7 +133,7 @@ fn js_assets_load_promise(source : String) -> @js_async.Promise[@js.Value] = "lo
 pub async fn assets_load_texture(
   source : String,
 ) -> PixiTexture raise PixiBindingError {
-  let result = @js_async.Promise::wait(js_assets_load_promise(source)) catch {
+  let result = (source |> js_assets_load_promise |> @js_async.Promise::wait) catch {
     _ =>
       raise PixiBindingError::ResourceLoadFailed(
         message="Failed to load Pixi texture: \{source}",

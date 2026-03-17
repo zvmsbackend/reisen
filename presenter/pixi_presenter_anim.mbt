@@ -91,10 +91,7 @@ fn apply_scalar_animation(
 
 ///|
 fn anim_value(values : Array[Double]?, idx : Int) -> Double? {
-  match values {
-    Some(arr) => if idx < arr.length() { Some(arr[idx]) } else { None }
-    None => None
-  }
+  values.bind(arr => if idx < arr.length() { Some(arr[idx]) } else { None })
 }
 
 ///|

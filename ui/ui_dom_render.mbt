@@ -9,14 +9,10 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     id: choice.id,
     text: self.localize_script_text(choice.text),
   })
-  let localized_text_input = match view.text_input {
-    Some(input_view) =>
-      Some(UiTextInputView::{
-        var_name: input_view.var_name,
-        prompt: self.localize_script_text(input_view.prompt),
-      })
-    None => None
-  }
+  let localized_text_input = view.text_input.map(input_view => UiTextInputView::{
+    var_name: input_view.var_name,
+    prompt: self.localize_script_text(input_view.prompt),
+  })
   let localized_dialog_history : Array[DialogLogEntry] = view.dialog_history.map(entry => {
       speaker: self.localize_script_text_string(entry.speaker),
       text: self.localize_script_text_string(entry.text),
@@ -24,18 +20,12 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   )
   let dom_figures_json = view.dom_figures.to_json().stringify()
   dom_render_dom_figures(self.root_id, dom_figures_json)
-  match view.video {
-    Some(video) => {
-      dom_render_video(
-        self.root_id,
-        video.url,
-        video.can_skip,
-        self.media_volume,
-      )
-      dom_setup_typewriter_click(self.root_id)
-      return
-    }
-    None => dom_clear_video(self.root_id)
+  if view.video is Some(video) {
+    dom_render_video(self.root_id, video.url, video.can_skip, self.media_volume)
+    dom_setup_typewriter_click(self.root_id)
+    return
+  } else {
+    dom_clear_video(self.root_id)
   }
   if localized_intro_text is Some(text) {
     dom_render_intro(self.root_id, text.render())
@@ -111,15 +101,15 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     dom_clear_log(self.root_id)
   }
   if self.dirty_text_input {
-    match localized_text_input {
-      Some(input_view) =>
-        dom_render_text_input(
-          self.root_id,
-          input_view.var_name,
-          input_view.prompt.render(),
-          self.ui_strings.game_text_input_submit,
-        )
-      None => dom_clear_text_input(self.root_id)
+    if localized_text_input is Some(input_view) {
+      dom_render_text_input(
+        self.root_id,
+        input_view.var_name,
+        input_view.prompt.render(),
+        self.ui_strings.game_text_input_submit,
+      )
+    } else {
+      dom_clear_text_input(self.root_id)
     }
     self.dirty_text_input = false
   }

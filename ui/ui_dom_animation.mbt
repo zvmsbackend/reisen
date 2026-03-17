@@ -56,15 +56,13 @@ fn dom_pos_tuple(pos : Position) -> (Double, Double) {
 
 ///|
 fn anim_value(values : Array[Double]?, index : Int) -> Double? {
-  match values {
-    Some(xs) =>
-      if index >= 0 && index < xs.length() {
-        Some(xs[index])
-      } else {
-        None
-      }
-    None => None
-  }
+  values.bind(xs => {
+    if index >= 0 && index < xs.length() {
+      Some(xs[index])
+    } else {
+      None
+    }
+  })
 }
 
 ///|
@@ -331,126 +329,90 @@ fn UiDom::apply_active_dom_animations(
 
   for id, state in dom_figures {
     let mut next = state.placement
-    match self.dom_position_anims.get(id) {
-      Some(anim) => {
-        let (x, y, done) = pos_at(self.dom_timeline_ms, anim)
-        next = { ..next, pos: Custom(x, y) }
-        if done {
-          finished_position.push(id)
-        }
+    if self.dom_position_anims.get(id) is Some(anim) {
+      let (x, y, done) = pos_at(self.dom_timeline_ms, anim)
+      next = { ..next, pos: Custom(x, y) }
+      if done {
+        finished_position.push(id)
       }
-      None => ()
     }
 
-    match self.dom_opacity_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, opacity: value } }
-        if done {
-          finished_opacity.push(id)
-        }
+    if self.dom_opacity_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, opacity: value } }
+      if done {
+        finished_opacity.push(id)
       }
-      None => ()
     }
-    match self.dom_scale_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, scale: value } }
-        if done {
-          finished_scale.push(id)
-        }
+    if self.dom_scale_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, scale: value } }
+      if done {
+        finished_scale.push(id)
       }
-      None => ()
     }
-    match self.dom_rotation_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, rotation: value } }
-        if done {
-          finished_rotation.push(id)
-        }
+    if self.dom_rotation_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, rotation: value } }
+      if done {
+        finished_rotation.push(id)
       }
-      None => ()
     }
-    match self.dom_blur_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, blur: value } }
-        if done {
-          finished_blur.push(id)
-        }
+    if self.dom_blur_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, blur: value } }
+      if done {
+        finished_blur.push(id)
       }
-      None => ()
     }
-    match self.dom_brightness_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, brightness: value } }
-        if done {
-          finished_brightness.push(id)
-        }
+    if self.dom_brightness_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, brightness: value } }
+      if done {
+        finished_brightness.push(id)
       }
-      None => ()
     }
-    match self.dom_contrast_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, contrast: value } }
-        if done {
-          finished_contrast.push(id)
-        }
+    if self.dom_contrast_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, contrast: value } }
+      if done {
+        finished_contrast.push(id)
       }
-      None => ()
     }
-    match self.dom_saturation_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, saturation: value } }
-        if done {
-          finished_saturation.push(id)
-        }
+    if self.dom_saturation_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, saturation: value } }
+      if done {
+        finished_saturation.push(id)
       }
-      None => ()
     }
-    match self.dom_gamma_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, gamma: value } }
-        if done {
-          finished_gamma.push(id)
-        }
+    if self.dom_gamma_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, gamma: value } }
+      if done {
+        finished_gamma.push(id)
       }
-      None => ()
     }
-    match self.dom_color_r_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, color_r: value } }
-        if done {
-          finished_color_r.push(id)
-        }
+    if self.dom_color_r_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, color_r: value } }
+      if done {
+        finished_color_r.push(id)
       }
-      None => ()
     }
-    match self.dom_color_g_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, color_g: value } }
-        if done {
-          finished_color_g.push(id)
-        }
+    if self.dom_color_g_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, color_g: value } }
+      if done {
+        finished_color_g.push(id)
       }
-      None => ()
     }
-    match self.dom_color_b_anims.get(id) {
-      Some(anim) => {
-        let (value, done) = scalar_at(self.dom_timeline_ms, anim)
-        next = { ..next, scalars: { ..next.scalars, color_b: value } }
-        if done {
-          finished_color_b.push(id)
-        }
+    if self.dom_color_b_anims.get(id) is Some(anim) {
+      let (value, done) = scalar_at(self.dom_timeline_ms, anim)
+      next = { ..next, scalars: { ..next.scalars, color_b: value } }
+      if done {
+        finished_color_b.push(id)
       }
-      None => ()
     }
     dom_figures.set(id, { placement: next, interactive: state.interactive })
   }

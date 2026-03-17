@@ -45,14 +45,12 @@ pub fn UiDom::localize_vocal_url(self : UiDom, raw : String) -> String {
   if self.vocal_locale_dir == "" {
     return key
   }
-  let locale = if self.script_locale != "" {
-    self.script_locale
-  } else {
-    self.script_default_locale
+  let locale = match self.script_locale {
+    "" => self.script_default_locale
+    _ => self.script_locale
   }
-  if locale == "" {
-    "\{self.vocal_locale_dir}/\{key}"
-  } else {
-    "\{self.vocal_locale_dir}/\{locale}/\{key}"
+  match locale {
+    "" => "\{self.vocal_locale_dir}/\{key}"
+    _ => "\{self.vocal_locale_dir}/\{locale}/\{key}"
   }
 }

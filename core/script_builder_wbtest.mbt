@@ -162,9 +162,7 @@ test "branch helper emits jump_if and jump instructions" {
   let then = label(name="then")
   let else_ = label(name="else")
   let built : Script[Int] = script(builder => {
-    builder.branch(then, else_, _ => true)
-    builder.label(then)
-    builder.label(else_)
+    builder..branch(then, else_, _ => true)..label(then).label(else_)
   })
 
   assert_eq(built.instructions.length(), 4)
@@ -175,8 +173,7 @@ test "branch helper emits jump_if and jump instructions" {
 ///|
 test "jump_by helper emits computed jump instruction" {
   let built : Script[Int] = script(builder => {
-    builder.jump_by(_ => label(name="target"))
-    builder.label(label(name="target"))
+    builder..jump_by(_ => label(name="target")).label(label(name="target"))
   })
 
   assert_eq(built.instructions.length(), 2)
@@ -188,13 +185,11 @@ test "menu helper emits say then choice" {
   let label_a = label(name="label_a")
   let label_b = label(name="label_b")
   let built : Script[Int] = script(builder => {
-    builder.label(label(name="start"))
-    builder.menu("narrator", "Pick one", [
-      option("A", label_a),
-      option("B", label_b),
-    ])
-    builder.label(label_a)
-    builder.label(label_b)
+    builder
+    ..label(label(name="start"))
+    ..menu("narrator", "Pick one", [option("A", label_a), option("B", label_b)])
+    ..label(label_a)
+    .label(label_b)
   })
 
   assert_true(
@@ -214,20 +209,21 @@ test "menu helper emits say then choice" {
 ///|
 test "scene/figure and animation shorthand helpers emit expected instructions" {
   let built : Script[Int] = script(builder => {
-    builder.scene(dummy_bg("bg_school"))
-    builder.show_figure_at(dummy_figure("alice"), Left, layer=2, scalars={
+    builder
+    ..scene(dummy_bg("bg_school"))
+    ..show_figure_at(dummy_figure("alice"), Left, layer=2, scalars={
       ..ScalarState::default(),
       opacity: 0.7,
     })
-    builder.animate_opacity(dummy_figure("alice"), 120, 1.0)
-    builder.animate_position(
+    ..animate_opacity(dummy_figure("alice"), 120, 1.0)
+    ..animate_position(
       dummy_figure("alice"),
       180,
       Custom(0.0, 0.0),
       easing=EaseInOut,
     )
-    builder.animate_scale(dummy_figure("alice"), 240, 1.0, easing=EaseOut)
-    builder.narrate("done")
+    ..animate_scale(dummy_figure("alice"), 240, 1.0, easing=EaseOut)
+    .narrate("done")
   })
 
   assert_true(built.instructions[0] is ShowBackground("bg_school"))
@@ -286,8 +282,9 @@ test "dom figure helper strips leading hash" {
 ///|
 test "dom figure show/hide emit expected instructions" {
   let built : Script[Int] = script(builder => {
-    builder.show_figure(dom_figure("#promo"), place_center(layer=2))
-    builder.hide_figure(dom_figure("promo"))
+    builder
+    ..show_figure(dom_figure("#promo"), place_center(layer=2))
+    .hide_figure(dom_figure("promo"))
   })
   assert_true(built.instructions[0] is ShowDomFigure("promo", _, false))
   assert_true(built.instructions[1] is HideDomFigure("promo"))
@@ -304,8 +301,9 @@ test "dom figure show can be interactive" {
 ///|
 test "set_figure_interactive emits dom instruction" {
   let built : Script[Int] = script(builder => {
-    builder.set_figure_interactive(dom_figure("promo"), true)
-    builder.set_figure_interactive(dom_figure("promo"), false)
+    builder
+    ..set_figure_interactive(dom_figure("promo"), true)
+    .set_figure_interactive(dom_figure("promo"), false)
   })
   assert_true(built.instructions[0] is SetDomFigureInteractive("promo", true))
   assert_true(built.instructions[1] is SetDomFigureInteractive("promo", false))
@@ -370,8 +368,7 @@ test "mixed group helpers emit animate-group instruction" {
 ///|
 test "wait_click supports can_skip option" {
   let built : Script[Int] = script(builder => {
-    builder.wait_click()
-    builder.wait_click(can_skip=false)
+    builder..wait_click().wait_click(can_skip=false)
   })
   assert_true(built.instructions[0] is WaitForClick(true))
   assert_true(built.instructions[1] is WaitForClick(false))
@@ -405,9 +402,10 @@ test "effect helper emits apply effect" {
 ///|
 test "live2d helpers emit motion and expression instructions" {
   let built : Script[Int] = script(builder => {
-    builder.play_live2d_motion(dummy_live2d_figure("hero"), "tap_body", index=1)
-    builder.set_live2d_expression(dummy_live2d_figure("hero"), id="smile")
-    builder.set_live2d_expression(dummy_live2d_figure("hero"))
+    builder
+    ..play_live2d_motion(dummy_live2d_figure("hero"), "tap_body", index=1)
+    ..set_live2d_expression(dummy_live2d_figure("hero"), id="smile")
+    .set_live2d_expression(dummy_live2d_figure("hero"))
   })
 
   assert_true(

@@ -1,6 +1,6 @@
 ///|
 fn effect_key(target : String, id : String) -> String {
-  target + "::" + id
+  "\{target}::\{id}"
 }
 
 ///|
@@ -136,20 +136,18 @@ fn PixiPresenter::apply_effects_to_target(
     let key = effect_key(target_id, spec.id)
     let signature = effect_signature(spec)
     active_effects.add(key)
-    match self.effect_signatures.get(key) {
-      Some(prev) =>
-        if prev != signature {
-          self.effect_signatures.set(key, signature)
-          self.effect_start_ms.set(key, self.timeline_ms)
-          let defaults = pixi_effect_defaults_for(spec.id, spec.params)
-          self.effect_from_params.set(key, defaults)
-        }
-      None => {
+    if self.effect_signatures.get(key) is Some(prev) {
+      if prev != signature {
         self.effect_signatures.set(key, signature)
         self.effect_start_ms.set(key, self.timeline_ms)
         let defaults = pixi_effect_defaults_for(spec.id, spec.params)
         self.effect_from_params.set(key, defaults)
       }
+    } else {
+      self.effect_signatures.set(key, signature)
+      self.effect_start_ms.set(key, self.timeline_ms)
+      let defaults = pixi_effect_defaults_for(spec.id, spec.params)
+      self.effect_from_params.set(key, defaults)
     }
     let progress = match (spec.duration_ms, self.effect_start_ms.get(key)) {
       (Some(duration), Some(start_ms)) => {
@@ -171,17 +169,18 @@ fn PixiPresenter::apply_effects_to_target(
       }
       _ => 1.0
     }
-    let render_params = if spec.duration_ms is Some(_) {
-      let from = self.effect_from_params.get_or_default(key, [])
-      let from_map = Map::from_array(from)
-      spec.params.map(entry => {
-        let (name, value) = entry
-        let start = from_map.get(name).unwrap_or(value)
-        let animated = start + (value - start) * progress
-        (name, animated)
-      })
-    } else {
-      spec.params
+    let render_params = match spec.duration_ms {
+      Some(_) => {
+        let from = self.effect_from_params.get_or_default(key, [])
+        let from_map = Map::from_array(from)
+        spec.params.map(entry => {
+          let (name, value) = entry
+          let start = from_map.get(name).unwrap_or(value)
+          let animated = start + (value - start) * progress
+          (name, animated)
+        })
+      }
+      None => spec.params
     }
     if pixi_apply_effect_to_target(
         target,

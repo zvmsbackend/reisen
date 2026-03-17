@@ -44,63 +44,65 @@ pub fn DialogText::new(text : String) -> DialogText {
 
   while i < len {
     let c = chars[i]
-    if c == '[' {
-      // Try to parse [base](ruby) or [base]{style}
-      match read_until(i + 1, ']') {
-        None => {
-          buf.write_char('[')
-          i += 1
-        }
-        Some((base_text, close_bracket)) => {
-          let after = close_bracket + 1
-          if after < len && chars[after] == '(' {
-            match read_until(after + 1, ')') {
-              Some((ruby_text, close_paren)) => {
-                flush_buf()
-                parts.push(Ruby(base_text, ruby=ruby_text))
-                i = close_paren + 1
-              }
-              None => {
-                buf.write_char('[')
-                i += 1
-              }
-            }
-          } else if after < len && chars[after] == '{' {
-            match read_until(after + 1, '}') {
-              Some((style_text, close_brace)) => {
-                flush_buf()
-                parts.push(
-                  Enhanced(DialogText::new(base_text), style=style_text),
-                )
-                i = close_brace + 1
-              }
-              None => {
-                buf.write_char('[')
-                i += 1
-              }
-            }
-          } else {
+    match c {
+      '[' =>
+        // Try to parse [base](ruby) or [base]{style}
+        match read_until(i + 1, ']') {
+          None => {
             buf.write_char('[')
             i += 1
           }
+          Some((base_text, close_bracket)) => {
+            let after = close_bracket + 1
+            if after < len && chars[after] == '(' {
+              match read_until(after + 1, ')') {
+                Some((ruby_text, close_paren)) => {
+                  flush_buf()
+                  parts.push(Ruby(base_text, ruby=ruby_text))
+                  i = close_paren + 1
+                }
+                None => {
+                  buf.write_char('[')
+                  i += 1
+                }
+              }
+            } else if after < len && chars[after] == '{' {
+              match read_until(after + 1, '}') {
+                Some((style_text, close_brace)) => {
+                  flush_buf()
+                  parts.push(
+                    Enhanced(DialogText::new(base_text), style=style_text),
+                  )
+                  i = close_brace + 1
+                }
+                None => {
+                  buf.write_char('[')
+                  i += 1
+                }
+              }
+            } else {
+              buf.write_char('[')
+              i += 1
+            }
+          }
         }
+      '{' =>
+        // Try to parse {varname} interpolation
+        match read_until(i + 1, '}') {
+          Some((var_name, close_brace)) => {
+            flush_buf()
+            parts.push(Interpolation(var_name))
+            i = close_brace + 1
+          }
+          None => {
+            buf.write_char(c)
+            i += 1
+          }
+        }
+      _ => {
+        buf.write_char(c)
+        i += 1
       }
-    } else if c == '{' {
-      // Try to parse {varname} interpolation
-      match read_until(i + 1, '}') {
-        Some((var_name, close_brace)) => {
-          flush_buf()
-          parts.push(Interpolation(var_name))
-          i = close_brace + 1
-        }
-        None => {
-          buf.write_char(c)
-          i += 1
-        }
-      }
-    } else {
-      buf.write_char(c)
-      i += 1
     }
   }
   flush_buf()
@@ -200,7 +202,7 @@ pub fn DialogText::slice(self : DialogText, end : Int) -> DialogText {
   fn walk(text : DialogText) -> DialogText {
     guard remaining > 0 else { return String("") }
     match text {
-      String(s) => String(slice_string(s))
+      String(s) => s |> slice_string |> String
       Concat(parts) => {
         let result_parts = []
         for part in parts {

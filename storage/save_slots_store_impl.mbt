@@ -1,11 +1,11 @@
 ///|
 fn namespaced_prefix(ns : String) -> String {
-  save_slot_prefix + ns + "."
+  "\{save_slot_prefix}\{ns}."
 }
 
 ///|
 fn namespaced_meta_prefix(ns : String) -> String {
-  save_slot_meta_prefix + ns + "."
+  "\{save_slot_meta_prefix}\{ns}."
 }
 
 ///|
@@ -120,10 +120,13 @@ pub impl SaveSlotStore for IndexedDbSaveSlotStore with read_slot_meta(
   ns,
   slot,
 ) {
-  match idb_cache_get_meta(self.db_name, slot_meta_key(ns, slot)).to_option() {
-    Some(raw) => Some(@json.from_json(@json.parse(raw))) catch { _ => None }
-    None => None
-  }
+  idb_cache_get_meta(self.db_name, slot_meta_key(ns, slot))
+  .to_option()
+  .bind(raw => {
+    (raw |> @json.parse |> @json.from_json |> Some) catch {
+      _ => None
+    }
+  })
 }
 
 ///|
@@ -169,7 +172,7 @@ pub async fn IndexedDbSaveSlotStore::preload_namespace(
 pub async fn IndexedDbSaveSlotStore::preload_all(
   self : IndexedDbSaveSlotStore,
 ) -> Unit {
-  @js_async.Promise::wait(idb_preload_all_into_cache(self.db_name))
+  self.db_name |> idb_preload_all_into_cache |> @js_async.Promise::wait
 }
 
 ///|
@@ -177,18 +180,17 @@ pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotSt
   P,
   F,
 ] with read_slot(self, ns, slot) {
-  match self.primary.read_slot(ns, slot) {
+  match self.primary.read_slot(ns, slot).bind(value => Some(value)) {
     Some(value) => Some(value)
     None =>
-      match self.fallback.read_slot(ns, slot) {
-        Some(value) => {
-          if self.migrate_on_read {
-            self.primary.write_slot(ns, slot, value)
-          }
-          Some(value)
+      self.fallback
+      .read_slot(ns, slot)
+      .map(value => {
+        if self.migrate_on_read {
+          self.primary.write_slot(ns, slot, value)
         }
-        None => None
-      }
+        value
+      })
   }
 }
 
@@ -222,18 +224,17 @@ pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotSt
   P,
   F,
 ] with read_slot_meta(self, ns, slot) {
-  match self.primary.read_slot_meta(ns, slot) {
+  match self.primary.read_slot_meta(ns, slot).bind(meta => Some(meta)) {
     Some(meta) => Some(meta)
     None =>
-      match self.fallback.read_slot_meta(ns, slot) {
-        Some(meta) => {
-          if self.migrate_on_read {
-            self.primary.write_slot_meta(ns, slot, meta)
-          }
-          Some(meta)
+      self.fallback
+      .read_slot_meta(ns, slot)
+      .map(meta => {
+        if self.migrate_on_read {
+          self.primary.write_slot_meta(ns, slot, meta)
         }
-        None => None
-      }
+        meta
+      })
   }
 }
 
@@ -357,7 +358,7 @@ fn local_save_slot_delete_in(ns : String, slot : String) -> Unit {
 
 ///|
 fn local_save_slot_list_in(ns : String) -> Array[String] {
-  storage_list_slots(namespaced_prefix(ns))
+  ns |> namespaced_prefix |> storage_list_slots
 }
 
 ///|
@@ -371,8 +372,11 @@ fn local_save_slot_write_meta_in(
 
 ///|
 fn local_save_slot_read_meta_in(ns : String, slot : String) -> SaveSlotMeta? {
-  match storage_get_item(slot_meta_key(ns, slot)).to_option() {
-    Some(raw) => Some(@json.from_json(@json.parse(raw))) catch { _ => None }
-    None => None
-  }
+  storage_get_item(slot_meta_key(ns, slot))
+  .to_option()
+  .bind(raw => {
+    (raw |> @json.parse |> @json.from_json |> Some) catch {
+      _ => None
+    }
+  })
 }

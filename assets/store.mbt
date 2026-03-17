@@ -98,7 +98,7 @@ fn int_array_to_bytes(xs : Array[Int]) -> Bytes {
 
 ///|
 pub async fn load_image(url : String) -> Image raise AssetStoreError {
-  let result = @js_async.Promise::wait(load_image_result_promise(url)) catch {
+  let result = (url |> load_image_result_promise |> @js_async.Promise::wait) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load image: \{url}"),
@@ -114,7 +114,7 @@ pub async fn load_image(url : String) -> Image raise AssetStoreError {
 
 ///|
 pub async fn load_video(url : String) -> Video raise AssetStoreError {
-  let result = @js_async.Promise::wait(load_video_result_promise(url)) catch {
+  let result = (url |> load_video_result_promise |> @js_async.Promise::wait) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load video: \{url}"),
@@ -130,7 +130,7 @@ pub async fn load_video(url : String) -> Video raise AssetStoreError {
 
 ///|
 pub async fn load_text(url : String) -> String raise AssetStoreError {
-  let result = @js_async.Promise::wait(load_text_result_promise(url)) catch {
+  let result = (url |> load_text_result_promise |> @js_async.Promise::wait) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load text: \{url}"),
@@ -146,7 +146,9 @@ pub async fn load_text(url : String) -> String raise AssetStoreError {
 
 ///|
 pub async fn load_bytes(url : String) -> Bytes raise AssetStoreError {
-  let result = @js_async.Promise::wait(load_arraybuffer_result_promise(url)) catch {
+  let result = (url
+  |> load_arraybuffer_result_promise
+  |> @js_async.Promise::wait) catch {
     err =>
       raise ResourceLoadFailed(
         message=promise_error_message(err, "Failed to load bytes: \{url}"),
@@ -197,7 +199,9 @@ fn js_load_live2d_model_promise(
 pub async fn load_live2d_model(
   source : String,
 ) -> PixiLive2dModel raise AssetStoreError {
-  let result = @js_async.Promise::wait(js_load_live2d_model_promise(source)) catch {
+  let result = (source
+  |> js_load_live2d_model_promise
+  |> @js_async.Promise::wait) catch {
     _ =>
       raise AssetStoreError::ResourceLoadFailed(
         message="Failed to load Live2D model: \{source}",

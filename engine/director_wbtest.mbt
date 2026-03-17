@@ -32,24 +32,25 @@ test "director maps runtime events into ui and render state" {
   let b = label()
   let end = label()
   let compiled : Script[Int] = script(builder => {
-    builder.scene(dummy_bg("bg_school"))
-    builder.show_figure_at(dummy_figure("alice"), Left, layer=1, scalars={
+    builder
+    ..scene(dummy_bg("bg_school"))
+    ..show_figure_at(dummy_figure("alice"), Left, layer=1, scalars={
       ..ScalarState::default(),
       opacity: 0.9,
     })
-    builder.play_music(dummy_music("bgm_theme"), true)
-    builder.animate_opacity(dummy_figure("alice"), 120, 1.0)
-    builder.menu("alice", "Where to?", [
+    ..play_music(dummy_music("bgm_theme"), true)
+    ..animate_opacity(dummy_figure("alice"), 120, 1.0)
+    ..menu("alice", "Where to?", [
       option("A route", a, id="a"),
       option("B route", b, id="b"),
     ])
-    builder.label(a)
-    builder.play_sfx(dummy_sfx("confirm"))
-    builder.say("alice", "A")
-    builder.jump(end)
-    builder.label(b)
-    builder.say("alice", "B")
-    builder.label(end)
+    ..label(a)
+    ..play_sfx(dummy_sfx("confirm"))
+    ..say("alice", "A")
+    ..jump(end)
+    ..label(b)
+    ..say("alice", "B")
+    .label(end)
   })
 
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
@@ -118,16 +119,17 @@ test "director branch false path through choose" {
   let right = label()
   let end = label()
   let compiled : Script[Int] = script(builder => {
-    builder.menu("guide", "Pick", [
+    builder
+    ..menu("guide", "Pick", [
       option("Left", left, id="left"),
       option("Right", right, id="right"),
     ])
-    builder.label(left)
-    builder.say("guide", "L")
-    builder.jump(end)
-    builder.label(right)
-    builder.say("guide", "R")
-    builder.label(end)
+    ..label(left)
+    ..say("guide", "L")
+    ..jump(end)
+    ..label(right)
+    ..say("guide", "R")
+    .label(end)
   })
 
   let director = Director::new(Runtime::new(compiled, GameState::new(0)))
@@ -158,8 +160,7 @@ test "director branch false path through choose" {
 ///|
 test "director save json resumes runtime position" {
   let script : Script[Int] = script(builder => {
-    builder.say("n", "a")
-    builder.say("n", "b")
+    builder..say("n", "a").say("n", "b")
   })
 
   let director = Director::new(Runtime::new(script, GameState::new(0)))
@@ -191,8 +192,7 @@ test "director save json resumes runtime position" {
 ///|
 test "director appends dialog text" {
   let script : Script[Int] = script(builder => {
-    builder.say("n", "Hello")
-    builder.say("n", " world", append=true)
+    builder..say("n", "Hello").say("n", " world", append=true)
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_eq(
@@ -231,8 +231,7 @@ test "director appends dialog text" {
 ///|
 test "director toggles text box visibility" {
   let script : Script[Int] = script(builder => {
-    builder.hide_text_box()
-    builder.show_text_box()
+    builder..hide_text_box().show_text_box()
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_true(director.text_box_visible())
@@ -245,8 +244,7 @@ test "director toggles text box visibility" {
 ///|
 test "director tracks avatar id" {
   let script : Script[Int] = script(builder => {
-    builder.show_avatar("/avatar.png")
-    builder.hide_avatar()
+    builder..show_avatar("/avatar.png").hide_avatar()
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_eq(director.step(), AvatarShown("/avatar.png"))
@@ -258,14 +256,15 @@ test "director tracks avatar id" {
 ///|
 test "director tracks dom figure state" {
   let script : Script[Int] = script(builder => {
-    builder.show_figure(
+    builder
+    ..show_figure(
       dom_figure("#promo"),
       @core.place_left(layer=3, scalars={
         ..ScalarState::default(),
         opacity: 0.7,
       }),
     )
-    builder.hide_figure(dom_figure("promo"))
+    .hide_figure(dom_figure("promo"))
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_true(director.step() is DomFigureShown("promo", _, false))
@@ -287,8 +286,9 @@ test "director tracks dom figure state" {
 ///|
 test "director updates dom figure interactive without placement change" {
   let script : Script[Int] = script(builder => {
-    builder.show_figure(dom_figure("promo"), @core.place_center(layer=2))
-    builder.set_figure_interactive(dom_figure("promo"), true)
+    builder
+    ..show_figure(dom_figure("promo"), @core.place_center(layer=2))
+    .set_figure_interactive(dom_figure("promo"), true)
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   ignore(director.step())
@@ -308,8 +308,9 @@ test "director updates dom figure interactive without placement change" {
 test "director tracks live2d motion and expression events" {
   let script : Script[Int] = script(builder => {
     let hero = dummy_live2d_figure("hero")
-    builder.play_live2d_motion(hero, "tap_body", index=1)
-    builder.set_live2d_expression(hero, id="smile")
+    builder
+    ..play_live2d_motion(hero, "tap_body", index=1)
+    .set_live2d_expression(hero, id="smile")
   })
   let director = Director::new(Runtime::new(script, GameState::new(0)))
   assert_eq(director.step(), Live2dMotionPlayed("hero", "tap_body", Some(1)))

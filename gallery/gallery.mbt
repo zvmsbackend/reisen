@@ -51,7 +51,7 @@ let gallery_image_order : Array[String] = []
 
 ///|
 fn gallery_image_unlock_key(id : String) -> String {
-  "gallery.image." + id
+  "gallery.image.\{id}"
 }
 
 ///|
@@ -113,7 +113,7 @@ pub fn unlock_image_by_id_in(ns : String, id : String) -> Unit {
 
 ///|
 pub fn lock_image(image : GalleryImage) -> Unit {
-  @storage.persistent_delete(gallery_image_unlock_key(image.id))
+  image.id |> gallery_image_unlock_key |> @storage.persistent_delete
 }
 
 ///|

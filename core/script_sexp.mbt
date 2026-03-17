@@ -394,27 +394,28 @@ fn[T] std_set_text(
 
 ///|
 fn[T] register_default_functions(parser : SexpScriptParser[T]) -> Unit {
-  parser.register_function("=", std_eq)
-  parser.register_function("!=", std_neq)
-  parser.register_function("not", std_not)
-  parser.register_function("and", std_and)
-  parser.register_function("or", std_or)
-  parser.register_function(">", std_gt)
-  parser.register_function(">=", std_gte)
-  parser.register_function("<", std_lt)
-  parser.register_function("<=", std_lte)
-  parser.register_function("+", std_add)
-  parser.register_function("-", std_sub)
-  parser.register_function("*", std_mul)
-  parser.register_function("/", std_div)
-  parser.register_function("%", std_mod)
-  parser.register_function("concat", std_concat)
-  parser.register_function("int-var", std_int_var)
-  parser.register_function("flag", std_flag)
-  parser.register_function("text-var", std_text_var)
-  parser.register_function("set-int", std_set_int)
-  parser.register_function("set-flag", std_set_flag)
-  parser.register_function("set-text", std_set_text)
+  parser
+  ..register_function("=", std_eq)
+  ..register_function("!=", std_neq)
+  ..register_function("not", std_not)
+  ..register_function("and", std_and)
+  ..register_function("or", std_or)
+  ..register_function(">", std_gt)
+  ..register_function(">=", std_gte)
+  ..register_function("<", std_lt)
+  ..register_function("<=", std_lte)
+  ..register_function("+", std_add)
+  ..register_function("-", std_sub)
+  ..register_function("*", std_mul)
+  ..register_function("/", std_div)
+  ..register_function("%", std_mod)
+  ..register_function("concat", std_concat)
+  ..register_function("int-var", std_int_var)
+  ..register_function("flag", std_flag)
+  ..register_function("text-var", std_text_var)
+  ..register_function("set-int", std_set_int)
+  ..register_function("set-flag", std_set_flag)
+  .register_function("set-text", std_set_text)
 }
 
 ///|
@@ -563,7 +564,7 @@ fn parse_render_kind_option(
   parts : ArrayView[@sexp.Sexp],
   start : Int,
 ) -> RenderableKind {
-  let mut kind = @assets.Pixi
+  let mut kind : RenderableKind = Pixi
   let mut i = start
   while i + 1 < parts.length() {
     match parts[i] {
@@ -749,7 +750,7 @@ fn parse_anim_spec(
     let mut option_start = value_start + 1
     if parts.length() > value_start + 1 &&
       !is_keyword_token(parts[value_start + 1]) {
-      from = Some(parse_position(parts[value_start]))
+      from = parts[value_start] |> parse_position |> Some
       to_index = value_start + 1
       option_start = value_start + 2
     }
@@ -801,10 +802,7 @@ fn parse_group_animation_step(item : @sexp.Sexp) -> GroupStep? {
       let parts = [prop, duration, ..rest]
       let p = sexp_as_string(prop).unwrap_or("").to_lower()
       let dur = sexp_as_int(duration).unwrap_or(0)
-      match parse_anim_spec(p, dur, parts, 2) {
-        Some(spec) => Some(GroupStep::Animate(spec))
-        None => None
-      }
+      parse_anim_spec(p, dur, parts, 2).map(spec => GroupStep::Animate(spec))
     }
     _ => None
   }
@@ -871,10 +869,7 @@ fn parse_mixed_group_effect_step(item : @sexp.Sexp) -> GroupStep? {
         return None
       }
       let id = sexp_as_string(effect_id).unwrap_or("")
-      match parse_effect_spec(id, rest) {
-        Some(spec) => Some(GroupStep::Effect(spec))
-        None => None
-      }
+      parse_effect_spec(id, rest).map(spec => GroupStep::Effect(spec))
     }
     _ => None
   }
@@ -899,7 +894,7 @@ fn parse_show_figure_options(
 ) -> (Int, ScalarState, Bool, RenderableKind) {
   let mut layer = 0
   let mut interactive = false
-  let mut kind = @assets.Pixi
+  let mut kind : RenderableKind = Pixi
   let mut scalars = ScalarState::default()
   let mut i = 0
   while i + 1 < rest.length() {
@@ -996,7 +991,14 @@ fn parse_choice_options(items : ArrayView[@sexp.Sexp]) -> Array[ChoiceOption] {
         }
         if txt != "" && tgt != "" {
           out.push(
-            option(txt, label(name=tgt), id=if id == "" { txt } else { id }),
+            option(
+              txt,
+              label(name=tgt),
+              id=match id {
+                "" => txt
+                _ => id
+              },
+            ),
           )
         }
       }
@@ -1082,7 +1084,7 @@ fn[T] lower_group_command(
     [target, .. step_items] => {
       let t = sexp_as_string(target).unwrap_or("")
       if t != "" {
-        let mut kind = @assets.Pixi
+        let mut kind : RenderableKind = Pixi
         let steps : Array[GroupStep] = []
         for item in step_items {
           if !(item is @sexp.Symbol(k) && k == @sexp.Symbol::new(":kind")) {

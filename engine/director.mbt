@@ -383,10 +383,7 @@ pub fn[T] Director::submit_custom_event(
 
 ///|
 pub fn[T] Director::background(self : Director[T]) -> String? {
-  match self.render.background {
-    Some(state) => Some(state.id)
-    None => None
-  }
+  self.render.background.map(state => state.id)
 }
 
 ///|
@@ -455,10 +452,9 @@ pub fn[T] Director::dom_animations(
 
 ///|
 pub fn[T] Director::ui_snapshot(self : Director[T]) -> UiSnapshot {
-  let dialog = match self.ui.dialog {
-    Some(line) => Some((line.speaker, line.text, line.typewriter, line.append))
-    None => None
-  }
+  let dialog = self.ui.dialog.map(line => {
+    (line.speaker, line.text, line.typewriter, line.append)
+  })
   {
     dialog,
     dialog_seq: self.ui.dialog_seq,

@@ -352,10 +352,10 @@ pub fn GalleryMenu::take_action(self : GalleryMenu) -> GalleryAction {
   match action {
     Open(id) => {
       let tiles = self.gallery_tile_views()
-      match find_tile(tiles, id) {
-        Some(tile) =>
-          self.active_id = if tile.unlocked { Some(id) } else { None }
-        None => self.active_id = None
+      if find_tile(tiles, id) is Some(tile) {
+        self.active_id = if tile.unlocked { Some(id) } else { None }
+      } else {
+        self.active_id = None
       }
       action
     }

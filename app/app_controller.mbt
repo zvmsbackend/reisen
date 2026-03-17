@@ -141,11 +141,12 @@ pub fn[T] AppController::new(
   } else {
     default_locale
   }
-  let ui_click_sfx_id = if ui_click_sfx_url == "" {
-    None
-  } else {
-    assets.put_audio_url(ui_click_sfx_url, ui_click_sfx_url)
-    Some(ui_click_sfx_url)
+  let ui_click_sfx_id = match ui_click_sfx_url {
+    "" => None
+    _ => {
+      assets.put_audio_url(ui_click_sfx_url, ui_click_sfx_url)
+      Some(ui_click_sfx_url)
+    }
   }
   let app : AppController[T] = {
     script_factory,
@@ -221,16 +222,13 @@ pub fn[T] AppController::new(
     gallery_replay_state_factories,
     assets,
   }
-  match settings_read_in(save_namespace) {
-    Some(settings) => {
-      AudioDom::set_bgm_gain(settings.bgm_volume)
-      AudioDom::set_sfx_gain(settings.sfx_volume)
-    }
-    None => {
-      let defaults = GameSettings::default()
-      AudioDom::set_bgm_gain(defaults.bgm_volume)
-      AudioDom::set_sfx_gain(defaults.sfx_volume)
-    }
+  if settings_read_in(save_namespace) is Some(settings) {
+    AudioDom::set_bgm_gain(settings.bgm_volume)
+    AudioDom::set_sfx_gain(settings.sfx_volume)
+  } else {
+    let defaults = GameSettings::default()
+    AudioDom::set_bgm_gain(defaults.bgm_volume)
+    AudioDom::set_sfx_gain(defaults.sfx_volume)
   }
   app.settings_menu.set_languages(languages)
   app.settings_menu.set_locale(selected_locale)
@@ -411,10 +409,9 @@ fn[T] AppController::sync_ui_strings(self : AppController[T]) -> Unit {
 
 ///|
 fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
-  let effective_locale = if self.locale != "" {
-    self.locale
-  } else {
-    self.default_locale
+  let effective_locale = match self.locale {
+    "" => self.default_locale
+    _ => self.locale
   }
   self.gallery_menu.set_script_localization(
     self.script_locale_json,
@@ -424,28 +421,25 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
     self.script_locale_json,
     self.script_default_locale_json,
   )
-  match self.runner {
-    Some(runner) => {
-      runner.set_ui_click_sfx(self.ui_click_sfx_id)
-      runner.set_ui_strings(self.ui_strings)
-      runner.set_script_localization(
-        self.script_locale_json,
-        self.script_default_locale_json,
-        self.vocal_locale_dir,
-        effective_locale,
-        self.default_locale,
-      )
-    }
-    None => ()
+  if self.runner is Some(runner) {
+    runner
+    ..set_ui_click_sfx(self.ui_click_sfx_id)
+    ..set_ui_strings(self.ui_strings)
+    .set_script_localization(
+      self.script_locale_json,
+      self.script_default_locale_json,
+      self.vocal_locale_dir,
+      effective_locale,
+      self.default_locale,
+    )
   }
 }
 
 ///|
 fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
-  let effective_locale = if self.locale != "" {
-    self.locale
-  } else {
-    self.default_locale
+  let effective_locale = match self.locale {
+    "" => self.default_locale
+    _ => self.locale
   }
   self.ui_strings = match self.ui_locales_json {
     Some(locales_json) if effective_locale != "" && self.default_locale != "" =>
@@ -497,54 +491,51 @@ async fn[T] AppController::ensure_script_locales_loaded(
   if self.script_locale_dir == "" {
     return false
   }
-  let selected_code = if self.locale != "" {
-    self.locale
-  } else {
-    self.default_locale
+  let selected_code = match self.locale {
+    "" => self.default_locale
+    _ => self.locale
   }
   let default_code = self.default_locale
-  let selected_path = if selected_code == "" {
-    ""
-  } else {
-    "\{self.script_locale_dir}/\{selected_code}.json"
+  let selected_path = match selected_code {
+    "" => ""
+    _ => "\{self.script_locale_dir}/\{selected_code}.json"
   }
-  let default_path = if default_code == "" {
-    ""
-  } else {
-    "\{self.script_locale_dir}/\{default_code}.json"
+  let default_path = match default_code {
+    "" => ""
+    _ => "\{self.script_locale_dir}/\{default_code}.json"
   }
-  self.script_locale_json = if selected_path == "" {
-    None
-  } else {
-    let raw = load_text(selected_path) catch {
-      error => {
-        log_app_warn(
-          "failed to load script locale '\{selected_path}': \{error.message()}",
-        )
-        ""
+  self.script_locale_json = match selected_path {
+    "" => None
+    _ => {
+      let raw = load_text(selected_path) catch {
+        error => {
+          log_app_warn(
+            "failed to load script locale '\{selected_path}': \{error.message()}",
+          )
+          ""
+        }
+      }
+      match raw {
+        "" => None
+        _ => Some(raw)
       }
     }
-    if raw == "" {
-      None
-    } else {
-      Some(raw)
-    }
   }
-  self.script_default_locale_json = if default_path == "" {
-    None
-  } else {
-    let raw = load_text(default_path) catch {
-      error => {
-        log_app_warn(
-          "failed to load default script locale '\{default_path}': \{error.message()}",
-        )
-        ""
+  self.script_default_locale_json = match default_path {
+    "" => None
+    _ => {
+      let raw = load_text(default_path) catch {
+        error => {
+          log_app_warn(
+            "failed to load default script locale '\{default_path}': \{error.message()}",
+          )
+          ""
+        }
       }
-    }
-    if raw == "" {
-      None
-    } else {
-      Some(raw)
+      match raw {
+        "" => None
+        _ => Some(raw)
+      }
     }
   }
   self.sync_runner_localization()
@@ -783,10 +774,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
         self.gallery_menu.render()
         self.phase = AppPhase::Gallery
       }
-    Credits => {
-      self.emit_ui_click_sfx()
-      self.enter_credits(AppPhase::StartMenu)
-    }
+    Credits => self..emit_ui_click_sfx().enter_credits(AppPhase::StartMenu)
   }
 }
 
@@ -794,8 +782,9 @@ async fn[T : FromJson] AppController::handle_menu_action(
 fn[T : ToJson] AppController::save_autosave_if_enabled(
   self : AppController[T],
 ) -> Unit {
-  if self.autosave_slot == "" {
-    return
+  match self.autosave_slot {
+    "" => return
+    _ => ()
   }
   match self.runner {
     Some(runner) => {
@@ -916,9 +905,8 @@ async fn[T : ToJson] AppController::tick_in_game(
   match self.runner {
     Some(runner) =>
       if runner.tick(elapsed_ms~) {
-        match runner.take_pending_action() {
-          Some(action) => self.handle_in_game_pending_action(runner, action)
-          None => ()
+        if runner.take_pending_action() is Some(action) {
+          self.handle_in_game_pending_action(runner, action)
         }
         true
       } else {
@@ -1027,12 +1015,8 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
     StartMenu => {
       self.emit_ui_click_sfx()
       self.save_autosave_if_enabled()
-      match self.runner {
-        Some(runner) => {
-          runner.apply_runtime_event(SfxStopped)
-          runner.clear_presentation()
-        }
-        None => ()
+      if self.runner is Some(runner) {
+        runner..apply_runtime_event(SfxStopped).clear_presentation()
       }
       (self.event_hook)(MusicStopped)
       (self.event_hook)(SfxStopped)
@@ -1042,10 +1026,7 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
       self.runner = None
       self.enter_start_menu()
     }
-    Credits => {
-      self.emit_ui_click_sfx()
-      self.enter_credits(AppPhase::Settings)
-    }
+    Credits => self..emit_ui_click_sfx().enter_credits(AppPhase::Settings)
     Log => {
       self.emit_ui_click_sfx()
       self.settings_menu.clear()
@@ -1059,16 +1040,14 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
     }
     SaveSlot(slot) => {
       self.emit_ui_click_sfx()
-      match self.runner {
-        Some(runner) =>
-          save_runner_to_slot_with_meta(
-            runner,
-            slot,
-            preview=dialog_preview(runner),
-            save_namespace=self.save_ns,
-            save_store=self.save_store,
-          )
-        None => ()
+      if self.runner is Some(runner) {
+        save_runner_to_slot_with_meta(
+          runner,
+          slot,
+          preview=dialog_preview(runner),
+          save_namespace=self.save_ns,
+          save_store=self.save_store,
+        )
       }
       self.settings_menu.render()
     }
@@ -1116,10 +1095,7 @@ async fn[T] AppController::tick_gallery(
       self.emit_ui_click_sfx()
       self.gallery_menu.render()
     }
-    Replay(label) => {
-      self.emit_ui_click_sfx()
-      self.start_gallery_replay(label)
-    }
+    Replay(label) => self..emit_ui_click_sfx().start_gallery_replay(label)
     NoAction => ()
   }
   true
@@ -1168,7 +1144,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
   let ui_locale_changed = self.ensure_ui_locales_loaded()
   let script_locale_changed = self.ensure_script_locales_loaded()
   if ui_locale_changed || script_locale_changed {
-    if self.phase == AppPhase::InGame {
+    if self.phase is AppPhase::InGame {
       match self.runner {
         Some(runner) => runner.sync_ui()
         None => ()

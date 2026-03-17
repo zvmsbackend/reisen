@@ -396,9 +396,8 @@ fn[T] GameRunner::apply_event_effects(
     EffectApplied(_, spec) => {
       self.ui_dirty = true
       self.render_sync_dirty = true
-      match spec.duration_ms {
-        Some(duration) => self.bump_animation_timer(duration)
-        None => ()
+      if spec.duration_ms is Some(duration) {
+        self.bump_animation_timer(duration)
       }
       if spec.blocking {
         match spec.duration_ms {
@@ -496,33 +495,32 @@ async fn[T] GameRunner::step_handle_video_and_wait(
 
 ///|
 fn[T] GameRunner::step_handle_ui_action(self : GameRunner[T]) -> RuntimeEvent? {
-  match self.ui.take_action() {
-    Some(action) => {
-      self.emit_ui_click_sfx()
-      match action {
-        "auto" => self.ui.toggle_auto_mode()
-        "skip" => self.ui.toggle_skip_mode()
-        "dialog" => {
-          if self.director.text_box_visible() {
-            self.director.apply_event(TextBoxHidden)
-          } else {
-            self.director.apply_event(TextBoxShown)
-          }
-          self.ui_dirty = true
-          self.ui.mark_dirty_text_and_speaker()
+  self.ui
+  .take_action()
+  .bind(action => {
+    self.emit_ui_click_sfx()
+    match action {
+      "auto" => self.ui.toggle_auto_mode()
+      "skip" => self.ui.toggle_skip_mode()
+      "dialog" => {
+        if self.director.text_box_visible() {
+          self.director.apply_event(TextBoxHidden)
+        } else {
+          self.director.apply_event(TextBoxShown)
         }
-        "log" => self.pending_action = Some("log")
-        "skip_hold_on" => self.ui.set_skip_hold(true)
-        "skip_hold_off" => self.ui.set_skip_hold(false)
-        "settings" | "qsave" | "save" => self.pending_action = Some(action)
-        _ => ()
+        self.ui_dirty = true
+        self.ui.mark_dirty_text_and_speaker()
       }
-      self.ui.mark_dirty_action_buttons()
-      self.render_ui()
-      Some(Noop)
+      "log" => self.pending_action = Some("log")
+      "skip_hold_on" => self.ui.set_skip_hold(true)
+      "skip_hold_off" => self.ui.set_skip_hold(false)
+      "settings" | "qsave" | "save" => self.pending_action = Some(action)
+      _ => ()
     }
-    None => None
-  }
+    self.ui.mark_dirty_action_buttons()
+    self.render_ui()
+    Some(Noop)
+  })
 }
 
 ///|
@@ -532,8 +530,7 @@ async fn[T] GameRunner::step_handle_blocking_or_wait(
 ) -> RuntimeEvent? raise ScriptRuntimeError {
   if self.is_blocking_active() {
     if self.ui.check_typewriter_click() {
-      self.emit_ui_click_sfx()
-      self.clear_blocking()
+      self..emit_ui_click_sfx().clear_blocking()
     } else {
       self.maybe_render_ui()
       return Some(Noop)
@@ -607,24 +604,21 @@ async fn[T] GameRunner::step_handle_intro_or_empty_dialog(
   self : GameRunner[T],
   elapsed_ms : Int,
 ) -> RuntimeEvent? raise ScriptRuntimeError {
-  match self.director.intro_text() {
-    Some(text) => {
-      let mut intro_done = self.ui.check_intro_done()
-      if self.ui.check_typewriter_click() && !intro_done {
-        self.emit_ui_click_sfx()
-        intro_done = self.ui.reveal_intro_line() || intro_done
-      }
-      if intro_done {
-        self.director.clear_intro_text()
-        let event = self.director.step(elapsed_ms=0)
-        self.emit_runtime_event(event)
-        self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
-        return Some(event)
-      }
-      self.maybe_render_ui()
-      return Some(IntroShown(text))
+  if self.director.intro_text() is Some(text) {
+    let mut intro_done = self.ui.check_intro_done()
+    if self.ui.check_typewriter_click() && !intro_done {
+      self.emit_ui_click_sfx()
+      intro_done = self.ui.reveal_intro_line() || intro_done
     }
-    None => ()
+    if intro_done {
+      self.director.clear_intro_text()
+      let event = self.director.step(elapsed_ms=0)
+      self.emit_runtime_event(event)
+      self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
+      return Some(event)
+    }
+    self.maybe_render_ui()
+    return Some(IntroShown(text))
   }
   if self.director.dialog() is None {
     let event = self.director.step(elapsed_ms~)
@@ -718,25 +712,20 @@ pub async fn[T] GameRunner::step(
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
   self.advance_frame_state(elapsed_ms)
-  match self.step_handle_video_and_wait(elapsed_ms) {
-    Some(event) => return event
-    None => ()
+  if self.step_handle_video_and_wait(elapsed_ms) is Some(event) {
+    return event
   }
-  match self.step_handle_ui_action() {
-    Some(event) => return event
-    None => ()
+  if self.step_handle_ui_action() is Some(event) {
+    return event
   }
-  match self.step_handle_blocking_or_wait(elapsed_ms) {
-    Some(event) => return event
-    None => ()
+  if self.step_handle_blocking_or_wait(elapsed_ms) is Some(event) {
+    return event
   }
-  match self.step_handle_choices_and_input() {
-    Some(event) => return event
-    None => ()
+  if self.step_handle_choices_and_input() is Some(event) {
+    return event
   }
-  match self.step_handle_intro_or_empty_dialog(elapsed_ms) {
-    Some(event) => return event
-    None => ()
+  if self.step_handle_intro_or_empty_dialog(elapsed_ms) is Some(event) {
+    return event
   }
   self.step_handle_dialog_flow(elapsed_ms)
 }

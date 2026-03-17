@@ -135,27 +135,23 @@ fn PixiPresenter::reset_render_state(self : PixiPresenter) -> Unit {
   self.blur_filters.clear()
   self.color_filters.clear()
   self.live2d_base_sizes.clear()
-  match self.background_sprite {
-    Some(sprite) => sprite.set_visible(false)
-    None => ()
+  if self.background_sprite is Some(sprite) {
+    sprite.set_visible(false)
   }
-  match self.background_cover_sprite {
-    Some(sprite) => sprite.set_visible(false)
-    None => ()
+  if self.background_cover_sprite is Some(sprite) {
+    sprite.set_visible(false)
   }
   let ids = self.figure_sprites.keys().collect()
   for id in ids {
-    match self.figure_sprites.get(id) {
-      Some(sprite) => self.stage.remove_sprite(sprite)
-      None => ()
+    if self.figure_sprites.get(id) is Some(sprite) {
+      self.stage.remove_sprite(sprite)
     }
     self.figure_sprites.remove(id)
   }
   let live2d_ids = self.figure_live2d.keys().collect()
   for id in live2d_ids {
-    match self.figure_live2d.get(id) {
-      Some(model) => self.stage.remove_live2d(model)
-      None => ()
+    if self.figure_live2d.get(id) is Some(model) {
+      self.stage.remove_live2d(model)
     }
     self.figure_live2d.remove(id)
   }
@@ -178,13 +174,12 @@ fn PixiPresenter::remove_target_animation_state(
   self.color_r_anims.remove(id)
   self.color_g_anims.remove(id)
   self.color_b_anims.remove(id)
-  let prefix = id + "::"
-  let keys : Array[String] = []
-  for key in self.effect_start_ms.keys() {
-    if key.has_prefix(prefix) {
-      keys.push(key)
-    }
-  }
+  let prefix = "\{id}::"
+  let keys = self.effect_start_ms
+    .keys()
+    .iter()
+    .filter(key => key.has_prefix(prefix))
+    .collect()
   for key in keys {
     self.effect_start_ms.remove(key)
     self.effect_signatures.remove(key)
@@ -276,9 +271,8 @@ async fn[T] PixiPresenter::pull_new_live2d_actions(
   for ;; {
     match motions.pop_front() {
       Some((target, group, index)) =>
-        match self.figure_live2d.get(target) {
-          Some(model) => model.motion(group, index?) |> ignore
-          None => ()
+        if self.figure_live2d.get(target) is Some(model) {
+          model.motion(group, index?) |> ignore
         }
       None => break
     }
@@ -288,9 +282,8 @@ async fn[T] PixiPresenter::pull_new_live2d_actions(
   for ;; {
     match expressions.pop_front() {
       Some((target, id)) =>
-        match self.figure_live2d.get(target) {
-          Some(model) => model.set_expression(@js.Optional::from_option(id))
-          None => ()
+        if self.figure_live2d.get(target) is Some(model) {
+          model.set_expression(@js.Optional::from_option(id))
         }
       None => break
     }
@@ -334,7 +327,7 @@ fn PixiPresenter::update_scalar_state(
           }
         }
       }
-      None => set_acc(get_value(next_state))
+      None => next_state |> get_value |> set_acc
     }
   }
   apply_scalar_anim_to_state(
@@ -412,12 +405,13 @@ fn apply_sprite_transform(
   visible : Bool,
   z_index : Int,
 ) -> Unit {
-  sprite.set_size(w, h)
-  sprite.set_position(x + w / 2.0, y + h / 2.0)
-  sprite.set_rotation(rotation)
-  sprite.set_alpha(opacity)
-  sprite.set_visible(visible)
-  sprite.set_z_index(z_index)
+  sprite
+  ..set_size(w, h)
+  ..set_position(x + w / 2.0, y + h / 2.0)
+  ..set_rotation(rotation)
+  ..set_alpha(opacity)
+  ..set_visible(visible)
+  .set_z_index(z_index)
 }
 
 ///|
@@ -432,12 +426,13 @@ fn apply_live2d_transform(
   visible : Bool,
   z_index : Int,
 ) -> Unit {
-  model.set_position(x + w / 2.0, y + h / 2.0)
-  model.set_size(w, h)
-  model.set_rotation(rotation)
-  model.set_alpha(opacity)
-  model.set_visible(visible)
-  model.set_z_index(z_index)
+  model
+  ..set_position(x + w / 2.0, y + h / 2.0)
+  ..set_size(w, h)
+  ..set_rotation(rotation)
+  ..set_alpha(opacity)
+  ..set_visible(visible)
+  .set_z_index(z_index)
 }
 
 ///|
@@ -573,9 +568,10 @@ fn[T] PixiPresenter::sync_background(
   match director.background_state() {
     Some(bg_state) => {
       let id = bg_state.id
-      match self.last_background_id {
-        Some(prev) => if prev != id { self.remove_target_animation_state(prev) }
-        None => ()
+      if self.last_background_id is Some(prev) {
+        if prev != id {
+          self.remove_target_animation_state(prev)
+        }
       }
       self.last_background_id = Some(id)
       match self.texture_for(id) {
@@ -631,58 +627,49 @@ fn[T] PixiPresenter::sync_background(
             w = sw
             h = sh
           }
-          match self.position_anims.get(id) {
-            Some(anim) => {
-              let (ax, ay, done) = apply_position_animation(
-                x,
-                y,
-                self.config.position_entry_offset_ratio,
-                viewport_h,
-                viewport_w,
-                w,
-                h,
-                self.timeline_ms,
-                anim,
-              )
-              x = ax
-              y = ay
-              if done {
-                self.position_anims.remove(id)
-              }
+          if self.position_anims.get(id) is Some(anim) {
+            let (ax, ay, done) = apply_position_animation(
+              x,
+              y,
+              self.config.position_entry_offset_ratio,
+              viewport_h,
+              viewport_w,
+              w,
+              h,
+              self.timeline_ms,
+              anim,
+            )
+            x = ax
+            y = ay
+            if done {
+              self.position_anims.remove(id)
             }
-            None => ()
           }
-          match self.scale_anims.get(id) {
-            Some(anim) => {
-              let (sx, sy, sw, sh, done) = apply_scale_animation(
-                base_x,
-                base_y,
-                base_w,
-                base_h,
-                bg_state.scalars.scale,
-                self.config.scale_entry_from,
-                self.timeline_ms,
-                anim,
-              )
-              x = sx
-              y = sy
-              w = sw
-              h = sh
-              if done {
-                self.scale_anims.remove(id)
-                match anim.to {
-                  Some(value) => {
-                    next_bg_state = {
-                      id: next_bg_state.id,
-                      scalars: { ..next_bg_state.scalars, scale: value },
-                    }
-                    update_bg_state = true
-                  }
-                  None => ()
+          if self.scale_anims.get(id) is Some(anim) {
+            let (sx, sy, sw, sh, done) = apply_scale_animation(
+              base_x,
+              base_y,
+              base_w,
+              base_h,
+              bg_state.scalars.scale,
+              self.config.scale_entry_from,
+              self.timeline_ms,
+              anim,
+            )
+            x = sx
+            y = sy
+            w = sw
+            h = sh
+            if done {
+              self.scale_anims.remove(id)
+              if anim.to is Some(value) {
+                next_bg_state = {
+                  id: next_bg_state.id,
+                  scalars: { ..next_bg_state.scalars, scale: value },
                 }
+                update_bg_state = true
               }
             }
-            None => ()
           }
           let (changed, next_scalars, scalar_acc) = self.update_scalar_state(
             next_bg_state.scalars,
@@ -716,7 +703,7 @@ fn[T] PixiPresenter::sync_background(
             cover_sprite.set_visible(false)
           } else {
             self.apply_scalar_visuals_sprite(
-              id + "#cover",
+              "\{id}#cover",
               cover_sprite,
               scalar_acc,
               extra_blur=2.0,
@@ -768,9 +755,8 @@ fn[T] PixiPresenter::sync_background(
         }
         None => {
           self.last_background_id = None
-          match self.background_cover_sprite {
-            Some(sprite) => sprite.set_visible(false)
-            None => ()
+          if self.background_cover_sprite is Some(sprite) {
+            sprite.set_visible(false)
           }
           match self.background_sprite {
             Some(sprite) => sprite.set_visible(false)
@@ -781,9 +767,8 @@ fn[T] PixiPresenter::sync_background(
     }
     None => {
       self.last_background_id = None
-      match self.background_cover_sprite {
-        Some(sprite) => sprite.set_visible(false)
-        None => ()
+      if self.background_cover_sprite is Some(sprite) {
+        sprite.set_visible(false)
       }
       match self.background_sprite {
         Some(sprite) => sprite.set_visible(false)
@@ -802,25 +787,22 @@ fn[T] PixiPresenter::sync_figures(
   active_effects : Set[String],
 ) -> Unit {
   let figures = director.figures()
-  let stale_ids : Array[String] = []
-  for id in self.figure_sprites.keys() {
-    if !figures.contains(id) {
-      stale_ids.push(id)
-    }
-  }
+  let stale_ids = self.figure_sprites
+    .keys()
+    .iter()
+    .filter(id => !figures.contains(id))
+    .collect()
   for id in self.figure_live2d.keys() {
     if !figures.contains(id) {
       stale_ids.push(id)
     }
   }
   for id in stale_ids {
-    match self.figure_sprites.get(id) {
-      Some(sprite) => self.stage.remove_sprite(sprite)
-      None => ()
+    if self.figure_sprites.get(id) is Some(sprite) {
+      self.stage.remove_sprite(sprite)
     }
-    match self.figure_live2d.get(id) {
-      Some(model) => self.stage.remove_live2d(model)
-      None => ()
+    if self.figure_live2d.get(id) is Some(model) {
+      self.stage.remove_live2d(model)
     }
     self.figure_sprites.remove(id)
     self.figure_live2d.remove(id)
@@ -838,9 +820,8 @@ fn[T] PixiPresenter::sync_figures(
     match self.store.get_live2d_model(id) {
       Some(model_asset) => {
         let model_asset = model_asset
-        match self.figure_sprites.get(id) {
-          Some(sprite) => self.stage.remove_sprite(sprite)
-          None => ()
+        if self.figure_sprites.get(id) is Some(sprite) {
+          self.stage.remove_sprite(sprite)
         }
         self.figure_sprites.remove(id)
 
@@ -919,9 +900,8 @@ fn[T] PixiPresenter::sync_figures(
       None =>
         match self.texture_for(id) {
           Some(texture) => {
-            match self.figure_live2d.get(id) {
-              Some(model) => self.stage.remove_live2d(model)
-              None => ()
+            if self.figure_live2d.get(id) is Some(model) {
+              self.stage.remove_live2d(model)
             }
             self.figure_live2d.remove(id)
             self.live2d_base_sizes.remove(id)
@@ -993,9 +973,8 @@ fn[T] PixiPresenter::sync_figures(
             }
           }
           None => {
-            match self.figure_sprites.get(id) {
-              Some(sprite) => sprite.set_visible(false)
-              None => ()
+            if self.figure_sprites.get(id) is Some(sprite) {
+              sprite.set_visible(false)
             }
             match self.figure_live2d.get(id) {
               Some(model) => model.set_visible(false)
@@ -1030,13 +1009,13 @@ async fn[T] PixiPresenter::sync_noraise(
 ) -> Unit noraise {
   self.skip_mode = skip_mode
   let epoch = director.render_epoch()
-  match self.render_epoch {
-    Some(prev) =>
-      if prev != epoch {
-        self.reset_render_state()
-        self.render_epoch = Some(epoch)
-      }
-    None => self.render_epoch = Some(epoch)
+  if self.render_epoch is Some(prev) {
+    if prev != epoch {
+      self.reset_render_state()
+      self.render_epoch = Some(epoch)
+    }
+  } else {
+    self.render_epoch = Some(epoch)
   }
 
   self.update_timeline()

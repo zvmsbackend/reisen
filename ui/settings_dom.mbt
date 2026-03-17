@@ -670,7 +670,11 @@ pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
         if idx < filtered.length() {
           let entry = filtered[idx]
           let title = match entry.meta {
-            Some(meta) => if meta.title == "" { entry.slot } else { meta.title }
+            Some(meta) =>
+              match meta.title {
+                "" => entry.slot
+                _ => meta.title
+              }
             None => entry.slot
           }
           let preview = match entry.meta {
@@ -795,7 +799,7 @@ fn SettingsMenu::persist_settings(self : SettingsMenu) -> Unit {
   match settings_dom_read(self.root_id).to_option() {
     Some(raw) =>
       try {
-        let settings : GameSettings = @json.from_json(@json.parse(raw))
+        let settings : GameSettings = raw |> @json.parse |> @json.from_json
         AudioDom::set_bgm_gain(settings.bgm_volume)
         AudioDom::set_sfx_gain(settings.sfx_volume)
         settings_write_in(self.save_ns, settings)
@@ -939,11 +943,12 @@ pub fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
         .to_option()
         .unwrap_or("")
       settings_action_clear(self.root_id)
-      if code == "" {
-        SettingsAction::NoAction
-      } else {
-        self.locale = code
-        SettingsAction::LanguageChanged(code)
+      match code {
+        "" => SettingsAction::NoAction
+        _ => {
+          self.locale = code
+          SettingsAction::LanguageChanged(code)
+        }
       }
     }
     Some("defaults") => {

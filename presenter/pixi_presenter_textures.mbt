@@ -7,23 +7,21 @@ fn PixiPresenter::texture_for(
     Some(texture) => Some(texture)
     None => {
       let maybe_texture = match self.store.get_image(id) {
-        Some(image) => Some(PixiTexture::new(@js.Value::cast_from(image)))
+        Some(image) => image |> @js.Value::cast_from |> PixiTexture::new |> Some
         None =>
-          match self.store.get_video(id) {
-            Some(video) => Some(PixiTexture::new(@js.Value::cast_from(video)))
-            None => None
-          }
+          self.store
+          .get_video(id)
+          .bind(video => {
+            video |> @js.Value::cast_from |> PixiTexture::new |> Some
+          })
       }
-      match maybe_texture {
-        Some(texture) => {
-          let w = texture.width()
-          let h = texture.height()
-          self.textures.set(id, texture)
-          self.texture_sizes.set(id, (w, h))
-          Some(texture)
-        }
-        None => None
-      }
+      maybe_texture.bind(texture => {
+        let w = texture.width()
+        let h = texture.height()
+        self.textures.set(id, texture)
+        self.texture_sizes.set(id, (w, h))
+        Some(texture)
+      })
     }
   }
 }
@@ -33,12 +31,8 @@ fn PixiPresenter::refresh_video_texture_if_any(
   self : PixiPresenter,
   id : String,
 ) -> Unit {
-  match self.store.get_video(id) {
-    Some(_) =>
-      match self.textures.get(id) {
-        Some(texture) => texture.update()
-        None => ()
-      }
-    None => ()
+  guard self.store.get_video(id) is Some(_) else { return }
+  if self.textures.get(id) is Some(texture) {
+    texture.update()
   }
 }

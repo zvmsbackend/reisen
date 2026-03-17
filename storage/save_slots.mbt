@@ -134,10 +134,9 @@ pub fn save_slot_meta(
   preview : String,
   updated_at_ms? : Double = save_slot_now_ms(),
 ) -> SaveSlotMeta {
-  let resolved_title = if title == "" {
-    save_slot_time_label(updated_at_ms)
-  } else {
-    title
+  let resolved_title = match title {
+    "" => save_slot_time_label(updated_at_ms)
+    _ => title
   }
   { title: resolved_title, preview, updated_at_ms }
 }
@@ -145,7 +144,7 @@ pub fn save_slot_meta(
 ///|
 pub fn SaveSlotEntry::new(
   slot : String,
-  meta? : SaveSlotMeta? = None,
+  meta? : SaveSlotMeta,
 ) -> SaveSlotEntry raise StorageValidationError {
   if slot == "" {
     raise StorageValidationError::InvalidSaveSlotName(slot~)

@@ -77,7 +77,7 @@ pub fn[T] ScriptBuilder::unlock_cg(
 
 ///|
 pub fn[T] ScriptBuilder::intro(self : ScriptBuilder[T], text : String) -> Unit {
-  self.instructions.push(Intro(DialogText::new(text)))
+  self.instructions.push(text |> DialogText::new |> Intro)
 }
 
 ///|
@@ -89,7 +89,10 @@ pub fn[T] ScriptBuilder::narrate(
   voice? : String = "",
   proceed_on_done? : Bool = false,
 ) -> Unit {
-  let voice_url = if voice == "" { None } else { Some(voice) }
+  let voice_url = match voice {
+    "" => None
+    _ => Some(voice)
+  }
   self.instructions.push(
     Say(
       speaker=DialogText::empty(),
@@ -112,7 +115,10 @@ pub fn[T] ScriptBuilder::say(
   voice? : String = "",
   proceed_on_done? : Bool = false,
 ) -> Unit {
-  let voice_url = if voice == "" { None } else { Some(voice) }
+  let voice_url = match voice {
+    "" => None
+    _ => Some(voice)
+  }
   self.instructions.push(
     Say(
       speaker=DialogText::new(speaker),
@@ -135,7 +141,10 @@ pub fn[T] ScriptBuilder::say_many(
   voice? : String = "",
   proceed_on_done? : Bool = false,
 ) -> Unit {
-  let voice_url = if voice == "" { None } else { Some(voice) }
+  let voice_url = match voice {
+    "" => None
+    _ => Some(voice)
+  }
   for text in texts {
     self.instructions.push(
       Say(

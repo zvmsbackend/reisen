@@ -533,15 +533,11 @@ pub fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
       NewGame
     }
     Some("continue") => {
-      let slot = match start_menu_action_slot(self.root_id).to_option() {
-        Some(slot) => slot
-        None => ""
-      }
+      let slot = start_menu_action_slot(self.root_id).to_option().unwrap_or("")
       start_menu_action_clear(self.root_id)
-      if slot == "" {
-        NoAction
-      } else {
-        Continue(slot)
+      match slot {
+        "" => NoAction
+        _ => Continue(slot)
       }
     }
     Some("load") => {

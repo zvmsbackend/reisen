@@ -123,15 +123,13 @@ pub fn UiDom::new(
   {
     root_id,
     ui_strings,
-    script_locale_json: if script_locale_json == "" {
-      None
-    } else {
-      Some(script_locale_json)
+    script_locale_json: match script_locale_json {
+      "" => None
+      _ => Some(script_locale_json)
     },
-    script_default_locale_json: if script_default_locale_json == "" {
-      None
-    } else {
-      Some(script_default_locale_json)
+    script_default_locale_json: match script_default_locale_json {
+      "" => None
+      _ => Some(script_default_locale_json)
     },
     vocal_locale_dir,
     script_locale,

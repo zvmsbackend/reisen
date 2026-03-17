@@ -38,7 +38,7 @@ fn encode_save_slot_payload(
 fn decode_save_slot_payload(
   raw : String,
 ) -> SaveSlotPayload raise AppBootstrapError {
-  let payload : SaveSlotPayload = @json.from_json(@json.parse(raw)) catch {
+  let payload : SaveSlotPayload = (raw |> @json.parse |> @json.from_json) catch {
     _ => raise AppBootstrapError::InvalidSavePayload(raw~)
   }
   if payload.version != save_slot_payload_version {
@@ -127,9 +127,8 @@ pub async fn[T] start_game(
     script_default_locale~,
   )
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
-  match settings {
-    Some(s) => runner.apply_settings(s)
-    None => ()
+  if settings is Some(s) {
+    runner.apply_settings(s)
   }
   runner.sync_ui()
   runner
@@ -164,13 +163,11 @@ pub async fn[T : FromJson] start_game_from_save(
     script_default_locale~,
   )
   let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
-  match settings {
-    Some(s) => runner.apply_settings(s)
-    None => ()
+  if settings is Some(s) {
+    runner.apply_settings(s)
   }
-  match runner.director().take_interrupted_sfx() {
-    Some(id) => event_hook(SfxPlayed(id, false))
-    None => ()
+  if runner.director().take_interrupted_sfx() is Some(id) {
+    event_hook(SfxPlayed(id, false))
   }
   runner.sync_ui()
   runner

@@ -74,8 +74,7 @@ async test "start_game supports optional hooks" {
 ///|
 async test "start_game_from_save resumes script" {
   let script : Script[Int] = script(builder => {
-    builder.say("n", "a")
-    builder.say("n", "b")
+    builder..say("n", "a").say("n", "b")
   })
   let runtime = Runtime::new(script, GameState::new(0))
   assert_eq(
@@ -108,8 +107,7 @@ async test "save_runner_to_slot and start_game_from_slot roundtrip" {
   let store = default_save_slot_storage()
   store.delete_slot("global", "wb_slot_roundtrip")
   let script : Script[Int] = script(builder => {
-    builder.say("n", "a")
-    builder.say("n", "b")
+    builder..say("n", "a").say("n", "b")
   })
 
   let runner = start_game(script, GameState::new(0), "app")
@@ -150,7 +148,7 @@ async test "save slot payload is wrapped with version" {
   assert_true(raw is Some(_))
   match raw {
     Some(s) => {
-      let payload : SaveSlotPayload = @json.from_json(@json.parse(s))
+      let payload : SaveSlotPayload = s |> @json.parse |> @json.from_json
       assert_eq(payload.version, 2)
       assert_true(payload.director_json != "")
       assert_eq(payload.dialog_history, [])
@@ -164,8 +162,7 @@ async test "start_game_from_slot restores dialog history from payload" {
   let store = default_save_slot_storage()
   store.delete_slot("global", "wb_slot_history")
   let script : Script[Int] = script(builder => {
-    builder.say("n", "a")
-    builder.say("n", "b")
+    builder..say("n", "a").say("n", "b")
   })
 
   let runner = start_game(script, GameState::new(0), "app")
@@ -228,8 +225,7 @@ async test "start_game_from_slot respects save namespace" {
   store.delete_slot("game_a", "shared_slot")
   store.delete_slot("game_b", "shared_slot")
   let script : Script[Int] = script(builder => {
-    builder.say("n", "a")
-    builder.say("n", "b")
+    builder..say("n", "a").say("n", "b")
   })
   let runner = start_game(script, GameState::new(0), "app")
   assert_eq(
@@ -294,8 +290,9 @@ async test "start_game_from_save raises when ip is out of bounds in json" {
 ///|
 test "validate_script_image_assets succeeds when all ids exist" {
   let script : Script[Int] = script(builder => {
-    builder.scene(dummy_bg("bg_school"))
-    builder.show_figure_at(dummy_figure("alice"), Left)
+    builder
+    ..scene(dummy_bg("bg_school"))
+    .show_figure_at(dummy_figure("alice"), Left)
   })
   let store = AssetStore::new()
   let dummy : @assets.Image = @js.Value::cast_from(0).cast()
@@ -326,8 +323,9 @@ test "validate_script_image_assets fails on missing image id" {
 ///|
 test "validate_script_audio_assets succeeds when audio ids exist" {
   let script : Script[Int] = script(builder => {
-    builder.play_music(dummy_music("bgm_theme"), true)
-    builder.play_sfx(dummy_sfx("click"))
+    builder
+    ..play_music(dummy_music("bgm_theme"), true)
+    .play_sfx(dummy_sfx("click"))
   })
   let store = AssetStore::new()
   store.put_audio_url("bgm_theme", "bgm://theme")

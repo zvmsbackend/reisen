@@ -65,8 +65,7 @@ async test "app controller stays in menu when loading missing slot" {
 async test "app controller can continue from saved slot" {
   default_save_slot_storage().delete_slot("app_test_ns_continue", "slot1")
   let script : Script[Int] = script(builder => {
-    builder.say("n", "a")
-    builder.say("n", "b")
+    builder..say("n", "a").say("n", "b")
   })
   let runner = start_game(script, GameState::new(0), "app")
   assert_eq(
@@ -95,7 +94,7 @@ async test "app controller can continue from saved slot" {
 
 ///|
 async test "app controller opens gallery when entries exist" {
-  @gallery.register_image(GalleryImage::new("assets/cg_dummy.jpg"))
+  "assets/cg_dummy.jpg" |> GalleryImage::new |> @gallery.register_image
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(
     () => script,
@@ -114,10 +113,11 @@ async test "gallery replay uses app controller state factory by default" {
   let start_label = label(name=gensym(prefix="start_default"))
   let replay_target = label(name=replay_label)
   let script : Script[Int] = script(builder => {
-    builder.label(start_label)
-    builder.say("n", "start")
-    builder.label(replay_target)
-    builder.say("n", "{who}")
+    builder
+    ..label(start_label)
+    ..say("n", "start")
+    ..label(replay_target)
+    .say("n", "{who}")
   })
   let image = GalleryImage::new("assets/cg_default.jpg", replay_label~)
   @gallery.register_image(image)
@@ -157,10 +157,11 @@ async test "gallery replay uses image-specific state factory key" {
   let start_label = label(name=gensym(prefix="start_custom"))
   let replay_target = label(name=replay_label)
   let script : Script[Int] = script(builder => {
-    builder.label(start_label)
-    builder.say("n", "start")
-    builder.label(replay_target)
-    builder.say("n", "{who}")
+    builder
+    ..label(start_label)
+    ..say("n", "start")
+    ..label(replay_target)
+    .say("n", "{who}")
   })
   let replay_state_factories = ReplayStateFactories::new()
   let _custom_factory = replay_state_factories.register(
@@ -213,8 +214,9 @@ async test "gallery replay uses image-specific state factory key" {
 ///|
 async test "app controller submit custom event only works in game" {
   let script : Script[Int] = script(builder => {
-    builder.wait_custom_event("evt", (_, payload) => payload == "ok")
-    builder.say("n", "done")
+    builder
+    ..wait_custom_event("evt", (_, payload) => payload == "ok")
+    .say("n", "done")
   })
   let seen : Array[RuntimeEvent] = []
   let app = AppController::new(
@@ -229,9 +231,10 @@ async test "app controller submit custom event only works in game" {
   app.enter_start_menu()
   app.handle_menu_action(NewGame)
   assert_eq(app.phase(), AppPhase::InGame)
-  match app.runner {
-    Some(runner) => assert_eq(runner.step(), WaitCustomEventStarted("evt"))
-    None => fail("Expected runner")
+  if app.runner is Some(runner) {
+    assert_eq(runner.step(), WaitCustomEventStarted("evt"))
+  } else {
+    fail("Expected runner")
   }
   assert_eq(app.submit_custom_event("evt", "no"), true)
   assert_eq(app.submit_custom_event("evt", "ok"), true)
@@ -258,17 +261,18 @@ async test "app controller custom event jump resumes on next step" {
   let left = label(name="left")
   let right = label(name="right")
   let script : Script[Int] = script(builder => {
-    builder.wait_custom_event_jump("route", (_, payload) => {
+    builder
+    ..wait_custom_event_jump("route", (_, payload) => {
       if payload == "left" {
         left
       } else {
         right
       }
     })
-    builder.label(left)
-    builder.say("n", "L")
-    builder.label(right)
-    builder.say("n", "R")
+    ..label(left)
+    ..say("n", "L")
+    ..label(right)
+    .say("n", "R")
   })
   let app = AppController::new(
     () => script,
@@ -278,9 +282,10 @@ async test "app controller custom event jump resumes on next step" {
   )
   app.enter_start_menu()
   app.handle_menu_action(NewGame)
-  match app.runner {
-    Some(runner) => assert_eq(runner.step(), WaitCustomEventStarted("route"))
-    None => fail("Expected runner")
+  if app.runner is Some(runner) {
+    assert_eq(runner.step(), WaitCustomEventStarted("route"))
+  } else {
+    fail("Expected runner")
   }
 
   assert_eq(app.submit_custom_event("route", "left"), true)

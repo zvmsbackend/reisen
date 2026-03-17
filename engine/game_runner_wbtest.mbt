@@ -24,16 +24,17 @@ async test "runner drives script and choice flow" {
   let right = label()
   let end = label()
   let compiled : Script[Int] = script(builder => {
-    builder.menu("guide", "Pick", [
+    builder
+    ..menu("guide", "Pick", [
       option("Left", left, id="left"),
       option("Right", right, id="right"),
     ])
-    builder.label(left)
-    builder.say("guide", "L")
-    builder.jump(end)
-    builder.label(right)
-    builder.say("guide", "R")
-    builder.label(end)
+    ..label(left)
+    ..say("guide", "L")
+    ..jump(end)
+    ..label(right)
+    ..say("guide", "R")
+    .label(end)
   })
 
   let runtime = Runtime::new(compiled, GameState::new(0))
@@ -90,10 +91,11 @@ async test "runner stays on choice prompt until choice submitted" {
   let a = label()
   let b = label()
   let compiled : Script[Int] = script(builder => {
-    builder.choice([option("A", a), option("B", b)])
-    builder.label(a)
-    builder.say("narrator", "A")
-    builder.label(b)
+    builder
+    ..choice([option("A", a), option("B", b)])
+    ..label(a)
+    ..say("narrator", "A")
+    .label(b)
   })
   let runtime = Runtime::new(compiled, GameState::new(0))
   let runner = GameRunner::new(Director::new(runtime), UiDom::new("app"))
@@ -183,8 +185,7 @@ async test "runner event hook receives emitted events" {
 ///|
 async test "runner click skips wait" {
   let script : Script[Int] = script(builder => {
-    builder.wait(200)
-    builder.say("n", "done")
+    builder..wait(200).say("n", "done")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new(
@@ -209,8 +210,7 @@ async test "runner click skips wait" {
 ///|
 async test "runner click advances wait click" {
   let script : Script[Int] = script(builder => {
-    builder.wait_click()
-    builder.say("n", "done")
+    builder..wait_click().say("n", "done")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new(
@@ -235,8 +235,7 @@ async test "runner click advances wait click" {
 ///|
 async test "auto mode skips skippable wait_click after short delay" {
   let script : Script[Int] = script(builder => {
-    builder.wait_click(can_skip=true)
-    builder.say("n", "done")
+    builder..wait_click(can_skip=true).say("n", "done")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new(
@@ -262,8 +261,7 @@ async test "auto mode skips skippable wait_click after short delay" {
 ///|
 async test "runner click reveals typewriter then advances on next click" {
   let script : Script[Int] = script(builder => {
-    builder.say("n", "hello")
-    builder.say("n", "next")
+    builder..say("n", "hello").say("n", "next")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new(
@@ -315,8 +313,7 @@ async test "runner emits ui click sfx on midgame click advance" {
   let click_sfx = "assets/ui_click.ogg"
   let seen : Array[RuntimeEvent] = []
   let script : Script[Int] = script(builder => {
-    builder.say("n", "hello")
-    builder.say("n", "next")
+    builder..say("n", "hello").say("n", "next")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new_with_hooks(
@@ -432,9 +429,7 @@ async test "runner clear presentation resets render and syncs canvas" {
 ///|
 async test "wait advances with elapsed even when dialog remains" {
   let script : Script[Int] = script(builder => {
-    builder.say("n", "first")
-    builder.wait(100)
-    builder.say("n", "after")
+    builder..say("n", "first")..wait(100).say("n", "after")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new(
@@ -480,9 +475,7 @@ async test "wait advances with elapsed even when dialog remains" {
 ///|
 async test "skip mode ignores waits" {
   let script : Script[Int] = script(builder => {
-    builder.say("n", "first")
-    builder.wait(200)
-    builder.say("n", "after")
+    builder..say("n", "first")..wait(200).say("n", "after")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new(
@@ -529,8 +522,7 @@ async test "skip mode ignores waits" {
 ///|
 async test "intro advances when display completes" {
   let script : Script[Int] = script(builder => {
-    builder.intro("Prelude")
-    builder.say("n", "after")
+    builder..intro("Prelude").say("n", "after")
   })
   let ui = UiDom::new("app")
   let runner = GameRunner::new(
@@ -581,8 +573,7 @@ async test "runner keeps rendering during animations" {
 async test "animation groups run alongside script flow" {
   let script : Script[Int] = script(builder => {
     let group = AnimationGroup::new().animate(anim_opacity(500, 0.5))
-    builder.animate_group(dummy_figure("hero"), group)
-    builder.say("n", "next")
+    builder..animate_group(dummy_figure("hero"), group).say("n", "next")
   })
   let runner = GameRunner::new(
     Director::new(Runtime::new(script, GameState::new(0))),
@@ -607,11 +598,12 @@ async test "runner keeps dialog history without reconstruction" {
   let left = label(name="left")
   let right = label(name="right")
   let script : Script[Int] = script(builder => {
-    builder.choice([option("L", left, id="l"), option("R", right, id="r")])
-    builder.label(left)
-    builder.say("n", "Left")
-    builder.label(right)
-    builder.say("n", "Right")
+    builder
+    ..choice([option("L", left, id="l"), option("R", right, id="r")])
+    ..label(left)
+    ..say("n", "Left")
+    ..label(right)
+    .say("n", "Right")
   })
   let runner = GameRunner::new(
     Director::new(Runtime::new(script, GameState::new(0))),

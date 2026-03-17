@@ -31,12 +31,12 @@ pub impl Default for GameSettings with default() {
 
 ///|
 fn settings_key_in(ns : String) -> String {
-  settings_prefix + ns + ".json"
+  "\{settings_prefix}\{ns}.json"
 }
 
 ///|
 fn persistent_key_in(ns : String, key : String) -> String {
-  persistent_prefix + ns + "." + key
+  "\{persistent_prefix}\{ns}.\{key}"
 }
 
 ///|
@@ -101,7 +101,7 @@ pub fn persistent_delete_in(ns : String, key : String) -> Unit {
 
 ///|
 pub fn persistent_keys_in(ns : String) -> Array[String] {
-  storage_list_slots(persistent_prefix + ns + ".")
+  storage_list_slots("\{persistent_prefix}\{ns}.")
 }
 
 ///|
@@ -111,22 +111,22 @@ pub fn settings_write_in(ns : String, settings : GameSettings) -> Unit {
 
 ///|
 pub fn settings_read_in(ns : String) -> GameSettings? {
-  match storage_get_item(settings_key_in(ns)).to_option() {
-    Some(raw) =>
-      try {
-        let decoded : GameSettings = @json.from_json(@json.parse(raw))
-        Some(
-          GameSettings::new(
-            decoded.text_speed,
-            decoded.bgm_volume,
-            decoded.sfx_volume,
-          ),
-        )
-      } catch {
-        _ => None
-      }
-    None => None
-  }
+  (ns |> settings_key_in |> storage_get_item)
+  .to_option()
+  .bind(raw => {
+    try {
+      let decoded : GameSettings = raw |> @json.parse |> @json.from_json
+      Some(
+        GameSettings::new(
+          decoded.text_speed,
+          decoded.bgm_volume,
+          decoded.sfx_volume,
+        ),
+      )
+    } catch {
+      _ => None
+    }
+  })
 }
 
 ///|

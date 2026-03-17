@@ -159,7 +159,7 @@ pub struct SaveSlotEntry {
   slot : String
   meta : SaveSlotMeta?
 }
-pub fn SaveSlotEntry::new(String, meta? : SaveSlotMeta?) -> Self raise StorageValidationError
+pub fn SaveSlotEntry::new(String, meta? : SaveSlotMeta) -> Self raise StorageValidationError
 pub impl Eq for SaveSlotEntry
 pub impl Show for SaveSlotEntry
 

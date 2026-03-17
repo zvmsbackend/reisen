@@ -110,5 +110,5 @@ pub fn[T : ToJson] GameState::to_json_string(self : GameState[T]) -> String {
 pub fn[T : FromJson] game_state_from_json_string(
   s : String,
 ) -> GameState[T] raise {
-  @json.from_json(@json.parse(s))
+  s |> @json.parse |> @json.from_json
 }

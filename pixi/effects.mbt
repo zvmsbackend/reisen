@@ -66,23 +66,22 @@ pub fn pixi_apply_effect_to_target(
   timeline_ms : Int,
 ) -> Bool {
   let mut skip_base = false
-  match pixi_shared_effect_appliers.get(effect_id) {
-    Some(apply_shared) =>
-      if apply_shared(target, params, timeline_ms) {
-        skip_base = true
-      }
-    None =>
-      match target {
-        Sprite(sprite) =>
-          match pixi_effect_appliers.get(effect_id) {
-            Some(apply) =>
-              if apply(sprite, params, timeline_ms) {
-                skip_base = true
-              }
-            None => ()
-          }
-        Live2d(_) => ()
-      }
+  if pixi_shared_effect_appliers.get(effect_id) is Some(apply_shared) {
+    if apply_shared(target, params, timeline_ms) {
+      skip_base = true
+    }
+  } else {
+    match target {
+      Sprite(sprite) =>
+        match pixi_effect_appliers.get(effect_id) {
+          Some(apply) =>
+            if apply(sprite, params, timeline_ms) {
+              skip_base = true
+            }
+          None => ()
+        }
+      Live2d(_) => ()
+    }
   }
   skip_base
 }
