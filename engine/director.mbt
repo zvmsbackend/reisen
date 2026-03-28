@@ -41,6 +41,33 @@ pub struct RenderState {
 } derive(ToJson, FromJson)
 
 ///|
+pub struct CoreRenderSnapshot {
+  background : BackgroundState?
+  figures : Map[String, FigurePlacement]
+  music : (String, Bool)?
+  last_sfx : String?
+  render_epoch : String
+}
+
+///|
+pub struct RenderExtensionView {
+  render_epoch : String
+  background_state : BackgroundState?
+  figure_entries : Array[(String, FigurePlacement)]
+  effects_by_id : Map[String, Array[EffectSpec]]
+  animations : Array[(String, AnimationSpec)]
+  live2d_motions : Array[(String, String, Int?)]
+  live2d_expressions : Array[(String, String?)]
+  apply_update_impl : (RenderExtensionUpdate) -> Unit
+}
+
+///|
+pub(all) enum RenderExtensionUpdate {
+  SetBackgroundState(BackgroundState)
+  SetFigurePlacement(String, FigurePlacement)
+}
+
+///|
 pub struct DirectorSave[T] {
   runtime : RuntimeSave[T]
   render : RenderState
@@ -468,6 +495,119 @@ pub fn[T] Director::ui_snapshot(self : Director[T]) -> UiSnapshot {
     dom_figures: self.render.dom_figures,
     dom_animations: self.render.dom_animations.to_array(),
   }
+}
+
+///|
+pub fn[T] Director::core_render_snapshot(
+  self : Director[T],
+) -> CoreRenderSnapshot {
+  {
+    background: self.render.background,
+    figures: self.render.figures,
+    music: self.render.music,
+    last_sfx: self.render.last_sfx,
+    render_epoch: self.render.render_epoch,
+  }
+}
+
+///|
+pub fn[T] Director::render_extension_view(
+  self : Director[T],
+) -> RenderExtensionView {
+  let figures = self.render.figures.iter2().to_array()
+  let animations : Array[(String, AnimationSpec)] = []
+  for ;; {
+    match self.render.pixi_animations.pop_front() {
+      Some(entry) => animations.push(entry)
+      None => break
+    }
+  }
+  let live2d_motions : Array[(String, String, Int?)] = []
+  for ;; {
+    match self.render.live2d_motions.pop_front() {
+      Some(entry) => live2d_motions.push(entry)
+      None => break
+    }
+  }
+  let live2d_expressions : Array[(String, String?)] = []
+  for ;; {
+    match self.render.live2d_expressions.pop_front() {
+      Some(entry) => live2d_expressions.push(entry)
+      None => break
+    }
+  }
+  {
+    render_epoch: self.render.render_epoch,
+    background_state: self.render.background,
+    figure_entries: figures,
+    effects_by_id: self.render.effects,
+    animations,
+    live2d_motions,
+    live2d_expressions,
+    apply_update_impl: update => {
+      match update {
+        SetBackgroundState(state) => self.render.background = Some(state)
+        SetFigurePlacement(id, placement) =>
+          self.render.figures.set(id, placement)
+      }
+    },
+  }
+}
+
+///|
+pub fn RenderExtensionView::render_epoch(self : RenderExtensionView) -> String {
+  self.render_epoch
+}
+
+///|
+pub fn RenderExtensionView::background_state(
+  self : RenderExtensionView,
+) -> BackgroundState? {
+  self.background_state
+}
+
+///|
+pub fn RenderExtensionView::apply(
+  self : RenderExtensionView,
+  update : RenderExtensionUpdate,
+) -> Unit {
+  (self.apply_update_impl)(update)
+}
+
+///|
+pub fn RenderExtensionView::figure_entries(
+  self : RenderExtensionView,
+) -> Array[(String, FigurePlacement)] {
+  self.figure_entries
+}
+
+///|
+pub fn RenderExtensionView::effects(
+  self : RenderExtensionView,
+  id : String,
+) -> Array[EffectSpec] {
+  self.effects_by_id.get(id).unwrap_or([])
+}
+
+///|
+pub fn RenderExtensionView::animations(
+  self : RenderExtensionView,
+) -> Array[(String, AnimationSpec)] {
+  self.animations
+}
+
+///|
+pub fn RenderExtensionView::live2d_motions(
+  self : RenderExtensionView,
+) -> Array[(String, String, Int?)] {
+  self.live2d_motions
+}
+
+///|
+pub fn RenderExtensionView::live2d_expressions(
+  self : RenderExtensionView,
+) -> Array[(String, String?)] {
+  self.live2d_expressions
 }
 
 ///|

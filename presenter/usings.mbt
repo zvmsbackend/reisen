@@ -32,4 +32,8 @@ using @pixi {
 }
 
 ///|
-using @engine {type Director, type RenderSyncHook}
+using @engine {
+  type RenderExtensionHook,
+  type RenderExtensionView,
+  type RenderExtensionUpdate,
+}

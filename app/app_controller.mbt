@@ -85,7 +85,8 @@ struct AppController[T] {
   save_store : &SaveSlotStore
   mut phase : AppPhase
   mut save_store_preloaded : Bool
-  render_sync : RenderSyncHook[T]
+  core_render_sync : RenderSyncHook
+  render_extension : RenderExtensionHook?
   event_hook : EventHook
   mut runner : GameRunner[T]?
   mut saved_director_json : String?
@@ -118,7 +119,8 @@ pub fn[T] AppController::new(
   save_store? : &SaveSlotStore = default_save_slot_storage(),
   start_logo_urls? : Array[String] = [],
   start_logo_duration_ms? : Int = 2000,
-  render_sync? : RenderSyncHook[T] = (_, _) => (),
+  core_render_sync? : RenderSyncHook = noop_core_render_sync,
+  render_extension? : RenderExtensionHook,
   event_hook? : EventHook = _ => (),
   gallery_replay_state_factories? : ReplayStateFactories[T] = ReplayStateFactories::new(),
 ) -> AppController[T] {
@@ -214,7 +216,8 @@ pub fn[T] AppController::new(
       AppPhase::StartGate
     },
     save_store_preloaded: false,
-    render_sync,
+    core_render_sync,
+    render_extension,
     event_hook,
     runner: None,
     saved_director_json: None,
@@ -580,7 +583,8 @@ async fn[T] AppController::make_runner(
     script,
     state,
     self.ui_root_id,
-    render_sync=self.render_sync,
+    core_render_sync=self.core_render_sync,
+    render_extension?=self.render_extension,
     event_hook=self.event_hook,
     ui_strings=self.ui_strings,
     script_locale_json=self.script_locale_json.unwrap_or(""),
@@ -608,7 +612,8 @@ async fn[T : FromJson] AppController::load_runner_from_slot(
     script,
     slot,
     self.ui_root_id,
-    render_sync=self.render_sync,
+    core_render_sync=self.core_render_sync,
+    render_extension?=self.render_extension,
     event_hook=self.event_hook,
     save_namespace=self.save_ns,
     save_store=self.save_store,
@@ -639,7 +644,8 @@ async fn[T : FromJson] AppController::resume_runner_from_json(
     script,
     director_json,
     self.ui_root_id,
-    render_sync=self.render_sync,
+    core_render_sync=self.core_render_sync,
+    render_extension?=self.render_extension,
     event_hook=self.event_hook,
     ui_strings=self.ui_strings,
     script_locale_json=self.script_locale_json.unwrap_or(""),

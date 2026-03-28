@@ -110,7 +110,7 @@ async test "runner render sync hook is called on ui sync and step" {
     builder.say("narrator", "hello")
   })
   let calls : Array[Int] = []
-  let hook : RenderSyncHook[Int] = (_, _) => calls.push(1)
+  let hook : RenderSyncHook = (_, _) => calls.push(1)
   let runner = GameRunner::new_with_render_sync(
     Director::new(Runtime::new(compiled, GameState::new(0))),
     UiDom::new("app"),
@@ -130,6 +130,26 @@ async test "runner render sync hook is called on ui sync and step" {
     ),
   )
   assert_eq(calls.length(), 1)
+}
+
+///|
+async test "runner render extension hook is called when canvas sync runs" {
+  let compiled : Script[Int] = script(builder => {
+    builder.animate_opacity(dummy_figure("hero"), 50, 0.8)
+  })
+  let extension_calls : Array[Int] = []
+  let runner = GameRunner::new_with_hooks(
+    Director::new(Runtime::new(compiled, GameState::new(0))),
+    UiDom::new("app"),
+    (_, _) => (),
+    _ => (),
+    render_extension=(_, _) => extension_calls.push(1),
+  )
+
+  runner.sync_ui()
+  assert_eq(extension_calls.length(), 1)
+  ignore(runner.step())
+  assert_eq(extension_calls.length(), 2)
 }
 
 ///|
@@ -410,7 +430,7 @@ async test "runner keeps literal vocal url unchanged" {
 ///|
 async test "runner clear presentation resets render and syncs canvas" {
   let calls : Array[Int] = []
-  let hook : RenderSyncHook[Int] = (_, _) => calls.push(1)
+  let hook : RenderSyncHook = (_, _) => calls.push(1)
   let runner = GameRunner::new_with_render_sync(
     Director::new(Runtime::new(script(_ => ()), GameState::new(0))),
     UiDom::new("app"),
@@ -551,7 +571,7 @@ async test "intro advances when display completes" {
 ///|
 async test "runner keeps rendering during animations" {
   let calls : Array[Int] = []
-  let hook : RenderSyncHook[Int] = (_, _) => calls.push(1)
+  let hook : RenderSyncHook = (_, _) => calls.push(1)
   let script : Script[Int] = script(builder => {
     builder.animate_opacity(dummy_figure("hero"), 200, 1.0)
   })

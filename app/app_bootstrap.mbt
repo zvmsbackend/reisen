@@ -104,7 +104,8 @@ pub async fn[T] start_game(
   script : Script[T],
   state : GameState[T],
   ui_root_id : String,
-  render_sync? : RenderSyncHook[T] = (_, _) => (),
+  core_render_sync? : RenderSyncHook = noop_core_render_sync,
+  render_extension? : RenderExtensionHook,
   event_hook? : EventHook = _ => (),
   settings? : GameSettings,
   ui_strings? : UiStrings = UiStrings::default(),
@@ -130,8 +131,9 @@ pub async fn[T] start_game(
     director,
     ui,
     AudioPort::browser(),
-    render_sync,
+    core_render_sync,
     event_hook,
+    render_extension?,
   )
   if settings is Some(s) {
     runner.apply_settings(s)
@@ -145,7 +147,8 @@ pub async fn[T : FromJson] start_game_from_save(
   script : Script[T],
   save_json : String,
   ui_root_id : String,
-  render_sync? : RenderSyncHook[T] = (_, _) => (),
+  core_render_sync? : RenderSyncHook = noop_core_render_sync,
+  render_extension? : RenderExtensionHook,
   event_hook? : EventHook = _ => (),
   settings? : GameSettings,
   ui_strings? : UiStrings = UiStrings::default(),
@@ -172,8 +175,9 @@ pub async fn[T : FromJson] start_game_from_save(
     director,
     ui,
     AudioPort::browser(),
-    render_sync,
+    core_render_sync,
     event_hook,
+    render_extension?,
   )
   if settings is Some(s) {
     runner.apply_settings(s)
@@ -231,7 +235,8 @@ pub async fn[T : FromJson] start_game_from_slot(
   script : Script[T],
   slot : String,
   ui_root_id : String,
-  render_sync? : RenderSyncHook[T] = (_, _) => (),
+  core_render_sync? : RenderSyncHook = noop_core_render_sync,
+  render_extension? : RenderExtensionHook,
   event_hook? : EventHook = _ => (),
   save_namespace? : String = "global",
   save_store? : &SaveSlotStore = default_save_slot_storage(),
@@ -251,7 +256,8 @@ pub async fn[T : FromJson] start_game_from_slot(
         script,
         payload.director_json,
         ui_root_id,
-        render_sync~,
+        core_render_sync~,
+        render_extension?,
         event_hook~,
         settings?,
         ui_strings~,

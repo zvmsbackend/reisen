@@ -90,14 +90,14 @@ async fn prepare_assets() -> AssetStore {
 }
 
 ///|
-async fn prepare_render_sync(store : AssetStore) -> RenderSyncHook[MyGameData]? {
+async fn prepare_render_extension(store : AssetStore) -> RenderExtensionHook? {
   let config = try! PixiPresenterConfig::new(
     background_alpha=0.0,
     resolution=1.0,
     position_entry_offset_ratio=0.04,
     scale_entry_from=0.0,
   )
-  make_pixi_render_sync_hook_from_canvas_with_config("gl-canvas", store, config)
+  make_pixi_render_extension_hook_from_canvas("gl-canvas", store, config~)
 }
 ```
 
@@ -111,7 +111,7 @@ async fn main {
   let store = prepare_assets()
   validate_script_assets(my_script, store)
 
-  let render_sync = prepare_render_sync(store).unwrap()
+  let render_extension = prepare_render_extension(store).unwrap()
 
   let controller = AppController::new(
     my_script_factory,
@@ -121,7 +121,7 @@ async fn main {
     menu_background="bg_temple",
     settings_background="bg_temple",
     gallery_background="bg_temple",
-    render_sync~,
+    render_extension~,
   )
   run_browser_app_loop(controller)
 }

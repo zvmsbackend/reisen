@@ -44,4 +44,10 @@ using @ui {
 }
 
 ///|
-using @engine {type Director, type GameRunner, type RenderSyncHook}
+using @engine {
+  type Director,
+  type GameRunner,
+  type RenderSyncHook,
+  type RenderExtensionHook,
+  noop_core_render_sync,
+}

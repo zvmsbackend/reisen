@@ -188,61 +188,32 @@ fn PixiPresenter::remove_target_animation_state(
 }
 
 ///|
-fn[T] PixiPresenter::pull_new_animations(
+fn PixiPresenter::pull_new_animations(
   self : PixiPresenter,
-  director : Director[T],
+  extension : RenderExtensionView,
 ) -> Unit {
-  let all = director.animations()
-  for ;; {
-    match all.pop_front() {
-      Some(entry) => {
-        let (target, spec) = entry
-        let target_map = match spec.prop {
-          Position => {
-            self.position_anims.set(target, {
-              start_ms: self.timeline_ms,
-              duration_ms: if self.skip_mode {
-                0
-              } else {
-                spec.duration_ms
-              },
-              easing: spec.easing,
-              from_x: anim_value(spec.from, 0),
-              from_y: anim_value(spec.from, 1),
-              to_x: anim_value(spec.to, 0),
-              to_y: anim_value(spec.to, 1),
-            })
-            continue
-          }
-          Scale => {
-            let (anchor_x, anchor_y) = anim_anchor(spec.anchor)
-            self.scale_anims.set(target, {
-              start_ms: self.timeline_ms,
-              duration_ms: if self.skip_mode {
-                0
-              } else {
-                spec.duration_ms
-              },
-              easing: spec.easing,
-              from: anim_value(spec.from, 0),
-              to: anim_value(spec.to, 0),
-              anchor_x,
-              anchor_y,
-            })
-            continue
-          }
-          Opacity => self.opacity_anims
-          Rotation => self.rotation_anims
-          Blur => self.blur_anims
-          Brightness => self.brightness_anims
-          Contrast => self.contrast_anims
-          Saturation => self.saturation_anims
-          Gamma => self.gamma_anims
-          ColorRed => self.color_r_anims
-          ColorGreen => self.color_g_anims
-          ColorBlue => self.color_b_anims
-        }
-        target_map[target] = {
+  for entry in extension.animations() {
+    let (target, spec) = entry
+    let target_map = match spec.prop {
+      Position => {
+        self.position_anims.set(target, {
+          start_ms: self.timeline_ms,
+          duration_ms: if self.skip_mode {
+            0
+          } else {
+            spec.duration_ms
+          },
+          easing: spec.easing,
+          from_x: anim_value(spec.from, 0),
+          from_y: anim_value(spec.from, 1),
+          to_x: anim_value(spec.to, 0),
+          to_y: anim_value(spec.to, 1),
+        })
+        continue
+      }
+      Scale => {
+        let (anchor_x, anchor_y) = anim_anchor(spec.anchor)
+        self.scale_anims.set(target, {
           start_ms: self.timeline_ms,
           duration_ms: if self.skip_mode {
             0
@@ -252,9 +223,32 @@ fn[T] PixiPresenter::pull_new_animations(
           easing: spec.easing,
           from: anim_value(spec.from, 0),
           to: anim_value(spec.to, 0),
-        }
+          anchor_x,
+          anchor_y,
+        })
+        continue
       }
-      None => break
+      Opacity => self.opacity_anims
+      Rotation => self.rotation_anims
+      Blur => self.blur_anims
+      Brightness => self.brightness_anims
+      Contrast => self.contrast_anims
+      Saturation => self.saturation_anims
+      Gamma => self.gamma_anims
+      ColorRed => self.color_r_anims
+      ColorGreen => self.color_g_anims
+      ColorBlue => self.color_b_anims
+    }
+    target_map[target] = {
+      start_ms: self.timeline_ms,
+      duration_ms: if self.skip_mode {
+        0
+      } else {
+        spec.duration_ms
+      },
+      easing: spec.easing,
+      from: anim_value(spec.from, 0),
+      to: anim_value(spec.to, 0),
     }
   }
 }
@@ -263,29 +257,21 @@ fn[T] PixiPresenter::pull_new_animations(
 extern "js" fn noop() -> Unit = "() => {}"
 
 ///|
-async fn[T] PixiPresenter::pull_new_live2d_actions(
+async fn PixiPresenter::pull_new_live2d_actions(
   self : PixiPresenter,
-  director : Director[T],
+  extension : RenderExtensionView,
 ) -> Unit noraise {
-  let motions = director.live2d_motions()
-  for ;; {
-    match motions.pop_front() {
-      Some((target, group, index)) =>
-        if self.figure_live2d.get(target) is Some(model) {
-          model.motion(group, index?) |> ignore
-        }
-      None => break
+  for entry in extension.live2d_motions() {
+    let (target, group, index) = entry
+    if self.figure_live2d.get(target) is Some(model) {
+      model.motion(group, index?) |> ignore
     }
   }
 
-  let expressions = director.live2d_expressions()
-  for ;; {
-    match expressions.pop_front() {
-      Some((target, id)) =>
-        if self.figure_live2d.get(target) is Some(model) {
-          model.set_expression(@js.Optional::from_option(id))
-        }
-      None => break
+  for entry in extension.live2d_expressions() {
+    let (target, id) = entry
+    if self.figure_live2d.get(target) is Some(model) {
+      model.set_expression(@js.Optional::from_option(id))
     }
   }
   // Due to a bug in the implementation of MoonBit async functions, if we don't
@@ -558,14 +544,14 @@ fn PixiPresenter::resolve_figure_frame(
 }
 
 ///|
-fn[T] PixiPresenter::sync_background(
+fn PixiPresenter::sync_background(
   self : PixiPresenter,
-  director : Director[T],
+  extension : RenderExtensionView,
   viewport_w : Double,
   viewport_h : Double,
   active_effects : Set[String],
 ) -> Unit {
-  match director.background_state() {
+  match extension.background_state() {
     Some(bg_state) => {
       let id = bg_state.id
       if self.last_background_id is Some(prev) {
@@ -678,7 +664,9 @@ fn[T] PixiPresenter::sync_background(
           let next_bg_state = { ..next_bg_state, scalars: next_scalars }
           update_bg_state = update_bg_state || changed
           if update_bg_state {
-            director.set_background_state(next_bg_state)
+            extension.apply(
+              RenderExtensionUpdate::SetBackgroundState(next_bg_state),
+            )
           }
           apply_sprite_transform(
             cover_sprite,
@@ -691,7 +679,7 @@ fn[T] PixiPresenter::sync_background(
             true,
             -1001,
           )
-          let effects = director.effects(id)
+          let effects = extension.effects(id)
           let cover_pre_skip = self.apply_effects_to_target(
             id,
             Sprite(cover_sprite),
@@ -779,14 +767,18 @@ fn[T] PixiPresenter::sync_background(
 }
 
 ///|
-fn[T] PixiPresenter::sync_figures(
+fn PixiPresenter::sync_figures(
   self : PixiPresenter,
-  director : Director[T],
+  extension : RenderExtensionView,
   viewport_w : Double,
   viewport_h : Double,
   active_effects : Set[String],
 ) -> Unit {
-  let figures = director.figures()
+  let figures : Map[String, FigurePlacement] = {}
+  for entry in extension.figure_entries() {
+    let (id, placement) = entry
+    figures[id] = placement
+  }
   let stale_ids = self.figure_sprites
     .keys()
     .iter()
@@ -816,7 +808,8 @@ fn[T] PixiPresenter::sync_figures(
   let finished_position : Array[String] = []
   let finished_scale : Array[String] = []
 
-  for id, placement in figures {
+  for entry in figures {
+    let (id, placement) = entry
     match self.store.get_live2d_model(id) {
       Some(model_asset) => {
         let model_asset = model_asset
@@ -870,7 +863,7 @@ fn[T] PixiPresenter::sync_figures(
           true,
           placement.layer,
         )
-        let effects = director.effects(id)
+        let effects = extension.effects(id)
         let pre_skip = self.apply_effects_to_target(
           id,
           Live2d(model),
@@ -945,7 +938,7 @@ fn[T] PixiPresenter::sync_figures(
               true,
               placement.layer,
             )
-            let effects = director.effects(id)
+            let effects = extension.effects(id)
             let pre_skip = self.apply_effects_to_target(
               id,
               Sprite(sprite),
@@ -997,18 +990,18 @@ fn[T] PixiPresenter::sync_figures(
   }
   for entry in updated_figures {
     let (id, placement) = entry
-    figures.set(id, placement)
+    extension.apply(RenderExtensionUpdate::SetFigurePlacement(id, placement))
   }
 }
 
 ///|
-async fn[T] PixiPresenter::sync_noraise(
+async fn PixiPresenter::sync_noraise(
   self : PixiPresenter,
-  director : Director[T],
+  extension : RenderExtensionView,
   skip_mode : Bool,
 ) -> Unit noraise {
   self.skip_mode = skip_mode
-  let epoch = director.render_epoch()
+  let epoch = extension.render_epoch()
   if self.render_epoch is Some(prev) {
     if prev != epoch {
       self.reset_render_state()
@@ -1019,15 +1012,15 @@ async fn[T] PixiPresenter::sync_noraise(
   }
 
   self.update_timeline()
-  self.pull_new_animations(director)
+  self.pull_new_animations(extension)
   let active_effects : Set[String] = Set::new()
 
   let viewport_w = window_inner_width()
   let viewport_h = window_inner_height()
   self.app.renderer_resize(viewport_w.to_int(), viewport_h.to_int())
-  self.sync_background(director, viewport_w, viewport_h, active_effects)
-  self.sync_figures(director, viewport_w, viewport_h, active_effects)
-  self.pull_new_live2d_actions(director)
+  self.sync_background(extension, viewport_w, viewport_h, active_effects)
+  self.sync_figures(extension, viewport_w, viewport_h, active_effects)
+  self.pull_new_live2d_actions(extension)
   for key in self.effect_start_ms.keys() {
     if !active_effects.contains(key) {
       self.effect_start_ms.remove(key)
@@ -1038,63 +1031,37 @@ async fn[T] PixiPresenter::sync_noraise(
 }
 
 ///|
-fn[T] PixiPresenter::as_render_sync_hook(
+fn PixiPresenter::as_render_extension_hook(
   self : PixiPresenter,
-) -> RenderSyncHook[T] {
-  (director, skip_mode) => self.sync_noraise(director, skip_mode)
+) -> RenderExtensionHook {
+  (extension, skip_mode) => self.sync_noraise(extension, skip_mode)
 }
 
 ///|
-pub async fn[T] make_pixi_render_sync_hook_from_canvas(
+pub async fn make_pixi_render_extension_hook_from_canvas(
   canvas_id : String,
   store : AssetStore,
-) -> RenderSyncHook[T]? {
-  make_pixi_render_sync_hook_from_canvas_with_config(
-    canvas_id,
-    store,
-    PixiPresenterConfig::default(),
-  )
-}
-
-///|
-pub async fn[T] make_pixi_render_sync_hook_from_canvas_with_config(
-  canvas_id : String,
-  store : AssetStore,
-  config : PixiPresenterConfig,
-) -> RenderSyncHook[T]? {
+  config? : PixiPresenterConfig = PixiPresenterConfig::default(),
+) -> RenderExtensionHook? {
   let canvas = get_canvas_by_id(canvas_id)
   match canvas {
     Some(c) =>
       Some(
-        make_pixi_render_sync_hook_from_canvas_element_with_config(
-          c, store, config,
-        ),
+        make_pixi_render_extension_hook_from_canvas_element(c, store, config~),
       )
     None => None
   }
 }
 
 ///|
-pub async fn[T] make_pixi_render_sync_hook_from_canvas_element(
+pub async fn make_pixi_render_extension_hook_from_canvas_element(
   canvas : PixiCanvas,
   store : AssetStore,
-) -> RenderSyncHook[T] {
-  make_pixi_render_sync_hook_from_canvas_element_with_config(
-    canvas,
-    store,
-    PixiPresenterConfig::default(),
-  )
-}
-
-///|
-pub async fn[T] make_pixi_render_sync_hook_from_canvas_element_with_config(
-  canvas : PixiCanvas,
-  store : AssetStore,
-  config : PixiPresenterConfig,
-) -> RenderSyncHook[T] {
+  config? : PixiPresenterConfig = PixiPresenterConfig::default(),
+) -> RenderExtensionHook {
   let w = window_inner_width()
   let h = window_inner_height()
   set_canvas_element_size(canvas, w.to_int(), h.to_int())
   let presenter = PixiPresenter::new(canvas, store, config)
-  presenter.as_render_sync_hook()
+  presenter.as_render_extension_hook()
 }

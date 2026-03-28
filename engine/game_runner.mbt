@@ -2,7 +2,14 @@
 /// Game loop glue between `Director` (state machine) and UI/audio ports.
 
 ///|
-pub type RenderSyncHook[T] = async (Director[T], Bool) -> Unit noraise
+pub type RenderSyncHook = async (CoreRenderSnapshot, Bool) -> Unit noraise
+
+///|
+pub type RenderExtensionHook = async (RenderExtensionView, Bool) -> Unit noraise
+
+///|
+/// Default no-op core render hook for compatibility wiring.
+pub let noop_core_render_sync : RenderSyncHook = (_, _) => ()
 
 ///|
 priv struct SequenceJob {
@@ -19,7 +26,8 @@ struct GameRunner[T] {
   director : Director[T]
   ui : UiPort
   audio : AudioPort
-  render_sync : RenderSyncHook[T]
+  render_sync : RenderSyncHook
+  render_extension : RenderExtensionHook?
   event_hook : EventHook
   mut ui_click_sfx_id : String?
   mut ui_dirty : Bool
@@ -39,7 +47,8 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
     director,
     ui,
     audio: AudioPort::browser(),
-    render_sync: (_, _) => (),
+    render_sync: noop_core_render_sync,
+    render_extension: None,
     event_hook: _ => (),
     ui_click_sfx_id: None,
     ui_dirty: true,
@@ -57,7 +66,7 @@ pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
 pub fn[T] GameRunner::new_with_render_sync(
   director : Director[T],
   ui : UiDom,
-  render_sync : RenderSyncHook[T],
+  render_sync : RenderSyncHook,
 ) -> GameRunner[T] {
   let ui = UiPort::from_dom(ui)
   {
@@ -65,6 +74,7 @@ pub fn[T] GameRunner::new_with_render_sync(
     ui,
     audio: AudioPort::browser(),
     render_sync,
+    render_extension: None,
     event_hook: _ => (),
     ui_click_sfx_id: None,
     ui_dirty: true,
@@ -82,8 +92,9 @@ pub fn[T] GameRunner::new_with_render_sync(
 pub fn[T] GameRunner::new_with_hooks(
   director : Director[T],
   ui : UiDom,
-  render_sync : RenderSyncHook[T],
+  render_sync : RenderSyncHook,
   event_hook : EventHook,
+  render_extension? : RenderExtensionHook,
 ) -> GameRunner[T] {
   let ui = UiPort::from_dom(ui)
   {
@@ -91,6 +102,7 @@ pub fn[T] GameRunner::new_with_hooks(
     ui,
     audio: AudioPort::browser(),
     render_sync,
+    render_extension,
     event_hook,
     ui_click_sfx_id: None,
     ui_dirty: true,
@@ -109,14 +121,16 @@ pub fn[T] GameRunner::new_with_ports(
   director : Director[T],
   ui : UiPort,
   audio : AudioPort,
-  render_sync : RenderSyncHook[T],
+  render_sync : RenderSyncHook,
   event_hook : EventHook,
+  render_extension? : RenderExtensionHook,
 ) -> GameRunner[T] {
   {
     director,
     ui,
     audio,
     render_sync,
+    render_extension,
     event_hook,
     ui_click_sfx_id: None,
     ui_dirty: true,
@@ -351,7 +365,13 @@ fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
 
 ///|
 async fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit noraise {
-  (self.render_sync)(self.director, self.ui.is_skip_active())
+  let skip_mode = self.ui.is_skip_active()
+  let core_snapshot = self.director.core_render_snapshot()
+  (self.render_sync)(core_snapshot, skip_mode)
+  match self.render_extension {
+    Some(hook) => hook(self.director.render_extension_view(), skip_mode)
+    None => ()
+  }
   self.render_sync_dirty = false
 }
 
