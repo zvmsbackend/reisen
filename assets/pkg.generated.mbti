@@ -57,54 +57,34 @@ pub fn AssetStore::register_sfx(Self, String, id? : String) -> Sfx
 pub struct Background {
   id : String
   url : String
-}
-pub impl Eq for Background
-pub impl Show for Background
-pub impl ToJson for Background
-pub impl @json.FromJson for Background
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub impl AnimationTarget for Background
 pub impl PixiTarget for Background
 
-pub struct DomFigure(String)
+pub struct DomFigure(String) derive(Eq, Show, ToJson, @json.FromJson)
 #deprecated
 pub fn DomFigure::inner(Self) -> String
 pub fn DomFigure::new(String) -> Self
-pub impl Eq for DomFigure
-pub impl Show for DomFigure
-pub impl ToJson for DomFigure
-pub impl @json.FromJson for DomFigure
 pub impl AnimationTarget for DomFigure
 pub impl Figure for DomFigure
 
 #external
 pub type Image
 
-pub struct Live2dFigure(String)
+pub struct Live2dFigure(String) derive(Eq, Show, ToJson, @json.FromJson)
 #deprecated
 pub fn Live2dFigure::inner(Self) -> String
-pub impl Eq for Live2dFigure
-pub impl Show for Live2dFigure
-pub impl ToJson for Live2dFigure
-pub impl @json.FromJson for Live2dFigure
 pub impl AnimationTarget for Live2dFigure
 pub impl Figure for Live2dFigure
 pub impl PixiTarget for Live2dFigure
 
-pub struct Music(String)
+pub struct Music(String) derive(Eq, Show, ToJson, @json.FromJson)
 #deprecated
 pub fn Music::inner(Self) -> String
-pub impl Eq for Music
-pub impl Show for Music
-pub impl ToJson for Music
-pub impl @json.FromJson for Music
 
-pub struct PixiFigure(String)
+pub struct PixiFigure(String) derive(Eq, Show, ToJson, @json.FromJson)
 #deprecated
 pub fn PixiFigure::inner(Self) -> String
-pub impl Eq for PixiFigure
-pub impl Show for PixiFigure
-pub impl ToJson for PixiFigure
-pub impl @json.FromJson for PixiFigure
 pub impl AnimationTarget for PixiFigure
 pub impl Figure for PixiFigure
 pub impl PixiTarget for PixiFigure
@@ -112,17 +92,11 @@ pub impl PixiTarget for PixiFigure
 pub(all) enum RenderableKind {
   Pixi
   Dom
-}
-pub impl Eq for RenderableKind
-pub impl Show for RenderableKind
+} derive(Eq, Show)
 
-pub struct Sfx(String)
+pub struct Sfx(String) derive(Eq, Show, ToJson, @json.FromJson)
 #deprecated
 pub fn Sfx::inner(Self) -> String
-pub impl Eq for Sfx
-pub impl Show for Sfx
-pub impl ToJson for Sfx
-pub impl @json.FromJson for Sfx
 
 #external
 pub type Video

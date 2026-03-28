@@ -14,9 +14,7 @@ import {
 // Errors
 
 // Types and methods
-type AudioCommand
-pub impl Eq for AudioCommand
-pub impl Show for AudioCommand
+type AudioCommand derive(Eq, Show)
 
 type AudioDom
 pub fn AudioDom::as_event_hook(Self) -> (@core.RuntimeEvent) -> Unit
@@ -57,11 +55,7 @@ pub fn GalleryMenu::set_script_localization(Self, String?, String?) -> Unit
 pub fn GalleryMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn GalleryMenu::take_action(Self) -> GalleryAction
 
-type GalleryTileView
-pub impl Eq for GalleryTileView
-pub impl Show for GalleryTileView
-pub impl ToJson for GalleryTileView
-pub impl @json.FromJson for GalleryTileView
+type GalleryTileView derive(Eq, Show, ToJson, @json.FromJson)
 
 type LoadingMenu
 pub fn LoadingMenu::clear(Self) -> Unit
@@ -84,9 +78,7 @@ pub enum SettingsAction {
 pub(all) enum SettingsContext {
   FromStartMenu
   FromMidgame
-}
-pub impl Eq for SettingsContext
-pub impl Show for SettingsContext
+} derive(Eq, Show)
 
 type SettingsMenu
 pub fn SettingsMenu::clear(Self) -> Unit
@@ -149,9 +141,7 @@ pub(all) enum StartMenuAction {
   Credits
 }
 
-type UiChoiceView
-pub impl Eq for UiChoiceView
-pub impl Show for UiChoiceView
+type UiChoiceView derive(Eq, Show)
 
 type UiDom
 pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
@@ -202,11 +192,7 @@ pub fn UiDom::toggle_log_visible(Self) -> Unit
 pub fn UiDom::toggle_skip_mode(Self) -> Unit
 pub fn UiDom::typewriter_visible_text(Self) -> @state.DialogText
 
-type UiDomFigureView
-pub impl Eq for UiDomFigureView
-pub impl Show for UiDomFigureView
-pub impl ToJson for UiDomFigureView
-pub impl @json.FromJson for UiDomFigureView
+type UiDomFigureView derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct UiStrings {
   start_locale_title : String
@@ -264,18 +250,12 @@ pub struct UiStrings {
 pub fn UiStrings::from_locales_json(String, String, String, fallback? : Self) -> Self
 pub impl Default for UiStrings
 
-type UiTextInputView
-pub impl Eq for UiTextInputView
-pub impl Show for UiTextInputView
+type UiTextInputView derive(Eq, Show)
 
-type UiVideoView
-pub impl Eq for UiVideoView
-pub impl Show for UiVideoView
+type UiVideoView derive(Eq, Show)
 
-type UiViewModel
+type UiViewModel derive(Eq, Show)
 pub fn UiViewModel::from_snapshot(@core.UiSnapshot, UiDom) -> Self
-pub impl Eq for UiViewModel
-pub impl Show for UiViewModel
 
 // Type aliases
 

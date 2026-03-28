@@ -32,11 +32,9 @@ pub struct PixiPresenterConfig {
   auto_density : Bool
   position_entry_offset_ratio : Double
   scale_entry_from : Double
-}
+} derive(Eq, Show)
 pub fn PixiPresenterConfig::new(antialias? : Bool, background_alpha? : Double, resolution? : Double, auto_density? : Bool, position_entry_offset_ratio? : Double, scale_entry_from? : Double) -> Self raise PixiPresenterConfigError
 pub impl Default for PixiPresenterConfig
-pub impl Eq for PixiPresenterConfig
-pub impl Show for PixiPresenterConfig
 
 // Type aliases
 

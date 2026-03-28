@@ -45,10 +45,8 @@ pub suberror AppControllerError {
   ScriptValidationMissingImage(id~ : String)
   ScriptValidationMissingAudio(id~ : String)
   SaveSlotMissing(slot~ : String)
-}
+} derive(Eq, Show)
 pub fn AppControllerError::message(Self) -> String
-pub impl Eq for AppControllerError
-pub impl Show for AppControllerError
 
 // Types and methods
 type AppController[T]
@@ -66,13 +64,9 @@ pub enum AppPhase {
   Settings
   Credits
   InGame
-}
-pub impl Eq for AppPhase
-pub impl Show for AppPhase
+} derive(Eq, Show)
 
-type SaveSlotPayload
-pub impl ToJson for SaveSlotPayload
-pub impl @json.FromJson for SaveSlotPayload
+type SaveSlotPayload derive(ToJson, @json.FromJson)
 
 // Type aliases
 pub type ScriptFactory[T] = async () -> @core.Script[T]

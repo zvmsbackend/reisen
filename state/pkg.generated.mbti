@@ -17,7 +17,7 @@ pub(all) enum DialogText {
   Interpolation(String)
   Enhanced(DialogText, style~ : String)
   Ruby(String, ruby~ : String)
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn DialogText::empty() -> Self
 pub fn DialogText::is_empty(Self) -> Bool
 pub fn DialogText::length(Self) -> Int
@@ -26,17 +26,13 @@ pub fn DialogText::raw_text(Self) -> String
 pub fn DialogText::render(Self) -> String
 pub fn DialogText::slice(Self, Int) -> Self
 pub impl Add for DialogText
-pub impl Eq for DialogText
-pub impl Show for DialogText
-pub impl ToJson for DialogText
-pub impl @json.FromJson for DialogText
 
 pub struct GameState[T] {
   mut user_data : T
   flags : Map[String, Bool]
   ints : Map[String, Int]
   texts : Map[String, String]
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn[T] GameState::flag(Self[T], String) -> Bool
 pub fn[T] GameState::get_user_data(Self[T]) -> T
 pub fn[T] GameState::int_var(Self[T], String, default_value? : Int) -> Int
@@ -48,10 +44,6 @@ pub fn[T] GameState::set_text_var(Self[T], String, String) -> Unit
 pub fn[T] GameState::set_user_data(Self[T], T) -> Unit
 pub fn[T] GameState::text_var(Self[T], String, default_value? : String) -> String
 pub fn[T : ToJson] GameState::to_json_string(Self[T]) -> String
-pub impl[T : Eq] Eq for GameState[T]
-pub impl[T : Show] Show for GameState[T]
-pub impl[T : ToJson] ToJson for GameState[T]
-pub impl[T : @json.FromJson] @json.FromJson for GameState[T]
 
 // Type aliases
 

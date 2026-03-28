@@ -87,7 +87,7 @@ fn js_to_int(value : @js.Value) -> Int {
             Some(b) => if b { 1 } else { 0 }
             None =>
               match js_value_as_string(value) {
-                Some(s) => @strconv.parse_int(s) catch { _ => 0 }
+                Some(s) => @string.parse_int(s) catch { _ => 0 }
                 None => 0
               }
           }
@@ -107,7 +107,7 @@ fn js_to_double(value : @js.Value) -> Double {
             Some(b) => if b { 1.0 } else { 0.0 }
             None =>
               match js_value_as_string(value) {
-                Some(s) => @strconv.parse_double(s) catch { _ => 0.0 }
+                Some(s) => @string.parse_double(s) catch { _ => 0.0 }
                 None => 0.0
               }
           }

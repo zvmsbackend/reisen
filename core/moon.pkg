@@ -6,7 +6,7 @@ import {
   "sennenki/reisen/state",
   "sennenki/reisen/pixi",
   "moonbitlang/core/json",
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string",
   "moonbit-community/js-ffi/js",
 }
 

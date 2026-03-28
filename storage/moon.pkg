@@ -2,5 +2,5 @@ import {
   "moonbit-community/js-ffi/js",
   "moonbitlang/async/js_async",
   "moonbitlang/core/json",
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string",
 }

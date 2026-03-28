@@ -127,13 +127,9 @@ pub struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub fn GameSettings::new(Int, Double, Double) -> Self raise StorageValidationError
 pub impl Default for GameSettings
-pub impl Eq for GameSettings
-pub impl Show for GameSettings
-pub impl ToJson for GameSettings
-pub impl @json.FromJson for GameSettings
 
 pub struct IndexedDbSaveSlotStore {
   db_name : String
@@ -158,20 +154,14 @@ pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotSt
 pub struct SaveSlotEntry {
   slot : String
   meta : SaveSlotMeta?
-}
+} derive(Eq, Show)
 pub fn SaveSlotEntry::new(String, meta? : SaveSlotMeta) -> Self raise StorageValidationError
-pub impl Eq for SaveSlotEntry
-pub impl Show for SaveSlotEntry
 
 pub struct SaveSlotMeta {
   title : String
   preview : String
   updated_at_ms : Double
-}
-pub impl Eq for SaveSlotMeta
-pub impl Show for SaveSlotMeta
-pub impl ToJson for SaveSlotMeta
-pub impl @json.FromJson for SaveSlotMeta
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 // Type aliases
 pub type DefaultSaveSlotStore = MultiSaveSlotStore[IndexedDbSaveSlotStore, LocalSaveSlotStore]

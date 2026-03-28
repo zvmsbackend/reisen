@@ -79,9 +79,7 @@ pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
 // Errors
-pub suberror ReisenSexpError
-pub impl Eq for ReisenSexpError
-pub impl Show for ReisenSexpError
+pub suberror ReisenSexpError derive(Eq, Show)
 
 pub suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
@@ -111,21 +109,15 @@ pub(all) enum AnimProp {
   ColorRed
   ColorGreen
   ColorBlue
-}
-pub impl Eq for AnimProp
-pub impl Show for AnimProp
-pub impl ToJson for AnimProp
-pub impl @json.FromJson for AnimProp
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct AnimationGroup {
   steps : Array[AnimationSpec]
-}
+} derive(Eq, Show)
 pub fn AnimationGroup::animate(Self, AnimationSpec) -> Self
 pub fn AnimationGroup::effect(Self, EffectSpec) -> MixedGroup
 pub fn AnimationGroup::new() -> Self
 pub fn AnimationGroup::to_steps(Self) -> Array[GroupStep]
-pub impl Eq for AnimationGroup
-pub impl Show for AnimationGroup
 
 pub(all) struct AnimationSpec {
   prop : AnimProp
@@ -135,68 +127,40 @@ pub(all) struct AnimationSpec {
   to : Array[Double]?
   anchor : Array[Double]?
   blocking : Bool
-}
-pub impl Eq for AnimationSpec
-pub impl Show for AnimationSpec
-pub impl ToJson for AnimationSpec
-pub impl @json.FromJson for AnimationSpec
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) struct BackgroundState {
   id : String
   scalars : ScalarState
-}
-pub impl Eq for BackgroundState
-pub impl Show for BackgroundState
-pub impl ToJson for BackgroundState
-pub impl @json.FromJson for BackgroundState
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct ChoiceOption {
   id : String
   text : @state.DialogText
   jump : String
-}
-pub impl Eq for ChoiceOption
-pub impl Show for ChoiceOption
-pub impl ToJson for ChoiceOption
-pub impl @json.FromJson for ChoiceOption
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) struct DialogLogEntry {
   speaker : String
   text : String
-}
-pub impl Eq for DialogLogEntry
-pub impl Show for DialogLogEntry
-pub impl ToJson for DialogLogEntry
-pub impl @json.FromJson for DialogLogEntry
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) struct DomFigureState {
   placement : FigurePlacement
   interactive : Bool
-}
-pub impl Eq for DomFigureState
-pub impl Show for DomFigureState
-pub impl ToJson for DomFigureState
-pub impl @json.FromJson for DomFigureState
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) enum Easing {
   Linear
   EaseIn
   EaseOut
   EaseInOut
-}
-pub impl Eq for Easing
-pub impl Show for Easing
-pub impl ToJson for Easing
-pub impl @json.FromJson for Easing
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) enum EffectPhase {
   Pre
   Post
-}
-pub impl Eq for EffectPhase
-pub impl Show for EffectPhase
-pub impl ToJson for EffectPhase
-pub impl @json.FromJson for EffectPhase
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) struct EffectSpec {
   id : String
@@ -205,28 +169,18 @@ pub(all) struct EffectSpec {
   duration_ms : Int?
   easing : Easing
   blocking : Bool
-}
-pub impl Eq for EffectSpec
-pub impl Show for EffectSpec
-pub impl ToJson for EffectSpec
-pub impl @json.FromJson for EffectSpec
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) struct FigurePlacement {
   pos : Position
   layer : Int
   scalars : ScalarState
-}
-pub impl Eq for FigurePlacement
-pub impl Show for FigurePlacement
-pub impl ToJson for FigurePlacement
-pub impl @json.FromJson for FigurePlacement
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub(all) enum GroupStep {
   Animate(AnimationSpec)
   Effect(EffectSpec)
-}
-pub impl Eq for GroupStep
-pub impl Show for GroupStep
+} derive(Eq, Show)
 
 pub(all) enum Instruction[T] {
   Label(String)
@@ -271,24 +225,18 @@ pub fn Label::inner(Self) -> String
 
 pub struct MixedGroup {
   steps : Array[GroupStep]
-}
+} derive(Eq, Show)
 pub fn MixedGroup::animate(Self, AnimationSpec) -> Self
 pub fn MixedGroup::effect(Self, EffectSpec) -> Self
 pub fn MixedGroup::new() -> Self
 pub fn MixedGroup::to_steps(Self) -> Array[GroupStep]
-pub impl Eq for MixedGroup
-pub impl Show for MixedGroup
 
 pub(all) enum Position {
   Left
   Center
   Right
   Custom(Double, Double)
-}
-pub impl Eq for Position
-pub impl Show for Position
-pub impl ToJson for Position
-pub impl @json.FromJson for Position
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 pub struct Runtime[T] {
   script : Script[T]
@@ -357,9 +305,7 @@ pub(all) enum RuntimeEvent {
   WaitCustomEventStarted(String)
   Custom(String, String)
   ScriptEnded
-}
-pub impl Eq for RuntimeEvent
-pub impl Show for RuntimeEvent
+} derive(Eq, Show)
 
 pub struct RuntimeSave[T] {
   state : @state.GameState[T]
@@ -373,9 +319,7 @@ pub struct RuntimeSave[T] {
   wait_video : Bool
   last_say_proceed_on_done : Bool
   ended : Bool
-}
-pub impl[T : ToJson] ToJson for RuntimeSave[T]
-pub impl[T : @json.FromJson] @json.FromJson for RuntimeSave[T]
+} derive(ToJson, @json.FromJson)
 
 pub(all) struct ScalarState {
   opacity : Double
@@ -389,12 +333,8 @@ pub(all) struct ScalarState {
   color_r : Double
   color_g : Double
   color_b : Double
-}
+} derive(Eq, Show, ToJson, @json.FromJson)
 pub impl Default for ScalarState
-pub impl Eq for ScalarState
-pub impl Show for ScalarState
-pub impl ToJson for ScalarState
-pub impl @json.FromJson for ScalarState
 
 pub struct Script[T] {
   instructions : Array[Instruction[T]]
@@ -477,10 +417,8 @@ pub(all) struct UiSnapshot {
   avatar_id : String?
   dom_figures : Map[String, DomFigureState]
   dom_animations : Array[(String, AnimationSpec)]
-}
+} derive(Eq, Show)
 pub impl Default for UiSnapshot
-pub impl Eq for UiSnapshot
-pub impl Show for UiSnapshot
 
 // Type aliases
 pub type EventHook = (RuntimeEvent) -> Unit

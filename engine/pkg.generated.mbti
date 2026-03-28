@@ -21,11 +21,7 @@ pub(all) struct DialogLine {
   typewriter : Bool
   append : Bool
   proceed_on_done : Bool
-}
-pub impl Eq for DialogLine
-pub impl Show for DialogLine
-pub impl ToJson for DialogLine
-pub impl @json.FromJson for DialogLine
+} derive(Eq, Show, ToJson, @json.FromJson)
 
 type Director[T]
 pub fn[T] Director::animations(Self[T]) -> @deque.Deque[(String, @core.AnimationSpec)]
@@ -84,9 +80,7 @@ pub struct DirectorSave[T] {
   video : (String, Bool)?
   text_box_visible : Bool
   avatar_id : String?
-}
-pub impl[T : ToJson] ToJson for DirectorSave[T]
-pub impl[T : @json.FromJson] @json.FromJson for DirectorSave[T]
+} derive(ToJson, @json.FromJson)
 
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], @core.RuntimeEvent) -> Unit
@@ -130,9 +124,7 @@ pub struct RenderState {
   live2d_motions : @deque.Deque[(String, String, Int?)]
   live2d_expressions : @deque.Deque[(String, String?)]
   render_epoch : String
-}
-pub impl ToJson for RenderState
-pub impl @json.FromJson for RenderState
+} derive(ToJson, @json.FromJson)
 
 // Type aliases
 pub type RenderSyncHook[T] = async (Director[T], Bool) -> Unit noraise
