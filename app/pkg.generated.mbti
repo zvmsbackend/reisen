@@ -19,6 +19,10 @@ pub async fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T])
 
 pub async fn[T] run_browser_loop(@engine.GameRunner[T]) -> Unit
 
+pub async fn[E : Error] run_browser_loop_port(async (Int) -> Bool raise E) -> Unit raise E
+
+pub async fn[E : Error] run_loop_with_port(async (Int) -> Bool raise E, async (async (Int) -> Bool raise E) -> Unit raise E) -> Unit raise E
+
 pub fn[T : ToJson] save_director_to_slot(@engine.Director[T], String, save_namespace? : String, save_store? : &@storage.SaveSlotStore) -> Unit
 
 pub fn[T : ToJson] save_runner_to_slot(@engine.GameRunner[T], String, save_namespace? : String, save_store? : &@storage.SaveSlotStore) -> Unit

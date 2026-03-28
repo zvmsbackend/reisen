@@ -32,6 +32,21 @@ async fn[E : Error] run_browser_loop_impl(
 }
 
 ///|
+pub async fn[E : Error] run_browser_loop_port(
+  on_tick : async (Int) -> Bool raise E,
+) -> Unit raise E {
+  run_browser_loop_impl(on_tick)
+}
+
+///|
+pub async fn[E : Error] run_loop_with_port(
+  on_tick : async (Int) -> Bool raise E,
+  loop_port : async (async (Int) -> Bool raise E) -> Unit raise E,
+) -> Unit raise E {
+  loop_port(on_tick)
+}
+
+///|
 extern "js" fn render_app_error_dom(message : String) -> Unit =
   #| (message) => {
   #|   const doc = globalThis.document;
@@ -68,12 +83,12 @@ pub fn default_app_error_handler(message : String) -> Unit {
 
 ///|
 pub async fn[T] run_browser_loop(runner : GameRunner[T]) -> Unit {
-  run_browser_loop_impl(dt => runner.tick(elapsed_ms=dt))
+  run_loop_with_port(dt => runner.tick(elapsed_ms=dt), run_browser_loop_port)
 }
 
 ///|
 pub async fn[T : FromJson + ToJson] run_browser_app_loop(
   app : AppController[T],
 ) -> Unit raise AppControllerError {
-  run_browser_loop_impl(dt => app.tick(elapsed_ms=dt))
+  run_loop_with_port(dt => app.tick(elapsed_ms=dt), run_browser_loop_port)
 }

@@ -30,8 +30,9 @@ using @util {script_locale_resolve_at}
 ///|
 using @ui {
   type AudioDom,
+  type AudioPort,
   type UiStrings,
-  type UiDom,
+  type UiPort,
   type StartMenu,
   type GalleryMenu,
   type SettingsMenu,

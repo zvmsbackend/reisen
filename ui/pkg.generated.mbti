@@ -25,6 +25,17 @@ pub fn AudioDom::new_with_store(@assets.AssetStore) -> Self
 pub fn AudioDom::set_bgm_gain(Double) -> Unit
 pub fn AudioDom::set_sfx_gain(Double) -> Unit
 
+pub struct AudioPort {
+  has_active_sfx_impl : () -> Bool
+  set_bgm_gain_impl : (Double) -> Unit
+  set_sfx_gain_impl : (Double) -> Unit
+}
+pub fn AudioPort::browser() -> Self
+pub fn AudioPort::has_active_sfx(Self) -> Bool
+pub fn AudioPort::new(() -> Bool, (Double) -> Unit, (Double) -> Unit) -> Self
+pub fn AudioPort::set_bgm_gain(Self, Double) -> Unit
+pub fn AudioPort::set_sfx_gain(Self, Double) -> Unit
+
 pub enum CreditsAction {
   NoAction
   Back
@@ -193,6 +204,53 @@ pub fn UiDom::toggle_skip_mode(Self) -> Unit
 pub fn UiDom::typewriter_visible_text(Self) -> @state.DialogText
 
 type UiDomFigureView derive(Eq, Show, ToJson, @json.FromJson)
+
+pub struct UiPort {
+  dom : UiDom
+}
+pub fn UiPort::advance_auto_mode_timer(Self, Int) -> Unit
+pub fn UiPort::advance_dom_animation_timer(Self, Int) -> Unit
+pub fn UiPort::advance_skip_mode_timer(Self, Int) -> Unit
+pub fn UiPort::advance_typewriter(Self, Int) -> Bool
+pub fn UiPort::as_dom(Self) -> UiDom
+pub fn UiPort::check_intro_done(Self) -> Bool
+pub fn UiPort::check_typewriter_click(Self) -> Bool
+pub fn UiPort::clear_game_ui(Self) -> Unit
+pub fn UiPort::complete_typewriter(Self) -> Unit
+pub fn UiPort::from_dom(UiDom) -> Self
+pub fn UiPort::has_active_dom_animations(Self) -> Bool
+pub fn UiPort::is_log_visible(Self) -> Bool
+pub fn UiPort::is_skip_active(Self) -> Bool
+pub fn UiPort::is_typewriter_done(Self) -> Bool
+pub fn UiPort::localize_vocal_url(Self, String) -> String
+pub fn UiPort::mark_all_dirty(Self) -> Unit
+pub fn UiPort::mark_auto_advanced(Self) -> Unit
+pub fn UiPort::mark_dirty_action_buttons(Self) -> Unit
+pub fn UiPort::mark_dirty_choices(Self) -> Unit
+pub fn UiPort::mark_dirty_text(Self) -> Unit
+pub fn UiPort::mark_dirty_text_and_speaker(Self) -> Unit
+pub fn UiPort::mark_dirty_text_input(Self) -> Unit
+pub fn UiPort::mark_skip_advanced(Self) -> Unit
+pub fn UiPort::new(String, ui_strings? : UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn UiPort::render(Self, UiViewModel) -> Unit
+pub fn UiPort::reveal_intro_line(Self) -> Bool
+pub fn UiPort::set_log_visible(Self, Bool) -> Unit
+pub fn UiPort::set_media_volume(Self, Double) -> Unit
+pub fn UiPort::set_script_localization(Self, String?, String?, String, String, String) -> Unit
+pub fn UiPort::set_skip_hold(Self, Bool) -> Unit
+pub fn UiPort::set_text_speed(Self, Int) -> Unit
+pub fn UiPort::set_ui_strings(Self, UiStrings) -> Unit
+pub fn UiPort::should_auto_advance(Self) -> Bool
+pub fn UiPort::should_auto_skip_wait_click(Self) -> Bool
+pub fn UiPort::should_skip_advance(Self) -> Bool
+pub fn UiPort::simulate_click(Self) -> Unit
+pub fn UiPort::take_action(Self) -> String?
+pub fn UiPort::take_selected_choice(Self) -> String?
+pub fn UiPort::take_submitted_text_input(Self) -> String?
+pub fn UiPort::take_video_action(Self) -> String?
+pub fn UiPort::toggle_auto_mode(Self) -> Unit
+pub fn UiPort::toggle_log_visible(Self) -> Unit
+pub fn UiPort::toggle_skip_mode(Self) -> Unit
 
 pub struct UiStrings {
   start_locale_title : String

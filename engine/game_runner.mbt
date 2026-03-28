@@ -1,5 +1,5 @@
 ///|
-/// Game loop glue between `Director` (state machine) and `UiDom` (HTML view).
+/// Game loop glue between `Director` (state machine) and UI/audio ports.
 
 ///|
 pub type RenderSyncHook[T] = async (Director[T], Bool) -> Unit noraise
@@ -17,7 +17,8 @@ priv struct SequenceJob {
 ///|
 struct GameRunner[T] {
   director : Director[T]
-  ui : UiDom
+  ui : UiPort
+  audio : AudioPort
   render_sync : RenderSyncHook[T]
   event_hook : EventHook
   mut ui_click_sfx_id : String?
@@ -33,9 +34,11 @@ struct GameRunner[T] {
 
 ///|
 pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
+  let ui = UiPort::from_dom(ui)
   {
     director,
     ui,
+    audio: AudioPort::browser(),
     render_sync: (_, _) => (),
     event_hook: _ => (),
     ui_click_sfx_id: None,
@@ -56,9 +59,11 @@ pub fn[T] GameRunner::new_with_render_sync(
   ui : UiDom,
   render_sync : RenderSyncHook[T],
 ) -> GameRunner[T] {
+  let ui = UiPort::from_dom(ui)
   {
     director,
     ui,
+    audio: AudioPort::browser(),
     render_sync,
     event_hook: _ => (),
     ui_click_sfx_id: None,
@@ -80,9 +85,37 @@ pub fn[T] GameRunner::new_with_hooks(
   render_sync : RenderSyncHook[T],
   event_hook : EventHook,
 ) -> GameRunner[T] {
+  let ui = UiPort::from_dom(ui)
   {
     director,
     ui,
+    audio: AudioPort::browser(),
+    render_sync,
+    event_hook,
+    ui_click_sfx_id: None,
+    ui_dirty: true,
+    render_sync_dirty: true,
+    pending_action: None,
+    animation_remaining_ms: 0,
+    blocking_remaining_ms: 0,
+    blocking_wait_sfx: false,
+    blocking_until_click: false,
+    sequence_jobs: [],
+  }
+}
+
+///|
+pub fn[T] GameRunner::new_with_ports(
+  director : Director[T],
+  ui : UiPort,
+  audio : AudioPort,
+  render_sync : RenderSyncHook[T],
+  event_hook : EventHook,
+) -> GameRunner[T] {
+  {
+    director,
+    ui,
+    audio,
     render_sync,
     event_hook,
     ui_click_sfx_id: None,
@@ -198,7 +231,7 @@ fn[T] GameRunner::is_blocking_active(self : GameRunner[T]) -> Bool {
     return true
   }
   if self.blocking_wait_sfx {
-    if AudioDom::has_active_sfx() {
+    if self.audio.has_active_sfx() {
       return true
     }
     self.blocking_wait_sfx = false
@@ -311,7 +344,7 @@ fn[T] GameRunner::enqueue_animation_group(
 ///|
 fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
   self.ui.render(
-    UiViewModel::from_snapshot(self.director.ui_snapshot(), self.ui),
+    UiViewModel::from_snapshot(self.director.ui_snapshot(), self.ui.as_dom()),
   )
   self.ui_dirty = false
 }
@@ -477,7 +510,7 @@ async fn[T] GameRunner::step_handle_video_and_wait(
   }
   if self.director.is_waiting() {
     if self.director.can_auto_skip_wait_click() {
-      self.ui.advance_auto_mode_timer(elapsed_ms~)
+      self.ui.advance_auto_mode_timer(elapsed_ms)
       if self.ui.should_auto_skip_wait_click() {
         self.director.skip_wait()
         self.ui.mark_auto_advanced()
@@ -634,7 +667,7 @@ async fn[T] GameRunner::step_handle_dialog_flow(
   self : GameRunner[T],
   elapsed_ms : Int,
 ) -> RuntimeEvent raise ScriptRuntimeError {
-  self.ui.advance_skip_mode_timer(elapsed_ms~)
+  self.ui.advance_skip_mode_timer(elapsed_ms)
   if self.ui.should_skip_advance() {
     self.ui.complete_typewriter()
     self.ui.mark_skip_advanced()
@@ -667,7 +700,7 @@ async fn[T] GameRunner::step_handle_dialog_flow(
       self.render_ui()
       return event
     } else {
-      ignore(self.ui.advance_typewriter(elapsed_ms~))
+      ignore(self.ui.advance_typewriter(elapsed_ms))
       self.ui.mark_dirty_text()
       let event = self.current_dialog_event()
       self.render_ui()
@@ -693,7 +726,7 @@ async fn[T] GameRunner::step_handle_dialog_flow(
     self.apply_event_and_render(event, true, RenderMode::MaybeRenderUi)
     return event
   }
-  self.ui.advance_auto_mode_timer(elapsed_ms~)
+  self.ui.advance_auto_mode_timer(elapsed_ms)
   if self.ui.should_auto_advance() {
     self.ui.mark_auto_advanced()
     let event = self.director.step(elapsed_ms=0)
@@ -910,6 +943,6 @@ pub fn[T] GameRunner::apply_settings(
 ) -> Unit {
   self.ui.set_text_speed(settings.text_speed)
   self.ui.set_media_volume(settings.bgm_volume)
-  AudioDom::set_bgm_gain(settings.bgm_volume)
-  AudioDom::set_sfx_gain(settings.sfx_volume)
+  self.audio.set_bgm_gain(settings.bgm_volume)
+  self.audio.set_sfx_gain(settings.sfx_volume)
 }

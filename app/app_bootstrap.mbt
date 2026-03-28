@@ -117,7 +117,7 @@ pub async fn[T] start_game(
 ) -> GameRunner[T] noraise {
   let runtime = Runtime::new(script, state)
   let director = Director::new(runtime, gallery_ns~)
-  let ui = UiDom::new(
+  let ui = UiPort::new(
     ui_root_id,
     ui_strings~,
     script_locale_json~,
@@ -126,7 +126,13 @@ pub async fn[T] start_game(
     script_locale~,
     script_default_locale~,
   )
-  let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
+  let runner = GameRunner::new_with_ports(
+    director,
+    ui,
+    AudioPort::browser(),
+    render_sync,
+    event_hook,
+  )
   if settings is Some(s) {
     runner.apply_settings(s)
   }
@@ -153,7 +159,7 @@ pub async fn[T : FromJson] start_game_from_save(
 ) -> GameRunner[T] {
   let director = Director::from_save_json(script, save_json, gallery_ns~)
   director.set_dialog_history(dialog_history)
-  let ui = UiDom::new(
+  let ui = UiPort::new(
     ui_root_id,
     ui_strings~,
     script_locale_json~,
@@ -162,7 +168,13 @@ pub async fn[T : FromJson] start_game_from_save(
     script_locale~,
     script_default_locale~,
   )
-  let runner = GameRunner::new_with_hooks(director, ui, render_sync, event_hook)
+  let runner = GameRunner::new_with_ports(
+    director,
+    ui,
+    AudioPort::browser(),
+    render_sync,
+    event_hook,
+  )
   if settings is Some(s) {
     runner.apply_settings(s)
   }
