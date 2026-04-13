@@ -503,8 +503,8 @@ fn[T] GameRunner::advance_frame_state(
   self.advance_animation_timer(elapsed_ms)
   self.advance_blocking_timer(elapsed_ms)
   self.advance_sequence_jobs(elapsed_ms)
-  self.ui.advance_dom_animation_timer(elapsed_ms)
-  if self.ui.has_active_dom_animations() {
+  self.ui.advance_ui_animation_timer(elapsed_ms)
+  if self.ui.has_active_ui_animations() {
     self.ui_dirty = true
   }
 }

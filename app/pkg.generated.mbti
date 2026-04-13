@@ -2,6 +2,7 @@
 package "sennenki/reisen/app"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "sennenki/reisen/assets",
   "sennenki/reisen/core",
@@ -29,11 +30,11 @@ pub fn[T : ToJson] save_runner_to_slot(@engine.GameRunner[T], String, save_names
 
 pub fn[T : ToJson] save_runner_to_slot_with_meta(@engine.GameRunner[T], String, title? : String, preview? : String, save_namespace? : String, save_store? : &@storage.SaveSlotStore) -> Unit
 
-pub async fn[T] start_game(@core.Script[T], @state.GameState[T], String, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, settings? : @storage.GameSettings, ui_strings? : @ui.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String, gallery_ns? : String) -> @engine.GameRunner[T] noraise
+pub fn[T] start_game(@core.Script[T], @state.GameState[T], String, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, settings? : @storage.GameSettings, ui_strings? : @ui.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String, gallery_ns? : String) -> @engine.GameRunner[T]
 
-pub async fn[T : @json.FromJson] start_game_from_save(@core.Script[T], String, String, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, settings? : @storage.GameSettings, ui_strings? : @ui.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String, gallery_ns? : String, dialog_history? : Array[@core.DialogLogEntry]) -> @engine.GameRunner[T]
+pub fn[T : @json.FromJson] start_game_from_save(@core.Script[T], String, String, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, settings? : @storage.GameSettings, ui_strings? : @ui.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String, gallery_ns? : String, dialog_history? : Array[@core.DialogLogEntry]) -> @engine.GameRunner[T] raise
 
-pub async fn[T : @json.FromJson] start_game_from_slot(@core.Script[T], String, String, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, save_namespace? : String, save_store? : &@storage.SaveSlotStore, settings? : @storage.GameSettings, ui_strings? : @ui.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String, gallery_ns? : String) -> @engine.GameRunner[T]
+pub fn[T : @json.FromJson] start_game_from_slot(@core.Script[T], String, String, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, save_namespace? : String, save_store? : &@storage.SaveSlotStore, settings? : @storage.GameSettings, ui_strings? : @ui.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String, gallery_ns? : String) -> @engine.GameRunner[T] raise
 
 // Errors
 pub suberror AppBootstrapError {
@@ -49,7 +50,7 @@ pub suberror AppControllerError {
   ScriptValidationMissingImage(id~ : String)
   ScriptValidationMissingAudio(id~ : String)
   SaveSlotMissing(slot~ : String)
-} derive(Eq, Show)
+} derive(Eq)
 pub fn AppControllerError::message(Self) -> String
 
 // Types and methods
@@ -68,7 +69,7 @@ pub enum AppPhase {
   Settings
   Credits
   InGame
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 type SaveSlotPayload derive(ToJson, @json.FromJson)
 

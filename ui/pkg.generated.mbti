@@ -2,6 +2,7 @@
 package "sennenki/reisen/ui"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "sennenki/reisen/assets",
   "sennenki/reisen/core",
@@ -14,7 +15,7 @@ import {
 // Errors
 
 // Types and methods
-type AudioCommand derive(Eq, Show)
+type AudioCommand derive(Eq, @debug.Debug)
 
 type AudioDom
 pub fn AudioDom::as_event_hook(Self) -> (@core.RuntimeEvent) -> Unit
@@ -62,12 +63,23 @@ pub fn GalleryMenu::set_script_localization(Self, String?, String?) -> Unit
 pub fn GalleryMenu::set_ui_strings(Self, UiStrings) -> Unit
 pub fn GalleryMenu::take_action(Self) -> GalleryAction
 
-type GalleryTileView derive(Eq, Show, ToJson, @json.FromJson)
+type GalleryTileView derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type LoadingMenu
 pub fn LoadingMenu::clear(Self) -> Unit
 pub fn LoadingMenu::new(String) -> Self
 pub fn LoadingMenu::render(Self, String) -> Unit
+
+type SeleneUiBackend
+pub fn SeleneUiBackend::last_view(Self) -> UiViewModel?
+pub fn SeleneUiBackend::new(ui_strings? : UiStrings, script_locale_json? : String?, script_default_locale_json? : String?, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn SeleneUiBackend::push_action(Self, String) -> Unit
+pub fn SeleneUiBackend::push_click(Self) -> Unit
+pub fn SeleneUiBackend::push_selected_choice(Self, String) -> Unit
+pub fn SeleneUiBackend::push_submitted_text_input(Self, String) -> Unit
+pub fn SeleneUiBackend::push_video_action(Self, String) -> Unit
+pub impl UiBackend for SeleneUiBackend
+pub impl UiPlatformHooks for SeleneUiBackend
 
 pub enum SettingsAction {
   ViewChanged
@@ -85,7 +97,7 @@ pub enum SettingsAction {
 pub(all) enum SettingsContext {
   FromStartMenu
   FromMidgame
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 type SettingsMenu
 pub fn SettingsMenu::clear(Self) -> Unit
@@ -148,7 +160,7 @@ pub(all) enum StartMenuAction {
   Credits
 }
 
-type UiChoiceView derive(Eq, Show)
+type UiChoiceView derive(Eq, @debug.Debug)
 
 type UiDom
 pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
@@ -193,21 +205,24 @@ pub fn UiDom::toggle_log_visible(Self) -> Unit
 pub fn UiDom::toggle_skip_mode(Self) -> Unit
 pub fn UiDom::typewriter_visible_text(Self) -> @state.DialogText
 pub impl UiBackend for UiDom
+pub impl UiPlatformHooks for UiDom
 
-type UiDomFigureView derive(Eq, Show, ToJson, @json.FromJson)
+type UiDomFigureView derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type UiPort
 pub fn UiPort::advance_auto_mode_timer(Self, Int) -> Unit
 pub fn UiPort::advance_dom_animation_timer(Self, Int) -> Unit
 pub fn UiPort::advance_skip_mode_timer(Self, Int) -> Unit
 pub fn UiPort::advance_typewriter(Self, Int) -> Bool
+pub fn UiPort::advance_ui_animation_timer(Self, Int) -> Unit
 pub fn UiPort::check_intro_done(Self) -> Bool
 pub fn UiPort::check_typewriter_click(Self) -> Bool
 pub fn UiPort::clear_game_ui(Self) -> Unit
 pub fn UiPort::complete_typewriter(Self) -> Unit
-pub fn UiPort::from_backend(&UiBackend) -> Self
+pub fn UiPort::from_backend(&UiBackend, &UiPlatformHooks) -> Self
 pub fn UiPort::from_dom(UiDom) -> Self
 pub fn UiPort::has_active_dom_animations(Self) -> Bool
+pub fn UiPort::has_active_ui_animations(Self) -> Bool
 pub fn UiPort::is_log_visible(Self) -> Bool
 pub fn UiPort::is_skip_active(Self) -> Bool
 pub fn UiPort::is_typewriter_done(Self) -> Bool
@@ -298,11 +313,11 @@ pub struct UiStrings {
 pub fn UiStrings::from_locales_json(String, String, String, fallback? : Self) -> Self
 pub impl Default for UiStrings
 
-type UiTextInputView derive(Eq, Show)
+type UiTextInputView derive(Eq, @debug.Debug)
 
-type UiVideoView derive(Eq, Show)
+type UiVideoView derive(Eq, @debug.Debug)
 
-type UiViewModel derive(Eq, Show)
+type UiViewModel derive(Eq, @debug.Debug)
 pub fn UiViewModel::from_snapshot(@core.UiSnapshot, UiDom) -> Self
 
 // Type aliases
@@ -312,19 +327,20 @@ pub(open) trait UiBackend {
   localize_vocal_url(Self, String) -> String
   render(Self, UiViewModel) -> Unit
   view_model_from_snapshot(Self, @core.UiSnapshot) -> UiViewModel
-  advance_dom_animation_timer(Self, Int) -> Unit
-  has_active_dom_animations(Self) -> Bool
   take_selected_choice(Self) -> String?
   take_submitted_text_input(Self) -> String?
   take_action(Self) -> String?
   take_video_action(Self) -> String?
   check_typewriter_click(Self) -> Bool
-  check_intro_done(Self) -> Bool
-  reveal_intro_line(Self) -> Bool
   clear_game_ui(Self) -> Unit
-  set_media_volume(Self, Double) -> Unit
   set_ui_strings(Self, UiStrings) -> Unit
   set_script_localization(Self, script_locale_json~ : String?, script_default_locale_json~ : String?, vocal_locale_dir~ : String, script_locale~ : String, script_default_locale~ : String) -> Unit
   simulate_click(Self) -> Unit
+}
+
+pub(open) trait UiPlatformHooks {
+  advance_ui_animation_timer(Self, Int) -> Unit
+  has_active_ui_animations(Self) -> Bool
+  set_media_volume(Self, Double) -> Unit
 }
 

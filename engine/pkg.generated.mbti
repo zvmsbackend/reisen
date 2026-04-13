@@ -2,6 +2,7 @@
 package "sennenki/reisen/engine"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/deque",
   "moonbitlang/core/json",
   "sennenki/reisen/core",
@@ -30,7 +31,7 @@ pub(all) struct DialogLine {
   typewriter : Bool
   append : Bool
   proceed_on_done : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type Director[T]
 pub fn[T] Director::animations(Self[T]) -> @deque.Deque[(String, @core.AnimationSpec)]

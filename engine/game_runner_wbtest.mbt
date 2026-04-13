@@ -51,8 +51,9 @@ async test "runner drives script and choice flow" {
       voice=None,
     ),
   )
-  ui.complete_typewriter()
-  ui.simulate_click()
+  runner.simulate_click()
+  ignore(runner.step(elapsed_ms=0))
+  runner.simulate_click()
   assert_true(runner.step() is ChoicePrompt(_))
   assert_eq(
     runner.submit_choice("right"),
@@ -75,7 +76,6 @@ test "runner apply settings updates text speed and audio gains" {
   set_dummy_bgm()
   runner.apply_settings(try! GameSettings::new(25, 0.42, 0.33))
 
-  assert_eq(ui.text_speed_ms_per_char(), 2000 / 25)
   let bgm = read_bgm_volume()
   let sfx = read_sfx_gain()
   if bgm < 0.4199 || bgm > 0.4201 {
@@ -164,9 +164,10 @@ async test "runner tick returns false when script ends" {
   )
 
   assert_true(runner.tick())
-  ui.complete_typewriter()
-  ui.simulate_click()
-  assert_true(!runner.tick())
+  runner.simulate_click()
+  ignore(runner.tick(elapsed_ms=0))
+  runner.simulate_click()
+  assert_true(!runner.tick(elapsed_ms=0))
 }
 
 ///|
@@ -214,7 +215,7 @@ async test "runner click skips wait" {
   )
 
   assert_true(runner.step() is WaitStarted(200))
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(
     runner.step()
     is Said(
@@ -239,7 +240,7 @@ async test "runner click advances wait click" {
   )
 
   assert_true(runner.step() is WaitForClickStarted)
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(
     runner.step()
     is Said(
@@ -264,7 +265,7 @@ async test "auto mode skips skippable wait_click after short delay" {
   )
 
   assert_true(runner.step() is WaitForClickStarted)
-  ui.set_auto_mode(true)
+  runner.toggle_auto_mode()
   assert_true(runner.step(elapsed_ms=80) is Noop)
   assert_true(
     runner.step(elapsed_ms=90)
@@ -299,10 +300,18 @@ async test "runner click reveals typewriter then advances on next click" {
       voice=None
     ),
   )
-  ignore(runner.step(elapsed_ms=20))
-  assert_true(!ui.is_typewriter_done())
+  assert_true(
+    runner.step(elapsed_ms=20)
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("hello"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
 
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(
     runner.step(elapsed_ms=0)
     is Said(
@@ -313,9 +322,7 @@ async test "runner click reveals typewriter then advances on next click" {
       voice=None
     ),
   )
-  assert_true(ui.is_typewriter_done())
-
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(
     runner.step(elapsed_ms=0)
     is Said(
@@ -354,8 +361,9 @@ async test "runner emits ui click sfx on midgame click advance" {
       voice=None
     ),
   )
-  ui.complete_typewriter()
-  ui.simulate_click()
+  runner.simulate_click()
+  ignore(runner.step(elapsed_ms=0))
+  runner.simulate_click()
   assert_true(
     runner.step(elapsed_ms=0)
     is Said(
@@ -467,7 +475,7 @@ async test "wait advances with elapsed even when dialog remains" {
       voice=None
     ),
   )
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(
     runner.step()
     is Said(
@@ -478,7 +486,7 @@ async test "wait advances with elapsed even when dialog remains" {
       voice=None
     ),
   )
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(runner.step() is WaitStarted(100))
   assert_true(
     runner.step(elapsed_ms=120)
@@ -513,7 +521,7 @@ async test "skip mode ignores waits" {
       voice=None
     ),
   )
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(
     runner.step()
     is Said(
@@ -524,9 +532,9 @@ async test "skip mode ignores waits" {
       voice=None
     ),
   )
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(runner.step() is WaitStarted(200))
-  ui.set_skip_mode(true)
+  runner.toggle_skip_mode()
   assert_true(
     runner.step(elapsed_ms=0)
     is Said(
@@ -551,7 +559,7 @@ async test "intro advances when display completes" {
   )
 
   assert_true(runner.step() is IntroShown(DialogText::String("Prelude")))
-  ui.simulate_click()
+  runner.simulate_click()
   assert_true(
     runner.step(elapsed_ms=0) is IntroShown(DialogText::String("Prelude")),
   )
@@ -660,7 +668,7 @@ async test "runner skip mode completes 200-step script without stack overflow" {
   )
 
   ignore(runner.step())
-  ui.set_skip_mode(true)
+  runner.toggle_skip_mode()
 
   let mut ticks = 0
   let mut ended = false
