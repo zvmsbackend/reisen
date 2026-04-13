@@ -357,9 +357,7 @@ fn[T] GameRunner::enqueue_animation_group(
 
 ///|
 fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
-  self.ui.render(
-    UiViewModel::from_snapshot(self.director.ui_snapshot(), self.ui.as_dom()),
-  )
+  self.ui.render(self.ui.view_model_from_snapshot(self.director.ui_snapshot()))
   self.ui_dirty = false
 }
 

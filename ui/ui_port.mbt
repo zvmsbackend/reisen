@@ -50,6 +50,14 @@ pub fn UiPort::render(self : UiPort, view : UiViewModel) -> Unit {
 }
 
 ///|
+pub fn UiPort::view_model_from_snapshot(
+  self : UiPort,
+  snapshot : UiSnapshot,
+) -> UiViewModel {
+  UiViewModel::from_snapshot(snapshot, self.dom)
+}
+
+///|
 pub fn UiPort::advance_dom_animation_timer(
   self : UiPort,
   elapsed_ms : Int,

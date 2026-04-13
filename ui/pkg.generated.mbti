@@ -251,6 +251,7 @@ pub fn UiPort::take_video_action(Self) -> String?
 pub fn UiPort::toggle_auto_mode(Self) -> Unit
 pub fn UiPort::toggle_log_visible(Self) -> Unit
 pub fn UiPort::toggle_skip_mode(Self) -> Unit
+pub fn UiPort::view_model_from_snapshot(Self, @core.UiSnapshot) -> UiViewModel
 
 pub struct UiStrings {
   start_locale_title : String
