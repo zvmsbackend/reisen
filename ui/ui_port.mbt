@@ -16,7 +16,13 @@ pub(open) trait UiBackend {
   check_intro_done(Self) -> Bool
   reveal_intro_line(Self) -> Bool
   clear_game_ui(Self) -> Unit
+  set_text_speed(Self, Int) -> Unit
   set_media_volume(Self, Double) -> Unit
+  toggle_auto_mode(Self) -> Unit
+  toggle_skip_mode(Self) -> Unit
+  set_skip_hold(Self, Bool) -> Unit
+  is_skip_active(Self) -> Bool
+  set_log_visible(Self, Bool) -> Unit
   set_ui_strings(Self, UiStrings) -> Unit
   set_script_localization(
     Self,
@@ -26,6 +32,16 @@ pub(open) trait UiBackend {
     script_locale~ : String,
     script_default_locale~ : String,
   ) -> Unit
+  advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
+  should_auto_skip_wait_click(Self) -> Bool
+  mark_auto_advanced(Self) -> Unit
+  advance_skip_mode_timer(Self, elapsed_ms~ : Int) -> Unit
+  should_skip_advance(Self) -> Bool
+  complete_typewriter(Self) -> Unit
+  mark_skip_advanced(Self) -> Unit
+  is_typewriter_done(Self) -> Bool
+  advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
+  should_auto_advance(Self) -> Bool
   simulate_click(Self) -> Unit
 }
 
@@ -95,8 +111,38 @@ pub impl UiBackend for UiDom with clear_game_ui(self) {
 }
 
 ///|
+pub impl UiBackend for UiDom with set_text_speed(self, speed) {
+  UiDom::set_text_speed(self, speed)
+}
+
+///|
 pub impl UiBackend for UiDom with set_media_volume(self, volume) {
   UiDom::set_media_volume(self, volume)
+}
+
+///|
+pub impl UiBackend for UiDom with toggle_auto_mode(self) {
+  UiDom::toggle_auto_mode(self)
+}
+
+///|
+pub impl UiBackend for UiDom with toggle_skip_mode(self) {
+  UiDom::toggle_skip_mode(self)
+}
+
+///|
+pub impl UiBackend for UiDom with set_skip_hold(self, enabled) {
+  UiDom::set_skip_hold(self, enabled)
+}
+
+///|
+pub impl UiBackend for UiDom with is_skip_active(self) {
+  UiDom::is_skip_active(self)
+}
+
+///|
+pub impl UiBackend for UiDom with set_log_visible(self, visible) {
+  UiDom::set_log_visible(self, visible)
 }
 
 ///|
@@ -121,6 +167,56 @@ pub impl UiBackend for UiDom with set_script_localization(
     script_locale~,
     script_default_locale~,
   )
+}
+
+///|
+pub impl UiBackend for UiDom with advance_auto_mode_timer(self, elapsed_ms~) {
+  UiDom::advance_auto_mode_timer(self, elapsed_ms~)
+}
+
+///|
+pub impl UiBackend for UiDom with should_auto_skip_wait_click(self) {
+  UiDom::should_auto_skip_wait_click(self)
+}
+
+///|
+pub impl UiBackend for UiDom with mark_auto_advanced(self) {
+  UiDom::mark_auto_advanced(self)
+}
+
+///|
+pub impl UiBackend for UiDom with advance_skip_mode_timer(self, elapsed_ms~) {
+  UiDom::advance_skip_mode_timer(self, elapsed_ms~)
+}
+
+///|
+pub impl UiBackend for UiDom with should_skip_advance(self) {
+  UiDom::should_skip_advance(self)
+}
+
+///|
+pub impl UiBackend for UiDom with complete_typewriter(self) {
+  UiDom::complete_typewriter(self)
+}
+
+///|
+pub impl UiBackend for UiDom with mark_skip_advanced(self) {
+  UiDom::mark_skip_advanced(self)
+}
+
+///|
+pub impl UiBackend for UiDom with is_typewriter_done(self) {
+  UiDom::is_typewriter_done(self)
+}
+
+///|
+pub impl UiBackend for UiDom with advance_typewriter(self, elapsed_ms~) {
+  UiDom::advance_typewriter(self, elapsed_ms~)
+}
+
+///|
+pub impl UiBackend for UiDom with should_auto_advance(self) {
+  UiDom::should_auto_advance(self)
 }
 
 ///|
@@ -321,9 +417,6 @@ pub fn UiPort::view_model_from_snapshot(
   let view = self.backend.view_model_from_snapshot(snapshot)
   {
     ..view,
-    text: self.core.visible_text(),
-    typewriter: false,
-    append: false,
     auto_mode: self.core.auto_mode,
     skip_mode: self.core.is_skip_active(),
     log_visible: self.core.log_visible,
@@ -438,6 +531,7 @@ pub fn UiPort::clear_game_ui(self : UiPort) -> Unit {
 pub fn UiPort::set_text_speed(self : UiPort, speed : Int) -> Unit {
   let clamped = if speed < 10 { 10 } else if speed > 100 { 100 } else { speed }
   self.core.text_speed = clamped
+  self.backend.set_text_speed(clamped)
 }
 
 ///|
@@ -451,6 +545,7 @@ pub fn UiPort::toggle_auto_mode(self : UiPort) -> Unit {
   if self.core.auto_mode {
     self.core.auto_mode_last_advance_ms = 0
   }
+  self.backend.toggle_auto_mode()
   self.core.dirty_action_buttons = true
 }
 
@@ -460,6 +555,7 @@ pub fn UiPort::toggle_skip_mode(self : UiPort) -> Unit {
   if self.core.skip_mode {
     self.core.skip_mode_last_advance_ms = 0
   }
+  self.backend.toggle_skip_mode()
   self.core.dirty_action_buttons = true
 }
 
@@ -469,12 +565,13 @@ pub fn UiPort::set_skip_hold(self : UiPort, enabled : Bool) -> Unit {
   if enabled {
     self.core.skip_mode_last_advance_ms = 0
   }
+  self.backend.set_skip_hold(enabled)
   self.core.dirty_action_buttons = true
 }
 
 ///|
 pub fn UiPort::is_skip_active(self : UiPort) -> Bool {
-  self.core.is_skip_active()
+  self.core.is_skip_active() || self.backend.is_skip_active()
 }
 
 ///|
@@ -482,6 +579,7 @@ pub fn UiPort::set_log_visible(self : UiPort, visible : Bool) -> Unit {
   self.core.log_visible = visible
   self.core.dirty_text = true
   self.core.dirty_action_buttons = true
+  self.backend.set_log_visible(visible)
 }
 
 ///|
@@ -524,6 +622,7 @@ pub fn UiPort::set_script_localization(
 
 ///|
 pub fn UiPort::advance_auto_mode_timer(self : UiPort, elapsed_ms : Int) -> Unit {
+  self.backend.advance_auto_mode_timer(elapsed_ms~)
   if !self.core.auto_mode {
     return
   }
@@ -535,6 +634,9 @@ pub fn UiPort::advance_auto_mode_timer(self : UiPort, elapsed_ms : Int) -> Unit 
 
 ///|
 pub fn UiPort::should_auto_skip_wait_click(self : UiPort) -> Bool {
+  if self.backend.should_auto_skip_wait_click() {
+    return true
+  }
   if !self.core.auto_mode {
     return false
   }
@@ -544,10 +646,12 @@ pub fn UiPort::should_auto_skip_wait_click(self : UiPort) -> Bool {
 ///|
 pub fn UiPort::mark_auto_advanced(self : UiPort) -> Unit {
   self.core.auto_mode_last_advance_ms = 0
+  self.backend.mark_auto_advanced()
 }
 
 ///|
 pub fn UiPort::advance_skip_mode_timer(self : UiPort, elapsed_ms : Int) -> Unit {
+  self.backend.advance_skip_mode_timer(elapsed_ms~)
   if !self.core.is_skip_active() {
     return
   }
@@ -559,6 +663,9 @@ pub fn UiPort::advance_skip_mode_timer(self : UiPort, elapsed_ms : Int) -> Unit 
 
 ///|
 pub fn UiPort::should_skip_advance(self : UiPort) -> Bool {
+  if self.backend.should_skip_advance() {
+    return true
+  }
   if !self.core.is_skip_active() {
     return false
   }
@@ -571,20 +678,23 @@ pub fn UiPort::should_skip_advance(self : UiPort) -> Bool {
 ///|
 pub fn UiPort::complete_typewriter(self : UiPort) -> Unit {
   self.core.typewriter_visible = self.core.typewriter_text.length()
+  self.backend.complete_typewriter()
 }
 
 ///|
 pub fn UiPort::mark_skip_advanced(self : UiPort) -> Unit {
   self.core.skip_mode_last_advance_ms = 0
+  self.backend.mark_skip_advanced()
 }
 
 ///|
 pub fn UiPort::is_typewriter_done(self : UiPort) -> Bool {
-  self.core.is_typewriter_done()
+  self.core.is_typewriter_done() || self.backend.is_typewriter_done()
 }
 
 ///|
 pub fn UiPort::advance_typewriter(self : UiPort, elapsed_ms : Int) -> Bool {
+  let backend_done = self.backend.advance_typewriter(elapsed_ms~)
   if self.core.is_typewriter_done() {
     return true
   }
@@ -599,11 +709,14 @@ pub fn UiPort::advance_typewriter(self : UiPort, elapsed_ms : Int) -> Bool {
       self.core.typewriter_visible = self.core.typewriter_text.length()
     }
   }
-  self.core.is_typewriter_done()
+  self.core.is_typewriter_done() || backend_done
 }
 
 ///|
 pub fn UiPort::should_auto_advance(self : UiPort) -> Bool {
+  if self.backend.should_auto_advance() {
+    return true
+  }
   if !self.core.auto_mode {
     return false
   }
