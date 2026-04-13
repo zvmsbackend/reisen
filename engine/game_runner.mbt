@@ -881,15 +881,18 @@ pub fn[T] GameRunner::set_ui_strings(
 ///|
 pub fn[T] GameRunner::set_script_localization(
   self : GameRunner[T],
-  script_locale_json : String?,
-  script_default_locale_json : String?,
-  vocal_locale_dir : String,
-  script_locale : String,
-  script_default_locale : String,
+  script_locale_json~ : String?,
+  script_default_locale_json~ : String?,
+  vocal_locale_dir~ : String,
+  script_locale~ : String,
+  script_default_locale~ : String,
 ) -> Unit {
   self.ui.set_script_localization(
-    script_locale_json, script_default_locale_json, vocal_locale_dir, script_locale,
-    script_default_locale,
+    script_locale_json~,
+    script_default_locale_json~,
+    vocal_locale_dir~,
+    script_locale~,
+    script_default_locale~,
   )
   self.ui_dirty = true
 }

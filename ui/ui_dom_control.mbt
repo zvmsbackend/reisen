@@ -143,8 +143,6 @@ pub fn UiDom::toggle_skip_mode(self : UiDom) -> Unit {
 ///|
 pub fn UiDom::set_log_visible(self : UiDom, visible : Bool) -> Unit {
   self.log_visible = visible
-  self.dirty_text = true
-  self.dirty_action_buttons = true
 }
 
 ///|
@@ -160,24 +158,22 @@ pub fn UiDom::is_log_visible(self : UiDom) -> Bool {
 ///|
 pub fn UiDom::set_ui_strings(self : UiDom, ui_strings : UiStrings) -> Unit {
   self.ui_strings = ui_strings
-  self.mark_all_dirty()
 }
 
 ///|
 pub fn UiDom::set_script_localization(
   self : UiDom,
-  script_locale_json : String?,
-  script_default_locale_json : String?,
-  vocal_locale_dir : String,
-  script_locale : String,
-  script_default_locale : String,
+  script_locale_json~ : String?,
+  script_default_locale_json~ : String?,
+  vocal_locale_dir~ : String,
+  script_locale~ : String,
+  script_default_locale~ : String,
 ) -> Unit {
   self.script_locale_json = script_locale_json
   self.script_default_locale_json = script_default_locale_json
   self.vocal_locale_dir = vocal_locale_dir
   self.script_locale = script_locale
   self.script_default_locale = script_default_locale
-  self.mark_all_dirty()
 }
 
 ///|
@@ -210,4 +206,10 @@ pub fn UiDom::mark_skip_advanced(self : UiDom) -> Unit {
 ///|
 pub fn UiDom::simulate_click(self : UiDom) -> Unit {
   self.simulated_click = true
+}
+
+///|
+pub fn UiDom::simulate_intro_done(self : UiDom) -> Unit {
+  self.simulated_intro_done = true
+  dom_mark_intro_done(self.root_id)
 }

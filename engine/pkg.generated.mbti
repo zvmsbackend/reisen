@@ -108,7 +108,7 @@ pub fn[T] GameRunner::new_with_hooks(Director[T], @ui.UiDom, (CoreRenderSnapshot
 pub fn[T] GameRunner::new_with_ports(Director[T], @ui.UiPort, @ui.AudioPort, (CoreRenderSnapshot, Bool) -> Unit, (@core.RuntimeEvent) -> Unit, render_extension? : (RenderExtensionView, Bool) -> Unit) -> Self[T]
 pub fn[T] GameRunner::new_with_render_sync(Director[T], @ui.UiDom, (CoreRenderSnapshot, Bool) -> Unit) -> Self[T]
 pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
-pub fn[T] GameRunner::set_script_localization(Self[T], String?, String?, String, String, String) -> Unit
+pub fn[T] GameRunner::set_script_localization(Self[T], script_locale_json~ : String?, script_default_locale_json~ : String?, vocal_locale_dir~ : String, script_locale~ : String, script_default_locale~ : String) -> Unit
 pub fn[T] GameRunner::set_ui_click_sfx(Self[T], String?) -> Unit
 pub fn[T] GameRunner::set_ui_strings(Self[T], @ui.UiStrings) -> Unit
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit

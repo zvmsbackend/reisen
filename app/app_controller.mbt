@@ -429,11 +429,11 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
     ..set_ui_click_sfx(self.ui_click_sfx_id)
     ..set_ui_strings(self.ui_strings)
     .set_script_localization(
-      self.script_locale_json,
-      self.script_default_locale_json,
-      self.vocal_locale_dir,
-      effective_locale,
-      self.default_locale,
+      script_locale_json=self.script_locale_json,
+      script_default_locale_json=self.script_default_locale_json,
+      vocal_locale_dir=self.vocal_locale_dir,
+      script_locale=effective_locale,
+      script_default_locale=self.default_locale,
     )
   }
 }

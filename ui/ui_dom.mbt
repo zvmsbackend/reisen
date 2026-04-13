@@ -61,6 +61,11 @@ struct UiViewModel {
   auto_mode : Bool
   skip_mode : Bool
   log_visible : Bool
+  dirty_speaker : Bool
+  dirty_text : Bool
+  dirty_choices : Bool
+  dirty_text_input : Bool
+  dirty_action_buttons : Bool
 } derive(Show, Eq)
 
 ///|
@@ -103,11 +108,6 @@ struct UiDom {
   mut simulated_click : Bool
   mut simulated_intro_done : Bool
   mut log_visible : Bool
-  mut dirty_speaker : Bool
-  mut dirty_text : Bool
-  mut dirty_choices : Bool
-  mut dirty_text_input : Bool
-  mut dirty_action_buttons : Bool
 }
 
 ///|
@@ -165,10 +165,5 @@ pub fn UiDom::new(
     simulated_click: false,
     simulated_intro_done: false,
     log_visible: false,
-    dirty_speaker: true,
-    dirty_text: true,
-    dirty_choices: true,
-    dirty_text_input: true,
-    dirty_action_buttons: true,
   }
 }

@@ -78,5 +78,10 @@ pub fn UiViewModel::from_snapshot(
     auto_mode: ui.auto_mode,
     skip_mode: ui.is_skip_active(),
     log_visible: ui.log_visible,
+    dirty_speaker: true,
+    dirty_text: true,
+    dirty_choices: true,
+    dirty_text_input: true,
+    dirty_action_buttons: true,
   }
 }

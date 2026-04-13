@@ -34,15 +34,20 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   } else {
     dom_clear_intro(self.root_id)
   }
-  if view.dialog_seq != self.last_dialog_seq && !localized_text.is_empty() {
-    if view.append && view.typewriter && !self.is_skip_active() {
+  if !view.typewriter {
+    self.typewriter_text = localized_text
+    self.typewriter_visible = self.typewriter_text.length()
+    self.typewriter_last_update_ms = 0
+  } else if view.dialog_seq != self.last_dialog_seq &&
+    !localized_text.is_empty() {
+    if view.append && !self.is_skip_active() {
       let prev_len = self.typewriter_text.length()
       self.typewriter_text = localized_text
       if self.typewriter_visible < prev_len {
         self.typewriter_visible = prev_len
       }
       self.typewriter_last_update_ms = 0
-    } else if view.typewriter && !self.is_skip_active() {
+    } else if !self.is_skip_active() {
       self.start_typewriter(localized_text)
     } else {
       self.typewriter_text = localized_text
@@ -52,7 +57,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   }
   self.last_dialog_seq = view.dialog_seq
   dom_setup_typewriter_click(self.root_id)
-  if self.dirty_speaker || self.dirty_text {
+  if view.dirty_speaker || view.dirty_text {
     let visible_html = if localized_text.is_empty() {
       ""
     } else if self.is_typewriter_done() {
@@ -65,18 +70,15 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       localized_speaker.render(),
       visible_html,
     )
-    self.dirty_speaker = false
-    self.dirty_text = false
   }
   dom_set_text_box_visible(self.root_id, view.text_box_visible)
   dom_set_avatar(self.root_id, view.avatar_id)
-  if self.dirty_choices {
+  if view.dirty_choices {
     let ids = localized_choices.map(c => c.id)
     let texts = localized_choices.map(c => c.text.render())
     dom_render_choices(self.root_id, ids, texts)
-    self.dirty_choices = false
   }
-  if self.dirty_action_buttons {
+  if view.dirty_action_buttons {
     dom_render_action_buttons(
       self.root_id,
       view.auto_mode,
@@ -93,14 +95,13 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
       self.ui_strings.game_toggle_on_prefix,
       self.ui_strings.game_toggle_off_prefix,
     )
-    self.dirty_action_buttons = false
   }
   if view.log_visible {
     dom_render_log(self.root_id, localized_dialog_history.to_json().stringify())
   } else {
     dom_clear_log(self.root_id)
   }
-  if self.dirty_text_input {
+  if view.dirty_text_input {
     if localized_text_input is Some(input_view) {
       dom_render_text_input(
         self.root_id,
@@ -111,6 +112,5 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     } else {
       dom_clear_text_input(self.root_id)
     }
-    self.dirty_text_input = false
   }
 }

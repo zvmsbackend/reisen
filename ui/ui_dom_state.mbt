@@ -42,47 +42,6 @@ pub fn UiDom::reveal_intro_line(self : UiDom) -> Bool {
 }
 
 ///|
-pub fn UiDom::simulate_intro_done(self : UiDom) -> Unit {
-  self.simulated_intro_done = true
-  dom_mark_intro_done(self.root_id)
-}
-
-///|
-pub fn UiDom::mark_all_dirty(self : UiDom) -> Unit {
-  self.dirty_speaker = true
-  self.dirty_text = true
-  self.dirty_choices = true
-  self.dirty_text_input = true
-  self.dirty_action_buttons = true
-}
-
-///|
-pub fn UiDom::mark_dirty_text(self : UiDom) -> Unit {
-  self.dirty_text = true
-}
-
-///|
-pub fn UiDom::mark_dirty_text_and_speaker(self : UiDom) -> Unit {
-  self.dirty_speaker = true
-  self.dirty_text = true
-}
-
-///|
-pub fn UiDom::mark_dirty_choices(self : UiDom) -> Unit {
-  self.dirty_choices = true
-}
-
-///|
-pub fn UiDom::mark_dirty_text_input(self : UiDom) -> Unit {
-  self.dirty_text_input = true
-}
-
-///|
-pub fn UiDom::mark_dirty_action_buttons(self : UiDom) -> Unit {
-  self.dirty_action_buttons = true
-}
-
-///|
 pub fn UiDom::clear_game_ui(self : UiDom) -> Unit {
   self.dom_animation_cursor = 0
   self.dom_timeline_ms = 0
