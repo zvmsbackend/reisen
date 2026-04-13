@@ -11,4 +11,5 @@ import {
 
 import {
   "sennenki/reisen/util",
+  "moonbitlang/core/debug",
 } for "wbtest"

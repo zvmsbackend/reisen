@@ -4,7 +4,7 @@ pub struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn GameSettings::new(

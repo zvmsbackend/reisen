@@ -5,7 +5,7 @@
 pub(all) enum SettingsContext {
   FromStartMenu
   FromMidgame
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub(all) enum SettingsViewMode {

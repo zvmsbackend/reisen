@@ -5,7 +5,7 @@ pub(all) enum DialogText {
   Interpolation(String)
   Enhanced(DialogText, style~ : String)
   Ruby(String, ruby~ : String)
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn DialogText::empty() -> DialogText {

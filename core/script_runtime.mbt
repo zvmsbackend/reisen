@@ -43,7 +43,7 @@ pub(all) enum RuntimeEvent {
   WaitCustomEventStarted(String)
   Custom(String, String)
   ScriptEnded
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub type EventHook = (RuntimeEvent) -> Unit

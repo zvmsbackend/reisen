@@ -8,7 +8,7 @@ pub struct GameState[T] {
   flags : Map[String, Bool]
   ints : Map[String, Int]
   texts : Map[String, String]
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn[T] GameState::new(user_data : T) -> GameState[T] {

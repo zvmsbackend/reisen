@@ -13,4 +13,5 @@ import {
   "sennenki/reisen/assets",
   "moonbit-community/js-ffi/js",
   "moonbitlang/async",
+  "moonbitlang/core/debug",
 } for "wbtest"

@@ -6,19 +6,19 @@
 struct UiChoiceView {
   id : String
   text : DialogText
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 struct UiTextInputView {
   var_name : String
   prompt : DialogText
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 struct UiVideoView {
   url : String
   can_skip : Bool
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 struct UiDomFigureView {
@@ -41,7 +41,7 @@ struct UiDomFigureView {
   color_r : Double
   color_g : Double
   color_b : Double
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 struct UiViewModel {
@@ -66,7 +66,7 @@ struct UiViewModel {
   dirty_choices : Bool
   dirty_text_input : Bool
   dirty_action_buttons : Bool
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 struct UiDom {

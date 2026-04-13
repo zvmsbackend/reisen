@@ -1,4 +1,7 @@
 ///|
+using @debug {assert_eq}
+
+///|
 test "save slots write read list delete" {
   let store = default_save_slot_store()
   store.delete_slot("global", "wb_a")

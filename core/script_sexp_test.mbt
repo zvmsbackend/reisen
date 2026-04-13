@@ -1,4 +1,7 @@
 ///|
+using @debug {assert_eq}
+
+///|
 using @core {type Script}
 
 ///|

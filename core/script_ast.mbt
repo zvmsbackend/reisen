@@ -13,7 +13,7 @@ pub fn label(name? : String = @util.gensym(prefix="label")) -> Label {
 pub(all) struct DialogLogEntry {
   speaker : String
   text : String
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum Position {
@@ -21,7 +21,7 @@ pub(all) enum Position {
   Center
   Right
   Custom(Double, Double)
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum Easing {
@@ -29,7 +29,7 @@ pub(all) enum Easing {
   EaseIn
   EaseOut
   EaseInOut
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) enum AnimProp {
@@ -45,7 +45,7 @@ pub(all) enum AnimProp {
   ColorRed
   ColorGreen
   ColorBlue
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) struct AnimationSpec {
@@ -56,7 +56,7 @@ pub(all) struct AnimationSpec {
   to : Array[Double]?
   anchor : Array[Double]?
   blocking : Bool
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) struct ScalarState {
@@ -71,7 +71,7 @@ pub(all) struct ScalarState {
   color_r : Double
   color_g : Double
   color_b : Double
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub impl Default for ScalarState with default() {
@@ -94,7 +94,7 @@ pub impl Default for ScalarState with default() {
 pub(all) enum EffectPhase {
   Pre
   Post
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) struct EffectSpec {
@@ -104,20 +104,20 @@ pub(all) struct EffectSpec {
   duration_ms : Int?
   easing : Easing
   blocking : Bool
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) struct FigurePlacement {
   pos : Position
   layer : Int
   scalars : ScalarState
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) struct DomFigureState {
   placement : FigurePlacement
   interactive : Bool
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub(all) struct UiSnapshot {
@@ -132,7 +132,7 @@ pub(all) struct UiSnapshot {
   avatar_id : String?
   dom_figures : Map[String, DomFigureState]
   dom_animations : Array[(String, AnimationSpec)]
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub impl Default for UiSnapshot with default() {
@@ -155,14 +155,14 @@ pub impl Default for UiSnapshot with default() {
 pub(all) struct BackgroundState {
   id : String
   scalars : ScalarState
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct ChoiceOption {
   id : String
   text : DialogText
   jump : String
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 /// User-defined MoonBit code hook executed by the script runtime.

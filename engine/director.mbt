@@ -9,7 +9,7 @@ pub(all) struct DialogLine {
   typewriter : Bool
   append : Bool
   proceed_on_done : Bool
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 priv struct UiState {

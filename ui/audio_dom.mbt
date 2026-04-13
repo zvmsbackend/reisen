@@ -9,7 +9,7 @@ enum AudioCommand {
   PlaySfx(String)
   PlaySfxUrl(String)
   StopSfx
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 fn AudioCommand::from_event(event : RuntimeEvent) -> AudioCommand {

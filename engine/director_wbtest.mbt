@@ -1,3 +1,5 @@
+using @debug {assert_eq}
+
 ///|
 using @assets {dom_figure}
 

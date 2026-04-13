@@ -2,17 +2,17 @@
 pub(all) enum GroupStep {
   Animate(AnimationSpec)
   Effect(EffectSpec)
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct AnimationGroup {
   steps : Array[AnimationSpec]
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub struct MixedGroup {
   steps : Array[GroupStep]
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub fn AnimationGroup::new() -> AnimationGroup {

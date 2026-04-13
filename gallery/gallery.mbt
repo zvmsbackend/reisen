@@ -8,7 +8,7 @@ pub fn[T] ReplayStateFactories::new() -> ReplayStateFactories[T] {
 }
 
 ///|
-pub struct ReplayStateFactoryKey(String) derive(Show, Eq, ToJson, FromJson)
+pub struct ReplayStateFactoryKey(String) derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn ReplayStateFactoryKey::new(key : String) -> ReplayStateFactoryKey {
@@ -41,7 +41,7 @@ pub struct GalleryImage {
   thumbnail_url : String?
   replay_label : String?
   replay_state_factory_key : ReplayStateFactoryKey?
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 let gallery_images : Map[String, GalleryImage] = {}

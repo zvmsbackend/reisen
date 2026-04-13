@@ -339,11 +339,6 @@ fn UiCoreState::sync_from_snapshot(
 }
 
 ///|
-fn UiCoreState::visible_text(self : UiCoreState) -> DialogText {
-  self.typewriter_text.slice(self.typewriter_visible)
-}
-
-///|
 fn UiCoreState::mark_all_dirty(self : UiCoreState) -> Unit {
   self.dirty_speaker = true
   self.dirty_text = true

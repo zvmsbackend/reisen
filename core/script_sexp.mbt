@@ -2,7 +2,7 @@
 /// S-expression script parser for Reisen.
 
 ///|
-pub suberror ReisenSexpError derive(Show, Eq)
+pub suberror ReisenSexpError derive(Debug, Eq)
 
 ///|
 pub type SexpHostFunction[T] = (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value

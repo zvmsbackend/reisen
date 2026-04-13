@@ -20,7 +20,7 @@ struct GalleryTileView {
   title : String
   unlocked : Bool
   replay_label : String?
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 struct GalleryMenu {

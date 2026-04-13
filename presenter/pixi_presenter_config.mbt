@@ -6,7 +6,7 @@ pub struct PixiPresenterConfig {
   auto_density : Bool
   position_entry_offset_ratio : Double
   scale_entry_from : Double
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub suberror PixiPresenterConfigError {

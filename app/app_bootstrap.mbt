@@ -100,7 +100,7 @@ fn[T] validate_script_assets(
 }
 
 ///|
-pub async fn[T] start_game(
+pub fn[T] start_game(
   script : Script[T],
   state : GameState[T],
   ui_root_id : String,
@@ -143,7 +143,7 @@ pub async fn[T] start_game(
 }
 
 ///|
-pub async fn[T : FromJson] start_game_from_save(
+pub fn[T : FromJson] start_game_from_save(
   script : Script[T],
   save_json : String,
   ui_root_id : String,
@@ -159,7 +159,7 @@ pub async fn[T : FromJson] start_game_from_save(
   script_default_locale? : String = "",
   gallery_ns? : String = "global",
   dialog_history? : Array[DialogLogEntry] = [],
-) -> GameRunner[T] {
+) -> GameRunner[T] raise {
   let director = Director::from_save_json(script, save_json, gallery_ns~)
   director.set_dialog_history(dialog_history)
   let ui = UiPort::new(
@@ -231,7 +231,7 @@ pub fn[T : ToJson] save_runner_to_slot_with_meta(
 }
 
 ///|
-pub async fn[T : FromJson] start_game_from_slot(
+pub fn[T : FromJson] start_game_from_slot(
   script : Script[T],
   slot : String,
   ui_root_id : String,
@@ -248,7 +248,7 @@ pub async fn[T : FromJson] start_game_from_slot(
   script_locale? : String = "",
   script_default_locale? : String = "",
   gallery_ns? : String = "global",
-) -> GameRunner[T] {
+) -> GameRunner[T] raise {
   match save_store.read_slot(save_namespace, slot) {
     Some(save_json) => {
       let payload = decode_save_slot_payload(save_json)

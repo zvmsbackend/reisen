@@ -22,13 +22,13 @@ pub struct SaveSlotMeta {
   title : String
   preview : String
   updated_at_ms : Double
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub struct SaveSlotEntry {
   slot : String
   meta : SaveSlotMeta?
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 /// Storage interface for save slot payloads + metadata.

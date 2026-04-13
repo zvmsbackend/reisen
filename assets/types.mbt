@@ -1,11 +1,11 @@
 ///|
-pub struct PixiFigure(String) derive(Show, Eq, ToJson, FromJson)
+pub struct PixiFigure(String) derive(Debug, Eq, ToJson, FromJson)
 
 ///|
-pub struct Live2dFigure(String) derive(Show, Eq, ToJson, FromJson)
+pub struct Live2dFigure(String) derive(Debug, Eq, ToJson, FromJson)
 
 ///|
-pub struct DomFigure(String) derive(Show, Eq, ToJson, FromJson)
+pub struct DomFigure(String) derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn DomFigure::new(id : String) -> DomFigure {
@@ -16,13 +16,13 @@ pub fn DomFigure::new(id : String) -> DomFigure {
 pub struct Background {
   id : String
   url : String
-} derive(Show, Eq, ToJson, FromJson)
+} derive(Debug, Eq, ToJson, FromJson)
 
 ///|
-pub struct Music(String) derive(Show, Eq, ToJson, FromJson)
+pub struct Music(String) derive(Debug, Eq, ToJson, FromJson)
 
 ///|
-pub struct Sfx(String) derive(Show, Eq, ToJson, FromJson)
+pub struct Sfx(String) derive(Debug, Eq, ToJson, FromJson)
 
 ///|
 pub fn dom_figure(id : String) -> DomFigure {

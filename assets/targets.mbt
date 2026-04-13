@@ -2,7 +2,7 @@
 pub(all) enum RenderableKind {
   Pixi
   Dom
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub trait AnimationTarget {

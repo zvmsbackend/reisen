@@ -19,7 +19,7 @@ pub enum AppPhase {
   Settings
   Credits
   InGame
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
 pub type ScriptFactory[T] = async () -> Script[T]
@@ -30,7 +30,7 @@ pub suberror AppControllerError {
   ScriptValidationMissingImage(id~ : String)
   ScriptValidationMissingAudio(id~ : String)
   SaveSlotMissing(slot~ : String)
-} derive(Show, Eq)
+} derive(Eq)
 
 ///|
 pub fn AppControllerError::message(self : AppControllerError) -> String {
@@ -574,7 +574,7 @@ fn[T] AppController::apply_settings_from_storage(
 /// Creates a fresh `GameRunner` for the given script + state, pre-filling all
 /// locale and rendering arguments from the controller's current configuration.
 /// Also calls `set_ui_click_sfx` and `apply_settings_from_storage`.
-async fn[T] AppController::make_runner(
+fn[T] AppController::make_runner(
   self : AppController[T],
   script : Script[T],
   state : GameState[T],
@@ -603,11 +603,11 @@ async fn[T] AppController::make_runner(
 /// Loads a `GameRunner` from a save slot, pre-filling all locale and rendering
 /// arguments from the controller's current configuration.
 /// Also calls `set_ui_click_sfx` and `apply_settings_from_storage`.
-async fn[T : FromJson] AppController::load_runner_from_slot(
+fn[T : FromJson] AppController::load_runner_from_slot(
   self : AppController[T],
   script : Script[T],
   slot : String,
-) -> GameRunner[T] {
+) -> GameRunner[T] raise {
   let runner = start_game_from_slot(
     script,
     slot,
@@ -634,12 +634,12 @@ async fn[T : FromJson] AppController::load_runner_from_slot(
 /// Restores a `GameRunner` from a mid-game director JSON snapshot (used when
 /// returning from the settings/save screen back to an in-progress game).
 /// Also calls `set_ui_click_sfx` and `apply_settings_from_storage`.
-async fn[T : FromJson] AppController::resume_runner_from_json(
+fn[T : FromJson] AppController::resume_runner_from_json(
   self : AppController[T],
   script : Script[T],
   director_json : String,
   dialog_history : Array[DialogLogEntry],
-) -> GameRunner[T] {
+) -> GameRunner[T] raise {
   let runner = start_game_from_save(
     script,
     director_json,
@@ -904,7 +904,7 @@ fn[T] AppController::tick_start_logo(
 }
 
 ///|
-async fn[T : ToJson] AppController::tick_in_game(
+fn[T : ToJson] AppController::tick_in_game(
   self : AppController[T],
   elapsed_ms : Int,
 ) -> Bool {
@@ -1163,10 +1163,7 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
     AppPhase::LocaleSelect => self.tick_locale_select()
     AppPhase::StartGate => self.tick_start_gate()
     AppPhase::StartLogo => self.tick_start_logo(elapsed_ms)
-    AppPhase::InGame =>
-      self.tick_in_game(elapsed_ms) catch {
-        err => raise ScriptLoadFailed(message=err.to_string())
-      }
+    AppPhase::InGame => self.tick_in_game(elapsed_ms)
     AppPhase::Settings => self.tick_settings()
     AppPhase::Gallery => self.tick_gallery()
     AppPhase::Credits => self.tick_credits()
