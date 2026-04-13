@@ -80,6 +80,7 @@ pub fn PixiLive2dModel::focus(Self, Double, Double, instant? : Bool) -> Unit
 pub fn PixiLive2dModel::height(Self) -> Double
 pub async fn PixiLive2dModel::load(String) -> Self raise PixiBindingError
 pub async fn PixiLive2dModel::motion(Self, String, index? : Int) -> Bool noraise
+pub fn PixiLive2dModel::motion_noawait(Self, String, index? : Int) -> Bool
 pub fn PixiLive2dModel::set_alpha(Self, Double) -> Unit
 pub fn PixiLive2dModel::set_anchor(Self, Double, Double) -> Unit
 pub fn PixiLive2dModel::set_expression(Self, @js.Optional[String]) -> Unit

@@ -257,14 +257,14 @@ fn PixiPresenter::pull_new_animations(
 extern "js" fn noop() -> Unit = "() => {}"
 
 ///|
-async fn PixiPresenter::pull_new_live2d_actions(
+fn PixiPresenter::pull_new_live2d_actions(
   self : PixiPresenter,
   extension : RenderExtensionView,
 ) -> Unit noraise {
   for entry in extension.live2d_motions() {
     let (target, group, index) = entry
     if self.figure_live2d.get(target) is Some(model) {
-      model.motion(group, index?) |> ignore
+      model.motion_noawait(group, index?) |> ignore
     }
   }
 
@@ -274,8 +274,6 @@ async fn PixiPresenter::pull_new_live2d_actions(
       model.set_expression(@js.Optional::from_option(id))
     }
   }
-  // Due to a bug in the implementation of MoonBit async functions, if we don't
-  // put any code at the end of the loop, the function will not halt
   noop()
 }
 
@@ -995,7 +993,7 @@ fn PixiPresenter::sync_figures(
 }
 
 ///|
-async fn PixiPresenter::sync_noraise(
+fn PixiPresenter::sync_noraise(
   self : PixiPresenter,
   extension : RenderExtensionView,
   skip_mode : Bool,

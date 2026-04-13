@@ -11,7 +11,7 @@ import {
 }
 
 // Values
-pub async fn noop_core_render_sync(CoreRenderSnapshot, Bool) -> Unit noraise
+pub fn noop_core_render_sync(CoreRenderSnapshot, Bool) -> Unit
 
 // Errors
 
@@ -96,7 +96,7 @@ pub struct DirectorSave[T] {
 type GameRunner[T]
 pub fn[T] GameRunner::apply_runtime_event(Self[T], @core.RuntimeEvent) -> Unit
 pub fn[T] GameRunner::apply_settings(Self[T], @storage.GameSettings) -> Unit
-pub async fn[T] GameRunner::clear_presentation(Self[T]) -> Unit noraise
+pub fn[T] GameRunner::clear_presentation(Self[T]) -> Unit
 pub fn[T] GameRunner::clear_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::complete_typewriter(Self[T]) -> Unit
 pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
@@ -104,21 +104,21 @@ pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::is_log_visible(Self[T]) -> Bool
 pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise @core.ScriptRuntimeError
 pub fn[T] GameRunner::new(Director[T], @ui.UiDom) -> Self[T]
-pub fn[T] GameRunner::new_with_hooks(Director[T], @ui.UiDom, async (CoreRenderSnapshot, Bool) -> Unit noraise, (@core.RuntimeEvent) -> Unit, render_extension? : async (RenderExtensionView, Bool) -> Unit noraise) -> Self[T]
-pub fn[T] GameRunner::new_with_ports(Director[T], @ui.UiPort, @ui.AudioPort, async (CoreRenderSnapshot, Bool) -> Unit noraise, (@core.RuntimeEvent) -> Unit, render_extension? : async (RenderExtensionView, Bool) -> Unit noraise) -> Self[T]
-pub fn[T] GameRunner::new_with_render_sync(Director[T], @ui.UiDom, async (CoreRenderSnapshot, Bool) -> Unit noraise) -> Self[T]
+pub fn[T] GameRunner::new_with_hooks(Director[T], @ui.UiDom, (CoreRenderSnapshot, Bool) -> Unit, (@core.RuntimeEvent) -> Unit, render_extension? : (RenderExtensionView, Bool) -> Unit) -> Self[T]
+pub fn[T] GameRunner::new_with_ports(Director[T], @ui.UiPort, @ui.AudioPort, (CoreRenderSnapshot, Bool) -> Unit, (@core.RuntimeEvent) -> Unit, render_extension? : (RenderExtensionView, Bool) -> Unit) -> Self[T]
+pub fn[T] GameRunner::new_with_render_sync(Director[T], @ui.UiDom, (CoreRenderSnapshot, Bool) -> Unit) -> Self[T]
 pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
 pub fn[T] GameRunner::set_script_localization(Self[T], String?, String?, String, String, String) -> Unit
 pub fn[T] GameRunner::set_ui_click_sfx(Self[T], String?) -> Unit
 pub fn[T] GameRunner::set_ui_strings(Self[T], @ui.UiStrings) -> Unit
 pub fn[T] GameRunner::simulate_click(Self[T]) -> Unit
-pub async fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
+pub fn[T] GameRunner::step(Self[T], elapsed_ms? : Int) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
 pub fn[T] GameRunner::submit_choice(Self[T], String) -> @core.RuntimeEvent raise @core.ScriptRuntimeError
 pub fn[T] GameRunner::submit_custom_event(Self[T], String, String) -> @core.RuntimeEvent
-pub async fn[T] GameRunner::sync_ui(Self[T]) -> Unit noraise
+pub fn[T] GameRunner::sync_ui(Self[T]) -> Unit
 pub fn[T] GameRunner::take_game_action(Self[T]) -> String?
 pub fn[T] GameRunner::take_pending_action(Self[T]) -> String?
-pub async fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool noraise
+pub fn[T] GameRunner::tick(Self[T], elapsed_ms? : Int) -> Bool
 pub fn[T] GameRunner::toggle_auto_mode(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_log_visible(Self[T]) -> Unit
 pub fn[T] GameRunner::toggle_skip_mode(Self[T]) -> Unit
@@ -163,9 +163,9 @@ pub struct RenderState {
 } derive(ToJson, @json.FromJson)
 
 // Type aliases
-pub type RenderExtensionHook = async (RenderExtensionView, Bool) -> Unit noraise
+pub type RenderExtensionHook = (RenderExtensionView, Bool) -> Unit
 
-pub type RenderSyncHook = async (CoreRenderSnapshot, Bool) -> Unit noraise
+pub type RenderSyncHook = (CoreRenderSnapshot, Bool) -> Unit
 
 // Traits
 

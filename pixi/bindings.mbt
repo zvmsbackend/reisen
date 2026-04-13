@@ -455,6 +455,14 @@ extern "js" fn js_live2d_motion_promise(
 ) -> @js_async.Promise[Bool] = "live2dMotion"
 
 ///|
+#module("/pixi-bridge.js")
+extern "js" fn js_live2d_motion_noawait(
+  model : PixiLive2dModel,
+  group : String,
+  index : @js.Optional[Int],
+) -> Unit = "live2dMotion"
+
+///|
 pub async fn PixiLive2dModel::motion(
   self : PixiLive2dModel,
   group : String,
@@ -463,6 +471,16 @@ pub async fn PixiLive2dModel::motion(
   try! @js_async.Promise::wait(
     js_live2d_motion_promise(self, group, @js.Optional::from_option(index)),
   )
+}
+
+///|
+pub fn PixiLive2dModel::motion_noawait(
+  self : PixiLive2dModel,
+  group : String,
+  index? : Int,
+) -> Bool {
+  js_live2d_motion_noawait(self, group, @js.Optional::from_option(index))
+  true
 }
 
 ///|

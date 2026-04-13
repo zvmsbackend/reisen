@@ -2,10 +2,10 @@
 /// Game loop glue between `Director` (state machine) and UI/audio ports.
 
 ///|
-pub type RenderSyncHook = async (CoreRenderSnapshot, Bool) -> Unit noraise
+pub type RenderSyncHook = (CoreRenderSnapshot, Bool) -> Unit noraise
 
 ///|
-pub type RenderExtensionHook = async (RenderExtensionView, Bool) -> Unit noraise
+pub type RenderExtensionHook = (RenderExtensionView, Bool) -> Unit noraise
 
 ///|
 /// Default no-op core render hook for compatibility wiring.
@@ -364,7 +364,7 @@ fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
-async fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit noraise {
+fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit noraise {
   let skip_mode = self.ui.is_skip_active()
   let core_snapshot = self.director.core_render_snapshot()
   (self.render_sync)(core_snapshot, skip_mode)
@@ -376,7 +376,7 @@ async fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit noraise {
 }
 
 ///|
-async fn[T] GameRunner::maybe_render_ui(self : GameRunner[T]) -> Unit noraise {
+fn[T] GameRunner::maybe_render_ui(self : GameRunner[T]) -> Unit noraise {
   if self.ui_dirty {
     self.render_ui()
   }
@@ -477,7 +477,7 @@ priv enum RenderMode {
 }
 
 ///|
-async fn[T] GameRunner::apply_event_and_render(
+fn[T] GameRunner::apply_event_and_render(
   self : GameRunner[T],
   event : RuntimeEvent,
   mark_ui_for_text : Bool,
@@ -491,7 +491,7 @@ async fn[T] GameRunner::apply_event_and_render(
 }
 
 ///|
-pub async fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit noraise {
+pub fn[T] GameRunner::sync_ui(self : GameRunner[T]) -> Unit noraise {
   self.ui.mark_all_dirty()
   self.render_ui()
   self.sync_canvas()
@@ -512,7 +512,7 @@ fn[T] GameRunner::advance_frame_state(
 }
 
 ///|
-async fn[T] GameRunner::step_handle_video_and_wait(
+fn[T] GameRunner::step_handle_video_and_wait(
   self : GameRunner[T],
   elapsed_ms : Int,
 ) -> RuntimeEvent? noraise {
@@ -577,7 +577,7 @@ fn[T] GameRunner::step_handle_ui_action(self : GameRunner[T]) -> RuntimeEvent? {
 }
 
 ///|
-async fn[T] GameRunner::step_handle_blocking_or_wait(
+fn[T] GameRunner::step_handle_blocking_or_wait(
   self : GameRunner[T],
   elapsed_ms : Int,
 ) -> RuntimeEvent? raise ScriptRuntimeError {
@@ -653,7 +653,7 @@ fn[T] GameRunner::step_handle_choices_and_input(
 }
 
 ///|
-async fn[T] GameRunner::step_handle_intro_or_empty_dialog(
+fn[T] GameRunner::step_handle_intro_or_empty_dialog(
   self : GameRunner[T],
   elapsed_ms : Int,
 ) -> RuntimeEvent? raise ScriptRuntimeError {
@@ -683,7 +683,7 @@ async fn[T] GameRunner::step_handle_intro_or_empty_dialog(
 }
 
 ///|
-async fn[T] GameRunner::step_handle_dialog_flow(
+fn[T] GameRunner::step_handle_dialog_flow(
   self : GameRunner[T],
   elapsed_ms : Int,
 ) -> RuntimeEvent raise ScriptRuntimeError {
@@ -760,7 +760,7 @@ async fn[T] GameRunner::step_handle_dialog_flow(
 }
 
 ///|
-pub async fn[T] GameRunner::step(
+pub fn[T] GameRunner::step(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> RuntimeEvent raise ScriptRuntimeError {
@@ -830,7 +830,7 @@ pub fn[T] GameRunner::jump_to_label(
 
 ///|
 /// Advances one frame and reports whether loop should continue.
-pub async fn[T] GameRunner::tick(
+pub fn[T] GameRunner::tick(
   self : GameRunner[T],
   elapsed_ms? : Int = 0,
 ) -> Bool noraise {
@@ -916,9 +916,7 @@ pub fn[T] GameRunner::clear_ui(self : GameRunner[T]) -> Unit {
 }
 
 ///|
-pub async fn[T] GameRunner::clear_presentation(
-  self : GameRunner[T],
-) -> Unit noraise {
+pub fn[T] GameRunner::clear_presentation(self : GameRunner[T]) -> Unit noraise {
   self.ui.clear_game_ui()
   self.director.clear_render()
   self.sync_canvas()
