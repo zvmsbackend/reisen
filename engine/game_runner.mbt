@@ -366,12 +366,12 @@ fn[T] GameRunner::render_ui(self : GameRunner[T]) -> Unit {
 ///|
 fn[T] GameRunner::sync_canvas(self : GameRunner[T]) -> Unit noraise {
   let skip_mode = self.ui.is_skip_active()
-  let core_snapshot = self.director.core_render_snapshot()
-  (self.render_sync)(core_snapshot, skip_mode)
   match self.render_extension {
     Some(hook) => hook(self.director.render_extension_view(), skip_mode)
     None => ()
   }
+  let core_snapshot = self.director.core_render_snapshot()
+  (self.render_sync)(core_snapshot, skip_mode)
   self.render_sync_dirty = false
 }
 

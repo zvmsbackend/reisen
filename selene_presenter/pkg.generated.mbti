@@ -19,6 +19,8 @@ pub struct SelenePresenter {
   background_handles : Map[String, @asset_types.ImageHandle]
   figure_handles : Map[String, @asset_types.ImageHandle]
   active_animations : Map[String, ActiveAnimation]
+  mut last_submitted_epoch : String?
+  mut force_submit : Bool
 }
 pub fn SelenePresenter::as_core_render_sync_hook(Self) -> (@engine.CoreRenderSnapshot, Bool) -> Unit
 pub fn SelenePresenter::as_render_hooks(Self) -> ((@engine.CoreRenderSnapshot, Bool) -> Unit, (@engine.RenderExtensionView, Bool) -> Unit)
