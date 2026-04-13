@@ -17,44 +17,34 @@ pub fn animation_anchor_from_values(
 
 ///|
 pub fn animation_scalar_target(spec : AnimationSpec) -> Double? {
-  match spec.to {
-    Some(values) => if values.is_empty() { None } else { Some(values[0]) }
-    None => None
-  }
+  spec.to.bind(values => values.get(0))
 }
 
 ///|
 pub fn animation_scalar_source(spec : AnimationSpec) -> Double? {
-  match spec.from {
-    Some(values) => if values.is_empty() { None } else { Some(values[0]) }
-    None => None
-  }
+  spec.from.bind(values => values.get(0))
 }
 
 ///|
 pub fn animation_vec2_target(spec : AnimationSpec) -> (Double, Double)? {
-  match spec.to {
-    Some(values) =>
-      if values.length() >= 2 {
-        Some((values[0], values[1]))
-      } else {
-        None
-      }
-    None => None
-  }
+  spec.to.bind(values => {
+    if values.length() >= 2 {
+      Some((values[0], values[1]))
+    } else {
+      None
+    }
+  })
 }
 
 ///|
 pub fn animation_vec2_source(spec : AnimationSpec) -> (Double, Double)? {
-  match spec.from {
-    Some(values) =>
-      if values.length() >= 2 {
-        Some((values[0], values[1]))
-      } else {
-        None
-      }
-    None => None
-  }
+  spec.from.bind(values => {
+    if values.length() >= 2 {
+      Some((values[0], values[1]))
+    } else {
+      None
+    }
+  })
 }
 
 ///|

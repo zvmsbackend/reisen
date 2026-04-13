@@ -4,7 +4,7 @@ pub fn UiViewModel::from_snapshot(
   ui : UiDom,
 ) -> UiViewModel {
   ui.pull_new_dom_animations(snapshot)
-  let dom_figure_states = clone_dom_figures(snapshot.dom_figures)
+  let dom_figure_states = snapshot.dom_figures.copy()
   ui.apply_active_dom_animations(dom_figure_states)
   let dom_figures : Array[UiDomFigureView] = []
   for id, state in dom_figure_states {
@@ -57,10 +57,10 @@ pub fn UiViewModel::from_snapshot(
   let text_box_visible = snapshot.text_box_visible
   let avatar_id = snapshot.avatar_id
   let choices = snapshot.choices.map(opt => { id: opt.id, text: opt.text })
-  let text_input = match snapshot.text_input {
-    Some((var_name, prompt)) => Some({ var_name, prompt })
-    None => None
-  }
+  let text_input = snapshot.text_input.map(entry => {
+    var_name: entry.0,
+    prompt: entry.1,
+  })
   {
     speaker,
     text,

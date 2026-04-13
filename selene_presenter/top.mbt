@@ -248,36 +248,36 @@ fn scalar_state_value(
   prop : @core.AnimProp,
 ) -> Double {
   match prop {
-    @core.AnimProp::Opacity => scalars.opacity
-    @core.AnimProp::Scale => scalars.scale
-    @core.AnimProp::Rotation => scalars.rotation
-    @core.AnimProp::Blur => scalars.blur
-    @core.AnimProp::Brightness => scalars.brightness
-    @core.AnimProp::Contrast => scalars.contrast
-    @core.AnimProp::Saturation => scalars.saturation
-    @core.AnimProp::Gamma => scalars.gamma
-    @core.AnimProp::ColorRed => scalars.color_r
-    @core.AnimProp::ColorGreen => scalars.color_g
-    @core.AnimProp::ColorBlue => scalars.color_b
-    @core.AnimProp::Position => 0.0
+    Opacity => scalars.opacity
+    Scale => scalars.scale
+    Rotation => scalars.rotation
+    Blur => scalars.blur
+    Brightness => scalars.brightness
+    Contrast => scalars.contrast
+    Saturation => scalars.saturation
+    Gamma => scalars.gamma
+    ColorRed => scalars.color_r
+    ColorGreen => scalars.color_g
+    ColorBlue => scalars.color_b
+    Position => 0.0
   }
 }
 
 ///|
 fn animation_key(target : String, prop : @core.AnimProp) -> String {
   let suffix = match prop {
-    @core.AnimProp::Position => "position"
-    @core.AnimProp::Scale => "scale"
-    @core.AnimProp::Opacity => "opacity"
-    @core.AnimProp::Rotation => "rotation"
-    @core.AnimProp::Blur => "blur"
-    @core.AnimProp::Brightness => "brightness"
-    @core.AnimProp::Contrast => "contrast"
-    @core.AnimProp::Saturation => "saturation"
-    @core.AnimProp::Gamma => "gamma"
-    @core.AnimProp::ColorRed => "color_r"
-    @core.AnimProp::ColorGreen => "color_g"
-    @core.AnimProp::ColorBlue => "color_b"
+    Position => "position"
+    Scale => "scale"
+    Opacity => "opacity"
+    Rotation => "rotation"
+    Blur => "blur"
+    Brightness => "brightness"
+    Contrast => "contrast"
+    Saturation => "saturation"
+    Gamma => "gamma"
+    ColorRed => "color_r"
+    ColorGreen => "color_g"
+    ColorBlue => "color_b"
   }
   "\{target}::\{suffix}"
 }
@@ -290,18 +290,18 @@ fn effect_key(target : String, id : String) -> String {
 ///|
 fn effect_signature(spec : @core.EffectSpec) -> String {
   let phase = match spec.phase {
-    @core.EffectPhase::Pre => "pre"
-    @core.EffectPhase::Post => "post"
+    Pre => "pre"
+    Post => "post"
   }
   let duration = match spec.duration_ms {
     Some(ms) => ms.to_string()
     None => "none"
   }
   let easing = match spec.easing {
-    @core.Easing::Linear => "linear"
-    @core.Easing::EaseIn => "easein"
-    @core.Easing::EaseOut => "easeout"
-    @core.Easing::EaseInOut => "easeinout"
+    Linear => "linear"
+    EaseIn => "easein"
+    EaseOut => "easeout"
+    EaseInOut => "easeinout"
   }
   let params = spec.params
     .map(entry => {
@@ -366,18 +366,18 @@ fn apply_scalar_to_state(
   value : Double,
 ) -> @core.ScalarState {
   match prop {
-    @core.AnimProp::Opacity => { ..scalars, opacity: value }
-    @core.AnimProp::Scale => { ..scalars, scale: value }
-    @core.AnimProp::Rotation => { ..scalars, rotation: value }
-    @core.AnimProp::Blur => { ..scalars, blur: value }
-    @core.AnimProp::Brightness => { ..scalars, brightness: value }
-    @core.AnimProp::Contrast => { ..scalars, contrast: value }
-    @core.AnimProp::Saturation => { ..scalars, saturation: value }
-    @core.AnimProp::Gamma => { ..scalars, gamma: value }
-    @core.AnimProp::ColorRed => { ..scalars, color_r: value }
-    @core.AnimProp::ColorGreen => { ..scalars, color_g: value }
-    @core.AnimProp::ColorBlue => { ..scalars, color_b: value }
-    @core.AnimProp::Position => scalars
+    Opacity => { ..scalars, opacity: value }
+    Scale => { ..scalars, scale: value }
+    Rotation => { ..scalars, rotation: value }
+    Blur => { ..scalars, blur: value }
+    Brightness => { ..scalars, brightness: value }
+    Contrast => { ..scalars, contrast: value }
+    Saturation => { ..scalars, saturation: value }
+    Gamma => { ..scalars, gamma: value }
+    ColorRed => { ..scalars, color_r: value }
+    ColorGreen => { ..scalars, color_g: value }
+    ColorBlue => { ..scalars, color_b: value }
+    Position => scalars
   }
 }
 
@@ -388,7 +388,7 @@ fn apply_figure_animation(
   values : Array[Double],
 ) -> @core.FigurePlacement {
   match prop {
-    @core.AnimProp::Position =>
+    Position =>
       if values.length() >= 2 {
         let x = values[0]
         let y = values[1]
@@ -413,7 +413,7 @@ fn apply_background_animation(
   values : Array[Double],
 ) -> @core.BackgroundState {
   match prop {
-    @core.AnimProp::Position => background
+    Position => background
     _ =>
       if values.length() >= 1 {
         let scalars = apply_scalar_to_state(background.scalars, prop, values[0])
@@ -435,22 +435,21 @@ fn SelenePresenter::upsert_active_animation(
   let duration_ms = if spec.duration_ms <= 0 { 1 } else { spec.duration_ms }
   let (anchor_x, anchor_y) = animation_anchor(spec)
   match spec.prop {
-    @core.AnimProp::Position => {
+    Position => {
       let to = animation_vec2_target(spec)
       if to is None {
         return
       }
+
       let from = match animation_vec2_source(spec) {
         Some(pair) => Some(pair)
         None =>
-          match figure {
-            Some(placement) =>
-              match placement.pos {
-                Custom(x, y) => Some((x, y))
-                _ => None
-              }
-            None => None
-          }
+          figure.bind(placement => {
+            match placement.pos {
+              Custom(x, y) => Some((x, y))
+              _ => None
+            }
+          })
       }
       match (from, to) {
         (Some((fx, fy)), Some((tx, ty))) =>
@@ -480,11 +479,9 @@ fn SelenePresenter::upsert_active_animation(
             Some(placement) =>
               Some(scalar_state_value(placement.scalars, spec.prop))
             None =>
-              match background {
-                Some(state) =>
-                  Some(scalar_state_value(state.scalars, spec.prop))
-                None => None
-              }
+              background.map(state => {
+                scalar_state_value(state.scalars, spec.prop)
+              })
           }
       }
       match (from, to) {
@@ -508,12 +505,12 @@ fn SelenePresenter::upsert_active_animation(
 
 ///|
 fn animation_values(anim : ActiveAnimation, progress : Double) -> Array[Double] {
-  let values : Array[Double] = []
   let p = progress.clamp(min=0.0, max=1.0)
-  for i in 0..<anim.from.length() {
-    values.push(animation_lerp(anim.from[i], anim.to[i], p))
-  }
-  values
+  anim.from
+  .iter()
+  .zip(anim.to.iter())
+  .map(entry => animation_lerp(entry.0, entry.1, p))
+  .collect()
 }
 
 ///|
@@ -545,11 +542,7 @@ fn SelenePresenter::apply_anchored_scale(
   anchor_y : Double,
 ) -> @core.FigurePlacement {
   let old_scale = placement.scalars.scale
-  let next_scalars = apply_scalar_to_state(
-    placement.scalars,
-    @core.AnimProp::Scale,
-    new_scale,
-  )
+  let next_scalars = apply_scalar_to_state(placement.scalars, Scale, new_scale)
   if (anchor_x - 0.5).abs() <= 0.000001 && (anchor_y - 0.5).abs() <= 0.000001 {
     return { ..placement, scalars: next_scalars }
   }
@@ -603,7 +596,7 @@ fn SelenePresenter::advance_active_animations(
     )
     let values = animation_values(anim, progress)
     if next_figures.get(anim.target) is Some(placement) {
-      if anim.prop is @core.AnimProp::Scale && values.length() >= 1 {
+      if anim.prop is Scale && values.length() >= 1 {
         next_figures.set(
           anim.target,
           self.apply_anchored_scale(
@@ -619,14 +612,10 @@ fn SelenePresenter::advance_active_animations(
           apply_figure_animation(placement, anim.prop, values),
         )
       }
-    } else {
-      match next_background {
-        Some(state) if state.id == anim.target =>
-          next_background = Some(
-            apply_background_animation(state, anim.prop, values),
-          )
-        _ => ()
-      }
+    } else if next_background is Some(state) && state.id == anim.target {
+      next_background = Some(
+        apply_background_animation(state, anim.prop, values),
+      )
     }
     if done {
       completed.push(key)
@@ -713,17 +702,15 @@ fn SelenePresenter::apply_effects_to_scalars(
     let mut any_supported = false
     for entry in render_params {
       let (name, value) = entry
-      match apply_scalar_param(scalars, name, value) {
-        Some(next) => {
-          scalars = next
-          any_supported = true
-        }
-        None =>
-          self.warn_once(
-            "effect-param::\{name.to_lower()}",
-            "selene_presenter effect fallback",
-            "unsupported effect param '\{name}' on target '\{target}'",
-          )
+      if apply_scalar_param(scalars, name, value) is Some(next) {
+        scalars = next
+        any_supported = true
+      } else {
+        self.warn_once(
+          "effect-param::\{name.to_lower()}",
+          "selene_presenter effect fallback",
+          "unsupported effect param '\{name}' on target '\{target}'",
+        )
       }
     }
     if !any_supported {
@@ -775,10 +762,7 @@ fn SelenePresenter::sync_render_extension(
       target,
       spec,
       figures.get(target),
-      match background {
-        Some(state) if state.id == target => Some(state)
-        _ => None
-      },
+      background.filter(state => state.id == target),
     )
   }
 
@@ -814,33 +798,30 @@ fn SelenePresenter::sync_render_extension(
     )
   }
 
-  match next_background {
-    Some(state) => {
-      let effects = extension.effects(state.id)
-      if effects.is_empty() {
-        extension.apply(RenderExtensionUpdate::SetBackgroundState(state))
-      } else {
-        let applied = self.apply_effects_to_scalars(
-          state.id,
-          state.scalars,
-          effects,
-          skip_mode,
-        )
-        for key in applied.active_effect_keys {
-          active_effect_keys.add(key)
-        }
-        if applied.has_active_timed_effect {
-          has_active_timed_effects = true
-        }
-        extension.apply(
-          RenderExtensionUpdate::SetBackgroundState({
-            ..state,
-            scalars: applied.scalars,
-          }),
-        )
+  if next_background is Some(state) {
+    let effects = extension.effects(state.id)
+    if effects.is_empty() {
+      extension.apply(RenderExtensionUpdate::SetBackgroundState(state))
+    } else {
+      let applied = self.apply_effects_to_scalars(
+        state.id,
+        state.scalars,
+        effects,
+        skip_mode,
+      )
+      for key in applied.active_effect_keys {
+        active_effect_keys.add(key)
       }
+      if applied.has_active_timed_effect {
+        has_active_timed_effects = true
+      }
+      extension.apply(
+        RenderExtensionUpdate::SetBackgroundState({
+          ..state,
+          scalars: applied.scalars,
+        }),
+      )
     }
-    None => ()
   }
 
   self.cleanup_stale_effect_state(active_effect_keys)
@@ -856,31 +837,28 @@ fn SelenePresenter::build_world_commands(
   let viewport_w = self.config.viewport_w
   let viewport_h = self.config.viewport_h
   let bg_rect = background_rect(viewport_w, viewport_h)
-  match snapshot.background {
-    Some(state) =>
-      match self.background_handles.get(state.id) {
-        Some(handle) =>
-          commands.push(
-            image_command(
-              handle,
-              bg_rect,
-              tint_from_scalars(state.scalars),
-              rotation_transform(bg_rect, state.scalars.rotation),
-            ),
-          )
-        None =>
-          commands.push(
-            placeholder_rect_command(
-              bg_rect,
-              base_color_with_alpha(
-                self.config.placeholder_background_color,
-                state.scalars.opacity,
-              ),
-              rotation_transform(bg_rect, state.scalars.rotation),
-            ),
-          )
-      }
-    None => ()
+  if snapshot.background is Some(state) {
+    if self.background_handles.get(state.id) is Some(handle) {
+      commands.push(
+        image_command(
+          handle,
+          bg_rect,
+          tint_from_scalars(state.scalars),
+          rotation_transform(bg_rect, state.scalars.rotation),
+        ),
+      )
+    } else {
+      commands.push(
+        placeholder_rect_command(
+          bg_rect,
+          base_color_with_alpha(
+            self.config.placeholder_background_color,
+            state.scalars.opacity,
+          ),
+          rotation_transform(bg_rect, state.scalars.rotation),
+        ),
+      )
+    }
   }
   let sorted_figures = snapshot.figures.iter2().to_array()
   sorted_figures.sort_by((lhs, rhs) => lhs.1.layer - rhs.1.layer)
@@ -892,27 +870,26 @@ fn SelenePresenter::build_world_commands(
       viewport_h,
       placement.scalars.scale,
     )
-    match self.figure_handles.get(id) {
-      Some(handle) =>
-        commands.push(
-          image_command(
-            handle,
-            rect,
-            tint_from_scalars(placement.scalars),
-            rotation_transform(rect, placement.scalars.rotation),
+    if self.figure_handles.get(id) is Some(handle) {
+      commands.push(
+        image_command(
+          handle,
+          rect,
+          tint_from_scalars(placement.scalars),
+          rotation_transform(rect, placement.scalars.rotation),
+        ),
+      )
+    } else {
+      commands.push(
+        placeholder_rect_command(
+          rect,
+          base_color_with_alpha(
+            self.config.placeholder_figure_color,
+            placement.scalars.opacity,
           ),
-        )
-      None =>
-        commands.push(
-          placeholder_rect_command(
-            rect,
-            base_color_with_alpha(
-              self.config.placeholder_figure_color,
-              placement.scalars.opacity,
-            ),
-            rotation_transform(rect, placement.scalars.rotation),
-          ),
-        )
+          rotation_transform(rect, placement.scalars.rotation),
+        ),
+      )
     }
   }
   commands

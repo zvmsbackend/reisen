@@ -66,17 +66,6 @@ fn anim_value(values : Array[Double]?, index : Int) -> Double? {
 }
 
 ///|
-fn clone_dom_figures(
-  src : Map[String, DomFigureState],
-) -> Map[String, DomFigureState] {
-  let out : Map[String, DomFigureState] = {}
-  for id, state in src {
-    out.set(id, state)
-  }
-  out
-}
-
-///|
 fn UiDom::pull_new_dom_animations(self : UiDom, snapshot : UiSnapshot) -> Unit {
   let all = snapshot.dom_animations
   if self.dom_animation_cursor > all.length() {

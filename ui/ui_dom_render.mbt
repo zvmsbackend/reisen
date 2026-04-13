@@ -102,15 +102,15 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     dom_clear_log(self.root_id)
   }
   if view.dirty_text_input {
-    if localized_text_input is Some(input_view) {
-      dom_render_text_input(
-        self.root_id,
-        input_view.var_name,
-        input_view.prompt.render(),
-        self.ui_strings.game_text_input_submit,
-      )
-    } else {
-      dom_clear_text_input(self.root_id)
+    match localized_text_input {
+      Some(input_view) =>
+        dom_render_text_input(
+          self.root_id,
+          input_view.var_name,
+          input_view.prompt.render(),
+          self.ui_strings.game_text_input_submit,
+        )
+      None => dom_clear_text_input(self.root_id)
     }
   }
 }

@@ -1,7 +1,6 @@
 ///|
 pub fn UiDom::set_text_speed(self : UiDom, speed : Int) -> Unit {
-  let clamped = if speed < 10 { 10 } else if speed > 100 { 100 } else { speed }
-  self.text_speed = clamped
+  self.text_speed = speed.clamp(min=10, max=100)
 }
 
 ///|
@@ -65,13 +64,7 @@ pub fn UiDom::set_auto_mode(self : UiDom, enabled : Bool) -> Unit {
 
 ///|
 pub fn UiDom::set_media_volume(self : UiDom, volume : Double) -> Unit {
-  self.media_volume = if volume < 0.0 {
-    0.0
-  } else if volume > 1.0 {
-    1.0
-  } else {
-    volume
-  }
+  self.media_volume = volume.clamp(min=0, max=1)
 }
 
 ///|

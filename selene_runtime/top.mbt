@@ -44,8 +44,8 @@ pub fn run_native_loop_with_selene(
       image_smooth: config.image_smooth,
     },
     {
-      startup: () => on_startup(),
-      render_loop: raw_delta => on_render(raw_delta),
+      startup: on_startup,
+      render_loop: on_render,
       game_loop: raw_delta => {
         let dt_ms = clamp_non_negative_ms(raw_delta)
         if !on_tick(dt_ms) {
