@@ -1,0 +1,10 @@
+import {
+  "sennenki/reisen/core",
+  "sennenki/reisen/engine",
+  "Milky2018/selene/asset_types" @selene_asset_types,
+  "Milky2018/selene/math" @selene_math,
+  "Milky2018/selene/platform_render" @selene_platform_render,
+  "Milky2018/selene/render" @selene_render,
+  "Milky2018/selene/render2d_types" @selene_render2d_types,
+  "Milky2018/selene/render_pipeline" @selene_render_pipeline,
+}

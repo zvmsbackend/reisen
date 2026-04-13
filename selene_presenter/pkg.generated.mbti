@@ -1,0 +1,42 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/selene_presenter"
+
+import {
+  "Milky2018/selene/asset_types",
+  "Milky2018/selene/render",
+  "sennenki/reisen/engine",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+type ActiveAnimation
+
+pub struct SelenePresenter {
+  config : SelenePresenterConfig
+  background_handles : Map[String, @asset_types.ImageHandle]
+  figure_handles : Map[String, @asset_types.ImageHandle]
+  active_animations : Map[String, ActiveAnimation]
+}
+pub fn SelenePresenter::as_core_render_sync_hook(Self) -> (@engine.CoreRenderSnapshot, Bool) -> Unit
+pub fn SelenePresenter::as_render_hooks(Self) -> ((@engine.CoreRenderSnapshot, Bool) -> Unit, (@engine.RenderExtensionView, Bool) -> Unit)
+pub fn SelenePresenter::new(config? : SelenePresenterConfig) -> Self
+pub fn SelenePresenter::register_background_image(Self, String, @asset_types.ImageHandle) -> Unit
+pub fn SelenePresenter::register_figure_image(Self, String, @asset_types.ImageHandle) -> Unit
+pub fn SelenePresenter::submit_core_snapshot(Self, @engine.CoreRenderSnapshot) -> Unit
+
+pub struct SelenePresenterConfig {
+  viewport_w : Double
+  viewport_h : Double
+  animation_step_ms : Int
+  placeholder_background_color : @render.Color
+  placeholder_figure_color : @render.Color
+}
+pub fn SelenePresenterConfig::default() -> Self
+
+// Type aliases
+
+// Traits
+

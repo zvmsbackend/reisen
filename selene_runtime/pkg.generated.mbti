@@ -1,0 +1,22 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/selene_runtime"
+
+// Values
+pub fn run_native_loop_with_selene((Int) -> Bool, on_render? : (Double) -> Unit, on_startup? : () -> Unit, config? : NativeLoopConfig) -> Unit
+
+// Errors
+
+// Types and methods
+pub struct NativeLoopConfig {
+  viewport_width : Double
+  viewport_height : Double
+  zoom : Double
+  fps : UInt
+  image_smooth : Bool
+}
+pub fn NativeLoopConfig::default() -> Self
+
+// Type aliases
+
+// Traits
+

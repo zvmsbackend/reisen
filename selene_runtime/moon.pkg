@@ -1,0 +1,4 @@
+import {
+  "Milky2018/selene/platform_window" @selene_window,
+  "moonbitlang/core/math",
+}
