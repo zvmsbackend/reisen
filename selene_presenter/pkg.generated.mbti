@@ -4,6 +4,7 @@ package "sennenki/reisen/selene_presenter"
 import {
   "Milky2018/selene/asset_types",
   "Milky2018/selene/render",
+  "moonbitlang/core/set",
   "sennenki/reisen/engine",
 }
 
@@ -19,6 +20,11 @@ pub struct SelenePresenter {
   background_handles : Map[String, @asset_types.ImageHandle]
   figure_handles : Map[String, @asset_types.ImageHandle]
   active_animations : Map[String, ActiveAnimation]
+  effect_signatures : Map[String, String]
+  effect_start_ms : Map[String, Int]
+  effect_from_params : Map[String, Array[(String, Double)]]
+  warned_capabilities : @set.Set[String]
+  mut has_active_timed_effects : Bool
   mut last_submitted_epoch : String?
   mut force_submit : Bool
 }

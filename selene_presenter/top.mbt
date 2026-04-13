@@ -55,11 +55,23 @@ struct ActiveAnimation {
 }
 
 ///|
+priv struct EffectApplyResult {
+  scalars : @core.ScalarState
+  has_active_timed_effect : Bool
+  active_effect_keys : Set[String]
+}
+
+///|
 pub struct SelenePresenter {
   config : SelenePresenterConfig
   background_handles : Map[String, @selene_asset_types.ImageHandle]
   figure_handles : Map[String, @selene_asset_types.ImageHandle]
   active_animations : Map[String, ActiveAnimation]
+  effect_signatures : Map[String, String]
+  effect_start_ms : Map[String, Int]
+  effect_from_params : Map[String, Array[(String, Double)]]
+  warned_capabilities : Set[String]
+  mut has_active_timed_effects : Bool
   mut last_submitted_epoch : String?
   mut force_submit : Bool
 }
@@ -73,6 +85,11 @@ pub fn SelenePresenter::new(
     background_handles: {},
     figure_handles: {},
     active_animations: {},
+    effect_signatures: {},
+    effect_start_ms: {},
+    effect_from_params: {},
+    warned_capabilities: Set::new(),
+    has_active_timed_effects: false,
     last_submitted_epoch: None,
     force_submit: true,
   }
@@ -263,6 +280,83 @@ fn animation_key(target : String, prop : @core.AnimProp) -> String {
     @core.AnimProp::ColorBlue => "color_b"
   }
   "\{target}::\{suffix}"
+}
+
+///|
+fn effect_key(target : String, id : String) -> String {
+  "\{target}::\{id}"
+}
+
+///|
+fn effect_signature(spec : @core.EffectSpec) -> String {
+  let phase = match spec.phase {
+    @core.EffectPhase::Pre => "pre"
+    @core.EffectPhase::Post => "post"
+  }
+  let duration = match spec.duration_ms {
+    Some(ms) => ms.to_string()
+    None => "none"
+  }
+  let easing = match spec.easing {
+    @core.Easing::Linear => "linear"
+    @core.Easing::EaseIn => "easein"
+    @core.Easing::EaseOut => "easeout"
+    @core.Easing::EaseInOut => "easeinout"
+  }
+  let params = spec.params
+    .map(entry => {
+      let (name, value) = entry
+      "\{name}=\{value}"
+    })
+    .join(";")
+  "\{spec.id}|\{phase}|\{duration}|\{easing}|\{params}"
+}
+
+///|
+fn scalar_param_value(scalars : @core.ScalarState, name : String) -> Double? {
+  match name.to_lower() {
+    "opacity" => Some(scalars.opacity)
+    "brightness" => Some(scalars.brightness)
+    "color_r" | "colorred" | "red" => Some(scalars.color_r)
+    "color_g" | "colorgreen" | "green" => Some(scalars.color_g)
+    "color_b" | "colorblue" | "blue" => Some(scalars.color_b)
+    _ => None
+  }
+}
+
+///|
+fn apply_scalar_param(
+  scalars : @core.ScalarState,
+  name : String,
+  value : Double,
+) -> @core.ScalarState? {
+  match name.to_lower() {
+    "opacity" => Some({ ..scalars, opacity: value })
+    "brightness" => Some({ ..scalars, brightness: value })
+    "color_r" | "colorred" | "red" => Some({ ..scalars, color_r: value })
+    "color_g" | "colorgreen" | "green" => Some({ ..scalars, color_g: value })
+    "color_b" | "colorblue" | "blue" => Some({ ..scalars, color_b: value })
+    _ => None
+  }
+}
+
+///|
+fn current_timeline_ms() -> Int {
+  (@selene_time.elapsed_raw() * 1000.0).to_int()
+}
+
+///|
+fn SelenePresenter::warn_once(
+  self : SelenePresenter,
+  key : String,
+  title : String,
+  detail : String,
+) -> Unit {
+  if self.warned_capabilities.contains(key) {
+    return
+  }
+  self.warned_capabilities.add(key)
+  @selene_platform_render.capability_warning(title, detail)
 }
 
 ///|
@@ -545,6 +639,124 @@ fn SelenePresenter::advance_active_animations(
 }
 
 ///|
+fn SelenePresenter::apply_effects_to_scalars(
+  self : SelenePresenter,
+  target : String,
+  base : @core.ScalarState,
+  effects : Array[@core.EffectSpec],
+  skip_mode : Bool,
+) -> EffectApplyResult {
+  let mut scalars = base
+  let mut has_active_timed_effect = false
+  let active_effect_keys : Set[String] = Set::new()
+  let now_ms = current_timeline_ms()
+  for spec in effects {
+    let key = effect_key(target, spec.id)
+    active_effect_keys.add(key)
+    let signature = effect_signature(spec)
+    if self.effect_signatures.get(key) is Some(prev) {
+      if prev != signature {
+        self.effect_signatures.set(key, signature)
+        self.effect_start_ms.set(key, now_ms)
+        let from_params = spec.params.map(entry => {
+          let (name, value) = entry
+          let from = scalar_param_value(scalars, name).unwrap_or(value)
+          (name, from)
+        })
+        self.effect_from_params.set(key, from_params)
+      }
+    } else {
+      self.effect_signatures.set(key, signature)
+      self.effect_start_ms.set(key, now_ms)
+      let from_params = spec.params.map(entry => {
+        let (name, value) = entry
+        let from = scalar_param_value(scalars, name).unwrap_or(value)
+        (name, from)
+      })
+      self.effect_from_params.set(key, from_params)
+    }
+
+    let progress = match (spec.duration_ms, self.effect_start_ms.get(key)) {
+      (Some(duration), Some(start_ms)) => {
+        let duration = if skip_mode { 0 } else { duration }
+        let (p, done) = animation_sample(
+          now_ms,
+          start_ms,
+          duration,
+          spec.easing,
+        )
+        if done {
+          1.0
+        } else {
+          has_active_timed_effect = true
+          p
+        }
+      }
+      _ => 1.0
+    }
+
+    let render_params = match spec.duration_ms {
+      Some(_) => {
+        let from_map = Map::from_array(
+          self.effect_from_params.get_or_default(key, []),
+        )
+        spec.params.map(entry => {
+          let (name, value) = entry
+          let start = from_map.get(name).unwrap_or(value)
+          let animated = animation_lerp(start, value, progress)
+          (name, animated)
+        })
+      }
+      None => spec.params
+    }
+
+    let mut any_supported = false
+    for entry in render_params {
+      let (name, value) = entry
+      match apply_scalar_param(scalars, name, value) {
+        Some(next) => {
+          scalars = next
+          any_supported = true
+        }
+        None =>
+          self.warn_once(
+            "effect-param::\{name.to_lower()}",
+            "selene_presenter effect fallback",
+            "unsupported effect param '\{name}' on target '\{target}'",
+          )
+      }
+    }
+    if !any_supported {
+      self.warn_once(
+        "effect-id::\{spec.id}",
+        "selene_presenter effect fallback",
+        "effect '\{spec.id}' has no supported scalar params on this backend",
+      )
+    }
+  }
+  { scalars, has_active_timed_effect, active_effect_keys }
+}
+
+///|
+fn SelenePresenter::cleanup_stale_effect_state(
+  self : SelenePresenter,
+  active_effect_keys : Set[String],
+) -> Unit {
+  let stale : Array[String] = []
+  for entry in self.effect_signatures {
+    let (key, _) = entry
+    if !active_effect_keys.contains(key) {
+      stale.push(key)
+    }
+  }
+  for key in stale {
+    self.effect_signatures.remove(key)
+    self.effect_start_ms.remove(key)
+    self.effect_from_params.remove(key)
+  }
+}
+
+///|
 fn SelenePresenter::sync_render_extension(
   self : SelenePresenter,
   extension : RenderExtensionView,
@@ -574,18 +786,65 @@ fn SelenePresenter::sync_render_extension(
     figures, background, skip_mode,
   )
 
+  let active_effect_keys : Set[String] = Set::new()
+  let mut has_active_timed_effects = false
+  for entry in next_figures {
+    let (target, placement) = entry
+    let effects = extension.effects(target)
+    if effects.is_empty() {
+      continue
+    }
+    let applied = self.apply_effects_to_scalars(
+      target,
+      placement.scalars,
+      effects,
+      skip_mode,
+    )
+    for key in applied.active_effect_keys {
+      active_effect_keys.add(key)
+    }
+    if applied.has_active_timed_effect {
+      has_active_timed_effects = true
+    }
+    extension.apply(
+      RenderExtensionUpdate::SetFigurePlacement(target, {
+        ..placement,
+        scalars: applied.scalars,
+      }),
+    )
+  }
+
   match next_background {
-    Some(state) =>
-      extension.apply(RenderExtensionUpdate::SetBackgroundState(state))
+    Some(state) => {
+      let effects = extension.effects(state.id)
+      if effects.is_empty() {
+        extension.apply(RenderExtensionUpdate::SetBackgroundState(state))
+      } else {
+        let applied = self.apply_effects_to_scalars(
+          state.id,
+          state.scalars,
+          effects,
+          skip_mode,
+        )
+        for key in applied.active_effect_keys {
+          active_effect_keys.add(key)
+        }
+        if applied.has_active_timed_effect {
+          has_active_timed_effects = true
+        }
+        extension.apply(
+          RenderExtensionUpdate::SetBackgroundState({
+            ..state,
+            scalars: applied.scalars,
+          }),
+        )
+      }
+    }
     None => ()
   }
 
-  for entry in next_figures {
-    let (target, placement) = entry
-    extension.apply(
-      RenderExtensionUpdate::SetFigurePlacement(target, placement),
-    )
-  }
+  self.cleanup_stale_effect_state(active_effect_keys)
+  self.has_active_timed_effects = has_active_timed_effects
 }
 
 ///|
@@ -677,7 +936,9 @@ pub fn SelenePresenter::submit_core_snapshot(
   self : SelenePresenter,
   snapshot : CoreRenderSnapshot,
 ) -> Unit {
-  if !self.force_submit && self.active_animations.is_empty() {
+  if !self.force_submit &&
+    self.active_animations.is_empty() &&
+    !self.has_active_timed_effects {
     if self.last_submitted_epoch is Some(epoch) &&
       epoch == snapshot.render_epoch {
       return
