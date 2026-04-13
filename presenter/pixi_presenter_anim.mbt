@@ -67,7 +67,7 @@ fn apply_scalar_animation(
   now_ms : Int,
   anim : ScalarAnim,
 ) -> (Double, Bool) {
-  let (p, done) = animation_progress(
+  let (p, done) = animation_sample(
     now_ms,
     anim.start_ms,
     anim.duration_ms,
@@ -81,24 +81,16 @@ fn apply_scalar_animation(
         (base_value * p, false)
       }
     _ => {
-      let from = anim.from.unwrap_or(base_value)
-      let to = anim.to.unwrap_or(base_value)
-      let value = if done { to } else { from + (to - from) * p }
+      let value = animation_lerp_optional(
+        base_value,
+        anim.from,
+        anim.to,
+        p,
+        done,
+      )
       (value, done)
     }
   }
-}
-
-///|
-fn anim_value(values : Array[Double]?, idx : Int) -> Double? {
-  values.bind(arr => if idx < arr.length() { Some(arr[idx]) } else { None })
-}
-
-///|
-fn anim_anchor(values : Array[Double]?) -> (Double, Double) {
-  let x = anim_value(values, 0).unwrap_or(0.5)
-  let y = anim_value(values, 1).unwrap_or(0.5)
-  (x, y)
 }
 
 ///|
@@ -113,7 +105,7 @@ fn apply_position_animation(
   now_ms : Int,
   anim : PositionAnim,
 ) -> (Double, Double, Bool) {
-  let (p, done) = animation_progress(
+  let (p, done) = animation_sample(
     now_ms,
     anim.start_ms,
     anim.duration_ms,
@@ -172,8 +164,8 @@ fn apply_position_animation(
             anim.to_y.map(v => v * viewport_h).unwrap_or(y),
           )
       }
-      let animated_x = start_x + (end_x - start_x) * p
-      let animated_y = start_y + (end_y - start_y) * p
+      let animated_x = animation_lerp(start_x, end_x, p)
+      let animated_y = animation_lerp(start_y, end_y, p)
       if done {
         (end_x, end_y, true)
       } else {
@@ -194,7 +186,7 @@ fn apply_scale_animation(
   now_ms : Int,
   anim : ScaleAnim,
 ) -> (Double, Double, Double, Double, Bool) {
-  let (p, done) = animation_progress(
+  let (p, done) = animation_sample(
     now_ms,
     anim.start_ms,
     anim.duration_ms,
@@ -213,7 +205,7 @@ fn apply_scale_animation(
       if done {
         to
       } else {
-        from + (to - from) * p
+        animation_lerp(from, to, p)
       }
     }
   }

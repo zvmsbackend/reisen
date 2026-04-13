@@ -204,15 +204,15 @@ fn PixiPresenter::pull_new_animations(
             spec.duration_ms
           },
           easing: spec.easing,
-          from_x: anim_value(spec.from, 0),
-          from_y: anim_value(spec.from, 1),
-          to_x: anim_value(spec.to, 0),
-          to_y: anim_value(spec.to, 1),
+          from_x: animation_value(spec.from, 0),
+          from_y: animation_value(spec.from, 1),
+          to_x: animation_value(spec.to, 0),
+          to_y: animation_value(spec.to, 1),
         })
         continue
       }
       Scale => {
-        let (anchor_x, anchor_y) = anim_anchor(spec.anchor)
+        let (anchor_x, anchor_y) = animation_anchor_from_values(spec.anchor)
         self.scale_anims.set(target, {
           start_ms: self.timeline_ms,
           duration_ms: if self.skip_mode {
@@ -221,8 +221,8 @@ fn PixiPresenter::pull_new_animations(
             spec.duration_ms
           },
           easing: spec.easing,
-          from: anim_value(spec.from, 0),
-          to: anim_value(spec.to, 0),
+          from: animation_value(spec.from, 0),
+          to: animation_value(spec.to, 0),
           anchor_x,
           anchor_y,
         })
@@ -247,8 +247,8 @@ fn PixiPresenter::pull_new_animations(
         spec.duration_ms
       },
       easing: spec.easing,
-      from: anim_value(spec.from, 0),
-      to: anim_value(spec.to, 0),
+      from: animation_value(spec.from, 0),
+      to: animation_value(spec.to, 0),
     }
   }
 }

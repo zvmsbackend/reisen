@@ -1,5 +1,16 @@
 ///|
-using @core {animation_progress, type Position}
+using @core {type Position}
+
+///|
+using @presenter_common {
+  animation_anchor,
+  animation_lerp,
+  animation_sample,
+  animation_scalar_source,
+  animation_scalar_target,
+  animation_vec2_source,
+  animation_vec2_target,
+}
 
 ///|
 using @engine {
@@ -196,15 +207,6 @@ fn rotation_transform(
 }
 
 ///|
-fn animation_anchor(spec : @core.AnimationSpec) -> (Double, Double) {
-  match spec.anchor {
-    Some(anchor) if anchor.length() >= 2 =>
-      (anchor[0].clamp(min=0.0, max=1.0), anchor[1].clamp(min=0.0, max=1.0))
-    _ => (0.5, 0.5)
-  }
-}
-
-///|
 fn fallback_animation_step_ms(configured : Int) -> Int {
   if configured <= 0 {
     16
@@ -220,48 +222,6 @@ fn resolved_step_ms(configured : Int) -> Int {
     raw_delta_ms
   } else {
     fallback_animation_step_ms(configured)
-  }
-}
-
-///|
-fn scalar_anim_target(spec : @core.AnimationSpec) -> Double? {
-  match spec.to {
-    Some(values) => if values.is_empty() { None } else { Some(values[0]) }
-    None => None
-  }
-}
-
-///|
-fn scalar_anim_source(spec : @core.AnimationSpec) -> Double? {
-  match spec.from {
-    Some(values) => if values.is_empty() { None } else { Some(values[0]) }
-    None => None
-  }
-}
-
-///|
-fn position_anim_target(spec : @core.AnimationSpec) -> (Double, Double)? {
-  match spec.to {
-    Some(values) =>
-      if values.length() >= 2 {
-        Some((values[0], values[1]))
-      } else {
-        None
-      }
-    None => None
-  }
-}
-
-///|
-fn position_anim_source(spec : @core.AnimationSpec) -> (Double, Double)? {
-  match spec.from {
-    Some(values) =>
-      if values.length() >= 2 {
-        Some((values[0], values[1]))
-      } else {
-        None
-      }
-    None => None
   }
 }
 
@@ -303,11 +263,6 @@ fn animation_key(target : String, prop : @core.AnimProp) -> String {
     @core.AnimProp::ColorBlue => "color_b"
   }
   "\{target}::\{suffix}"
-}
-
-///|
-fn lerp(from : Double, to : Double, p : Double) -> Double {
-  from + (to - from) * p
 }
 
 ///|
@@ -387,11 +342,11 @@ fn SelenePresenter::upsert_active_animation(
   let (anchor_x, anchor_y) = animation_anchor(spec)
   match spec.prop {
     @core.AnimProp::Position => {
-      let to = position_anim_target(spec)
+      let to = animation_vec2_target(spec)
       if to is None {
         return
       }
-      let from = match position_anim_source(spec) {
+      let from = match animation_vec2_source(spec) {
         Some(pair) => Some(pair)
         None =>
           match figure {
@@ -420,11 +375,11 @@ fn SelenePresenter::upsert_active_animation(
       }
     }
     _ => {
-      let to = scalar_anim_target(spec)
+      let to = animation_scalar_target(spec)
       if to is None {
         return
       }
-      let from = match scalar_anim_source(spec) {
+      let from = match animation_scalar_source(spec) {
         Some(value) => Some(value)
         None =>
           match figure {
@@ -462,7 +417,7 @@ fn animation_values(anim : ActiveAnimation, progress : Double) -> Array[Double] 
   let values : Array[Double] = []
   let p = progress.clamp(min=0.0, max=1.0)
   for i in 0..<anim.from.length() {
-    values.push(lerp(anim.from[i], anim.to[i], p))
+    values.push(animation_lerp(anim.from[i], anim.to[i], p))
   }
   values
 }
@@ -546,7 +501,7 @@ fn SelenePresenter::advance_active_animations(
       resolved_step_ms(self.config.animation_step_ms)
     }
     anim.elapsed_ms = anim.elapsed_ms + step_ms
-    let (progress, done) = animation_progress(
+    let (progress, done) = animation_sample(
       anim.elapsed_ms,
       0,
       anim.duration_ms,

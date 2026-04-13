@@ -1,6 +1,7 @@
 import {
   "sennenki/reisen/core",
   "sennenki/reisen/engine",
+  "sennenki/reisen/presenter_common" @presenter_common,
   "Milky2018/selene/asset_types" @selene_asset_types,
   "Milky2018/selene/math" @selene_math,
   "Milky2018/selene/platform_render" @selene_platform_render,

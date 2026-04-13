@@ -13,6 +13,15 @@ using @core {
 using @assets {type AssetStore}
 
 ///|
+using @presenter_common {
+  animation_anchor_from_values,
+  animation_lerp,
+  animation_lerp_optional,
+  animation_sample,
+  animation_value,
+}
+
+///|
 using @pixi {
   type PixiApplication,
   type PixiBlurFilter,

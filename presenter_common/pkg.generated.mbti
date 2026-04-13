@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/presenter_common"
+
+import {
+  "sennenki/reisen/core",
+}
+
+// Values
+pub fn animation_anchor(@core.AnimationSpec) -> (Double, Double)
+
+pub fn animation_anchor_from_values(Array[Double]?) -> (Double, Double)
+
+pub fn animation_lerp(Double, Double, Double) -> Double
+
+pub fn animation_lerp_optional(Double, Double?, Double?, Double, Bool) -> Double
+
+pub fn animation_sample(Int, Int, Int, @core.Easing) -> (Double, Bool)
+
+pub fn animation_scalar_source(@core.AnimationSpec) -> Double?
+
+pub fn animation_scalar_target(@core.AnimationSpec) -> Double?
+
+pub fn animation_value(Array[Double]?, Int) -> Double?
+
+pub fn animation_vec2_source(@core.AnimationSpec) -> (Double, Double)?
+
+pub fn animation_vec2_target(@core.AnimationSpec) -> (Double, Double)?
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
+
