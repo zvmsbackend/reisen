@@ -28,4 +28,7 @@ using @storage {type GameSettings}
 using @state {type DialogText}
 
 ///|
-using @ui {type AudioPort, type UiPort, type UiDom, type UiStrings}
+using @audio {type AudioPort}
+
+///|
+using @ui_game {type UiPort, type UiDom, type UiStrings}

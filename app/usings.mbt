@@ -28,11 +28,16 @@ using @pixi {type PixiBindingError}
 using @util {script_locale_resolve_at}
 
 ///|
-using @ui {
-  type AudioDom,
-  type AudioPort,
-  type UiStrings,
-  type UiPort,
+using @audio_web {type AudioDom}
+
+///|
+using @audio {type AudioPort}
+
+///|
+using @ui_game {type UiStrings, type UiPort}
+
+///|
+using @ui_menu {
   type StartMenu,
   type GalleryMenu,
   type SettingsMenu,

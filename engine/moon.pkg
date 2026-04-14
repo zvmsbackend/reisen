@@ -4,7 +4,8 @@ import {
   "sennenki/reisen/gallery",
   "sennenki/reisen/storage",
   "sennenki/reisen/state",
-  "sennenki/reisen/ui",
+  "sennenki/reisen/audio_core" @audio,
+  "sennenki/reisen/ui_game" @ui_game,
   "moonbitlang/core/json",
   "moonbitlang/core/deque",
 }

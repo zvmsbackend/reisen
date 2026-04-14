@@ -1,15 +1,11 @@
 import {
   "moonbit-community/js-ffi/js",
-  "sennenki/reisen/assets",
+  "moonbitlang/core/json",
   "sennenki/reisen/core",
-  "sennenki/reisen/gallery",
-  "sennenki/reisen/storage",
   "sennenki/reisen/state",
   "sennenki/reisen/util",
-  "moonbitlang/core/json",
 }
 
 import {
-  "sennenki/reisen/util",
   "moonbitlang/core/debug",
 } for "wbtest"

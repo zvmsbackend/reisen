@@ -1,13 +1,11 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "sennenki/reisen/ui"
+package "sennenki/reisen/ui_game"
 
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "sennenki/reisen/assets",
   "sennenki/reisen/core",
   "sennenki/reisen/state",
-  "sennenki/reisen/storage",
 }
 
 // Values
@@ -15,61 +13,6 @@ import {
 // Errors
 
 // Types and methods
-type AudioCommand derive(Eq, @debug.Debug)
-
-type AudioDom
-pub fn AudioDom::as_event_hook(Self) -> (@core.RuntimeEvent) -> Unit
-pub fn AudioDom::handle_event(Self, @core.RuntimeEvent) -> Unit
-pub fn AudioDom::has_active_sfx() -> Bool
-pub fn AudioDom::new((String) -> String?) -> Self
-pub fn AudioDom::new_with_store(@assets.AssetStore) -> Self
-pub fn AudioDom::set_bgm_gain(Double) -> Unit
-pub fn AudioDom::set_sfx_gain(Double) -> Unit
-
-type AudioPort
-pub fn AudioPort::browser() -> Self
-pub fn AudioPort::has_active_sfx(Self) -> Bool
-pub fn AudioPort::new(() -> Bool, (Double) -> Unit, (Double) -> Unit) -> Self
-pub fn AudioPort::set_bgm_gain(Self, Double) -> Unit
-pub fn AudioPort::set_sfx_gain(Self, Double) -> Unit
-
-pub enum CreditsAction {
-  NoAction
-  Back
-}
-
-type CreditsMenu
-pub fn CreditsMenu::clear(Self) -> Unit
-pub fn CreditsMenu::new(String, background? : String, ui_strings? : UiStrings) -> Self
-pub fn CreditsMenu::render(Self, String) -> Unit
-pub fn CreditsMenu::set_ui_strings(Self, UiStrings) -> Unit
-pub fn CreditsMenu::take_action(Self) -> CreditsAction
-
-pub enum GalleryAction {
-  NoAction
-  Back
-  Open(String)
-  Close
-  Prev
-  Next
-  Replay(String)
-}
-
-type GalleryMenu
-pub fn GalleryMenu::clear(Self) -> Unit
-pub fn GalleryMenu::new(String, save_namespace? : String, background? : String, show_locked? : Bool, ui_strings? : UiStrings) -> Self
-pub fn GalleryMenu::render(Self) -> Unit
-pub fn GalleryMenu::set_script_localization(Self, String?, String?) -> Unit
-pub fn GalleryMenu::set_ui_strings(Self, UiStrings) -> Unit
-pub fn GalleryMenu::take_action(Self) -> GalleryAction
-
-type GalleryTileView derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-
-type LoadingMenu
-pub fn LoadingMenu::clear(Self) -> Unit
-pub fn LoadingMenu::new(String) -> Self
-pub fn LoadingMenu::render(Self, String) -> Unit
-
 type SeleneUiBackend
 pub fn SeleneUiBackend::last_view(Self) -> UiViewModel?
 pub fn SeleneUiBackend::new(ui_strings? : UiStrings, script_locale_json? : String?, script_default_locale_json? : String?, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
@@ -80,85 +23,6 @@ pub fn SeleneUiBackend::push_submitted_text_input(Self, String) -> Unit
 pub fn SeleneUiBackend::push_video_action(Self, String) -> Unit
 pub impl UiBackend for SeleneUiBackend
 pub impl UiPlatformHooks for SeleneUiBackend
-
-pub enum SettingsAction {
-  ViewChanged
-  NoAction
-  LanguageChanged(String)
-  Back
-  Credits
-  NewGame
-  StartMenu
-  Log
-  SaveSlot(String)
-  LoadSlot(String)
-}
-
-pub(all) enum SettingsContext {
-  FromStartMenu
-  FromMidgame
-} derive(Eq, @debug.Debug)
-
-type SettingsMenu
-pub fn SettingsMenu::clear(Self) -> Unit
-pub fn SettingsMenu::new(String, save_namespace? : String, save_store? : &@storage.SaveSlotStore, background? : String, context? : SettingsContext, ui_strings? : UiStrings, show_credits? : Bool) -> Self
-pub fn SettingsMenu::render(Self) -> Unit
-pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
-pub fn SettingsMenu::set_languages(Self, Array[(String, String)]) -> Unit
-pub fn SettingsMenu::set_locale(Self, String) -> Unit
-pub fn SettingsMenu::set_script_localization(Self, String?, String?) -> Unit
-pub fn SettingsMenu::set_show_credits(Self, Bool) -> Unit
-pub fn SettingsMenu::set_ui_strings(Self, UiStrings) -> Unit
-pub fn SettingsMenu::set_view_mode(Self, SettingsViewMode) -> Unit
-pub fn SettingsMenu::take_action(Self) -> SettingsAction
-
-pub(all) enum SettingsViewMode {
-  Settings
-  SaveList
-  LoadList
-}
-
-pub enum StartGateAction {
-  NoAction
-  Start
-}
-
-pub enum StartLocaleAction {
-  NoAction
-  Select(String)
-}
-
-pub enum StartLogoAction {
-  NoAction
-  Done
-}
-
-type StartMenu
-pub fn StartMenu::clear(Self) -> Unit
-pub fn StartMenu::clear_gate(Self) -> Unit
-pub fn StartMenu::clear_locale_picker(Self) -> Unit
-pub fn StartMenu::clear_logo(Self) -> Unit
-pub fn StartMenu::new(String, save_namespace? : String, save_store? : &@storage.SaveSlotStore, background? : String, ui_strings? : UiStrings, show_credits? : Bool) -> Self
-pub fn StartMenu::render(Self) -> Unit
-pub fn StartMenu::render_gate(Self) -> Unit
-pub fn StartMenu::render_locale_picker(Self, Array[(String, String)]) -> Unit
-pub fn StartMenu::render_logo(Self, String, Int) -> Unit
-pub fn StartMenu::set_show_credits(Self, Bool) -> Unit
-pub fn StartMenu::set_ui_strings(Self, UiStrings) -> Unit
-pub fn StartMenu::take_action(Self) -> StartMenuAction
-pub fn StartMenu::take_gate_action(Self) -> StartGateAction
-pub fn StartMenu::take_locale_action(Self) -> StartLocaleAction
-pub fn StartMenu::take_logo_action(Self) -> StartLogoAction
-
-pub(all) enum StartMenuAction {
-  NoAction
-  NewGame
-  Continue(String)
-  Load
-  Settings
-  Gallery
-  Credits
-}
 
 type UiChoiceView derive(Eq, @debug.Debug)
 
@@ -211,7 +75,6 @@ type UiDomFigureView derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type UiPort
 pub fn UiPort::advance_auto_mode_timer(Self, Int) -> Unit
-pub fn UiPort::advance_dom_animation_timer(Self, Int) -> Unit
 pub fn UiPort::advance_skip_mode_timer(Self, Int) -> Unit
 pub fn UiPort::advance_typewriter(Self, Int) -> Bool
 pub fn UiPort::advance_ui_animation_timer(Self, Int) -> Unit
@@ -221,7 +84,6 @@ pub fn UiPort::clear_game_ui(Self) -> Unit
 pub fn UiPort::complete_typewriter(Self) -> Unit
 pub fn UiPort::from_backend(&UiBackend, &UiPlatformHooks) -> Self
 pub fn UiPort::from_dom(UiDom) -> Self
-pub fn UiPort::has_active_dom_animations(Self) -> Bool
 pub fn UiPort::has_active_ui_animations(Self) -> Bool
 pub fn UiPort::is_log_visible(Self) -> Bool
 pub fn UiPort::is_skip_active(Self) -> Bool
@@ -332,6 +194,8 @@ pub(open) trait UiBackend {
   take_action(Self) -> String?
   take_video_action(Self) -> String?
   check_typewriter_click(Self) -> Bool
+  check_intro_done(Self) -> Bool
+  reveal_intro_line(Self) -> Bool
   clear_game_ui(Self) -> Unit
   set_ui_strings(Self, UiStrings) -> Unit
   set_script_localization(Self, script_locale_json~ : String?, script_default_locale_json~ : String?, vocal_locale_dir~ : String, script_locale~ : String, script_default_locale~ : String) -> Unit

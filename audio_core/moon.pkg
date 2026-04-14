@@ -1,0 +1,7 @@
+import {
+  "sennenki/reisen/audio_web" @audio_web,
+}
+
+import {
+  "moonbitlang/core/debug",
+} for "wbtest"

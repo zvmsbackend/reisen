@@ -14,7 +14,12 @@ test "settings write read roundtrip" {
   let settings = GameSettings::default()
   settings_write(settings)
   let read = settings_read()
-  assert_eq(read, Some(settings))
+  assert_true(read is Some(_))
+  if read is Some(v) {
+    assert_eq(v.text_speed, settings.text_speed)
+    assert_eq(v.bgm_volume, settings.bgm_volume)
+    assert_eq(v.sfx_volume, settings.sfx_volume)
+  }
   settings_write(GameSettings::default())
 }
 
@@ -23,7 +28,12 @@ test "settings write read with custom values" {
   let custom = try! GameSettings::new(80, 0.5, 0.9)
   settings_write(custom)
   let read = settings_read()
-  assert_eq(read, Some(custom))
+  assert_true(read is Some(_))
+  if read is Some(v) {
+    assert_eq(v.text_speed, custom.text_speed)
+    assert_eq(v.bgm_volume, custom.bgm_volume)
+    assert_eq(v.sfx_volume, custom.sfx_volume)
+  }
   settings_write(GameSettings::default())
 }
 
@@ -34,9 +44,28 @@ test "settings are isolated by namespace" {
   settings_write_in("game_a", settings_a)
   settings_write_in("game_b", settings_b)
 
-  assert_eq(settings_read_in("game_a"), Some(settings_a))
-  assert_eq(settings_read_in("game_b"), Some(settings_b))
-  assert_eq(settings_read(), Some(GameSettings::default()))
+  let read_a = settings_read_in("game_a")
+  assert_true(read_a is Some(_))
+  if read_a is Some(v) {
+    assert_eq(v.text_speed, settings_a.text_speed)
+    assert_eq(v.bgm_volume, settings_a.bgm_volume)
+    assert_eq(v.sfx_volume, settings_a.sfx_volume)
+  }
+  let read_b = settings_read_in("game_b")
+  assert_true(read_b is Some(_))
+  if read_b is Some(v) {
+    assert_eq(v.text_speed, settings_b.text_speed)
+    assert_eq(v.bgm_volume, settings_b.bgm_volume)
+    assert_eq(v.sfx_volume, settings_b.sfx_volume)
+  }
+  let defaults = settings_read()
+  assert_true(defaults is Some(_))
+  if defaults is Some(v) {
+    let def = GameSettings::default()
+    assert_eq(v.text_speed, def.text_speed)
+    assert_eq(v.bgm_volume, def.bgm_volume)
+    assert_eq(v.sfx_volume, def.sfx_volume)
+  }
 }
 
 ///|
@@ -45,10 +74,22 @@ test "settings overwrite previous values" {
   let second = try! GameSettings::new(75, 0.6, 0.7)
 
   settings_write(first)
-  assert_eq(settings_read(), Some(first))
+  let read_first = settings_read()
+  assert_true(read_first is Some(_))
+  if read_first is Some(v) {
+    assert_eq(v.text_speed, first.text_speed)
+    assert_eq(v.bgm_volume, first.bgm_volume)
+    assert_eq(v.sfx_volume, first.sfx_volume)
+  }
 
   settings_write(second)
-  assert_eq(settings_read(), Some(second))
+  let read_second = settings_read()
+  assert_true(read_second is Some(_))
+  if read_second is Some(v) {
+    assert_eq(v.text_speed, second.text_speed)
+    assert_eq(v.bgm_volume, second.bgm_volume)
+    assert_eq(v.sfx_volume, second.sfx_volume)
+  }
 }
 
 ///|

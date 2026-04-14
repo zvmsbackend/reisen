@@ -1,15 +1,16 @@
 ///|
+using @state {type DialogText}
+
+///|
 test "audio command mapping from runtime event" {
-  assert_eq(
-    AudioCommand::from_event(MusicPlayed("bgm", true)),
-    PlayMusic("bgm", true),
+  assert_true(
+    AudioCommand::from_event(MusicPlayed("bgm", true)) is PlayMusic("bgm", true),
   )
-  assert_eq(AudioCommand::from_event(MusicStopped), StopMusic)
-  assert_eq(
-    AudioCommand::from_event(SfxPlayed("click", false)),
-    PlaySfx("click"),
+  assert_true(AudioCommand::from_event(MusicStopped) is StopMusic)
+  assert_true(
+    AudioCommand::from_event(SfxPlayed("click", false)) is PlaySfx("click"),
   )
-  assert_eq(
+  assert_true(
     AudioCommand::from_event(
       Said(
         speaker=DialogText::String("n"),
@@ -18,10 +19,10 @@ test "audio command mapping from runtime event" {
         append=false,
         voice=None,
       ),
-    ),
-    Noop,
+    )
+    is Noop,
   )
-  assert_eq(
+  assert_true(
     AudioCommand::from_event(
       Said(
         speaker=DialogText::String("n"),
@@ -30,8 +31,8 @@ test "audio command mapping from runtime event" {
         append=false,
         voice=Some("voice"),
       ),
-    ),
-    PlaySfxUrl("voice"),
+    )
+    is PlaySfxUrl("voice"),
   )
 }
 

@@ -11,6 +11,7 @@ struct SeleneUiBackend {
   mut pending_action : String?
   mut pending_video_action : String?
   mut pending_click : Bool
+  mut pending_intro_done : Bool
   mut last_view : UiViewModel?
 }
 
@@ -35,6 +36,7 @@ pub fn SeleneUiBackend::new(
     pending_action: None,
     pending_video_action: None,
     pending_click: false,
+    pending_intro_done: false,
     last_view: None,
   }
 }
@@ -203,12 +205,26 @@ pub impl UiBackend for SeleneUiBackend with check_typewriter_click(self) {
 }
 
 ///|
+pub impl UiBackend for SeleneUiBackend with check_intro_done(self) {
+  let done = self.pending_intro_done
+  self.pending_intro_done = false
+  done
+}
+
+///|
+pub impl UiBackend for SeleneUiBackend with reveal_intro_line(self) {
+  self.pending_intro_done = true
+  false
+}
+
+///|
 pub impl UiBackend for SeleneUiBackend with clear_game_ui(self) {
   self.pending_choice = None
   self.pending_text_input = None
   self.pending_action = None
   self.pending_video_action = None
   self.pending_click = false
+  self.pending_intro_done = false
   self.last_view = None
 }
 

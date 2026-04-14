@@ -1,0 +1,9 @@
+import {
+  "moonbitlang/core/debug",
+  "sennenki/reisen/assets",
+  "sennenki/reisen/core",
+}
+
+import {
+  "sennenki/reisen/state",
+} for "wbtest"

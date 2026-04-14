@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/audio_core"
+
+// Values
+
+// Errors
+
+// Types and methods
+type AudioPort
+pub fn AudioPort::browser() -> Self
+pub fn AudioPort::has_active_sfx(Self) -> Bool
+pub fn AudioPort::new(() -> Bool, (Double) -> Unit, (Double) -> Unit) -> Self
+pub fn AudioPort::set_bgm_gain(Self, Double) -> Unit
+pub fn AudioPort::set_sfx_gain(Self, Double) -> Unit
+
+// Type aliases
+
+// Traits
+

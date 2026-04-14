@@ -1,18 +1,4 @@
 ///|
-using @assets {type AssetStore}
-
-///|
-using @core {
-  animation_progress,
-  type DomFigureState,
-  type DialogLogEntry,
-  type Easing,
-  type Position,
-  type UiSnapshot,
-  type RuntimeEvent,
-}
-
-///|
 using @gallery {type GalleryImage}
 
 ///|
@@ -26,7 +12,10 @@ using @storage {
 }
 
 ///|
-using @state {type DialogText}
+using @audio_web {type AudioDom}
+
+///|
+using @ui_game {type UiStrings}
 
 ///|
 using @util {script_locale_resolve_at}
