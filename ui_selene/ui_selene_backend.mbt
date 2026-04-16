@@ -1,5 +1,5 @@
 ///|
-struct SeleneUiBackend {
+pub struct SeleneUiBackend {
   mut ui_strings : UiStrings
   mut script_locale_json : String?
   mut script_default_locale_json : String?
@@ -12,6 +12,10 @@ struct SeleneUiBackend {
   mut pending_video_action : String?
   mut pending_click : Bool
   mut pending_intro_done : Bool
+  mut last_mouse_left_down : Bool
+  mut last_enter_down : Bool
+  mut last_space_down : Bool
+  mut last_escape_down : Bool
   mut last_view : UiViewModel?
 }
 
@@ -37,6 +41,10 @@ pub fn SeleneUiBackend::new(
     pending_video_action: None,
     pending_click: false,
     pending_intro_done: false,
+    last_mouse_left_down: false,
+    last_enter_down: false,
+    last_space_down: false,
+    last_escape_down: false,
     last_view: None,
   }
 }
@@ -101,9 +109,12 @@ fn selene_view_from_snapshot(snapshot : UiSnapshot) -> UiViewModel {
     Some((url, can_skip)) => Some(UiVideoView::{ url, can_skip })
     None => None
   }
-  let choices = snapshot.choices.map(opt => { id: opt.id, text: opt.text })
+  let choices = snapshot.choices.map(opt => UiChoiceView::{
+    id: opt.id,
+    text: opt.text,
+  })
   let text_input = match snapshot.text_input {
-    Some((var_name, prompt)) => Some({ var_name, prompt })
+    Some((var_name, prompt)) => Some(UiTextInputView::{ var_name, prompt })
     None => None
   }
   {
@@ -225,6 +236,10 @@ pub impl UiBackend for SeleneUiBackend with clear_game_ui(self) {
   self.pending_video_action = None
   self.pending_click = false
   self.pending_intro_done = false
+  self.last_mouse_left_down = false
+  self.last_enter_down = false
+  self.last_space_down = false
+  self.last_escape_down = false
   self.last_view = None
 }
 
@@ -259,7 +274,27 @@ pub impl UiPlatformHooks for SeleneUiBackend with advance_ui_animation_timer(
   self,
   _elapsed_ms,
 ) {
-  ignore(self)
+  let mouse_left_down = @selene_inputs.mouse.left_button
+  let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
+  let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
+  let escape_down = @selene_inputs.is_pressed(@selene_inputs.Escape)
+
+  if (mouse_left_down && !self.last_mouse_left_down) ||
+    (enter_down && !self.last_enter_down) ||
+    (space_down && !self.last_space_down) {
+    self.pending_click = true
+  }
+
+  if escape_down && !self.last_escape_down {
+    if self.pending_action is None {
+      self.pending_action = Some("settings")
+    }
+  }
+
+  self.last_mouse_left_down = mouse_left_down
+  self.last_enter_down = enter_down
+  self.last_space_down = space_down
+  self.last_escape_down = escape_down
 }
 
 ///|
@@ -274,4 +309,107 @@ pub impl UiPlatformHooks for SeleneUiBackend with set_media_volume(
   _volume,
 ) {
   ignore(self)
+}
+
+///|
+pub struct SeleneUiPortFactory {
+  backend : SeleneUiBackend
+}
+
+///|
+pub fn SeleneUiPortFactory::new(
+  ui_strings? : UiStrings = UiStrings::default(),
+  script_locale_json? : String = "",
+  script_default_locale_json? : String = "",
+  vocal_locale_dir? : String = "",
+  script_locale? : String = "",
+  script_default_locale? : String = "",
+) -> SeleneUiPortFactory {
+  {
+    backend: SeleneUiBackend::new(
+      ui_strings~,
+      script_locale_json=match script_locale_json {
+        "" => None
+        _ => Some(script_locale_json)
+      },
+      script_default_locale_json=match script_default_locale_json {
+        "" => None
+        _ => Some(script_default_locale_json)
+      },
+      vocal_locale_dir~,
+      script_locale~,
+      script_default_locale~,
+    ),
+  }
+}
+
+///|
+pub fn SeleneUiPortFactory::push_action(
+  self : SeleneUiPortFactory,
+  action : String,
+) -> Unit {
+  self.backend.push_action(action)
+}
+
+///|
+pub fn SeleneUiPortFactory::push_video_action(
+  self : SeleneUiPortFactory,
+  action : String,
+) -> Unit {
+  self.backend.push_video_action(action)
+}
+
+///|
+pub fn SeleneUiPortFactory::push_selected_choice(
+  self : SeleneUiPortFactory,
+  id : String,
+) -> Unit {
+  self.backend.push_selected_choice(id)
+}
+
+///|
+pub fn SeleneUiPortFactory::push_submitted_text_input(
+  self : SeleneUiPortFactory,
+  text : String,
+) -> Unit {
+  self.backend.push_submitted_text_input(text)
+}
+
+///|
+pub fn SeleneUiPortFactory::push_click(self : SeleneUiPortFactory) -> Unit {
+  self.backend.push_click()
+}
+
+///|
+pub fn SeleneUiPortFactory::last_view(
+  self : SeleneUiPortFactory,
+) -> UiViewModel? {
+  self.backend.last_view()
+}
+
+///|
+pub impl UiPortFactory for SeleneUiPortFactory with create_port(
+  self,
+  ui_strings~,
+  script_locale_json~,
+  script_default_locale_json~,
+  vocal_locale_dir~,
+  script_locale~,
+  script_default_locale~,
+) {
+  self.backend.set_ui_strings(ui_strings)
+  self.backend.set_script_localization(
+    script_locale_json=match script_locale_json {
+      "" => None
+      _ => Some(script_locale_json)
+    },
+    script_default_locale_json=match script_default_locale_json {
+      "" => None
+      _ => Some(script_default_locale_json)
+    },
+    vocal_locale_dir~,
+    script_locale~,
+    script_default_locale~,
+  )
+  UiPort::from_backend(self.backend, self.backend)
 }

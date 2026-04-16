@@ -1,0 +1,6 @@
+import {
+  "Milky2018/selene/inputs" @selene_inputs,
+  "sennenki/reisen/ui_game",
+  "sennenki/reisen/state",
+  "sennenki/reisen/core",
+}

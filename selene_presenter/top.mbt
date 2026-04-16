@@ -22,6 +22,9 @@ using @engine {
 }
 
 ///|
+pub type UiOverlayProvider = () -> Array[@selene_render2d_types.DrawCommand2D]
+
+///|
 pub struct SelenePresenterConfig {
   viewport_w : Double
   viewport_h : Double
@@ -71,6 +74,7 @@ pub struct SelenePresenter {
   effect_start_ms : Map[String, Int]
   effect_from_params : Map[String, Array[(String, Double)]]
   warned_capabilities : Set[String]
+  mut ui_overlay_provider : UiOverlayProvider?
   mut has_active_timed_effects : Bool
   mut last_submitted_epoch : String?
   mut force_submit : Bool
@@ -89,10 +93,20 @@ pub fn SelenePresenter::new(
     effect_start_ms: {},
     effect_from_params: {},
     warned_capabilities: Set::new(),
+    ui_overlay_provider: None,
     has_active_timed_effects: false,
     last_submitted_epoch: None,
     force_submit: true,
   }
+}
+
+///|
+pub fn SelenePresenter::set_ui_overlay_provider(
+  self : SelenePresenter,
+  provider : UiOverlayProvider?,
+) -> Unit {
+  self.ui_overlay_provider = provider
+  self.force_submit = true
 }
 
 ///|
@@ -900,9 +914,13 @@ fn SelenePresenter::submit_frame(
   self : SelenePresenter,
   snapshot : CoreRenderSnapshot,
 ) -> Unit {
+  let ui_commands = match self.ui_overlay_provider {
+    Some(provider) => provider()
+    None => []
+  }
   let frame2d : @selene_render2d_types.RenderFrame2D = {
     world_commands: self.build_world_commands(snapshot),
-    ui_commands: [],
+    ui_commands,
   }
   let frame = { ..@selene_render_pipeline.empty_render_frame(), frame2d, }
   @selene_platform_render.submit_frame(frame)

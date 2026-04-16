@@ -53,14 +53,10 @@ pub fn GalleryImage::new(String, id? : String, title? : String, thumbnail_url? :
 
 pub struct ReplayStateFactories[T](Map[String, () -> @state.GameState[T]])
 pub fn[T] ReplayStateFactories::get(Self[T], ReplayStateFactoryKey) -> (() -> @state.GameState[T])?
-#deprecated
-pub fn[T] ReplayStateFactories::inner(Self[T]) -> Map[String, () -> @state.GameState[T]]
 pub fn[T] ReplayStateFactories::new() -> Self[T]
 pub fn[T] ReplayStateFactories::register(Self[T], () -> @state.GameState[T], key? : String) -> ReplayStateFactoryKey
 
 pub struct ReplayStateFactoryKey(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-#deprecated
-pub fn ReplayStateFactoryKey::inner(Self) -> String
 pub fn ReplayStateFactoryKey::new(String) -> Self
 
 // Type aliases

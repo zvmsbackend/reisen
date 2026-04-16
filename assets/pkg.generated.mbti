@@ -24,26 +24,18 @@ pub impl AnimationTarget for Background
 pub impl PixiTarget for Background
 
 pub(all) struct DomFigure(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-#deprecated
-pub fn DomFigure::inner(Self) -> String
 pub fn DomFigure::new(String) -> Self
 pub impl AnimationTarget for DomFigure
 pub impl Figure for DomFigure
 
 pub(all) struct Live2dFigure(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-#deprecated
-pub fn Live2dFigure::inner(Self) -> String
 pub impl AnimationTarget for Live2dFigure
 pub impl Figure for Live2dFigure
 pub impl PixiTarget for Live2dFigure
 
 pub(all) struct Music(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-#deprecated
-pub fn Music::inner(Self) -> String
 
 pub(all) struct PixiFigure(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-#deprecated
-pub fn PixiFigure::inner(Self) -> String
 pub impl AnimationTarget for PixiFigure
 pub impl Figure for PixiFigure
 pub impl PixiTarget for PixiFigure
@@ -54,8 +46,6 @@ pub(all) enum RenderableKind {
 } derive(Eq, @debug.Debug)
 
 pub(all) struct Sfx(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
-#deprecated
-pub fn Sfx::inner(Self) -> String
 
 // Type aliases
 

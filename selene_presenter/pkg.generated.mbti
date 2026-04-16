@@ -4,6 +4,7 @@ package "sennenki/reisen/selene_presenter"
 import {
   "Milky2018/selene/asset_types",
   "Milky2018/selene/render",
+  "Milky2018/selene/render2d_types",
   "moonbitlang/core/set",
   "sennenki/reisen/engine",
 }
@@ -24,6 +25,7 @@ pub struct SelenePresenter {
   effect_start_ms : Map[String, Int]
   effect_from_params : Map[String, Array[(String, Double)]]
   warned_capabilities : @set.Set[String]
+  mut ui_overlay_provider : (() -> Array[@render2d_types.DrawCommand2D])?
   mut has_active_timed_effects : Bool
   mut last_submitted_epoch : String?
   mut force_submit : Bool
@@ -33,6 +35,7 @@ pub fn SelenePresenter::as_render_hooks(Self) -> ((@engine.CoreRenderSnapshot, B
 pub fn SelenePresenter::new(config? : SelenePresenterConfig) -> Self
 pub fn SelenePresenter::register_background_image(Self, String, @asset_types.ImageHandle) -> Unit
 pub fn SelenePresenter::register_figure_image(Self, String, @asset_types.ImageHandle) -> Unit
+pub fn SelenePresenter::set_ui_overlay_provider(Self, (() -> Array[@render2d_types.DrawCommand2D])?) -> Unit
 pub fn SelenePresenter::submit_core_snapshot(Self, @engine.CoreRenderSnapshot) -> Unit
 
 pub struct SelenePresenterConfig {
@@ -45,6 +48,7 @@ pub struct SelenePresenterConfig {
 pub fn SelenePresenterConfig::default() -> Self
 
 // Type aliases
+pub type UiOverlayProvider = () -> Array[@render2d_types.DrawCommand2D]
 
 // Traits
 

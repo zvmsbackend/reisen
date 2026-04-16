@@ -1,0 +1,7 @@
+import {
+  "Milky2018/selene/inputs" @selene_inputs,
+  "Milky2018/selene/math" @selene_math,
+  "Milky2018/selene/render2d_types" @selene_render2d_types,
+  "sennenki/reisen/ui_game",
+  "sennenki/reisen/ui_menu",
+}

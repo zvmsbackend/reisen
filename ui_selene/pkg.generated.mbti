@@ -1,0 +1,58 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/ui_selene"
+
+import {
+  "sennenki/reisen/core",
+  "sennenki/reisen/ui_game",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct SeleneUiBackend {
+  mut ui_strings : @ui_game.UiStrings
+  mut script_locale_json : String?
+  mut script_default_locale_json : String?
+  mut vocal_locale_dir : String
+  mut script_locale : String
+  mut script_default_locale : String
+  mut pending_choice : String?
+  mut pending_text_input : String?
+  mut pending_action : String?
+  mut pending_video_action : String?
+  mut pending_click : Bool
+  mut pending_intro_done : Bool
+  mut last_mouse_left_down : Bool
+  mut last_enter_down : Bool
+  mut last_space_down : Bool
+  mut last_escape_down : Bool
+  mut last_view : @ui_game.UiViewModel?
+}
+pub fn SeleneUiBackend::last_view(Self) -> @ui_game.UiViewModel?
+pub fn SeleneUiBackend::new(ui_strings? : @ui_game.UiStrings, script_locale_json? : String?, script_default_locale_json? : String?, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn SeleneUiBackend::push_action(Self, String) -> Unit
+pub fn SeleneUiBackend::push_click(Self) -> Unit
+pub fn SeleneUiBackend::push_selected_choice(Self, String) -> Unit
+pub fn SeleneUiBackend::push_submitted_text_input(Self, String) -> Unit
+pub fn SeleneUiBackend::push_video_action(Self, String) -> Unit
+pub impl @ui_game.UiBackend for SeleneUiBackend
+pub impl @ui_game.UiPlatformHooks for SeleneUiBackend
+
+pub struct SeleneUiPortFactory {
+  backend : SeleneUiBackend
+}
+pub fn SeleneUiPortFactory::last_view(Self) -> @ui_game.UiViewModel?
+pub fn SeleneUiPortFactory::new(ui_strings? : @ui_game.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn SeleneUiPortFactory::push_action(Self, String) -> Unit
+pub fn SeleneUiPortFactory::push_click(Self) -> Unit
+pub fn SeleneUiPortFactory::push_selected_choice(Self, String) -> Unit
+pub fn SeleneUiPortFactory::push_submitted_text_input(Self, String) -> Unit
+pub fn SeleneUiPortFactory::push_video_action(Self, String) -> Unit
+pub impl @ui_game.UiPortFactory for SeleneUiPortFactory
+
+// Type aliases
+
+// Traits
+

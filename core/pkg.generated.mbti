@@ -220,8 +220,6 @@ pub(all) enum Instruction[T] {
 }
 
 pub struct Label(String)
-#deprecated
-pub fn Label::inner(Self) -> String
 
 pub struct MixedGroup {
   steps : Array[GroupStep]

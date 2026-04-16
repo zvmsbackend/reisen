@@ -7,8 +7,6 @@ package "sennenki/reisen/effect_types"
 
 // Types and methods
 pub(all) struct Effect(String)
-#deprecated
-pub fn Effect::inner(Self) -> String
 
 // Type aliases
 pub type EffectParam = (String, Double)
