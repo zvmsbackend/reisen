@@ -462,6 +462,7 @@ fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
   }
   self.sync_ui_strings()
   self.sync_runner_localization()
+  self.render_phase_on_locale_change()
 }
 
 ///|
