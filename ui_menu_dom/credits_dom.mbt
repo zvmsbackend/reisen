@@ -1,10 +1,4 @@
 ///|
-pub enum CreditsAction {
-  NoAction
-  Back
-}
-
-///|
 struct CreditsMenu {
   root_id : String
   background : String
@@ -21,10 +15,10 @@ pub fn CreditsMenu::new(
 }
 
 ///|
-pub fn CreditsMenu::set_ui_strings(
-  self : CreditsMenu,
-  ui_strings : UiStrings,
-) -> Unit {
+pub impl @ui_menu.CreditsMenu for CreditsMenu with set_ui_strings(
+  self,
+  ui_strings,
+) {
   self.ui_strings = ui_strings
 }
 
@@ -106,7 +100,7 @@ extern "js" fn credits_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn CreditsMenu::render(self : CreditsMenu, credits_html : String) -> Unit {
+pub impl @ui_menu.CreditsMenu for CreditsMenu with render(self, credits_html) {
   credits_dom_render(
     self.root_id,
     self.background,
@@ -116,17 +110,17 @@ pub fn CreditsMenu::render(self : CreditsMenu, credits_html : String) -> Unit {
 }
 
 ///|
-pub fn CreditsMenu::take_action(self : CreditsMenu) -> CreditsAction {
+pub impl @ui_menu.CreditsMenu for CreditsMenu with take_action(self) {
   match credits_action_kind(self.root_id).to_option() {
     Some("back") => {
       credits_action_clear(self.root_id)
-      CreditsAction::Back
+      Back
     }
-    _ => CreditsAction::NoAction
+    _ => NoAction
   }
 }
 
 ///|
-pub fn CreditsMenu::clear(self : CreditsMenu) -> Unit {
+pub impl @ui_menu.CreditsMenu for CreditsMenu with clear(self) {
   credits_dom_clear(self.root_id)
 }

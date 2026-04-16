@@ -18,4 +18,4 @@ using @assets {
 }
 
 ///|
-using @pixi {type EffectParam}
+using @effect_types {type EffectParam}

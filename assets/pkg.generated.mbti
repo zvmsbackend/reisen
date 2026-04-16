@@ -2,87 +2,46 @@
 package "sennenki/reisen/assets"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "sennenki/reisen/pixi",
 }
 
 // Values
 pub fn dom_figure(String) -> DomFigure
 
-pub async fn load_bytes(String) -> Bytes raise AssetStoreError
-
-pub async fn load_image(String) -> Image raise AssetStoreError
-
-pub async fn load_live2d_model(String) -> @pixi.PixiLive2dModel raise AssetStoreError
-
-pub async fn load_text(String) -> String raise AssetStoreError
-
-pub async fn load_video(String) -> Video raise AssetStoreError
-
 // Errors
-pub suberror AssetStoreError {
+pub(all) suberror AssetStoreError {
   ResourceLoadFailed(message~ : String)
 }
 pub fn AssetStoreError::message(Self) -> String
 
 // Types and methods
-pub struct AssetStore {
-  images : Map[String, Image]
-  videos : Map[String, Video]
-  texts : Map[String, String]
-  bytes : Map[String, Bytes]
-  audios : Map[String, String]
-  live2d_models : Map[String, @pixi.PixiLive2dModel]
-}
-pub fn AssetStore::get_audio_url(Self, String) -> String?
-pub fn AssetStore::get_bytes(Self, String) -> Bytes?
-pub fn AssetStore::get_image(Self, String) -> Image?
-pub fn AssetStore::get_live2d_model(Self, String) -> @pixi.PixiLive2dModel?
-pub fn AssetStore::get_text(Self, String) -> String?
-pub fn AssetStore::get_video(Self, String) -> Video?
-pub fn AssetStore::new() -> Self
-pub fn AssetStore::put_audio_url(Self, String, String) -> Unit
-pub fn AssetStore::put_bytes(Self, String, Bytes) -> Unit
-pub fn AssetStore::put_image(Self, String, Image) -> Unit
-pub fn AssetStore::put_live2d_model(Self, String, @pixi.PixiLive2dModel) -> Unit
-pub fn AssetStore::put_text(Self, String, String) -> Unit
-pub fn AssetStore::put_video(Self, String, Video) -> Unit
-pub async fn AssetStore::register_background(Self, String, id? : String) -> Background raise AssetStoreError
-pub async fn AssetStore::register_background_video(Self, String, id? : String) -> Background raise AssetStoreError
-pub async fn AssetStore::register_figure(Self, String, id? : String) -> PixiFigure raise AssetStoreError
-pub async fn AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure raise AssetStoreError
-pub fn AssetStore::register_music(Self, String, id? : String) -> Music
-pub fn AssetStore::register_sfx(Self, String, id? : String) -> Sfx
-
-pub struct Background {
+pub(all) struct Background {
   id : String
   url : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub impl AnimationTarget for Background
 pub impl PixiTarget for Background
 
-pub struct DomFigure(String) derive(Eq, Show, ToJson, @json.FromJson)
+pub(all) struct DomFigure(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 #deprecated
 pub fn DomFigure::inner(Self) -> String
 pub fn DomFigure::new(String) -> Self
 pub impl AnimationTarget for DomFigure
 pub impl Figure for DomFigure
 
-#external
-pub type Image
-
-pub struct Live2dFigure(String) derive(Eq, Show, ToJson, @json.FromJson)
+pub(all) struct Live2dFigure(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 #deprecated
 pub fn Live2dFigure::inner(Self) -> String
 pub impl AnimationTarget for Live2dFigure
 pub impl Figure for Live2dFigure
 pub impl PixiTarget for Live2dFigure
 
-pub struct Music(String) derive(Eq, Show, ToJson, @json.FromJson)
+pub(all) struct Music(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 #deprecated
 pub fn Music::inner(Self) -> String
 
-pub struct PixiFigure(String) derive(Eq, Show, ToJson, @json.FromJson)
+pub(all) struct PixiFigure(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 #deprecated
 pub fn PixiFigure::inner(Self) -> String
 pub impl AnimationTarget for PixiFigure
@@ -92,14 +51,11 @@ pub impl PixiTarget for PixiFigure
 pub(all) enum RenderableKind {
   Pixi
   Dom
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
-pub struct Sfx(String) derive(Eq, Show, ToJson, @json.FromJson)
+pub(all) struct Sfx(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 #deprecated
 pub fn Sfx::inner(Self) -> String
-
-#external
-pub type Video
 
 // Type aliases
 
@@ -108,6 +64,27 @@ pub trait AnimationTarget {
   id(Self) -> String
   kind(Self) -> RenderableKind
 }
+
+pub(open) trait AssetStore {
+  has_image(Self, String) -> Bool
+  has_video(Self, String) -> Bool
+  has_live2d_model(Self, String) -> Bool
+  get_audio_url(Self, String) -> String?
+  put_audio_url(Self, String, String) -> Unit
+  put_text(Self, String, String) -> Unit
+  put_bytes(Self, String, Bytes) -> Unit
+  put_path(Self, String, String) -> Unit
+  get_path(Self, String) -> String?
+  async load_image_and_cache(Self, String, String) -> Unit raise AssetStoreError
+  async load_video_and_cache(Self, String, String) -> Unit raise AssetStoreError
+  async load_live2d_and_cache(Self, String, String) -> Unit raise AssetStoreError
+}
+pub async fn &AssetStore::register_background(Self, String, id? : String) -> Background raise AssetStoreError
+pub async fn &AssetStore::register_background_video(Self, String, id? : String) -> Background raise AssetStoreError
+pub async fn &AssetStore::register_figure(Self, String, id? : String) -> PixiFigure raise AssetStoreError
+pub async fn &AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure raise AssetStoreError
+pub fn &AssetStore::register_music(Self, String, id? : String) -> Music
+pub fn &AssetStore::register_sfx(Self, String, id? : String) -> Sfx
 
 pub trait Figure : AnimationTarget {
   dummy(Self) -> Unit

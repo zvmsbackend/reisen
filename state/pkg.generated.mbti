@@ -2,6 +2,7 @@
 package "sennenki/reisen/state"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
 
@@ -17,7 +18,7 @@ pub(all) enum DialogText {
   Interpolation(String)
   Enhanced(DialogText, style~ : String)
   Ruby(String, ruby~ : String)
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn DialogText::empty() -> Self
 pub fn DialogText::is_empty(Self) -> Bool
 pub fn DialogText::length(Self) -> Int
@@ -32,7 +33,7 @@ pub struct GameState[T] {
   flags : Map[String, Bool]
   ints : Map[String, Int]
   texts : Map[String, String]
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn[T] GameState::flag(Self[T], String) -> Bool
 pub fn[T] GameState::get_user_data(Self[T]) -> T
 pub fn[T] GameState::int_var(Self[T], String, default_value? : Int) -> Int

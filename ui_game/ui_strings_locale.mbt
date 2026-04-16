@@ -1,54 +1,41 @@
 ///|
-extern "js" fn ui_locale_lookup(
-  locales_json : String,
+fn ui_locale_lookup(
+  locales_json : Json,
   locale : String,
   key : String,
-) -> @js.Nullable[String] =
-  #| (locales_json, locale, key) => {
-  #|   try {
-  #|     if (!globalThis.__reisenUiLocaleTableCache) {
-  #|       globalThis.__reisenUiLocaleTableCache = { raw: '', parsed: null };
-  #|     }
-  #|     const cache = globalThis.__reisenUiLocaleTableCache;
-  #|     if (cache.raw !== locales_json) {
-  #|       cache.raw = locales_json;
-  #|       cache.parsed = locales_json ? JSON.parse(locales_json) : null;
-  #|     }
-  #|     const parsed = cache.parsed;
-  #|     if (!parsed || typeof parsed !== 'object') return null;
-  #|     const byLocale = parsed[locale];
-  #|     if (!byLocale || typeof byLocale !== 'object') return null;
-  #|     const value = byLocale[key];
-  #|     return typeof value === 'string' ? value : null;
-  #|   } catch {
-  #|     return null;
-  #|   }
-  #| }
+) -> String? {
+  guard locales_json is Object(locales) else { return None }
+  guard locales.get(locale) is Some(Object(map)) else { return None }
+  guard map.get(key) is Some(by_locale) else { return None }
+  match by_locale {
+    String(s) => Some(s)
+    _ => None
+  }
+}
 
 ///|
-extern "js" fn ui_locale_warn_missing(
+fn ui_locale_warn_missing(
   locale : String,
   default_locale : String,
   key : String,
-) -> Unit =
-  #| (locale, default_locale, key) => {
-  #|   if (typeof console !== 'undefined' && console.warn) {
-  #|     console.warn(`[reisen:i18n] missing ui key '${key}' for locale='${locale}' (default='${default_locale}')`);
-  #|   }
-  #| }
+) -> Unit {
+  @util.console_warn(
+    "[reisen:i18n] missing ui key '\{key}' for locale='\{locale}' (default='\{default_locale}')",
+  )
+}
 
 ///|
 fn ui_locale_resolve_string(
-  locales_json : String,
+  locales_json : Json,
   locale : String,
   default_locale : String,
   key : String,
   fallback : String,
 ) -> String {
-  match ui_locale_lookup(locales_json, locale, key).to_option() {
+  match ui_locale_lookup(locales_json, locale, key) {
     Some(value) => value
     None =>
-      match ui_locale_lookup(locales_json, default_locale, key).to_option() {
+      match ui_locale_lookup(locales_json, default_locale, key) {
         Some(value) => value
         None => {
           ui_locale_warn_missing(locale, default_locale, key)
@@ -65,6 +52,7 @@ pub fn UiStrings::from_locales_json(
   default_locale : String,
   fallback? : UiStrings = UiStrings::default(),
 ) -> UiStrings {
+  let locales_json = @json.parse(locales_json) catch { _ => {} }
   {
     start_locale_title: ui_locale_resolve_string(
       locales_json,

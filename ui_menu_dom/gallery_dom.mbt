@@ -2,17 +2,6 @@
 /// Gallery viewer DOM integration (grid + fullscreen viewer actions).
 
 ///|
-pub enum GalleryAction {
-  NoAction
-  Back
-  Open(String)
-  Close
-  Prev
-  Next
-  Replay(String)
-}
-
-///|
 struct GalleryTileView {
   id : String
   image_id : String
@@ -55,19 +44,19 @@ pub fn GalleryMenu::new(
 }
 
 ///|
-pub fn GalleryMenu::set_ui_strings(
-  self : GalleryMenu,
-  ui_strings : UiStrings,
-) -> Unit {
+pub impl @ui_menu.GalleryMenu for GalleryMenu with set_ui_strings(
+  self,
+  ui_strings,
+) {
   self.ui_strings = ui_strings
 }
 
 ///|
-pub fn GalleryMenu::set_script_localization(
-  self : GalleryMenu,
-  script_locale_json : String?,
-  script_default_locale_json : String?,
-) -> Unit {
+pub impl @ui_menu.GalleryMenu for GalleryMenu with set_script_localization(
+  self,
+  script_locale_json~,
+  script_default_locale_json~,
+) {
   self.script_locale_json = script_locale_json
   self.script_default_locale_json = script_default_locale_json
 }
@@ -306,7 +295,7 @@ extern "js" fn gallery_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn GalleryMenu::render(self : GalleryMenu) -> Unit {
+pub impl @ui_menu.GalleryMenu for GalleryMenu with render(self) {
   let tiles = self.gallery_tile_views()
   let tiles_json = tiles.to_json().stringify()
   gallery_dom_render(
@@ -324,13 +313,13 @@ pub fn GalleryMenu::render(self : GalleryMenu) -> Unit {
 }
 
 ///|
-pub fn GalleryMenu::clear(self : GalleryMenu) -> Unit {
+pub impl @ui_menu.GalleryMenu for GalleryMenu with clear(self) {
   self.active_id = None
   gallery_dom_clear(self.root_id)
 }
 
 ///|
-pub fn GalleryMenu::take_action(self : GalleryMenu) -> GalleryAction {
+pub impl @ui_menu.GalleryMenu for GalleryMenu with take_action(self) {
   let action = match gallery_action_kind(self.root_id).to_option() {
     Some("back") => GalleryAction::Back
     Some("close") => GalleryAction::Close

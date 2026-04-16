@@ -1,5 +1,8 @@
 import {
-  "moonbit-community/js-ffi/js",
+  "sennenki/js-ffi/js",
   "moonbitlang/async/js_async",
+  "sennenki/reisen/effect_types",
   "sennenki/reisen/util",
 }
+
+supported_targets = "js"

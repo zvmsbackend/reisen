@@ -2,9 +2,8 @@
 package "sennenki/reisen/audio_web"
 
 import {
-  "moonbitlang/core/debug",
   "sennenki/reisen/assets",
-  "sennenki/reisen/core",
+  "sennenki/reisen/audio_core",
 }
 
 // Values
@@ -12,16 +11,10 @@ import {
 // Errors
 
 // Types and methods
-type AudioCommand derive(Eq, @debug.Debug)
-
 type AudioDom
-pub fn AudioDom::as_event_hook(Self) -> (@core.RuntimeEvent) -> Unit
-pub fn AudioDom::handle_event(Self, @core.RuntimeEvent) -> Unit
-pub fn AudioDom::has_active_sfx() -> Bool
 pub fn AudioDom::new((String) -> String?) -> Self
-pub fn AudioDom::new_with_store(@assets.AssetStore) -> Self
-pub fn AudioDom::set_bgm_gain(Double) -> Unit
-pub fn AudioDom::set_sfx_gain(Double) -> Unit
+pub fn AudioDom::new_with_store(&@assets.AssetStore) -> Self
+pub impl @audio_core.AudioPort for AudioDom
 
 // Type aliases
 

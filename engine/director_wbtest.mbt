@@ -6,27 +6,27 @@ using @assets {dom_figure}
 
 ///|
 fn dummy_bg(id : String) -> @assets.Background {
-  @js.Object::from_iter([("id", id), ("url", "")].iter()).to_value().cast()
+  { id, url: "" }
 }
 
 ///|
 fn dummy_figure(id : String) -> @assets.PixiFigure {
-  @js.Value::cast_from(id).cast()
+  @assets.PixiFigure(id)
 }
 
 ///|
 fn dummy_music(id : String) -> @assets.Music {
-  @js.Value::cast_from(id).cast()
+  @assets.Music(id)
 }
 
 ///|
 fn dummy_sfx(id : String) -> @assets.Sfx {
-  @js.Value::cast_from(id).cast()
+  @assets.Sfx(id)
 }
 
 ///|
 fn dummy_live2d_figure(id : String) -> @assets.Live2dFigure {
-  @js.Value::cast_from(id).cast()
+  @assets.Live2dFigure(id)
 }
 
 ///|

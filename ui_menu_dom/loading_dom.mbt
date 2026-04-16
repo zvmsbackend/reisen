@@ -69,11 +69,11 @@ extern "js" fn loading_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn LoadingMenu::render(self : LoadingMenu, text : String) -> Unit {
+pub impl @ui_menu.LoadingMenu for LoadingMenu with render(self, text) {
   loading_dom_render(self.root_id, text)
 }
 
 ///|
-pub fn LoadingMenu::clear(self : LoadingMenu) -> Unit {
+pub impl @ui_menu.LoadingMenu for LoadingMenu with clear(self) {
   loading_dom_clear(self.root_id)
 }

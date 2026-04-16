@@ -5,7 +5,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   let localized_intro_text = view.intro_text.map(text => {
     self.localize_script_text(text)
   })
-  let localized_choices = view.choices.map(choice => {
+  let localized_choices = view.choices.map(choice => UiChoiceView::{
     id: choice.id,
     text: self.localize_script_text(choice.text),
   })

@@ -1,9 +1,12 @@
 import {
-  "sennenki/reisen/assets",
+  "sennenki/reisen/assets_web",
   "sennenki/reisen/core",
   "sennenki/reisen/presenter_common",
   "sennenki/reisen/pixi",
+  "sennenki/reisen/effect_types",
   "sennenki/reisen/engine",
-  "moonbit-community/js-ffi/js",
+  "sennenki/js-ffi/js",
   "moonbitlang/core/deque",
 }
+
+supported_targets = "js"

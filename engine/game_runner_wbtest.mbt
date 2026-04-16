@@ -1,4 +1,7 @@
 ///|
+using @ui_dom {type UiDom}
+
+///|
 using @core {label, option, script, anim_opacity, type AnimationGroup}
 
 ///|
@@ -111,10 +114,10 @@ async test "runner render sync hook is called on ui sync and step" {
   })
   let calls : Array[Int] = []
   let hook : RenderSyncHook = (_, _) => calls.push(1)
-  let runner = GameRunner::new_with_render_sync(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(compiled, GameState::new(0))),
     UiDom::new("app"),
-    hook,
+    render_sync=hook,
   )
 
   runner.sync_ui()
@@ -138,11 +141,9 @@ async test "runner render extension hook is called when canvas sync runs" {
     builder.animate_opacity(dummy_figure("hero"), 50, 0.8)
   })
   let extension_calls : Array[Int] = []
-  let runner = GameRunner::new_with_hooks(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(compiled, GameState::new(0))),
     UiDom::new("app"),
-    (_, _) => (),
-    _ => (),
     render_extension=(_, _) => extension_calls.push(1),
   )
 
@@ -174,11 +175,10 @@ async test "runner tick returns false when script ends" {
 async test "runner event hook receives emitted events" {
   let script : Script[Int] = script(builder => builder.say("n", "t"))
   let seen : Array[RuntimeEvent] = []
-  let runner = GameRunner::new_with_hooks(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(script, GameState::new(0))),
     UiDom::new("app"),
-    (_, _) => (),
-    event => seen.push(event),
+    event_hook=event => seen.push(event),
   )
   assert_eq(
     runner.step(),
@@ -343,11 +343,10 @@ async test "runner emits ui click sfx on midgame click advance" {
     builder..say("n", "hello").say("n", "next")
   })
   let ui = UiDom::new("app")
-  let runner = GameRunner::new_with_hooks(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(script, GameState::new(0))),
     ui,
-    (_, _) => (),
-    event => seen.push(event),
+    event_hook=event => seen.push(event),
   )
   runner.set_ui_click_sfx(Some(click_sfx))
 
@@ -389,11 +388,10 @@ async test "runner emits selected localized vocal url" {
     script_locale="ja",
     script_default_locale="en",
   )
-  let runner = GameRunner::new_with_hooks(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(script, GameState::new(0))),
     ui,
-    (_, _) => (),
-    event => seen.push(event),
+    event_hook=event => seen.push(event),
   )
 
   ignore(runner.step())
@@ -415,11 +413,10 @@ async test "runner keeps literal vocal url unchanged" {
     builder.say("n", "hello", voice="assets/direct.ogg")
   })
   let seen : Array[RuntimeEvent] = []
-  let runner = GameRunner::new_with_hooks(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(script, GameState::new(0))),
     UiDom::new("app"),
-    (_, _) => (),
-    event => seen.push(event),
+    event_hook=event => seen.push(event),
   )
 
   ignore(runner.step())
@@ -439,10 +436,10 @@ async test "runner keeps literal vocal url unchanged" {
 async test "runner clear presentation resets render and syncs canvas" {
   let calls : Array[Int] = []
   let hook : RenderSyncHook = (_, _) => calls.push(1)
-  let runner = GameRunner::new_with_render_sync(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(script(_ => ()), GameState::new(0))),
     UiDom::new("app"),
-    hook,
+    render_sync=hook,
   )
 
   runner.apply_runtime_event(BackgroundShown("bg_demo"))
@@ -583,10 +580,10 @@ async test "runner keeps rendering during animations" {
   let script : Script[Int] = script(builder => {
     builder.animate_opacity(dummy_figure("hero"), 200, 1.0)
   })
-  let runner = GameRunner::new_with_render_sync(
+  let runner = GameRunner::new(
     Director::new(Runtime::new(script, GameState::new(0))),
     UiDom::new("app"),
-    hook,
+    render_sync=hook,
   )
 
   let _ = runner.step()

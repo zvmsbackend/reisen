@@ -19,7 +19,7 @@ test "ui view model reflects dialog and choices from snapshot" {
   }
   let ui = UiDom::new("ui-root")
 
-  let view = UiViewModel::from_snapshot(snapshot, ui)
+  let view = ui_view_model_from_snapshot(snapshot, ui)
   assert_eq(view.speaker, DialogText::String("guide"))
   assert_eq(view.text, DialogText::String("Pick one"))
   assert_eq(view.dialog_seq, 1)
@@ -31,7 +31,7 @@ test "ui view model reflects dialog and choices from snapshot" {
 ///|
 test "ui view model is empty with default snapshot" {
   let ui = UiDom::new("ui-root")
-  let view = UiViewModel::from_snapshot(UiSnapshot::default(), ui)
+  let view = ui_view_model_from_snapshot(UiSnapshot::default(), ui)
   assert_eq(view.speaker, DialogText::String(""))
   assert_eq(view.text, DialogText::String(""))
   assert_eq(view.dialog_seq, 0)
@@ -65,9 +65,9 @@ test "ui view model includes dom figures and applies dom animation" {
   }
   let ui = UiDom::new("ui-root")
 
-  ignore(UiViewModel::from_snapshot(snapshot0, ui))
+  ignore(ui_view_model_from_snapshot(snapshot0, ui))
   ui.advance_dom_animation_timer(120)
-  let view = UiViewModel::from_snapshot(snapshot0, ui)
+  let view = ui_view_model_from_snapshot(snapshot0, ui)
   assert_eq(view.dom_figures.length(), 1)
   assert_eq(view.dom_figures[0].id, "promo")
   assert_eq(view.dom_figures[0].dom_id, "promo")

@@ -2,6 +2,7 @@
 package "sennenki/reisen/gallery"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "sennenki/reisen/state",
 }
@@ -47,7 +48,7 @@ pub struct GalleryImage {
   thumbnail_url : String?
   replay_label : String?
   replay_state_factory_key : ReplayStateFactoryKey?
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn GalleryImage::new(String, id? : String, title? : String, thumbnail_url? : String, replay_label? : String, replay_state_factory_key? : ReplayStateFactoryKey) -> Self
 
 pub struct ReplayStateFactories[T](Map[String, () -> @state.GameState[T]])
@@ -57,7 +58,7 @@ pub fn[T] ReplayStateFactories::inner(Self[T]) -> Map[String, () -> @state.GameS
 pub fn[T] ReplayStateFactories::new() -> Self[T]
 pub fn[T] ReplayStateFactories::register(Self[T], () -> @state.GameState[T], key? : String) -> ReplayStateFactoryKey
 
-pub struct ReplayStateFactoryKey(String) derive(Eq, Show, ToJson, @json.FromJson)
+pub struct ReplayStateFactoryKey(String) derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 #deprecated
 pub fn ReplayStateFactoryKey::inner(Self) -> String
 pub fn ReplayStateFactoryKey::new(String) -> Self

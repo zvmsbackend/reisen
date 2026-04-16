@@ -1,5 +1,4 @@
 import {
-  "moonbit-community/js-ffi/js",
   "moonbitlang/core/json",
   "sennenki/reisen/core",
   "sennenki/reisen/state",

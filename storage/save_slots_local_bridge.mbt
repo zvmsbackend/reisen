@@ -17,7 +17,7 @@ extern "js" fn storage_set_item(key : String, value : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn storage_get_item(key : String) -> @js.Nullable[String] =
+extern "js" fn js_storage_get_item(key : String) -> @js.Nullable[String] =
   #| (key) => {
   #|   const ls = globalThis.localStorage;
   #|   if (ls && ls.getItem) {
@@ -28,6 +28,11 @@ extern "js" fn storage_get_item(key : String) -> @js.Nullable[String] =
   #|   if (!bag) return null;
   #|   return bag.has(key) ? bag.get(key) : null;
   #| }
+
+///|
+fn storage_get_item(key : String) -> String? {
+  js_storage_get_item(key).to_option()
+}
 
 ///|
 extern "js" fn storage_remove_item(key : String) -> Unit =

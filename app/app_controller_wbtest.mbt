@@ -1,4 +1,7 @@
 ///|
+using @assets_web {type WebAssetStore}
+
+///|
 using @debug {assert_eq}
 
 ///|
@@ -15,7 +18,246 @@ extern "js" fn read_bgm_gain() -> Double =
   #| () => globalThis.__reisenBgmGain ?? -1
 
 ///|
-let dummy_assets : AssetStore = AssetStore::new()
+let dummy_assets : WebAssetStore = WebAssetStore::new()
+
+///|
+struct DummyMenuFactory {}
+
+///|
+struct DummyStartMenu {}
+
+///|
+impl StartMenu for DummyStartMenu with set_ui_strings(_, _) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with render_gate(_) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with clear_gate(_) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with take_gate_action(_) {
+  NoAction
+}
+
+///|
+impl StartMenu for DummyStartMenu with render_logo(_, _, _) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with clear_logo(_) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with take_logo_action(_) {
+  NoAction
+}
+
+///|
+impl StartMenu for DummyStartMenu with render_locale_picker(_, _) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with clear_locale_picker(_) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with take_locale_action(_) {
+  NoAction
+}
+
+///|
+impl StartMenu for DummyStartMenu with render(_) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with clear(_) {
+
+}
+
+///|
+impl StartMenu for DummyStartMenu with take_action(_) {
+  NoAction
+}
+
+///|
+struct DummyGalleryMenu {}
+
+///|
+impl GalleryMenu for DummyGalleryMenu with set_ui_strings(_, _) {
+
+}
+
+///|
+impl GalleryMenu for DummyGalleryMenu with set_script_localization(
+  _,
+  script_locale_json~,
+  script_default_locale_json~,
+) {
+  ignore(script_locale_json)
+  ignore(script_default_locale_json)
+}
+
+///|
+impl GalleryMenu for DummyGalleryMenu with render(_) {
+
+}
+
+///|
+impl GalleryMenu for DummyGalleryMenu with clear(_) {
+
+}
+
+///|
+impl GalleryMenu for DummyGalleryMenu with take_action(_) {
+  NoAction
+}
+
+///|
+struct DummySettingsMenu {}
+
+///|
+impl SettingsMenu for DummySettingsMenu with set_ui_strings(_, _) {
+
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with set_script_localization(
+  _,
+  script_locale_json~,
+  script_default_locale_json~,
+) {
+  ignore(script_locale_json)
+  ignore(script_default_locale_json)
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with set_languages(_, _) {
+
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with set_locale(_, _) {
+
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with set_context(_, _) {
+
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with set_view_mode(_, _) {
+
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with render(_) {
+
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with clear(_) {
+
+}
+
+///|
+impl SettingsMenu for DummySettingsMenu with take_action(_) {
+  NoAction
+}
+
+///|
+struct DummyCreditsMenu {}
+
+///|
+impl CreditsMenu for DummyCreditsMenu with set_ui_strings(_, _) {
+
+}
+
+///|
+impl CreditsMenu for DummyCreditsMenu with render(_, _) {
+
+}
+
+///|
+impl CreditsMenu for DummyCreditsMenu with clear(_) {
+
+}
+
+///|
+impl CreditsMenu for DummyCreditsMenu with take_action(_) {
+  NoAction
+}
+
+///|
+struct DummyLoadingMenu {}
+
+///|
+impl LoadingMenu for DummyLoadingMenu with render(_, _) {
+
+}
+
+///|
+impl LoadingMenu for DummyLoadingMenu with clear(_) {
+
+}
+
+///|
+impl MenuFactory for DummyMenuFactory with create_start_menu(
+  _,
+  save_store~,
+  background~,
+  show_credits~,
+) {
+  ignore(save_store)
+  ignore(background)
+  ignore(show_credits)
+  DummyStartMenu::{  }
+}
+
+///|
+impl MenuFactory for DummyMenuFactory with create_gallery_menu(_, background~) {
+  ignore(background)
+  DummyGalleryMenu::{  }
+}
+
+///|
+impl MenuFactory for DummyMenuFactory with create_settings_menu(
+  _,
+  audio~,
+  background~,
+  show_credits~,
+) {
+  ignore(audio)
+  ignore(background)
+  ignore(show_credits)
+  DummySettingsMenu::{  }
+}
+
+///|
+impl MenuFactory for DummyMenuFactory with create_credits_menu(_, background~) {
+  ignore(background)
+  DummyCreditsMenu::{  }
+}
+
+///|
+impl MenuFactory for DummyMenuFactory with create_loading_menu(_) {
+  DummyLoadingMenu::{  }
+}
+
+///|
+let dummy_menu_factory : &MenuFactory = DummyMenuFactory::{  }
 
 ///|
 test "app controller applies stored bgm gain on startup" {
@@ -24,8 +266,9 @@ test "app controller applies stored bgm gain on startup" {
     AppController::new(
       () => script(builder => builder.say("n", "hello")),
       () => GameState::new(0),
-      "app",
+      dummy_ui_port_factory,
       dummy_assets,
+      dummy_menu_factory,
       save_namespace="app_test_bgm_init",
     ),
   )
@@ -38,8 +281,9 @@ async test "app controller enters game on new game action" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
   )
 
   assert_eq(app.phase(), AppPhase::StartGate)
@@ -55,8 +299,9 @@ async test "app controller stays in menu when loading missing slot" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
   )
   // Load from start menu now goes to settings
   app.enter_start_menu()
@@ -70,7 +315,12 @@ async test "app controller can continue from saved slot" {
   let script : Script[Int] = script(builder => {
     builder..say("n", "a").say("n", "b")
   })
-  let runner = start_game(script, GameState::new(0), "app")
+  let runner = start_game(
+    script,
+    GameState::new(0),
+    dummy_ui_port_factory,
+    @audio.dummy,
+  )
   assert_eq(
     runner.step(),
     Said(
@@ -86,9 +336,10 @@ async test "app controller can continue from saved slot" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     save_namespace="app_test_ns_continue",
     dummy_assets,
+    dummy_menu_factory,
   )
   app.enter_start_menu()
   app.handle_menu_action(Continue("slot1"))
@@ -102,8 +353,9 @@ async test "app controller opens gallery when entries exist" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
   )
   app.enter_start_menu()
   app.handle_menu_action(Gallery)
@@ -132,8 +384,9 @@ async test "gallery replay uses app controller state factory by default" {
       state.set_text_var("who", "default")
       state
     },
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
   )
 
   app.start_gallery_replay(replay_label)
@@ -191,8 +444,9 @@ async test "gallery replay uses image-specific state factory key" {
       state.set_text_var("who", "default")
       state
     },
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
     gallery_replay_state_factories=replay_state_factories,
   )
 
@@ -225,8 +479,9 @@ async test "app controller submit custom event only works in game" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
     event_hook=event => seen.push(event),
   )
 
@@ -280,8 +535,9 @@ async test "app controller custom event jump resumes on next step" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
   )
   app.enter_start_menu()
   app.handle_menu_action(NewGame)
@@ -314,8 +570,9 @@ test "start logo sequence advances one logo per skip" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
     start_logo_urls=["logo_a.png", "logo_b.png", "logo_c.png"],
     start_logo_duration_ms=5000,
   )
@@ -342,8 +599,9 @@ async test "start logo timeout advances sequence before menu" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
     start_logo_urls=["logo_a.png", "logo_b.png"],
     start_logo_duration_ms=100,
   )
@@ -370,8 +628,9 @@ async test "script factory is lazy and cached" {
       script
     },
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
   )
 
   assert_eq(calls.val, 0)
@@ -393,8 +652,9 @@ test "start logo urls normalize by removing empty entries" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
     start_logo_urls=["", "logo_a.png", "", "logo_b.png", ""],
   )
   assert_eq(app.start_logo_urls, ["logo_a.png", "logo_b.png"])
@@ -407,8 +667,9 @@ test "app controller enters locale select when language not chosen" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
     save_namespace="app_test_locale",
     languages=[("English", "en"), ("Japanese", "ja")],
   )
@@ -423,8 +684,9 @@ test "app controller skips locale select when language already chosen" {
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     dummy_assets,
+    dummy_menu_factory,
     save_namespace="app_test_locale2",
     languages=[("English", "en"), ("Japanese", "ja")],
   )
@@ -433,15 +695,16 @@ test "app controller skips locale select when language already chosen" {
 
 ///|
 async test "app controller emits ui click sfx on menu action" {
-  let assets = AssetStore::new()
+  let assets = WebAssetStore::new()
   let click_sfx_url = "assets/ui_click.ogg"
   let seen : Array[RuntimeEvent] = []
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let app = AppController::new(
     () => script,
     () => GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
     assets,
+    dummy_menu_factory,
     ui_click_sfx_url=click_sfx_url,
     event_hook=event => seen.push(event),
   )

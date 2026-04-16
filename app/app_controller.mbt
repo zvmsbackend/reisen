@@ -2,12 +2,9 @@
 /// Top-level app controller: start menu <-> game runtime switching.
 
 ///|
-extern "js" fn log_app_warn(message : String) -> Unit =
-  #| (msg) => {
-  #|   if (typeof console !== 'undefined' && console.warn) {
-  #|     console.warn('[reisen:app]', msg);
-  #|   }
-  #| }
+fn log_app_warn(msg : String) -> Unit {
+  @util.console_warn("[reisen:app] \{msg}")
+}
 
 ///|
 pub enum AppPhase {
@@ -22,7 +19,12 @@ pub enum AppPhase {
 } derive(Debug, Eq)
 
 ///|
+#cfg(target="js")
 pub type ScriptFactory[T] = async () -> Script[T]
+
+///|
+#cfg(target="native")
+pub type ScriptFactory[T] = () -> Script[T]
 
 ///|
 pub suberror AppControllerError {
@@ -49,20 +51,16 @@ struct AppController[T] {
   script_factory : ScriptFactory[T]
   mut script : Script[T]?
   new_state : () -> GameState[T]
-  ui_root_id : String
+  ui_port_factory : &@ui_game.UiPortFactory
   ui_strings_default : UiStrings
+  mut ui_locales_json : String?
   mut ui_strings : UiStrings
   languages : Array[(String, String)]
   mut locale : String
   default_locale : String
-  ui_locale_path : String
-  mut ui_locales_json : String?
-  mut ui_locale_load_attempted : Bool
-  script_locale_dir : String
   mut script_locale_json : String?
   mut script_default_locale_json : String?
   vocal_locale_dir : String
-  mut script_locale_load_attempted : Bool
   credits : String?
   save_ns : String
   autosave_slot : String
@@ -75,11 +73,11 @@ struct AppController[T] {
   start_logo_duration_ms : Int
   mut start_logo_elapsed_ms : Int
   mut start_logo_index : Int
-  start_menu : StartMenu
-  gallery_menu : GalleryMenu
-  settings_menu : SettingsMenu
-  credits_menu : CreditsMenu
-  loading_menu : LoadingMenu
+  start_menu : &StartMenu
+  gallery_menu : &GalleryMenu
+  settings_menu : &SettingsMenu
+  credits_menu : &CreditsMenu
+  loading_menu : &LoadingMenu
   mut credits_return_phase : AppPhase
   gallery_replay_state_factories : ReplayStateFactories[T]
   save_store : &SaveSlotStore
@@ -91,15 +89,18 @@ struct AppController[T] {
   mut runner : GameRunner[T]?
   mut saved_director_json : String?
   mut saved_dialog_history : Array[DialogLogEntry]?
-  assets : AssetStore
+  assets : &AssetStore
+  audio : &AudioPort
 }
 
 ///|
 pub fn[T] AppController::new(
   script_factory : ScriptFactory[T],
   new_state : () -> GameState[T],
-  ui_root_id : String,
-  assets : AssetStore,
+  ui_port_factory : &@ui_game.UiPortFactory,
+  assets : &AssetStore,
+  menu_factory : &MenuFactory,
+  audio? : &AudioPort = @audio.dummy,
   save_namespace? : String = "global",
   autosave_slot? : String = "autosave",
   autosave_title? : String = "",
@@ -112,8 +113,9 @@ pub fn[T] AppController::new(
   menu_music_loop? : Bool = true,
   ui_strings? : UiStrings = UiStrings::default(),
   languages? : Array[(String, String)] = [],
-  ui_locale_path? : String = "locales/ui.json",
-  script_locale_dir? : String = "locales",
+  ui_locales_json? : String = "",
+  script_locale_json? : String = "",
+  script_default_locale_json? : String = "",
   vocal_locale_dir? : String = "",
   credits? : String,
   save_store? : &SaveSlotStore = default_save_slot_storage(),
@@ -154,20 +156,25 @@ pub fn[T] AppController::new(
     script_factory,
     script: None,
     new_state,
-    ui_root_id,
+    ui_port_factory,
     ui_strings_default: ui_strings,
+    ui_locales_json: match ui_locales_json {
+      "" => None
+      _ => Some(ui_locales_json)
+    },
     ui_strings,
     languages,
     locale: selected_locale,
     default_locale,
-    ui_locale_path,
-    ui_locales_json: None,
-    ui_locale_load_attempted: false,
-    script_locale_dir,
-    script_locale_json: None,
-    script_default_locale_json: None,
+    script_locale_json: match script_locale_json {
+      "" => None
+      _ => Some(script_locale_json)
+    },
+    script_default_locale_json: match script_default_locale_json {
+      "" => None
+      _ => Some(script_default_locale_json)
+    },
     vocal_locale_dir,
-    script_locale_load_attempted: false,
     credits,
     save_ns: save_namespace,
     autosave_slot,
@@ -180,40 +187,29 @@ pub fn[T] AppController::new(
     start_logo_duration_ms,
     start_logo_elapsed_ms: 0,
     start_logo_index: 0,
-    start_menu: StartMenu::new(
-      ui_root_id,
-      save_namespace~,
+    start_menu: menu_factory.create_start_menu(
       save_store~,
       background=menu_background,
-      ui_strings~,
       show_credits=credits is Some(_),
     ),
-    gallery_menu: GalleryMenu::new(
-      ui_root_id,
-      save_namespace~,
+    gallery_menu: menu_factory.create_gallery_menu(
       background=gallery_background,
-      ui_strings~,
     ),
-    settings_menu: SettingsMenu::new(
-      ui_root_id,
-      save_namespace~,
-      save_store~,
+    settings_menu: menu_factory.create_settings_menu(
+      audio~,
       background=settings_background,
-      ui_strings~,
       show_credits=credits is Some(_),
     ),
-    credits_menu: CreditsMenu::new(
-      ui_root_id,
+    credits_menu: menu_factory.create_credits_menu(
       background=credits_background,
-      ui_strings~,
     ),
-    loading_menu: LoadingMenu::new(ui_root_id),
-    credits_return_phase: AppPhase::StartMenu,
+    loading_menu: menu_factory.create_loading_menu(),
+    credits_return_phase: StartMenu,
     save_store,
     phase: if !languages.is_empty() && !has_persisted {
-      AppPhase::LocaleSelect
+      LocaleSelect
     } else {
-      AppPhase::StartGate
+      StartGate
     },
     save_store_preloaded: false,
     core_render_sync,
@@ -224,21 +220,27 @@ pub fn[T] AppController::new(
     saved_dialog_history: None,
     gallery_replay_state_factories,
     assets,
+    audio,
   }
-  if settings_read_in(save_namespace) is Some(settings) {
-    AudioDom::set_bgm_gain(settings.bgm_volume)
-    AudioDom::set_sfx_gain(settings.sfx_volume)
-  } else {
-    let defaults = GameSettings::default()
-    AudioDom::set_bgm_gain(defaults.bgm_volume)
-    AudioDom::set_sfx_gain(defaults.sfx_volume)
-  }
+  let settings = settings_read_in(save_namespace).unwrap_or_default()
+  audio.set_bgm_gain(settings.bgm_volume)
+  audio.set_sfx_gain(settings.sfx_volume)
   app.settings_menu.set_languages(languages)
   app.settings_menu.set_locale(selected_locale)
+  app.gallery_menu.set_script_localization(
+    script_locale_json=app.script_locale_json,
+    script_default_locale_json=app.script_default_locale_json,
+  )
+  app.settings_menu.set_script_localization(
+    script_locale_json=app.script_locale_json,
+    script_default_locale_json=app.script_default_locale_json,
+  )
+  app.refresh_ui_strings()
   app
 }
 
 ///|
+#cfg(target="js")
 async fn[T] AppController::script(
   self : AppController[T],
 ) -> Script[T] raise AppControllerError {
@@ -247,12 +249,12 @@ async fn[T] AppController::script(
     None => {
       self.loading_menu.render(self.ui_strings.loading_text)
       let script = (self.script_factory)() catch {
-        PixiBindingError::ResourceLoadFailed(message~) => {
-          self.loading_menu.clear()
-          raise ScriptLoadFailed(
-            message="Pixi resource load failed: \{message}",
-          )
-        }
+        //PixiBindingError::ResourceLoadFailed(message~) => {
+        //  self.loading_menu.clear()
+        //  raise ScriptLoadFailed(
+        //    message="Pixi resource load failed: \{message}",
+        //  )
+        //}
         AssetStoreError::ResourceLoadFailed(message~) => {
           self.loading_menu.clear()
           raise ScriptLoadFailed(
@@ -277,6 +279,10 @@ async fn[T] AppController::script(
           raise ScriptLoadFailed(
             message="Unsupported save payload version: expected \{expected}, found \{found}",
           )
+        LocalizationLoadFailed(message~) =>
+          raise ScriptLoadFailed(
+            message="Localization preload failed: \{message}",
+          )
       }
       self.script = Some(script)
       script
@@ -296,7 +302,7 @@ fn[T] AppController::show_current_start_logo(self : AppController[T]) -> Unit {
     self.start_logo_duration_ms,
   )
   self.start_logo_elapsed_ms = 0
-  self.phase = AppPhase::StartLogo
+  self.phase = StartLogo
 }
 
 ///|
@@ -358,7 +364,7 @@ fn[T] AppController::enter_credits(
       self.gallery_menu.clear()
       self.credits_return_phase = return_phase
       self.credits_menu.render(self.credits_html())
-      self.phase = AppPhase::Credits
+      self.phase = Credits
     }
     None => ()
   }
@@ -371,7 +377,7 @@ fn[T] AppController::enter_start_menu(self : AppController[T]) -> Unit {
   self.start_menu.clear_logo()
   self.start_menu.clear_gate()
   self.start_menu.render()
-  self.phase = AppPhase::StartMenu
+  self.phase = StartMenu
   self.start_menu_music_start()
 }
 
@@ -417,12 +423,12 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
     _ => self.locale
   }
   self.gallery_menu.set_script_localization(
-    self.script_locale_json,
-    self.script_default_locale_json,
+    script_locale_json=self.script_locale_json,
+    script_default_locale_json=self.script_default_locale_json,
   )
   self.settings_menu.set_script_localization(
-    self.script_locale_json,
-    self.script_default_locale_json,
+    script_locale_json=self.script_locale_json,
+    script_default_locale_json=self.script_default_locale_json,
   )
   if self.runner is Some(runner) {
     runner
@@ -459,90 +465,28 @@ fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
 }
 
 ///|
-async fn[T] AppController::ensure_ui_locales_loaded(
+pub fn[T] AppController::set_localization_payload(
   self : AppController[T],
-) -> Bool noraise {
-  if self.ui_locale_load_attempted {
-    return false
+  ui_locales_json? : String = "",
+  script_locale_json? : String = "",
+  script_default_locale_json? : String = "",
+) -> Unit {
+  let next_ui_locales_json = match ui_locales_json {
+    "" => None
+    _ => Some(ui_locales_json)
   }
-  self.ui_locale_load_attempted = true
-  if self.ui_locale_path == "" {
-    return false
+  let next_script_locale_json = match script_locale_json {
+    "" => None
+    _ => Some(script_locale_json)
   }
-  self.ui_locales_json = Some(
-    load_text(self.ui_locale_path) catch {
-      error => {
-        log_app_warn(
-          "failed to load ui locale '\{self.ui_locale_path}': \{error.message()}",
-        )
-        ""
-      }
-    },
-  )
+  let next_script_default_locale_json = match script_default_locale_json {
+    "" => None
+    _ => Some(script_default_locale_json)
+  }
+  self.ui_locales_json = next_ui_locales_json
+  self.script_locale_json = next_script_locale_json
+  self.script_default_locale_json = next_script_default_locale_json
   self.refresh_ui_strings()
-  true
-}
-
-///|
-async fn[T] AppController::ensure_script_locales_loaded(
-  self : AppController[T],
-) -> Bool noraise {
-  if self.script_locale_load_attempted {
-    return false
-  }
-  self.script_locale_load_attempted = true
-  if self.script_locale_dir == "" {
-    return false
-  }
-  let selected_code = match self.locale {
-    "" => self.default_locale
-    _ => self.locale
-  }
-  let default_code = self.default_locale
-  let selected_path = match selected_code {
-    "" => ""
-    _ => "\{self.script_locale_dir}/\{selected_code}.json"
-  }
-  let default_path = match default_code {
-    "" => ""
-    _ => "\{self.script_locale_dir}/\{default_code}.json"
-  }
-  self.script_locale_json = match selected_path {
-    "" => None
-    _ => {
-      let raw = load_text(selected_path) catch {
-        error => {
-          log_app_warn(
-            "failed to load script locale '\{selected_path}': \{error.message()}",
-          )
-          ""
-        }
-      }
-      match raw {
-        "" => None
-        _ => Some(raw)
-      }
-    }
-  }
-  self.script_default_locale_json = match default_path {
-    "" => None
-    _ => {
-      let raw = load_text(default_path) catch {
-        error => {
-          log_app_warn(
-            "failed to load default script locale '\{default_path}': \{error.message()}",
-          )
-          ""
-        }
-      }
-      match raw {
-        "" => None
-        _ => Some(raw)
-      }
-    }
-  }
-  self.sync_runner_localization()
-  true
 }
 
 ///|
@@ -553,9 +497,6 @@ fn[T] AppController::apply_locale(
   self.locale = code
   self.settings_menu.set_locale(code)
   persistent_set_text_in(self.save_ns, "locale", code)
-  self.script_locale_load_attempted = false
-  self.script_locale_json = None
-  self.script_default_locale_json = None
   self.refresh_ui_strings()
 }
 
@@ -582,7 +523,8 @@ fn[T] AppController::make_runner(
   let runner = start_game(
     script,
     state,
-    self.ui_root_id,
+    self.ui_port_factory,
+    self.audio,
     core_render_sync=self.core_render_sync,
     render_extension?=self.render_extension,
     event_hook=self.event_hook,
@@ -611,7 +553,8 @@ fn[T : FromJson] AppController::load_runner_from_slot(
   let runner = start_game_from_slot(
     script,
     slot,
-    self.ui_root_id,
+    self.ui_port_factory,
+    self.audio,
     core_render_sync=self.core_render_sync,
     render_extension?=self.render_extension,
     event_hook=self.event_hook,
@@ -643,7 +586,8 @@ fn[T : FromJson] AppController::resume_runner_from_json(
   let runner = start_game_from_save(
     script,
     director_json,
-    self.ui_root_id,
+    self.ui_port_factory,
+    self.audio,
     core_render_sync=self.core_render_sync,
     render_extension?=self.render_extension,
     event_hook=self.event_hook,
@@ -667,7 +611,7 @@ pub fn[T] AppController::submit_custom_event(
   name : String,
   payload : String,
 ) -> Bool {
-  if self.phase != AppPhase::InGame {
+  if self.phase != InGame {
     return false
   }
   match self.runner {
@@ -695,6 +639,7 @@ fn[T] AppController::replay_factory_for_image(
 }
 
 ///|
+#cfg(target="js")
 async fn[T] AppController::start_gallery_replay(
   self : AppController[T],
   replay_label : String,
@@ -711,7 +656,7 @@ async fn[T] AppController::start_gallery_replay(
         self.start_menu_music_stop()
         self.gallery_menu.clear()
         self.runner = Some(runner)
-        self.phase = AppPhase::InGame
+        self.phase = InGame
       } catch {
         LabelNotFound(label~) => {
           log_app_warn("gallery replay label not found: '\{label}'")
@@ -725,6 +670,7 @@ async fn[T] AppController::start_gallery_replay(
 }
 
 ///|
+#cfg(target="js")
 async fn[T : FromJson] AppController::handle_menu_action(
   self : AppController[T],
   action : StartMenuAction,
@@ -737,7 +683,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
       let runner = self.make_runner(self.script(), (self.new_state)())
       self.runner = Some(runner)
       self.start_menu.clear()
-      self.phase = AppPhase::InGame
+      self.phase = InGame
     }
     Continue(slot) => {
       self.emit_ui_click_sfx()
@@ -747,7 +693,7 @@ async fn[T : FromJson] AppController::handle_menu_action(
         self.start_menu_music_stop()
         self.runner = Some(runner)
         self.start_menu.clear()
-        self.phase = AppPhase::InGame
+        self.phase = InGame
       } catch {
         _ => {
           log_app_warn(
@@ -764,23 +710,23 @@ async fn[T : FromJson] AppController::handle_menu_action(
       self.settings_menu.set_context(FromStartMenu)
       self.settings_menu.set_view_mode(LoadList)
       self.settings_menu.render()
-      self.phase = AppPhase::Settings
+      self.phase = Settings
     }
     Settings => {
       self.emit_ui_click_sfx()
       self.start_menu.clear()
       self.settings_menu.set_context(FromStartMenu)
       self.settings_menu.render()
-      self.phase = AppPhase::Settings
+      self.phase = Settings
     }
     Gallery =>
       if !@gallery.registered_images().is_empty() {
         self.emit_ui_click_sfx()
         self.start_menu.clear()
         self.gallery_menu.render()
-        self.phase = AppPhase::Gallery
+        self.phase = Gallery
       }
-    Credits => self..emit_ui_click_sfx().enter_credits(AppPhase::StartMenu)
+    Credits => self..emit_ui_click_sfx().enter_credits(StartMenu)
   }
 }
 
@@ -844,14 +790,13 @@ fn[T] AppController::render_phase_on_locale_change(
   self : AppController[T],
 ) -> Unit {
   match self.phase {
-    AppPhase::LocaleSelect =>
-      self.start_menu.render_locale_picker(self.languages)
-    AppPhase::StartGate => self.start_menu.render_gate()
-    AppPhase::StartMenu => self.start_menu.render()
-    AppPhase::Settings => self.settings_menu.render()
-    AppPhase::Gallery => self.gallery_menu.render()
-    AppPhase::Credits => self.credits_menu.render(self.credits_html())
-    AppPhase::InGame => ()
+    LocaleSelect => self.start_menu.render_locale_picker(self.languages)
+    StartGate => self.start_menu.render_gate()
+    StartMenu => self.start_menu.render()
+    Settings => self.settings_menu.render()
+    Gallery => self.gallery_menu.render()
+    Credits => self.credits_menu.render(self.credits_html())
+    InGame => ()
     _ => ()
   }
 }
@@ -864,7 +809,7 @@ fn[T] AppController::tick_locale_select(self : AppController[T]) -> Bool {
       self.apply_locale(code)
       self.start_menu.clear_locale_picker()
       self.start_menu.render_gate()
-      self.phase = AppPhase::StartGate
+      self.phase = StartGate
     }
     StartLocaleAction::NoAction => ()
   }
@@ -945,7 +890,7 @@ fn[T : ToJson] AppController::handle_in_game_pending_action(
       self.settings_menu.set_context(FromMidgame)
       self.settings_menu.set_view_mode(Settings)
       self.settings_menu.render()
-      self.phase = AppPhase::Settings
+      self.phase = Settings
     }
     "qsave" =>
       save_runner_to_slot_with_meta(
@@ -962,7 +907,7 @@ fn[T : ToJson] AppController::handle_in_game_pending_action(
       self.settings_menu.set_context(FromMidgame)
       self.settings_menu.set_view_mode(SaveList)
       self.settings_menu.render()
-      self.phase = AppPhase::Settings
+      self.phase = Settings
     }
     "log" => runner.toggle_log_visible()
     _ => ()
@@ -970,6 +915,7 @@ fn[T : ToJson] AppController::handle_in_game_pending_action(
 }
 
 ///|
+#cfg(target="js")
 async fn[T : FromJson + ToJson] AppController::tick_settings(
   self : AppController[T],
 ) -> Bool raise AppControllerError {
@@ -994,7 +940,7 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
             )
             runner.sync_ui()
             self.runner = Some(runner)
-            self.phase = AppPhase::InGame
+            self.phase = InGame
           } catch {
             _ => {
               log_app_warn("resume from saved state failed (corrupt save data)")
@@ -1016,7 +962,7 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
       self.start_menu_music_stop()
       let runner = self.make_runner(self.script(), (self.new_state)())
       self.runner = Some(runner)
-      self.phase = AppPhase::InGame
+      self.phase = InGame
     }
     StartMenu => {
       self.emit_ui_click_sfx()
@@ -1032,14 +978,14 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
       self.runner = None
       self.enter_start_menu()
     }
-    Credits => self..emit_ui_click_sfx().enter_credits(AppPhase::Settings)
+    Credits => self..emit_ui_click_sfx().enter_credits(Settings)
     Log => {
       self.emit_ui_click_sfx()
       self.settings_menu.clear()
       match self.runner {
         Some(runner) => {
           runner.set_log_visible(true)
-          self.phase = AppPhase::InGame
+          self.phase = InGame
         }
         None => self.enter_start_menu()
       }
@@ -1068,7 +1014,7 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
         Ok(runner) => {
           self.start_menu_music_stop()
           self.runner = Some(runner)
-          self.phase = AppPhase::InGame
+          self.phase = InGame
         }
         Err(_) => {
           log_app_warn(
@@ -1088,6 +1034,7 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
 }
 
 ///|
+#cfg(target="js")
 async fn[T] AppController::tick_gallery(
   self : AppController[T],
 ) -> Bool raise AppControllerError {
@@ -1114,13 +1061,13 @@ fn[T] AppController::tick_credits(self : AppController[T]) -> Bool {
       self.emit_ui_click_sfx()
       self.credits_menu.clear()
       match self.credits_return_phase {
-        AppPhase::Settings => {
+        Settings => {
           self.settings_menu.render()
-          self.phase = AppPhase::Settings
+          self.phase = Settings
         }
         _ => {
           self.start_menu.render()
-          self.phase = AppPhase::StartMenu
+          self.phase = StartMenu
         }
       }
     }
@@ -1130,6 +1077,7 @@ fn[T] AppController::tick_credits(self : AppController[T]) -> Bool {
 }
 
 ///|
+#cfg(target="js")
 async fn[T : FromJson] AppController::tick_start_menu(
   self : AppController[T],
 ) -> Bool raise AppControllerError {
@@ -1139,6 +1087,7 @@ async fn[T : FromJson] AppController::tick_start_menu(
 }
 
 ///|
+#cfg(target="js")
 pub async fn[T : FromJson + ToJson] AppController::tick(
   self : AppController[T],
   elapsed_ms? : Int = 0,
@@ -1147,26 +1096,14 @@ pub async fn[T : FromJson + ToJson] AppController::tick(
     self.save_store.preload_namespace(self.save_ns)
     self.save_store_preloaded = true
   }
-  let ui_locale_changed = self.ensure_ui_locales_loaded()
-  let script_locale_changed = self.ensure_script_locales_loaded()
-  if ui_locale_changed || script_locale_changed {
-    if self.phase is AppPhase::InGame {
-      match self.runner {
-        Some(runner) => runner.sync_ui()
-        None => ()
-      }
-    } else {
-      self.render_phase_on_locale_change()
-    }
-  }
   match self.phase {
-    AppPhase::LocaleSelect => self.tick_locale_select()
-    AppPhase::StartGate => self.tick_start_gate()
-    AppPhase::StartLogo => self.tick_start_logo(elapsed_ms)
-    AppPhase::InGame => self.tick_in_game(elapsed_ms)
-    AppPhase::Settings => self.tick_settings()
-    AppPhase::Gallery => self.tick_gallery()
-    AppPhase::Credits => self.tick_credits()
-    AppPhase::StartMenu => self.tick_start_menu()
+    LocaleSelect => self.tick_locale_select()
+    StartGate => self.tick_start_gate()
+    StartLogo => self.tick_start_logo(elapsed_ms)
+    InGame => self.tick_in_game(elapsed_ms)
+    Settings => self.tick_settings()
+    Gallery => self.tick_gallery()
+    Credits => self.tick_credits()
+    StartMenu => self.tick_start_menu()
   }
 }

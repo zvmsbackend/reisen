@@ -2,7 +2,7 @@
 /// Fluent builder for authoring `Script[T]` in MoonBit DSL style.
 
 ///|
-using @pixi {type Effect}
+using @effect_types {type Effect}
 
 ///|
 struct ScriptBuilder[T] {
@@ -118,7 +118,7 @@ pub async fn[T] ScriptBuilder::load_sexp_file(
   path : String,
   parser? : SexpScriptParser[T] = SexpScriptParser::new(),
 ) -> Unit {
-  let text = @assets.load_text(path)
+  let text = @util.load_text(path)
   parser.to_builder_with_text(text, self)
 }
 

@@ -2,6 +2,7 @@
 package "sennenki/reisen/storage"
 
 import {
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
 }
 
@@ -66,7 +67,7 @@ pub fn save_slot_list() -> Array[String]
 #deprecated
 pub fn save_slot_list_in(String) -> Array[String]
 
-pub fn save_slot_meta(String, String, updated_at_ms? : Double) -> SaveSlotMeta
+pub fn save_slot_meta(String, String, updated_at_ms? : Int64) -> SaveSlotMeta
 
 #deprecated
 pub fn save_slot_read(String) -> String?
@@ -127,7 +128,7 @@ pub struct GameSettings {
   text_speed : Int
   bgm_volume : Double
   sfx_volume : Double
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn GameSettings::new(Int, Double, Double) -> Self raise StorageValidationError
 pub impl Default for GameSettings
 
@@ -154,14 +155,14 @@ pub impl[P : SaveSlotStore, F : SaveSlotStore] SaveSlotStore for MultiSaveSlotSt
 pub struct SaveSlotEntry {
   slot : String
   meta : SaveSlotMeta?
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn SaveSlotEntry::new(String, meta? : SaveSlotMeta) -> Self raise StorageValidationError
 
 pub struct SaveSlotMeta {
   title : String
   preview : String
-  updated_at_ms : Double
-} derive(Eq, Show, ToJson, @json.FromJson)
+  updated_at_ms : Int64
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 // Type aliases
 pub type DefaultSaveSlotStore = MultiSaveSlotStore[IndexedDbSaveSlotStore, LocalSaveSlotStore]

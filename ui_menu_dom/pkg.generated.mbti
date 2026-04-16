@@ -4,8 +4,10 @@ package "sennenki/reisen/ui_menu_dom"
 import {
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
+  "sennenki/reisen/audio_core",
   "sennenki/reisen/storage",
   "sennenki/reisen/ui_game",
+  "sennenki/reisen/ui_menu",
 }
 
 // Values
@@ -13,121 +15,33 @@ import {
 // Errors
 
 // Types and methods
-pub enum CreditsAction {
-  NoAction
-  Back
-}
-
 type CreditsMenu
-pub fn CreditsMenu::clear(Self) -> Unit
 pub fn CreditsMenu::new(String, background? : String, ui_strings? : @ui_game.UiStrings) -> Self
-pub fn CreditsMenu::render(Self, String) -> Unit
-pub fn CreditsMenu::set_ui_strings(Self, @ui_game.UiStrings) -> Unit
-pub fn CreditsMenu::take_action(Self) -> CreditsAction
+pub impl @ui_menu.CreditsMenu for CreditsMenu
 
-pub enum GalleryAction {
-  NoAction
-  Back
-  Open(String)
-  Close
-  Prev
-  Next
-  Replay(String)
-}
+type DomMenuFactory
+pub fn DomMenuFactory::new(String, String, ui_strings? : @ui_game.UiStrings) -> Self
+pub impl @ui_menu.MenuFactory for DomMenuFactory
 
 type GalleryMenu
-pub fn GalleryMenu::clear(Self) -> Unit
 pub fn GalleryMenu::new(String, save_namespace? : String, background? : String, show_locked? : Bool, ui_strings? : @ui_game.UiStrings) -> Self
-pub fn GalleryMenu::render(Self) -> Unit
-pub fn GalleryMenu::set_script_localization(Self, String?, String?) -> Unit
-pub fn GalleryMenu::set_ui_strings(Self, @ui_game.UiStrings) -> Unit
-pub fn GalleryMenu::take_action(Self) -> GalleryAction
+pub impl @ui_menu.GalleryMenu for GalleryMenu
 
 type GalleryTileView derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type LoadingMenu
-pub fn LoadingMenu::clear(Self) -> Unit
 pub fn LoadingMenu::new(String) -> Self
-pub fn LoadingMenu::render(Self, String) -> Unit
-
-pub enum SettingsAction {
-  ViewChanged
-  NoAction
-  LanguageChanged(String)
-  Back
-  Credits
-  NewGame
-  StartMenu
-  Log
-  SaveSlot(String)
-  LoadSlot(String)
-}
-
-pub(all) enum SettingsContext {
-  FromStartMenu
-  FromMidgame
-} derive(Eq, @debug.Debug)
+pub impl @ui_menu.LoadingMenu for LoadingMenu
 
 type SettingsMenu
-pub fn SettingsMenu::clear(Self) -> Unit
-pub fn SettingsMenu::new(String, save_namespace? : String, save_store? : &@storage.SaveSlotStore, background? : String, context? : SettingsContext, ui_strings? : @ui_game.UiStrings, show_credits? : Bool) -> Self
-pub fn SettingsMenu::render(Self) -> Unit
-pub fn SettingsMenu::set_context(Self, SettingsContext) -> Unit
-pub fn SettingsMenu::set_languages(Self, Array[(String, String)]) -> Unit
-pub fn SettingsMenu::set_locale(Self, String) -> Unit
-pub fn SettingsMenu::set_script_localization(Self, String?, String?) -> Unit
+pub fn SettingsMenu::new(String, audio? : &@audio_core.AudioPort, save_namespace? : String, save_store? : &@storage.SaveSlotStore, background? : String, context? : @ui_menu.SettingsContext, ui_strings? : @ui_game.UiStrings, show_credits? : Bool) -> Self
 pub fn SettingsMenu::set_show_credits(Self, Bool) -> Unit
-pub fn SettingsMenu::set_ui_strings(Self, @ui_game.UiStrings) -> Unit
-pub fn SettingsMenu::set_view_mode(Self, SettingsViewMode) -> Unit
-pub fn SettingsMenu::take_action(Self) -> SettingsAction
-
-pub(all) enum SettingsViewMode {
-  Settings
-  SaveList
-  LoadList
-}
-
-pub enum StartGateAction {
-  NoAction
-  Start
-}
-
-pub enum StartLocaleAction {
-  NoAction
-  Select(String)
-}
-
-pub enum StartLogoAction {
-  NoAction
-  Done
-}
+pub impl @ui_menu.SettingsMenu for SettingsMenu
 
 type StartMenu
-pub fn StartMenu::clear(Self) -> Unit
-pub fn StartMenu::clear_gate(Self) -> Unit
-pub fn StartMenu::clear_locale_picker(Self) -> Unit
-pub fn StartMenu::clear_logo(Self) -> Unit
 pub fn StartMenu::new(String, save_namespace? : String, save_store? : &@storage.SaveSlotStore, background? : String, ui_strings? : @ui_game.UiStrings, show_credits? : Bool) -> Self
-pub fn StartMenu::render(Self) -> Unit
-pub fn StartMenu::render_gate(Self) -> Unit
-pub fn StartMenu::render_locale_picker(Self, Array[(String, String)]) -> Unit
-pub fn StartMenu::render_logo(Self, String, Int) -> Unit
 pub fn StartMenu::set_show_credits(Self, Bool) -> Unit
-pub fn StartMenu::set_ui_strings(Self, @ui_game.UiStrings) -> Unit
-pub fn StartMenu::take_action(Self) -> StartMenuAction
-pub fn StartMenu::take_gate_action(Self) -> StartGateAction
-pub fn StartMenu::take_locale_action(Self) -> StartLocaleAction
-pub fn StartMenu::take_logo_action(Self) -> StartLogoAction
-
-pub(all) enum StartMenuAction {
-  NoAction
-  NewGame
-  Continue(String)
-  Load
-  Settings
-  Gallery
-  Credits
-}
+pub impl @ui_menu.StartMenu for StartMenu
 
 // Type aliases
 

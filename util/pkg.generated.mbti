@@ -2,10 +2,12 @@
 package "sennenki/reisen/util"
 
 import {
-  "moonbit-community/js-ffi/js",
+  "sennenki/js-ffi/js",
 }
 
 // Values
+pub fn console_warn(String) -> Unit
+
 pub fn gensym(prefix? : String) -> String
 
 pub fn load_result_error(@js.Value, String) -> String
@@ -14,11 +16,19 @@ pub fn load_result_ok(@js.Value) -> Bool
 
 pub fn load_result_value(@js.Value) -> @js.Value
 
+pub async fn load_text(String) -> String raise LoadTextError
+
+pub fn promise_error_message(Error, String) -> String
+
 pub fn script_locale_lookup(String, String) -> String?
 
 pub fn script_locale_resolve_at(String, String?, String?) -> (String, String?, Bool)
 
 // Errors
+pub suberror LoadTextError {
+  TextLoadFailed(message~ : String)
+}
+pub fn LoadTextError::message(Self) -> String
 
 // Types and methods
 

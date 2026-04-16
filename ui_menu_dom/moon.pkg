@@ -1,14 +1,17 @@
 import {
-  "moonbit-community/js-ffi/js",
+  "sennenki/js-ffi/js",
   "moonbitlang/core/json",
-  "sennenki/reisen/audio_web" @audio_web,
   "sennenki/reisen/gallery",
   "sennenki/reisen/storage",
-  "sennenki/reisen/ui_game" @ui_game,
+  "sennenki/reisen/ui_game",
   "sennenki/reisen/util",
+  "sennenki/reisen/audio_core",
+  "sennenki/reisen/ui_menu",
 }
 
 import {
   "moonbitlang/core/debug",
   "sennenki/reisen/util",
 } for "wbtest"
+
+supported_targets = "js"

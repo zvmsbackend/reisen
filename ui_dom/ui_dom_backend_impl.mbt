@@ -10,7 +10,7 @@ pub impl UiBackend for UiDom with render(self, view) {
 
 ///|
 pub impl UiBackend for UiDom with view_model_from_snapshot(self, snapshot) {
-  UiViewModel::from_snapshot(snapshot, self)
+  ui_view_model_from_snapshot(snapshot, self)
 }
 
 ///|

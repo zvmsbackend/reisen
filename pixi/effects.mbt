@@ -1,14 +1,14 @@
 ///|
-pub type EffectParam = (String, Double)
+using @effect_types {type EffectParam, type Effect}
+
+///|
+using @util {gensym}
 
 ///|
 pub type PixiEffectApply = (PixiSprite, Array[EffectParam], Int) -> Bool
 
 ///|
 let pixi_effect_appliers : Map[String, PixiEffectApply] = {}
-
-///|
-pub struct Effect(String)
 
 ///|
 pub(all) enum PixiEffectTarget {

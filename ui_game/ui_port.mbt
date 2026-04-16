@@ -6,7 +6,7 @@ struct UiPort {
 }
 
 ///|
-pub fn UiPort::from_dom(dom : UiDom) -> UiPort {
+pub fn[T : UiBackend + UiPlatformHooks] UiPort::from_dom(dom : T) -> UiPort {
   { core: UiCoreState::new(), backend: dom, hooks: dom }
 }
 
@@ -16,29 +16,6 @@ pub fn UiPort::from_backend(
   hooks : &UiPlatformHooks,
 ) -> UiPort {
   { core: UiCoreState::new(), backend, hooks }
-}
-
-///|
-pub fn UiPort::new(
-  root_id : String,
-  ui_strings? : UiStrings = UiStrings::default(),
-  script_locale_json? : String = "",
-  script_default_locale_json? : String = "",
-  vocal_locale_dir? : String = "",
-  script_locale? : String = "",
-  script_default_locale? : String = "",
-) -> UiPort {
-  UiPort::from_dom(
-    UiDom::new(
-      root_id,
-      ui_strings~,
-      script_locale_json~,
-      script_default_locale_json~,
-      vocal_locale_dir~,
-      script_locale~,
-      script_default_locale~,
-    ),
-  )
 }
 
 ///|
@@ -356,4 +333,17 @@ pub fn UiPort::should_auto_advance(self : UiPort) -> Bool {
 pub fn UiPort::simulate_click(self : UiPort) -> Unit {
   self.core.simulated_click = true
   self.backend.simulate_click()
+}
+
+///|
+pub(open) trait UiPortFactory {
+  create_port(
+    Self,
+    ui_strings~ : UiStrings,
+    script_locale_json~ : String,
+    script_default_locale_json~ : String,
+    vocal_locale_dir~ : String,
+    script_locale~ : String,
+    script_default_locale~ : String,
+  ) -> UiPort
 }

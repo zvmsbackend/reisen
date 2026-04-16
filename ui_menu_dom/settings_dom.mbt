@@ -2,33 +2,6 @@
 /// Settings menu DOM integration (text speed, BGM volume, SFX volume, skip mode).
 
 ///|
-pub(all) enum SettingsContext {
-  FromStartMenu
-  FromMidgame
-} derive(Debug, Eq)
-
-///|
-pub(all) enum SettingsViewMode {
-  Settings
-  SaveList
-  LoadList
-}
-
-///|
-pub enum SettingsAction {
-  ViewChanged
-  NoAction
-  LanguageChanged(String)
-  Back
-  Credits
-  NewGame
-  StartMenu
-  Log
-  SaveSlot(String)
-  LoadSlot(String)
-}
-
-///|
 priv enum SaveSlotType {
   Autosave
   Quicksave
@@ -41,6 +14,7 @@ struct SettingsMenu {
   save_ns : String
   save_store : &@storage.SaveSlotStore
   background : String
+  audio : &@audio_core.AudioPort
   mut ui_strings : UiStrings
   mut script_locale_json : String?
   mut script_default_locale_json : String?
@@ -63,6 +37,7 @@ priv struct SettingsView {
 ///|
 pub fn SettingsMenu::new(
   root_id : String,
+  audio? : &@audio_core.AudioPort = @audio_core.dummy,
   save_namespace? : String = "global",
   save_store? : &@storage.SaveSlotStore = default_save_slot_storage(),
   background? : String = "",
@@ -73,6 +48,7 @@ pub fn SettingsMenu::new(
   {
     root_id,
     save_ns: save_namespace,
+    audio,
     save_store,
     background,
     ui_strings,
@@ -89,19 +65,19 @@ pub fn SettingsMenu::new(
 }
 
 ///|
-pub fn SettingsMenu::set_ui_strings(
-  self : SettingsMenu,
-  ui_strings : UiStrings,
-) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with set_ui_strings(
+  self,
+  ui_strings,
+) {
   self.ui_strings = ui_strings
 }
 
 ///|
-pub fn SettingsMenu::set_script_localization(
-  self : SettingsMenu,
-  script_locale_json : String?,
-  script_default_locale_json : String?,
-) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with set_script_localization(
+  self,
+  script_locale_json~,
+  script_default_locale_json~,
+) {
   self.script_locale_json = script_locale_json
   self.script_default_locale_json = script_default_locale_json
 }
@@ -120,15 +96,15 @@ fn SettingsMenu::localize_save_preview(
 }
 
 ///|
-pub fn SettingsMenu::set_languages(
-  self : SettingsMenu,
-  languages : Array[(String, String)],
-) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with set_languages(
+  self,
+  languages,
+) {
   self.languages = languages
 }
 
 ///|
-pub fn SettingsMenu::set_locale(self : SettingsMenu, locale : String) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with set_locale(self, locale) {
   self.locale = locale
 }
 
@@ -141,18 +117,12 @@ pub fn SettingsMenu::set_show_credits(
 }
 
 ///|
-pub fn SettingsMenu::set_context(
-  self : SettingsMenu,
-  context : SettingsContext,
-) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with set_context(self, context) {
   self.context = context
 }
 
 ///|
-pub fn SettingsMenu::set_view_mode(
-  self : SettingsMenu,
-  mode : SettingsViewMode,
-) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with set_view_mode(self, mode) {
   self.view_mode = mode
   self.save_slot_type = SaveSlotType::Normal
   self.page = 0
@@ -640,7 +610,7 @@ fn filter_entries_by_type(
 }
 
 ///|
-pub fn SettingsMenu::render(self : SettingsMenu) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with render(self) {
   settings_dom_install_confirm_helper(
     self.ui_strings.settings_confirm_cancel,
     self.ui_strings.settings_confirm_ok,
@@ -790,7 +760,7 @@ extern "js" fn settings_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn SettingsMenu::clear(self : SettingsMenu) -> Unit {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with clear(self) {
   settings_dom_clear(self.root_id)
 }
 
@@ -800,8 +770,8 @@ fn SettingsMenu::persist_settings(self : SettingsMenu) -> Unit {
     Some(raw) =>
       try {
         let settings : GameSettings = raw |> @json.parse |> @json.from_json
-        AudioDom::set_bgm_gain(settings.bgm_volume)
-        AudioDom::set_sfx_gain(settings.sfx_volume)
+        self.audio.set_bgm_gain(settings.bgm_volume)
+        self.audio.set_sfx_gain(settings.sfx_volume)
         settings_write_in(self.save_ns, settings)
       } catch {
         _ => ()
@@ -811,7 +781,7 @@ fn SettingsMenu::persist_settings(self : SettingsMenu) -> Unit {
 }
 
 ///|
-pub fn SettingsMenu::take_action(self : SettingsMenu) -> SettingsAction {
+pub impl @ui_menu.SettingsMenu for SettingsMenu with take_action(self) {
   match settings_action_kind(self.root_id).to_option() {
     Some("start_menu") => {
       if self.view_mode is SettingsViewMode::Settings {

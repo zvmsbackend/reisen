@@ -1,0 +1,64 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/ui_dom"
+
+import {
+  "sennenki/reisen/core",
+  "sennenki/reisen/state",
+  "sennenki/reisen/ui_game",
+}
+
+// Values
+pub fn ui_view_model_from_snapshot(@core.UiSnapshot, UiDom) -> @ui_game.UiViewModel
+
+// Errors
+
+// Types and methods
+type UiDom
+pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
+pub fn UiDom::advance_dom_animation_timer(Self, Int) -> Unit
+pub fn UiDom::advance_skip_mode_timer(Self, elapsed_ms~ : Int) -> Unit
+pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
+pub fn UiDom::check_intro_done(Self) -> Bool
+pub fn UiDom::check_typewriter_click(Self) -> Bool
+pub fn UiDom::clear_game_ui(Self) -> Unit
+pub fn UiDom::complete_typewriter(Self) -> Unit
+pub fn UiDom::has_active_dom_animations(Self) -> Bool
+pub fn UiDom::is_log_visible(Self) -> Bool
+pub fn UiDom::is_skip_active(Self) -> Bool
+pub fn UiDom::is_typewriter_done(Self) -> Bool
+pub fn UiDom::localize_vocal_url(Self, String) -> String
+pub fn UiDom::mark_auto_advanced(Self) -> Unit
+pub fn UiDom::mark_skip_advanced(Self) -> Unit
+pub fn UiDom::new(String, ui_strings? : @ui_game.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn UiDom::render(Self, @ui_game.UiViewModel) -> Unit
+pub fn UiDom::reveal_intro_line(Self) -> Bool
+pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
+pub fn UiDom::set_log_visible(Self, Bool) -> Unit
+pub fn UiDom::set_media_volume(Self, Double) -> Unit
+pub fn UiDom::set_script_localization(Self, script_locale_json~ : String?, script_default_locale_json~ : String?, vocal_locale_dir~ : String, script_locale~ : String, script_default_locale~ : String) -> Unit
+pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
+pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
+pub fn UiDom::set_text_speed(Self, Int) -> Unit
+pub fn UiDom::set_ui_strings(Self, @ui_game.UiStrings) -> Unit
+pub fn UiDom::should_auto_advance(Self) -> Bool
+pub fn UiDom::should_auto_skip_wait_click(Self) -> Bool
+pub fn UiDom::should_skip_advance(Self) -> Bool
+pub fn UiDom::simulate_click(Self) -> Unit
+pub fn UiDom::simulate_intro_done(Self) -> Unit
+pub fn UiDom::start_typewriter(Self, @state.DialogText) -> Unit
+pub fn UiDom::take_action(Self) -> String?
+pub fn UiDom::take_selected_choice(Self) -> String?
+pub fn UiDom::take_submitted_text_input(Self) -> String?
+pub fn UiDom::take_video_action(Self) -> String?
+pub fn UiDom::text_speed_ms_per_char(Self) -> Int
+pub fn UiDom::toggle_auto_mode(Self) -> Unit
+pub fn UiDom::toggle_log_visible(Self) -> Unit
+pub fn UiDom::toggle_skip_mode(Self) -> Unit
+pub fn UiDom::typewriter_visible_text(Self) -> @state.DialogText
+pub impl @ui_game.UiBackend for UiDom
+pub impl @ui_game.UiPlatformHooks for UiDom
+
+// Type aliases
+
+// Traits
+

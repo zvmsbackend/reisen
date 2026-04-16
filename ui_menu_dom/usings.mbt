@@ -12,10 +12,17 @@ using @storage {
 }
 
 ///|
-using @audio_web {type AudioDom}
+using @ui_game {type UiStrings}
 
 ///|
-using @ui_game {type UiStrings}
+using @ui_menu {
+  type StartGateAction,
+  type StartLogoAction,
+  type GalleryAction,
+  type SettingsContext,
+  type SettingsViewMode,
+  type SettingsAction,
+}
 
 ///|
 using @util {script_locale_resolve_at}

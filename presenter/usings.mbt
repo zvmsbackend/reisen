@@ -10,7 +10,7 @@ using @core {
 }
 
 ///|
-using @assets {type AssetStore}
+using @assets_web {type WebAssetStore}
 
 ///|
 using @presenter_common {
@@ -28,17 +28,17 @@ using @pixi {
   type PixiCanvas,
   type PixiColorMatrixFilter,
   type PixiContainer,
-  type PixiEffectTarget,
+  type PixiTexture,
   type PixiLive2dModel,
   type PixiSprite,
-  type PixiTexture,
-  type EffectParam,
+  type PixiEffectTarget,
   get_canvas_by_id,
-  pixi_apply_effect_to_target,
-  pixi_effect_defaults_for,
   window_inner_height,
   window_inner_width,
 }
+
+///|
+using @effect_types {type EffectParam}
 
 ///|
 using @engine {

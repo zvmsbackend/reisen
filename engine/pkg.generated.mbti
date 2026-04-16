@@ -105,10 +105,8 @@ pub fn[T] GameRunner::dialog_history(Self[T]) -> Array[@core.DialogLogEntry]
 pub fn[T] GameRunner::director(Self[T]) -> Director[T]
 pub fn[T] GameRunner::is_log_visible(Self[T]) -> Bool
 pub fn[T] GameRunner::jump_to_label(Self[T], String) -> Unit raise @core.ScriptRuntimeError
-pub fn[T] GameRunner::new(Director[T], @ui_game.UiDom) -> Self[T]
-pub fn[T] GameRunner::new_with_hooks(Director[T], @ui_game.UiDom, (CoreRenderSnapshot, Bool) -> Unit, (@core.RuntimeEvent) -> Unit, render_extension? : (RenderExtensionView, Bool) -> Unit) -> Self[T]
-pub fn[T] GameRunner::new_with_ports(Director[T], @ui_game.UiPort, @audio_core.AudioPort, (CoreRenderSnapshot, Bool) -> Unit, (@core.RuntimeEvent) -> Unit, render_extension? : (RenderExtensionView, Bool) -> Unit) -> Self[T]
-pub fn[T] GameRunner::new_with_render_sync(Director[T], @ui_game.UiDom, (CoreRenderSnapshot, Bool) -> Unit) -> Self[T]
+pub fn[T, U : @ui_game.UiBackend + @ui_game.UiPlatformHooks] GameRunner::new(Director[T], U, render_sync? : (CoreRenderSnapshot, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, render_extension? : (RenderExtensionView, Bool) -> Unit) -> Self[T]
+pub fn[T] GameRunner::new_with_ports(Director[T], @ui_game.UiPort, &@audio_core.AudioPort, (CoreRenderSnapshot, Bool) -> Unit, (@core.RuntimeEvent) -> Unit, render_extension? : (RenderExtensionView, Bool) -> Unit) -> Self[T]
 pub fn[T] GameRunner::set_log_visible(Self[T], Bool) -> Unit
 pub fn[T] GameRunner::set_script_localization(Self[T], script_locale_json~ : String?, script_default_locale_json~ : String?, vocal_locale_dir~ : String, script_locale~ : String, script_default_locale~ : String) -> Unit
 pub fn[T] GameRunner::set_ui_click_sfx(Self[T], String?) -> Unit

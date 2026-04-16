@@ -64,58 +64,44 @@ test "parse sexp choice and menu" {
 }
 
 ///|
-extern "js" fn js_truthy() -> @js.Value = "() => true"
-
-///|
-extern "js" fn js_strict_eq(lhs : @js.Value, rhs : @js.Value) -> Bool =
-  #| (lhs, rhs) => lhs === rhs
-
-///|
 fn[T] host_int_var(
   state : @state.GameState[T],
-  args : ArrayView[@js.Value],
-) -> @js.Value {
+  args : ArrayView[SexpValue],
+) -> SexpValue {
   match args {
-    [var_name] if @js.Cast::into(var_name) is Some(var_name) =>
-      @js.Value::cast_from(state.int_var(var_name))
-    _ => @js.Value::cast_from(0)
+    [String(var_name)] => Int(state.int_var(var_name))
+    _ => Int(0)
   }
 }
 
 ///|
 fn[T] host_eq(
   _ : @state.GameState[T],
-  args : ArrayView[@js.Value],
-) -> @js.Value {
+  args : ArrayView[SexpValue],
+) -> SexpValue {
   match args {
-    [lhs, rhs] =>
-      if js_strict_eq(lhs, rhs) {
-        js_truthy()
-      } else {
-        @js.Cast::from(false)
-      }
-    _ => @js.Cast::from(false)
+    [lhs, rhs] => Bool(lhs == rhs)
+    _ => Bool(false)
   }
 }
 
 ///|
 fn[T] host_set_int(
   state : @state.GameState[T],
-  args : ArrayView[@js.Value],
-) -> @js.Value {
+  args : ArrayView[SexpValue],
+) -> SexpValue {
   match args {
-    [var_name, value] if @js.Cast::into(var_name) is Some(var_name) &&
-      @js.Cast::into(value) is Some(value) => {
+    [String(var_name), Int(value)] => {
       state.set_int_var(var_name, value)
-      @js.Cast::from(true)
+      Bool(true)
     }
-    _ => @js.Cast::from(false)
+    _ => Bool(false)
   }
 }
 
 ///|
-fn[T] host_true(_ : @state.GameState[T], _ : ArrayView[@js.Value]) -> @js.Value {
-  @js.Cast::from(true)
+fn[T] host_true(_ : @state.GameState[T], _ : ArrayView[SexpValue]) -> SexpValue {
+  Bool(true)
 }
 
 ///|

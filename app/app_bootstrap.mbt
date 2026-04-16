@@ -8,6 +8,36 @@ pub suberror AppBootstrapError {
   MissingSaveSlot(slot~ : String)
   InvalidSavePayload(raw~ : String)
   UnsupportedSavePayloadVersion(expected~ : Int, found~ : Int)
+  LocalizationLoadFailed(message~ : String)
+}
+
+///|
+pub struct LocalizationPayload {
+  locale : String
+  default_locale : String
+  ui_locales_json : String
+  script_locale_json : String
+  script_default_locale_json : String
+}
+
+///|
+fn resolve_selected_locale(
+  save_namespace : String,
+  languages : Array[(String, String)],
+) -> (String, String) {
+  let persisted_locale = persistent_get_text_in(save_namespace, "locale")
+  let default_locale = match languages {
+    [(_, code), ..] => code
+    _ => ""
+  }
+  let selected_locale = if languages.any(language => {
+      language.1 == persisted_locale
+    }) {
+    persisted_locale
+  } else {
+    default_locale
+  }
+  (selected_locale, default_locale)
 }
 
 ///|
@@ -53,16 +83,16 @@ fn decode_save_slot_payload(
 ///|
 fn[T] validate_script_image_assets(
   script : Script[T],
-  store : AssetStore,
+  store : &AssetStore,
 ) -> Unit raise AppBootstrapError {
   for inst in script.instructions {
     match inst {
       ShowBackground(id) =>
-        if store.get_image(id) is None && store.get_video(id) is None {
+        if !store.has_image(id) && !store.has_video(id) {
           raise AppBootstrapError::MissingImageAsset(id~)
         }
       ShowFigure(id, _) =>
-        if store.get_image(id) is None && store.get_live2d_model(id) is None {
+        if !store.has_image(id) && !store.has_live2d_model(id) {
           raise AppBootstrapError::MissingImageAsset(id~)
         }
       _ => ()
@@ -73,7 +103,7 @@ fn[T] validate_script_image_assets(
 ///|
 fn[T] validate_script_audio_assets(
   script : Script[T],
-  store : AssetStore,
+  store : &AssetStore,
 ) -> Unit raise AppBootstrapError {
   for inst in script.instructions {
     match inst {
@@ -93,7 +123,7 @@ fn[T] validate_script_audio_assets(
 ///|
 fn[T] validate_script_assets(
   script : Script[T],
-  store : AssetStore,
+  store : &AssetStore,
 ) -> Unit raise AppBootstrapError {
   validate_script_image_assets(script, store)
   validate_script_audio_assets(script, store)
@@ -103,7 +133,8 @@ fn[T] validate_script_assets(
 pub fn[T] start_game(
   script : Script[T],
   state : GameState[T],
-  ui_root_id : String,
+  ui_port_factory : &@ui_game.UiPortFactory,
+  audio : &AudioPort,
   core_render_sync? : RenderSyncHook = noop_core_render_sync,
   render_extension? : RenderExtensionHook,
   event_hook? : EventHook = _ => (),
@@ -118,8 +149,7 @@ pub fn[T] start_game(
 ) -> GameRunner[T] noraise {
   let runtime = Runtime::new(script, state)
   let director = Director::new(runtime, gallery_ns~)
-  let ui = UiPort::new(
-    ui_root_id,
+  let ui = ui_port_factory.create_port(
     ui_strings~,
     script_locale_json~,
     script_default_locale_json~,
@@ -130,7 +160,7 @@ pub fn[T] start_game(
   let runner = GameRunner::new_with_ports(
     director,
     ui,
-    AudioPort::browser(),
+    audio,
     core_render_sync,
     event_hook,
     render_extension?,
@@ -146,7 +176,8 @@ pub fn[T] start_game(
 pub fn[T : FromJson] start_game_from_save(
   script : Script[T],
   save_json : String,
-  ui_root_id : String,
+  ui_port_factory : &@ui_game.UiPortFactory,
+  audio : &AudioPort,
   core_render_sync? : RenderSyncHook = noop_core_render_sync,
   render_extension? : RenderExtensionHook,
   event_hook? : EventHook = _ => (),
@@ -162,8 +193,7 @@ pub fn[T : FromJson] start_game_from_save(
 ) -> GameRunner[T] raise {
   let director = Director::from_save_json(script, save_json, gallery_ns~)
   director.set_dialog_history(dialog_history)
-  let ui = UiPort::new(
-    ui_root_id,
+  let ui = ui_port_factory.create_port(
     ui_strings~,
     script_locale_json~,
     script_default_locale_json~,
@@ -174,7 +204,7 @@ pub fn[T : FromJson] start_game_from_save(
   let runner = GameRunner::new_with_ports(
     director,
     ui,
-    AudioPort::browser(),
+    audio,
     core_render_sync,
     event_hook,
     render_extension?,
@@ -234,7 +264,8 @@ pub fn[T : ToJson] save_runner_to_slot_with_meta(
 pub fn[T : FromJson] start_game_from_slot(
   script : Script[T],
   slot : String,
-  ui_root_id : String,
+  ui_port_factory : &@ui_game.UiPortFactory,
+  audio : &AudioPort,
   core_render_sync? : RenderSyncHook = noop_core_render_sync,
   render_extension? : RenderExtensionHook,
   event_hook? : EventHook = _ => (),
@@ -255,7 +286,8 @@ pub fn[T : FromJson] start_game_from_slot(
       start_game_from_save(
         script,
         payload.director_json,
-        ui_root_id,
+        ui_port_factory,
+        audio,
         core_render_sync~,
         render_extension?,
         event_hook~,

@@ -19,30 +19,28 @@ using @state {type GameState, type DialogText}
 using @gallery {type GalleryImage, type ReplayStateFactories}
 
 ///|
-using @assets {type AssetStore, type AssetStoreError, type Music, load_text}
+using @assets {trait AssetStore, type AssetStoreError, type Music}
 
 ///|
-using @pixi {type PixiBindingError}
+using @util {load_text}
 
 ///|
 using @util {script_locale_resolve_at}
 
 ///|
-using @audio_web {type AudioDom}
+using @audio {trait AudioPort}
 
 ///|
-using @audio {type AudioPort}
-
-///|
-using @ui_game {type UiStrings, type UiPort}
+using @ui_game {type UiStrings}
 
 ///|
 using @ui_menu {
-  type StartMenu,
-  type GalleryMenu,
-  type SettingsMenu,
-  type CreditsMenu,
-  type LoadingMenu,
+  trait MenuFactory,
+  trait StartMenu,
+  trait GalleryMenu,
+  trait SettingsMenu,
+  trait CreditsMenu,
+  trait LoadingMenu,
   type StartMenuAction,
   type StartLocaleAction,
   type CreditsAction,

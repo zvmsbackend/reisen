@@ -42,8 +42,10 @@ test "gallery tile title resolves localized key" {
 
   let menu = GalleryMenu::new("app", save_namespace=ns, show_locked=true)
   menu.set_script_localization(
-    Some("{\"gallery.title.demo\":\"已解锁图片\"}"),
-    Some("{\"gallery.title.demo\":\"Localized Title\"}"),
+    script_locale_json=Some("{\"gallery.title.demo\":\"已解锁图片\"}"),
+    script_default_locale_json=Some(
+      "{\"gallery.title.demo\":\"Localized Title\"}",
+    ),
   )
   let tiles = menu.gallery_tile_views()
   let tile = tiles.iter().find_first(t => t.id == image.id)

@@ -5,20 +5,32 @@ import {
   "sennenki/reisen/core",
   "sennenki/reisen/gallery",
   "sennenki/reisen/assets",
-  "sennenki/reisen/pixi",
   "sennenki/reisen/audio_core" @audio,
-  "sennenki/reisen/audio_web" @audio_web,
-  "sennenki/reisen/ui_game" @ui_game,
-  "sennenki/reisen/ui_menu_dom" @ui_menu,
+  "sennenki/reisen/ui_game",
+  "sennenki/reisen/ui_menu",
   "sennenki/reisen/engine",
+  "sennenki/reisen/selene_runtime",
   "sennenki/reisen/util",
-  "moonbit-community/js-ffi/js",
+  "sennenki/js-ffi/js",
   "moonbitlang/core/math",
   "moonbitlang/core/json",
   "moonbitlang/core/strconv",
+  "moonbitlang/x/fs" @x_fs,
+  "moonbitlang/core/cmp",
 }
 
 import {
   "moonbitlang/async",
   "moonbitlang/core/debug",
+  "sennenki/reisen/assets_web",
 } for "wbtest"
+
+options(
+  targets: {
+    "app_bootstrap_js.mbt": [ "js" ],
+    "app_bootstrap_native.mbt": [ "native" ],
+    "app_controller_sync.mbt": [ "native" ],
+    "app_loop_js.mbt": [ "js" ],
+    "app_loop_native.mbt": [ "native" ],
+  },
+)

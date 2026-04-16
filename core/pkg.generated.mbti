@@ -2,11 +2,11 @@
 package "sennenki/reisen/core"
 
 import {
-  "moonbit-community/js-ffi/js",
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
   "sennenki/reisen/assets",
+  "sennenki/reisen/effect_types",
   "sennenki/reisen/gallery",
-  "sennenki/reisen/pixi",
   "sennenki/reisen/state",
   "sennenki/sexp",
 }
@@ -58,7 +58,7 @@ pub fn animation_progress(Int, Int, Int, Easing) -> (Double, Bool)
 
 pub fn easing_apply(Easing, Double) -> Double
 
-pub fn effect_spec(@pixi.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
+pub fn effect_spec(@effect_types.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, blocking? : Bool, easing? : Easing) -> EffectSpec
 
 pub fn label(name? : String) -> Label
 
@@ -79,7 +79,7 @@ pub fn[T] script((ScriptBuilder[T]) -> Unit) -> Script[T] raise ScriptBuildError
 pub fn[T] script_from_instructions(Array[Instruction[T]]) -> Script[T] raise ScriptBuildError
 
 // Errors
-pub suberror ReisenSexpError derive(Eq, Show)
+pub suberror ReisenSexpError derive(Eq, @debug.Debug)
 
 pub suberror ScriptBuildError {
   DuplicateLabel(name~ : String)
@@ -109,11 +109,11 @@ pub(all) enum AnimProp {
   ColorRed
   ColorGreen
   ColorBlue
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct AnimationGroup {
   steps : Array[AnimationSpec]
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn AnimationGroup::animate(Self, AnimationSpec) -> Self
 pub fn AnimationGroup::effect(Self, EffectSpec) -> MixedGroup
 pub fn AnimationGroup::new() -> Self
@@ -127,40 +127,40 @@ pub(all) struct AnimationSpec {
   to : Array[Double]?
   anchor : Array[Double]?
   blocking : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct BackgroundState {
   id : String
   scalars : ScalarState
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct ChoiceOption {
   id : String
   text : @state.DialogText
   jump : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct DialogLogEntry {
   speaker : String
   text : String
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct DomFigureState {
   placement : FigurePlacement
   interactive : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum Easing {
   Linear
   EaseIn
   EaseOut
   EaseInOut
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum EffectPhase {
   Pre
   Post
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct EffectSpec {
   id : String
@@ -169,18 +169,18 @@ pub(all) struct EffectSpec {
   duration_ms : Int?
   easing : Easing
   blocking : Bool
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) struct FigurePlacement {
   pos : Position
   layer : Int
   scalars : ScalarState
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub(all) enum GroupStep {
   Animate(AnimationSpec)
   Effect(EffectSpec)
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub(all) enum Instruction[T] {
   Label(String)
@@ -225,7 +225,7 @@ pub fn Label::inner(Self) -> String
 
 pub struct MixedGroup {
   steps : Array[GroupStep]
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn MixedGroup::animate(Self, AnimationSpec) -> Self
 pub fn MixedGroup::effect(Self, EffectSpec) -> Self
 pub fn MixedGroup::new() -> Self
@@ -236,7 +236,7 @@ pub(all) enum Position {
   Center
   Right
   Custom(Double, Double)
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 pub struct Runtime[T] {
   script : Script[T]
@@ -305,7 +305,7 @@ pub(all) enum RuntimeEvent {
   WaitCustomEventStarted(String)
   Custom(String, String)
   ScriptEnded
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 
 pub struct RuntimeSave[T] {
   state : @state.GameState[T]
@@ -333,7 +333,7 @@ pub(all) struct ScalarState {
   color_r : Double
   color_g : Double
   color_b : Double
-} derive(Eq, Show, ToJson, @json.FromJson)
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub impl Default for ScalarState
 
 pub struct Script[T] {
@@ -362,7 +362,7 @@ pub fn[T] ScriptBuilder::branch(Self[T], Label, Label, (@state.GameState[T]) -> 
 pub fn[T] ScriptBuilder::build(Self[T]) -> Script[T] raise ScriptBuildError
 pub fn[T] ScriptBuilder::choice(Self[T], Array[ChoiceOption]) -> Unit
 pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect(Self[T], A, EffectSpec) -> Unit
-pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect_with(Self[T], A, @pixi.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing, blocking? : Bool) -> Unit
+pub fn[T, A : @assets.PixiTarget] ScriptBuilder::effect_with(Self[T], A, @effect_types.Effect, Array[(String, Double)], phase? : EffectPhase, duration_ms? : Int, easing? : Easing, blocking? : Bool) -> Unit
 pub fn[T] ScriptBuilder::hide_avatar(Self[T]) -> Unit
 pub fn[T, F : @assets.Figure] ScriptBuilder::hide_figure(Self[T], F) -> Unit
 pub fn[T] ScriptBuilder::hide_text_box(Self[T]) -> Unit
@@ -401,9 +401,22 @@ pub fn[T] ScriptBuilder::wait_custom_event_jump(Self[T], String, (@state.GameSta
 
 type SexpScriptParser[T]
 pub fn[T] SexpScriptParser::new() -> Self[T]
-pub fn[T] SexpScriptParser::register_function(Self[T], String, (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value) -> Unit
+pub fn[T] SexpScriptParser::register_function(Self[T], String, (@state.GameState[T], ArrayView[SexpValue]) -> SexpValue) -> Unit
 pub fn[T] SexpScriptParser::to_builder(Self[T], ArrayView[@sexp.Sexp], ScriptBuilder[T]) -> Unit
 pub fn[T] SexpScriptParser::to_builder_with_text(Self[T], String, ScriptBuilder[T]) -> Unit raise ScriptBuildError
+
+pub(all) enum SexpValue {
+  Bool(Bool)
+  Int(Int)
+  Double(Double)
+  String(String)
+  Undefined
+} derive(@debug.Debug)
+pub fn SexpValue::to_bool(Self) -> Bool
+pub fn SexpValue::to_double(Self) -> Double
+pub fn SexpValue::to_int(Self) -> Int
+pub impl Eq for SexpValue
+pub impl Show for SexpValue
 
 pub(all) struct UiSnapshot {
   dialog : (@state.DialogText, @state.DialogText, Bool, Bool)?
@@ -417,7 +430,7 @@ pub(all) struct UiSnapshot {
   avatar_id : String?
   dom_figures : Map[String, DomFigureState]
   dom_animations : Array[(String, AnimationSpec)]
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub impl Default for UiSnapshot
 
 // Type aliases
@@ -433,7 +446,7 @@ pub type ScriptJumpSelector[T] = (@state.GameState[T]) -> Label
 
 pub type ScriptPredicate[T] = (@state.GameState[T]) -> Bool
 
-pub type SexpHostFunction[T] = (@state.GameState[T], ArrayView[@js.Value]) -> @js.Value
+pub type SexpHostFunction[T] = (@state.GameState[T], ArrayView[SexpValue]) -> SexpValue
 
 // Traits
 

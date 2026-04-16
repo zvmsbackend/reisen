@@ -13,65 +13,32 @@ import {
 // Errors
 
 // Types and methods
-type SeleneUiBackend
-pub fn SeleneUiBackend::last_view(Self) -> UiViewModel?
-pub fn SeleneUiBackend::new(ui_strings? : UiStrings, script_locale_json? : String?, script_default_locale_json? : String?, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
-pub fn SeleneUiBackend::push_action(Self, String) -> Unit
-pub fn SeleneUiBackend::push_click(Self) -> Unit
-pub fn SeleneUiBackend::push_selected_choice(Self, String) -> Unit
-pub fn SeleneUiBackend::push_submitted_text_input(Self, String) -> Unit
-pub fn SeleneUiBackend::push_video_action(Self, String) -> Unit
-pub impl UiBackend for SeleneUiBackend
-pub impl UiPlatformHooks for SeleneUiBackend
+pub(all) struct UiChoiceView {
+  id : String
+  text : @state.DialogText
+} derive(Eq, @debug.Debug)
 
-type UiChoiceView derive(Eq, @debug.Debug)
-
-type UiDom
-pub fn UiDom::advance_auto_mode_timer(Self, elapsed_ms~ : Int) -> Unit
-pub fn UiDom::advance_dom_animation_timer(Self, Int) -> Unit
-pub fn UiDom::advance_skip_mode_timer(Self, elapsed_ms~ : Int) -> Unit
-pub fn UiDom::advance_typewriter(Self, elapsed_ms~ : Int) -> Bool
-pub fn UiDom::check_intro_done(Self) -> Bool
-pub fn UiDom::check_typewriter_click(Self) -> Bool
-pub fn UiDom::clear_game_ui(Self) -> Unit
-pub fn UiDom::complete_typewriter(Self) -> Unit
-pub fn UiDom::has_active_dom_animations(Self) -> Bool
-pub fn UiDom::is_log_visible(Self) -> Bool
-pub fn UiDom::is_skip_active(Self) -> Bool
-pub fn UiDom::is_typewriter_done(Self) -> Bool
-pub fn UiDom::localize_vocal_url(Self, String) -> String
-pub fn UiDom::mark_auto_advanced(Self) -> Unit
-pub fn UiDom::mark_skip_advanced(Self) -> Unit
-pub fn UiDom::new(String, ui_strings? : UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
-pub fn UiDom::render(Self, UiViewModel) -> Unit
-pub fn UiDom::reveal_intro_line(Self) -> Bool
-pub fn UiDom::set_auto_mode(Self, Bool) -> Unit
-pub fn UiDom::set_log_visible(Self, Bool) -> Unit
-pub fn UiDom::set_media_volume(Self, Double) -> Unit
-pub fn UiDom::set_script_localization(Self, script_locale_json~ : String?, script_default_locale_json~ : String?, vocal_locale_dir~ : String, script_locale~ : String, script_default_locale~ : String) -> Unit
-pub fn UiDom::set_skip_hold(Self, Bool) -> Unit
-pub fn UiDom::set_skip_mode(Self, Bool) -> Unit
-pub fn UiDom::set_text_speed(Self, Int) -> Unit
-pub fn UiDom::set_ui_strings(Self, UiStrings) -> Unit
-pub fn UiDom::should_auto_advance(Self) -> Bool
-pub fn UiDom::should_auto_skip_wait_click(Self) -> Bool
-pub fn UiDom::should_skip_advance(Self) -> Bool
-pub fn UiDom::simulate_click(Self) -> Unit
-pub fn UiDom::simulate_intro_done(Self) -> Unit
-pub fn UiDom::start_typewriter(Self, @state.DialogText) -> Unit
-pub fn UiDom::take_action(Self) -> String?
-pub fn UiDom::take_selected_choice(Self) -> String?
-pub fn UiDom::take_submitted_text_input(Self) -> String?
-pub fn UiDom::take_video_action(Self) -> String?
-pub fn UiDom::text_speed_ms_per_char(Self) -> Int
-pub fn UiDom::toggle_auto_mode(Self) -> Unit
-pub fn UiDom::toggle_log_visible(Self) -> Unit
-pub fn UiDom::toggle_skip_mode(Self) -> Unit
-pub fn UiDom::typewriter_visible_text(Self) -> @state.DialogText
-pub impl UiBackend for UiDom
-pub impl UiPlatformHooks for UiDom
-
-type UiDomFigureView derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub(all) struct UiDomFigureView {
+  id : String
+  dom_id : String
+  interactive : Bool
+  left_pct : Double
+  top_pct : Double
+  anchor_x : Double
+  anchor_y : Double
+  layer : Int
+  opacity : Double
+  scale : Double
+  rotation : Double
+  blur : Double
+  brightness : Double
+  contrast : Double
+  saturation : Double
+  gamma : Double
+  color_r : Double
+  color_g : Double
+  color_b : Double
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 
 type UiPort
 pub fn UiPort::advance_auto_mode_timer(Self, Int) -> Unit
@@ -83,7 +50,7 @@ pub fn UiPort::check_typewriter_click(Self) -> Bool
 pub fn UiPort::clear_game_ui(Self) -> Unit
 pub fn UiPort::complete_typewriter(Self) -> Unit
 pub fn UiPort::from_backend(&UiBackend, &UiPlatformHooks) -> Self
-pub fn UiPort::from_dom(UiDom) -> Self
+pub fn[T : UiBackend + UiPlatformHooks] UiPort::from_dom(T) -> Self
 pub fn UiPort::has_active_ui_animations(Self) -> Bool
 pub fn UiPort::is_log_visible(Self) -> Bool
 pub fn UiPort::is_skip_active(Self) -> Bool
@@ -97,7 +64,6 @@ pub fn UiPort::mark_dirty_text(Self) -> Unit
 pub fn UiPort::mark_dirty_text_and_speaker(Self) -> Unit
 pub fn UiPort::mark_dirty_text_input(Self) -> Unit
 pub fn UiPort::mark_skip_advanced(Self) -> Unit
-pub fn UiPort::new(String, ui_strings? : UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
 pub fn UiPort::render(Self, UiViewModel) -> Unit
 pub fn UiPort::reveal_intro_line(Self) -> Bool
 pub fn UiPort::set_log_visible(Self, Bool) -> Unit
@@ -175,12 +141,39 @@ pub struct UiStrings {
 pub fn UiStrings::from_locales_json(String, String, String, fallback? : Self) -> Self
 pub impl Default for UiStrings
 
-type UiTextInputView derive(Eq, @debug.Debug)
+pub(all) struct UiTextInputView {
+  var_name : String
+  prompt : @state.DialogText
+} derive(Eq, @debug.Debug)
 
-type UiVideoView derive(Eq, @debug.Debug)
+pub(all) struct UiVideoView {
+  url : String
+  can_skip : Bool
+} derive(Eq, @debug.Debug)
 
-type UiViewModel derive(Eq, @debug.Debug)
-pub fn UiViewModel::from_snapshot(@core.UiSnapshot, UiDom) -> Self
+pub(all) struct UiViewModel {
+  speaker : @state.DialogText
+  text : @state.DialogText
+  dialog_seq : Int
+  typewriter : Bool
+  intro_text : @state.DialogText?
+  video : UiVideoView?
+  append : Bool
+  text_box_visible : Bool
+  avatar_id : String?
+  choices : Array[UiChoiceView]
+  text_input : UiTextInputView?
+  dialog_history : Array[@core.DialogLogEntry]
+  dom_figures : Array[UiDomFigureView]
+  auto_mode : Bool
+  skip_mode : Bool
+  log_visible : Bool
+  dirty_speaker : Bool
+  dirty_text : Bool
+  dirty_choices : Bool
+  dirty_text_input : Bool
+  dirty_action_buttons : Bool
+} derive(Eq, @debug.Debug)
 
 // Type aliases
 
@@ -206,5 +199,9 @@ pub(open) trait UiPlatformHooks {
   advance_ui_animation_timer(Self, Int) -> Unit
   has_active_ui_animations(Self) -> Bool
   set_media_volume(Self, Double) -> Unit
+}
+
+pub(open) trait UiPortFactory {
+  create_port(Self, ui_strings~ : UiStrings, script_locale_json~ : String, script_default_locale_json~ : String, vocal_locale_dir~ : String, script_locale~ : String, script_default_locale~ : String) -> UiPort
 }
 

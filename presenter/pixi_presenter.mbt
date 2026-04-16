@@ -8,7 +8,7 @@
 
 ///|
 priv struct PixiPresenter {
-  store : AssetStore
+  store : WebAssetStore
   config : PixiPresenterConfig
   app : PixiApplication
   stage : PixiContainer
@@ -46,7 +46,7 @@ priv struct PixiPresenter {
 ///|
 async fn PixiPresenter::new(
   canvas : PixiCanvas,
-  store : AssetStore,
+  store : WebAssetStore,
   config : PixiPresenterConfig,
 ) -> PixiPresenter {
   let app = PixiApplication::new()
@@ -1038,7 +1038,7 @@ fn PixiPresenter::as_render_extension_hook(
 ///|
 pub async fn make_pixi_render_extension_hook_from_canvas(
   canvas_id : String,
-  store : AssetStore,
+  store : WebAssetStore,
   config? : PixiPresenterConfig = PixiPresenterConfig::default(),
 ) -> RenderExtensionHook? {
   let canvas = get_canvas_by_id(canvas_id)
@@ -1054,7 +1054,7 @@ pub async fn make_pixi_render_extension_hook_from_canvas(
 ///|
 pub async fn make_pixi_render_extension_hook_from_canvas_element(
   canvas : PixiCanvas,
-  store : AssetStore,
+  store : WebAssetStore,
   config? : PixiPresenterConfig = PixiPresenterConfig::default(),
 ) -> RenderExtensionHook {
   let w = window_inner_width()

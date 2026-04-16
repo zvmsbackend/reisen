@@ -1,10 +1,25 @@
 import {
-  "moonbit-community/js-ffi/js",
+  "sennenki/js-ffi/js",
   "moonbitlang/async/js_async",
+  "moonbitlang/core/env",
+  "moonbitlang/x/time",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
+  "moonbitlang/x/fs" @x_fs,
 }
 
 import {
   "moonbitlang/core/debug",
 } for "wbtest"
+
+options(
+  targets: {
+    "save_slots_fs_bridge.mbt": [ "native" ],
+    "save_slots_idb_bridge.mbt": [ "js" ],
+    "save_slots_impl_js.mbt": [ "js" ],
+    "save_slots_js.mbt": [ "js" ],
+    "save_slots_local_bridge.mbt": [ "js" ],
+    "save_slots_native.mbt": [ "native" ],
+    "save_slots_wbtest.mbt": [ "js" ],
+  },
+)

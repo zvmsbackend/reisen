@@ -5,23 +5,21 @@ using @debug {assert_eq}
 using @assets {dom_figure}
 
 ///|
-fn dummy_effect(id : String) -> Effect {
-  @js.Value::cast_from(id).cast()
-}
+fn dummy_effect(id : String) -> Effect = "%identity"
 
 ///|
 fn dummy_bg(id : String) -> Background {
-  @js.Object::from_iter([("id", id), ("url", "")].iter()).to_value().cast()
+  { id, url: "" }
 }
 
 ///|
 fn dummy_figure(id : String) -> @assets.PixiFigure {
-  @js.Value::cast_from(id).cast()
+  @assets.PixiFigure(id)
 }
 
 ///|
 fn dummy_live2d_figure(id : String) -> Live2dFigure {
-  @js.Value::cast_from(id).cast()
+  @assets.Live2dFigure(id)
 }
 
 ///|

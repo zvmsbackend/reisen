@@ -1,5 +1,5 @@
 ///|
-pub fn UiViewModel::from_snapshot(
+pub fn ui_view_model_from_snapshot(
   snapshot : UiSnapshot,
   ui : UiDom,
 ) -> UiViewModel {
@@ -56,8 +56,11 @@ pub fn UiViewModel::from_snapshot(
   }
   let text_box_visible = snapshot.text_box_visible
   let avatar_id = snapshot.avatar_id
-  let choices = snapshot.choices.map(opt => { id: opt.id, text: opt.text })
-  let text_input = snapshot.text_input.map(entry => {
+  let choices = snapshot.choices.map(opt => UiChoiceView::{
+    id: opt.id,
+    text: opt.text,
+  })
+  let text_input = snapshot.text_input.map(entry => UiTextInputView::{
     var_name: entry.0,
     prompt: entry.1,
   })

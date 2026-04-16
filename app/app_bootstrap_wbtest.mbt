@@ -22,6 +22,31 @@ fn dummy_sfx(id : String) -> @assets.Sfx {
 }
 
 ///|
+struct DummyUiPortFactory {}
+
+///|
+impl @ui_game.UiPortFactory for DummyUiPortFactory with create_port(
+  _,
+  ui_strings~,
+  script_locale_json~,
+  script_default_locale_json~,
+  vocal_locale_dir~,
+  script_locale~,
+  script_default_locale~,
+) {
+  ignore(ui_strings)
+  ignore(script_locale_json)
+  ignore(script_default_locale_json)
+  ignore(vocal_locale_dir)
+  ignore(script_locale)
+  ignore(script_default_locale)
+  @js.Value::cast_from(()).cast()
+}
+
+///|
+let dummy_ui_port_factory : &@ui_game.UiPortFactory = DummyUiPortFactory::{  }
+
+///|
 async test "start_game wires runner and performs initial sync" {
   let script : Script[Int] = script(builder => builder.say("narrator", "hello"))
   let calls : Array[Int] = []
@@ -29,7 +54,8 @@ async test "start_game wires runner and performs initial sync" {
   let runner = start_game(
     script,
     GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
+    @audio.dummy,
     core_render_sync=hook,
   )
 
@@ -56,7 +82,8 @@ async test "start_game supports optional hooks" {
   let runner = start_game(
     script,
     GameState::new(0),
-    "app",
+    dummy_ui_port_factory,
+    @audio.dummy,
     core_render_sync=(_, _) => calls.push(1),
     event_hook=event => events.push(event),
   )
@@ -94,7 +121,9 @@ async test "start_game_from_save resumes script" {
   )
   let saved = runtime.save_json()
 
-  let runner = start_game_from_save(script, saved, "app")
+  let runner = start_game_from_save(
+    script, saved, dummy_ui_port_factory, @audio.dummy,
+  )
   assert_eq(
     runner.step(),
     Said(
@@ -115,7 +144,12 @@ async test "save_runner_to_slot and start_game_from_slot roundtrip" {
     builder..say("n", "a").say("n", "b")
   })
 
-  let runner = start_game(script, GameState::new(0), "app")
+  let runner = start_game(
+    script,
+    GameState::new(0),
+    dummy_ui_port_factory,
+    @audio.dummy,
+  )
   assert_eq(
     runner.step(),
     Said(
@@ -128,7 +162,9 @@ async test "save_runner_to_slot and start_game_from_slot roundtrip" {
   )
   save_runner_to_slot(runner, "wb_slot_roundtrip")
 
-  let resumed = start_game_from_slot(script, "wb_slot_roundtrip", "app")
+  let resumed = start_game_from_slot(
+    script, "wb_slot_roundtrip", dummy_ui_port_factory, @audio.dummy,
+  )
   assert_eq(
     resumed.step(),
     Said(
@@ -146,7 +182,12 @@ async test "save slot payload is wrapped with version" {
   let store = default_save_slot_storage()
   store.delete_slot("global", "wb_slot_payload")
   let script : Script[Int] = script(builder => builder.say("n", "a"))
-  let runner = start_game(script, GameState::new(0), "app")
+  let runner = start_game(
+    script,
+    GameState::new(0),
+    dummy_ui_port_factory,
+    @audio.dummy,
+  )
   save_runner_to_slot(runner, "wb_slot_payload")
 
   let raw = store.read_slot("global", "wb_slot_payload")
@@ -170,7 +211,12 @@ async test "start_game_from_slot restores dialog history from payload" {
     builder..say("n", "a").say("n", "b")
   })
 
-  let runner = start_game(script, GameState::new(0), "app")
+  let runner = start_game(
+    script,
+    GameState::new(0),
+    dummy_ui_port_factory,
+    @audio.dummy,
+  )
   assert_eq(
     runner.step(),
     Said(
@@ -183,7 +229,9 @@ async test "start_game_from_slot restores dialog history from payload" {
   )
   save_runner_to_slot(runner, "wb_slot_history")
 
-  let resumed = start_game_from_slot(script, "wb_slot_history", "app")
+  let resumed = start_game_from_slot(
+    script, "wb_slot_history", dummy_ui_port_factory, @audio.dummy,
+  )
   assert_eq(resumed.dialog_history(), [{ speaker: "n", text: "a" }])
 }
 
@@ -192,7 +240,12 @@ async test "save_runner_to_slot_with_meta writes slot metadata" {
   let store = default_save_slot_storage()
   store.delete_slot("global", "wb_slot_meta")
   let script : Script[Int] = script(builder => builder.say("n", "line"))
-  let runner = start_game(script, GameState::new(0), "app")
+  let runner = start_game(
+    script,
+    GameState::new(0),
+    dummy_ui_port_factory,
+    @audio.dummy,
+  )
   save_runner_to_slot_with_meta(
     runner,
     "wb_slot_meta",
@@ -217,7 +270,7 @@ async test "start_game_from_slot raises on missing slot" {
   store.delete_slot("global", "wb_slot_missing")
   let script : Script[Int] = script(builder => builder.say("n", "hello"))
   let result : Result[GameRunner[Int], Error] = try? start_game_from_slot(
-    script, "wb_slot_missing", "app",
+    script, "wb_slot_missing", dummy_ui_port_factory, @audio.dummy,
   )
   assert_true(
     result is Err(AppBootstrapError::MissingSaveSlot(slot="wb_slot_missing")),
@@ -232,7 +285,12 @@ async test "start_game_from_slot respects save namespace" {
   let script : Script[Int] = script(builder => {
     builder..say("n", "a").say("n", "b")
   })
-  let runner = start_game(script, GameState::new(0), "app")
+  let runner = start_game(
+    script,
+    GameState::new(0),
+    dummy_ui_port_factory,
+    @audio.dummy,
+  )
   assert_eq(
     runner.step(),
     Said(
@@ -248,7 +306,8 @@ async test "start_game_from_slot respects save namespace" {
   let ok = start_game_from_slot(
     script,
     "shared_slot",
-    "app",
+    dummy_ui_port_factory,
+    @audio.dummy,
     save_namespace="game_a",
   )
   assert_eq(
@@ -265,7 +324,8 @@ async test "start_game_from_slot respects save namespace" {
   let bad : Result[GameRunner[Int], Error] = try? start_game_from_slot(
     script,
     "shared_slot",
-    "app",
+    dummy_ui_port_factory,
+    @audio.dummy,
     save_namespace="game_b",
   )
   assert_true(
@@ -277,7 +337,7 @@ async test "start_game_from_slot respects save namespace" {
 async test "start_game_from_save raises on corrupt json" {
   let script : Script[Int] = script(builder => builder.say("n", "hi"))
   let result : Result[GameRunner[Int], Error] = try? start_game_from_save(
-    script, "{not valid json", "app",
+    script, "{not valid json", dummy_ui_port_factory, @audio.dummy,
   )
   assert_true(result is Err(_))
 }
@@ -287,7 +347,7 @@ async test "start_game_from_save raises when ip is out of bounds in json" {
   let script : Script[Int] = script(builder => builder.say("n", "hi"))
   let bad_json = "{\"ip\":999,\"state\":{\"int_vars\":{},\"text_vars\":{},\"flags\":{},\"payload\":0},\"pending_choices\":[],\"pending_text_input\":null,\"wait_ms\":0,\"wait_for_click\":false,\"wait_for_click_can_skip\":true,\"wait_custom_name\":null,\"wait_video\":false,\"last_say_proceed_on_done\":false,\"ended\":false}"
   let result : Result[GameRunner[Int], Error] = try? start_game_from_save(
-    script, bad_json, "app",
+    script, bad_json, dummy_ui_port_factory, @audio.dummy,
   )
   assert_true(result is Err(_))
 }
@@ -299,8 +359,8 @@ test "validate_script_image_assets succeeds when all ids exist" {
     ..scene(dummy_bg("bg_school"))
     .show_figure_at(dummy_figure("alice"), Left)
   })
-  let store = AssetStore::new()
-  let dummy : @assets.Image = @js.Value::cast_from(0).cast()
+  let store = @assets_web.WebAssetStore::new()
+  let dummy : @assets_web.Image = @js.Value::cast_from(0).cast()
   store.put_image("bg_school", dummy)
   store.put_image("alice", dummy)
 
@@ -315,7 +375,7 @@ test "validate_script_image_assets fails on missing image id" {
   let script : Script[Int] = script(builder => {
     builder.scene(dummy_bg("missing_bg"))
   })
-  let store = AssetStore::new()
+  let store = @assets_web.WebAssetStore::new()
 
   let result : Result[Unit, AppBootstrapError] = try? validate_script_image_assets(
     script, store,
@@ -332,7 +392,7 @@ test "validate_script_audio_assets succeeds when audio ids exist" {
     ..play_music(dummy_music("bgm_theme"), true)
     .play_sfx(dummy_sfx("click"))
   })
-  let store = AssetStore::new()
+  let store = @assets_web.WebAssetStore::new()
   store.put_audio_url("bgm_theme", "bgm://theme")
   store.put_audio_url("click", "sfx://click")
 
@@ -347,7 +407,7 @@ test "validate_script_audio_assets fails on missing audio id" {
   let script : Script[Int] = script(builder => {
     builder.play_music(dummy_music("missing_bgm"), true)
   })
-  let store = AssetStore::new()
+  let store = @assets_web.WebAssetStore::new()
 
   let result : Result[Unit, AppBootstrapError] = try? validate_script_audio_assets(
     script, store,

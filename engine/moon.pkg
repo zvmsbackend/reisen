@@ -5,14 +5,14 @@ import {
   "sennenki/reisen/storage",
   "sennenki/reisen/state",
   "sennenki/reisen/audio_core" @audio,
-  "sennenki/reisen/ui_game" @ui_game,
+  "sennenki/reisen/ui_game",
   "moonbitlang/core/json",
   "moonbitlang/core/deque",
 }
 
 import {
   "sennenki/reisen/assets",
-  "moonbit-community/js-ffi/js",
   "moonbitlang/async",
   "moonbitlang/core/debug",
+  "sennenki/reisen/ui_dom",
 } for "wbtest"

@@ -1,0 +1,48 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/assets_web"
+
+import {
+  "sennenki/reisen/assets",
+  "sennenki/reisen/pixi",
+}
+
+// Values
+pub async fn load_bytes(String) -> Bytes raise @assets.AssetStoreError
+
+pub async fn load_image(String) -> Image raise @assets.AssetStoreError
+
+pub async fn load_live2d_model(String) -> @pixi.PixiLive2dModel raise @assets.AssetStoreError
+
+pub async fn load_video(String) -> Video raise @assets.AssetStoreError
+
+// Errors
+
+// Types and methods
+#external
+pub type Image
+
+#external
+pub type Video
+
+pub struct WebAssetStore {
+  asset_paths : Map[String, String]
+  images : Map[String, Image]
+  videos : Map[String, Video]
+  live2d_models : Map[String, @pixi.PixiLive2dModel]
+  texts : Map[String, String]
+  bytes : Map[String, Bytes]
+  audios : Map[String, String]
+}
+pub fn WebAssetStore::get_image(Self, String) -> Image?
+pub fn WebAssetStore::get_live2d_model(Self, String) -> @pixi.PixiLive2dModel?
+pub fn WebAssetStore::get_video(Self, String) -> Video?
+pub fn WebAssetStore::new() -> Self
+pub fn WebAssetStore::put_image(Self, String, Image) -> Unit
+pub fn WebAssetStore::put_live2d_model(Self, String, @pixi.PixiLive2dModel) -> Unit
+pub fn WebAssetStore::put_video(Self, String, Video) -> Unit
+pub impl @assets.AssetStore for WebAssetStore
+
+// Type aliases
+
+// Traits
+

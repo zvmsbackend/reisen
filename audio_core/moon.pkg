@@ -1,6 +1,10 @@
 import {
-  "sennenki/reisen/audio_web" @audio_web,
+  "sennenki/reisen/core",
 }
+
+import {
+  "sennenki/reisen/state",
+} for "test"
 
 import {
   "moonbitlang/core/debug",

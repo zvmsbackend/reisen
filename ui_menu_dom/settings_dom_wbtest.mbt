@@ -107,8 +107,10 @@ test "game_settings JSON roundtrip" {
 test "settings menu localizes save preview key" {
   let menu = SettingsMenu::new("app")
   menu.set_script_localization(
-    Some("{\"save.preview.auto\":\"自动存档预览\"}"),
-    Some("{\"save.preview.auto\":\"Autosave preview\"}"),
+    script_locale_json=Some("{\"save.preview.auto\":\"自动存档预览\"}"),
+    script_default_locale_json=Some(
+      "{\"save.preview.auto\":\"Autosave preview\"}",
+    ),
   )
   assert_eq(
     menu.localize_save_preview("@save.preview.auto"),
@@ -119,7 +121,10 @@ test "settings menu localizes save preview key" {
 ///|
 test "settings menu save preview fallback to key" {
   let menu = SettingsMenu::new("app")
-  menu.set_script_localization(Some("{}"), Some("{}"))
+  menu.set_script_localization(
+    script_locale_json=Some("{}"),
+    script_default_locale_json=Some("{}"),
+  )
   assert_eq(
     menu.localize_save_preview("@save.preview.auto"),
     "save.preview.auto",

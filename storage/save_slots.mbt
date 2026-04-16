@@ -21,7 +21,7 @@ let persistent_prefix = "reisen.persist."
 pub struct SaveSlotMeta {
   title : String
   preview : String
-  updated_at_ms : Double
+  updated_at_ms : Int64
 } derive(Debug, Eq, ToJson, FromJson)
 
 ///|
@@ -55,30 +55,6 @@ pub fn local_save_slot_store() -> LocalSaveSlotStore {
 }
 
 ///|
-/// IndexedDB-backed store with synchronous cache reads.
-///
-/// Reads and list operations are served from an in-memory cache.
-/// Writes/deletes update cache immediately and flush to IndexedDB asynchronously.
-/// Use `preload_namespace`/`preload_all` to hydrate cache on startup.
-pub struct IndexedDbSaveSlotStore {
-  db_name : String
-}
-
-///|
-pub fn IndexedDbSaveSlotStore::new(
-  db_name? : String = "reisen.save.indexeddb",
-) -> IndexedDbSaveSlotStore {
-  { db_name, }
-}
-
-///|
-pub fn indexeddb_save_slot_store(
-  db_name? : String = "reisen.save.indexeddb",
-) -> IndexedDbSaveSlotStore {
-  IndexedDbSaveSlotStore::new(db_name~)
-}
-
-///|
 /// Composite backend with primary + fallback stores.
 ///
 /// Read path:
@@ -93,12 +69,6 @@ pub struct MultiSaveSlotStore[P, F] {
   fallback : F
   migrate_on_read : Bool
 }
-
-///|
-pub type DefaultSaveSlotStore = MultiSaveSlotStore[
-  IndexedDbSaveSlotStore,
-  LocalSaveSlotStore,
-]
 
 ///|
 pub fn[P, F] MultiSaveSlotStore::new(
@@ -118,21 +88,23 @@ pub suberror StorageValidationError {
 }
 
 ///|
-extern "js" fn save_slot_now_ms() -> Double =
-  #| () => Date.now()
-
-///|
-extern "js" fn save_slot_time_label(ms : Double) -> String =
-  #| (ms) => {
-  #|   const d = new Date(ms);
-  #|   return d.toISOString().replace('T', ' ').replace('Z', '');
-  #| }
+fn save_slot_time_label(ms : Int64) -> String {
+  @time.ZonedDateTime::from_unix_second(
+    ms / 1000,
+    nanosecond=(ms % 1000).to_int() * 1000,
+  )
+  .to_string()
+  .replace(old="T", new=" ")
+  .replace(old="Z", new="") catch {
+    _ => ""
+  }
+}
 
 ///|
 pub fn save_slot_meta(
   title : String,
   preview : String,
-  updated_at_ms? : Double = save_slot_now_ms(),
+  updated_at_ms? : Int64 = @env.now().reinterpret_as_int64(),
 ) -> SaveSlotMeta {
   let resolved_title = match title {
     "" => save_slot_time_label(updated_at_ms)

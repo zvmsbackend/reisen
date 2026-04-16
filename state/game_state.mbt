@@ -76,8 +76,20 @@ pub fn[T] GameState::set_text_var(
 }
 
 ///|
-extern "js" fn escape_html(s : String) -> String =
-  #| (s) => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;')
+fn escape_html(s : String) -> String {
+  let result = StringBuilder::new()
+  for c in s {
+    match c {
+      '&' => result.write_string("&amp;")
+      '<' => result.write_string("&lt;")
+      '>' => result.write_string("&gt;")
+      '"' => result.write_string("&gt;")
+      '\'' => result.write_string("&quot;")
+      _ => result.write_char(c)
+    }
+  }
+  result.to_string()
+}
 
 ///|
 /// Interpolate text variables into a string.

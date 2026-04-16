@@ -2,15 +2,16 @@
 package "sennenki/reisen/presenter"
 
 import {
-  "sennenki/reisen/assets",
+  "moonbitlang/core/debug",
+  "sennenki/reisen/assets_web",
   "sennenki/reisen/engine",
   "sennenki/reisen/pixi",
 }
 
 // Values
-pub async fn make_pixi_render_extension_hook_from_canvas(String, @assets.AssetStore, config? : PixiPresenterConfig) -> ((@engine.RenderExtensionView, Bool) -> Unit)?
+pub async fn make_pixi_render_extension_hook_from_canvas(String, @assets_web.WebAssetStore, config? : PixiPresenterConfig) -> ((@engine.RenderExtensionView, Bool) -> Unit)?
 
-pub async fn make_pixi_render_extension_hook_from_canvas_element(@pixi.PixiCanvas, @assets.AssetStore, config? : PixiPresenterConfig) -> ((@engine.RenderExtensionView, Bool) -> Unit)
+pub async fn make_pixi_render_extension_hook_from_canvas_element(@pixi.PixiCanvas, @assets_web.WebAssetStore, config? : PixiPresenterConfig) -> ((@engine.RenderExtensionView, Bool) -> Unit)
 
 // Errors
 pub suberror PixiPresenterConfigError {
@@ -28,7 +29,7 @@ pub struct PixiPresenterConfig {
   auto_density : Bool
   position_entry_offset_ratio : Double
   scale_entry_from : Double
-} derive(Eq, Show)
+} derive(Eq, @debug.Debug)
 pub fn PixiPresenterConfig::new(antialias? : Bool, background_alpha? : Double, resolution? : Double, auto_density? : Bool, position_entry_offset_ratio? : Double, scale_entry_from? : Double) -> Self raise PixiPresenterConfigError
 pub impl Default for PixiPresenterConfig
 

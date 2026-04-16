@@ -1,30 +1,15 @@
 ///|
-extern "js" fn script_locale_lookup_raw(
-  locale_json : String,
-  key : String,
-) -> @js.Nullable[String] =
-  #| (locale_json, key) => {
-  #|   try {
-  #|     if (!globalThis.__reisenScriptLocaleTableCache) {
-  #|       globalThis.__reisenScriptLocaleTableCache = { raw: '', parsed: null };
-  #|     }
-  #|     const cache = globalThis.__reisenScriptLocaleTableCache;
-  #|     if (cache.raw !== locale_json) {
-  #|       cache.raw = locale_json;
-  #|       cache.parsed = locale_json ? JSON.parse(locale_json) : null;
-  #|     }
-  #|     const parsed = cache.parsed;
-  #|     if (!parsed || typeof parsed !== 'object') return null;
-  #|     const value = parsed[key];
-  #|     return typeof value === 'string' ? value : null;
-  #|   } catch {
-  #|     return null;
-  #|   }
-  #| }
+fn script_locale_table(locale_json : String) -> Map[String, String]? {
+  let parsed = try? @json.parse(locale_json)
+  guard parsed is Ok(parsed) else { None }
+  let table : Result[Map[String, String], _] = try? @json.from_json(parsed)
+  guard table is Ok(table) else { None }
+  Some(table)
+}
 
 ///|
 pub fn script_locale_lookup(locale_json : String, key : String) -> String? {
-  script_locale_lookup_raw(locale_json, key).to_option()
+  script_locale_table(locale_json).bind(table => table.get(key))
 }
 
 ///|
@@ -44,28 +29,20 @@ pub fn script_locale_resolve_at(
     "" => return (raw, None, true)
     _ => ()
   }
-  match selected_locale_json {
-    Some(locale_json) =>
-      match script_locale_lookup(locale_json, key) {
-        Some(value) => (value, Some(key), true)
-        None =>
-          match default_locale_json {
-            Some(default_json) =>
-              match script_locale_lookup(default_json, key) {
-                Some(value) => (value, Some(key), true)
-                None => (key, Some(key), false)
-              }
-            None => (key, Some(key), false)
-          }
-      }
-    None =>
-      match default_locale_json {
-        Some(default_json) =>
-          match script_locale_lookup(default_json, key) {
-            Some(value) => (value, Some(key), true)
-            None => (key, Some(key), false)
-          }
-        None => (key, Some(key), false)
-      }
+  fn fallback_default() {
+    guard default_locale_json is Some(default_json) else {
+      return (key, Some(key), false)
+    }
+    match script_locale_lookup(default_json, key) {
+      Some(value) => (value, Some(key), true)
+      None => (key, Some(key), false)
+    }
+  }
+  guard selected_locale_json is Some(locale_json) else {
+    return fallback_default()
+  }
+  match script_locale_lookup(locale_json, key) {
+    Some(value) => (value, Some(key), true)
+    None => fallback_default()
   }
 }

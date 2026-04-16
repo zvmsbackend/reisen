@@ -25,7 +25,7 @@ priv struct SequenceJob {
 struct GameRunner[T] {
   director : Director[T]
   ui : UiPort
-  audio : AudioPort
+  audio : &AudioPort
   render_sync : RenderSyncHook
   render_extension : RenderExtensionHook?
   event_hook : EventHook
@@ -41,66 +41,18 @@ struct GameRunner[T] {
 }
 
 ///|
-pub fn[T] GameRunner::new(director : Director[T], ui : UiDom) -> GameRunner[T] {
-  let ui = UiPort::from_dom(ui)
-  {
-    director,
-    ui,
-    audio: AudioPort::browser(),
-    render_sync: noop_core_render_sync,
-    render_extension: None,
-    event_hook: _ => (),
-    ui_click_sfx_id: None,
-    ui_dirty: true,
-    render_sync_dirty: true,
-    pending_action: None,
-    animation_remaining_ms: 0,
-    blocking_remaining_ms: 0,
-    blocking_wait_sfx: false,
-    blocking_until_click: false,
-    sequence_jobs: [],
-  }
-}
-
-///|
-pub fn[T] GameRunner::new_with_render_sync(
+pub fn[T, U : @ui_game.UiBackend + @ui_game.UiPlatformHooks] GameRunner::new(
   director : Director[T],
-  ui : UiDom,
-  render_sync : RenderSyncHook,
-) -> GameRunner[T] {
-  let ui = UiPort::from_dom(ui)
-  {
-    director,
-    ui,
-    audio: AudioPort::browser(),
-    render_sync,
-    render_extension: None,
-    event_hook: _ => (),
-    ui_click_sfx_id: None,
-    ui_dirty: true,
-    render_sync_dirty: true,
-    pending_action: None,
-    animation_remaining_ms: 0,
-    blocking_remaining_ms: 0,
-    blocking_wait_sfx: false,
-    blocking_until_click: false,
-    sequence_jobs: [],
-  }
-}
-
-///|
-pub fn[T] GameRunner::new_with_hooks(
-  director : Director[T],
-  ui : UiDom,
-  render_sync : RenderSyncHook,
-  event_hook : EventHook,
+  ui : U,
+  render_sync? : RenderSyncHook = noop_core_render_sync,
+  event_hook? : EventHook = _ => (),
   render_extension? : RenderExtensionHook,
 ) -> GameRunner[T] {
   let ui = UiPort::from_dom(ui)
   {
     director,
     ui,
-    audio: AudioPort::browser(),
+    audio: @audio.dummy,
     render_sync,
     render_extension,
     event_hook,
@@ -120,7 +72,7 @@ pub fn[T] GameRunner::new_with_hooks(
 pub fn[T] GameRunner::new_with_ports(
   director : Director[T],
   ui : UiPort,
-  audio : AudioPort,
+  audio : &AudioPort,
   render_sync : RenderSyncHook,
   event_hook : EventHook,
   render_extension? : RenderExtensionHook,

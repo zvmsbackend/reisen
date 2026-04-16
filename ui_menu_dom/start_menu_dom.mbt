@@ -2,35 +2,6 @@
 /// Start menu DOM integration (New Game / Continue / Load Slot / Settings).
 
 ///|
-pub(all) enum StartMenuAction {
-  NoAction
-  NewGame
-  Continue(String)
-  Load
-  Settings
-  Gallery
-  Credits
-}
-
-///|
-pub enum StartGateAction {
-  NoAction
-  Start
-}
-
-///|
-pub enum StartLogoAction {
-  NoAction
-  Done
-}
-
-///|
-pub enum StartLocaleAction {
-  NoAction
-  Select(String)
-}
-
-///|
 struct StartMenu {
   root_id : String
   save_ns : String
@@ -60,10 +31,7 @@ pub fn StartMenu::new(
 }
 
 ///|
-pub fn StartMenu::set_ui_strings(
-  self : StartMenu,
-  ui_strings : UiStrings,
-) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with set_ui_strings(self, ui_strings) {
   self.ui_strings = ui_strings
 }
 
@@ -76,17 +44,17 @@ pub fn StartMenu::set_show_credits(
 }
 
 ///|
-pub fn StartMenu::render_gate(self : StartMenu) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with render_gate(self) {
   start_gate_dom_render(self.root_id, self.ui_strings.start_gate_click_to_start)
 }
 
 ///|
-pub fn StartMenu::clear_gate(self : StartMenu) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with clear_gate(self) {
   start_gate_dom_clear(self.root_id)
 }
 
 ///|
-pub fn StartMenu::take_gate_action(self : StartMenu) -> StartGateAction {
+pub impl @ui_menu.StartMenu for StartMenu with take_gate_action(self) {
   match start_gate_action_kind(self.root_id).to_option() {
     Some("start") => {
       start_gate_action_clear(self.root_id)
@@ -97,21 +65,21 @@ pub fn StartMenu::take_gate_action(self : StartMenu) -> StartGateAction {
 }
 
 ///|
-pub fn StartMenu::render_logo(
-  self : StartMenu,
-  url : String,
-  duration_ms : Int,
-) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with render_logo(
+  self,
+  url,
+  duration_ms,
+) {
   start_logo_dom_render(self.root_id, url, duration_ms)
 }
 
 ///|
-pub fn StartMenu::clear_logo(self : StartMenu) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with clear_logo(self) {
   start_logo_dom_clear(self.root_id)
 }
 
 ///|
-pub fn StartMenu::take_logo_action(self : StartMenu) -> StartLogoAction {
+pub impl @ui_menu.StartMenu for StartMenu with take_logo_action(self) {
   match start_logo_action_kind(self.root_id).to_option() {
     Some("done") => {
       start_logo_action_clear(self.root_id)
@@ -122,10 +90,10 @@ pub fn StartMenu::take_logo_action(self : StartMenu) -> StartLogoAction {
 }
 
 ///|
-pub fn StartMenu::render_locale_picker(
-  self : StartMenu,
-  languages : Array[(String, String)],
-) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with render_locale_picker(
+  self,
+  languages,
+) {
   let names : Array[String] = []
   let codes : Array[String] = []
   for language in languages {
@@ -141,12 +109,12 @@ pub fn StartMenu::render_locale_picker(
 }
 
 ///|
-pub fn StartMenu::clear_locale_picker(self : StartMenu) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with clear_locale_picker(self) {
   start_locale_dom_clear(self.root_id)
 }
 
 ///|
-pub fn StartMenu::take_locale_action(self : StartMenu) -> StartLocaleAction {
+pub impl @ui_menu.StartMenu for StartMenu with take_locale_action(self) {
   match start_locale_action_code(self.root_id).to_option() {
     Some(code) => {
       start_locale_action_clear(self.root_id)
@@ -158,10 +126,10 @@ pub fn StartMenu::take_locale_action(self : StartMenu) -> StartLocaleAction {
 
 ///|
 fn choose_continue_slot(entries : Array[SaveSlotEntry]) -> String? {
-  for entry in entries; best_slot = None, best_ts = -1.0 {
+  for entry in entries; best_slot = None, best_ts = -1L {
     let ts = match entry.meta {
       Some(meta) => meta.updated_at_ms
-      None => -1.0
+      None => -1L
     }
     if ts > best_ts || best_slot is None {
       continue Some(entry.slot), ts
@@ -467,7 +435,7 @@ extern "js" fn start_menu_action_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn StartMenu::render(self : StartMenu) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with render(self) {
   let entries = save_slot_store_entries_in(self.save_store, self.save_ns)
   let has_gallery = !@gallery.registered_images().is_empty()
   let has_credits = self.show_credits && self.ui_strings.menu_credits != ""
@@ -520,13 +488,13 @@ extern "js" fn start_menu_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-pub fn StartMenu::clear(self : StartMenu) -> Unit {
+pub impl @ui_menu.StartMenu for StartMenu with clear(self) {
   start_locale_dom_clear(self.root_id)
   start_menu_dom_clear(self.root_id)
 }
 
 ///|
-pub fn StartMenu::take_action(self : StartMenu) -> StartMenuAction {
+pub impl @ui_menu.StartMenu for StartMenu with take_action(self) {
   match start_menu_action_kind(self.root_id).to_option() {
     Some("new") => {
       start_menu_action_clear(self.root_id)

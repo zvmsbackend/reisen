@@ -1,19 +1,38 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "sennenki/reisen/audio_core"
 
+import {
+  "moonbitlang/core/debug",
+  "sennenki/reisen/core",
+}
+
 // Values
+pub let dummy : &AudioPort
 
 // Errors
 
 // Types and methods
-type AudioPort
-pub fn AudioPort::browser() -> Self
-pub fn AudioPort::has_active_sfx(Self) -> Bool
-pub fn AudioPort::new(() -> Bool, (Double) -> Unit, (Double) -> Unit) -> Self
-pub fn AudioPort::set_bgm_gain(Self, Double) -> Unit
-pub fn AudioPort::set_sfx_gain(Self, Double) -> Unit
+pub enum AudioCommand {
+  Noop
+  PlayMusic(String, Bool)
+  StopMusic
+  PlaySfx(String)
+  PlaySfxUrl(String)
+  StopSfx
+} derive(Eq, @debug.Debug)
+pub fn AudioCommand::from_event(@core.RuntimeEvent) -> Self
+
+type DummyAudioPort
+pub impl AudioPort for DummyAudioPort
 
 // Type aliases
 
 // Traits
+pub(open) trait AudioPort {
+  set_bgm_gain(Self, Double) -> Unit
+  set_sfx_gain(Self, Double) -> Unit
+  has_active_sfx(Self) -> Bool
+  handle_command(Self, AudioCommand) -> Unit
+}
+pub fn &AudioPort::as_event_hook(Self) -> (@core.RuntimeEvent) -> Unit
 

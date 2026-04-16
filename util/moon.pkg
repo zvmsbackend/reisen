@@ -1,3 +1,7 @@
 import {
-  "moonbit-community/js-ffi/js",
+  "moonbitlang/core/json",
+  "moonbitlang/async/js_async",
+  "moonbitlang/async/fs",
+  "moonbitlang/async/io",
+  "sennenki/js-ffi/js",
 }

@@ -4,10 +4,9 @@ import {
   "sennenki/sexp",
   "sennenki/reisen/util",
   "sennenki/reisen/state",
-  "sennenki/reisen/pixi",
+  "sennenki/reisen/effect_types",
   "moonbitlang/core/json",
   "moonbitlang/core/string",
-  "moonbit-community/js-ffi/js",
 }
 
 import {
@@ -15,6 +14,5 @@ import {
 } for "test"
 
 import {
-  "moonbit-community/js-ffi/js",
   "moonbitlang/core/debug",
 } for "wbtest"

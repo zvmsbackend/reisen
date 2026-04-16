@@ -2,33 +2,7 @@
 /// HTML audio adapter driven by `RuntimeEvent`.
 
 ///|
-enum AudioCommand {
-  Noop
-  PlayMusic(String, Bool)
-  StopMusic
-  PlaySfx(String)
-  PlaySfxUrl(String)
-  StopSfx
-} derive(Debug, Eq)
-
-///|
-fn AudioCommand::from_event(event : RuntimeEvent) -> AudioCommand {
-  match event {
-    MusicPlayed(id, should_loop) => AudioCommand::PlayMusic(id, should_loop)
-    MusicStopped => AudioCommand::StopMusic
-    SfxPlayed(id, _) => AudioCommand::PlaySfx(id)
-    SfxStopped => AudioCommand::StopSfx
-    Said(voice~, ..) =>
-      match voice {
-        Some(url) => AudioCommand::PlaySfxUrl(url)
-        None => AudioCommand::Noop
-      }
-    IntroShown(_) => AudioCommand::Noop
-    TextBoxShown | TextBoxHidden => AudioCommand::Noop
-    AvatarShown(_) | AvatarHidden => AudioCommand::Noop
-    _ => AudioCommand::Noop
-  }
-}
+using @audio_core {trait AudioPort}
 
 ///|
 struct AudioDom {
@@ -41,20 +15,18 @@ pub fn AudioDom::new(resolve_url : (String) -> String?) -> AudioDom {
 }
 
 ///|
-pub fn AudioDom::new_with_store(store : AssetStore) -> AudioDom {
+pub fn AudioDom::new_with_store(store : &AssetStore) -> AudioDom {
   AudioDom::new(id => store.get_audio_url(id))
 }
 
 ///|
-pub fn AudioDom::set_bgm_gain(gain : Double) -> Unit {
-  let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
-  audio_dom_set_bgm_gain(clamped)
+pub impl AudioPort for AudioDom with set_bgm_gain(_self, gain) {
+  audio_dom_set_bgm_gain(gain.clamp(min=0, max=1))
 }
 
 ///|
-pub fn AudioDom::set_sfx_gain(gain : Double) -> Unit {
-  let clamped = if gain < 0.0 { 0.0 } else if gain > 1.0 { 1.0 } else { gain }
-  audio_dom_set_sfx_gain(clamped)
+pub impl AudioPort for AudioDom with set_sfx_gain(_self, gain) -> Unit {
+  audio_dom_set_sfx_gain(gain.clamp(min=0, max=1))
 }
 
 ///|
@@ -142,31 +114,29 @@ extern "js" fn audio_dom_has_active_sfx_impl() -> Bool =
   #| }
 
 ///|
-pub fn AudioDom::handle_event(self : AudioDom, event : RuntimeEvent) -> Unit {
-  match AudioCommand::from_event(event) {
-    AudioCommand::PlayMusic(id, should_loop) =>
+pub impl AudioPort for AudioDom with handle_command(
+  self : AudioDom,
+  command : @audio_core.AudioCommand,
+) -> Unit {
+  match command {
+    PlayMusic(id, should_loop) =>
       match (self.resolve_url)(id) {
         Some(url) => audio_dom_play_music(url, should_loop)
         None => ()
       }
-    AudioCommand::StopMusic => audio_dom_stop_music()
-    AudioCommand::PlaySfx(id) =>
+    StopMusic => audio_dom_stop_music()
+    PlaySfx(id) =>
       match (self.resolve_url)(id) {
         Some(url) => audio_dom_play_sfx(url)
         None => ()
       }
-    AudioCommand::PlaySfxUrl(url) => audio_dom_play_sfx(url)
-    AudioCommand::StopSfx => audio_dom_stop_sfx()
-    AudioCommand::Noop => ()
+    PlaySfxUrl(url) => audio_dom_play_sfx(url)
+    StopSfx => audio_dom_stop_sfx()
+    Noop => ()
   }
 }
 
 ///|
-pub fn AudioDom::has_active_sfx() -> Bool {
+pub impl AudioPort for AudioDom with has_active_sfx(_self) {
   audio_dom_has_active_sfx_impl()
-}
-
-///|
-pub fn AudioDom::as_event_hook(self : AudioDom) -> @core.EventHook {
-  event => self.handle_event(event)
 }

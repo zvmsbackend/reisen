@@ -26,7 +26,7 @@ test "save slot metadata roundtrip and entries" {
   let store = default_save_slot_store()
   store.delete_slot("global", "wb_meta")
   store.write_slot("global", "wb_meta", "STATE")
-  let meta = save_slot_meta("Prologue", "Wake up in shrine", updated_at_ms=1.0)
+  let meta = save_slot_meta("Prologue", "Wake up in shrine", updated_at_ms=1)
   store.write_slot_meta("global", "wb_meta", meta)
 
   assert_eq(store.read_slot_meta("global", "wb_meta"), Some(meta))
@@ -42,7 +42,7 @@ test "save slot delete also removes metadata" {
   store.write_slot_meta(
     "global",
     "wb_meta_delete",
-    save_slot_meta("T", "P", updated_at_ms=2.0),
+    save_slot_meta("T", "P", updated_at_ms=2),
   )
 
   store.delete_slot("global", "wb_meta_delete")
@@ -154,7 +154,7 @@ test "store trait wrappers work with local backend" {
   save_slot_store_delete_in(store, "wb_store", "slot")
   save_slot_store_write_in(store, "wb_store", "slot", "payload")
   assert_eq(save_slot_store_read_in(store, "wb_store", "slot"), Some("payload"))
-  let meta = save_slot_meta("Title", "Preview", updated_at_ms=10.0)
+  let meta = save_slot_meta("Title", "Preview", updated_at_ms=10)
   save_slot_store_write_meta_in(store, "wb_store", "slot", meta)
   assert_eq(save_slot_store_read_meta_in(store, "wb_store", "slot"), Some(meta))
 }
@@ -211,7 +211,7 @@ test "indexeddb store cache read write list" {
 ///|
 test "indexeddb store cache metadata roundtrip" {
   let store = IndexedDbSaveSlotStore::new(db_name="wb.indexed.meta")
-  let meta = save_slot_meta("T", "P", updated_at_ms=11.0)
+  let meta = save_slot_meta("T", "P", updated_at_ms=11)
   store.write_slot_meta("ns", "a", meta)
   assert_eq(store.read_slot_meta("ns", "a"), Some(meta))
 }

@@ -140,13 +140,13 @@ fn PixiPresenter::apply_effects_to_target(
       if prev != signature {
         self.effect_signatures.set(key, signature)
         self.effect_start_ms.set(key, self.timeline_ms)
-        let defaults = pixi_effect_defaults_for(spec.id, spec.params)
+        let defaults = @pixi.pixi_effect_defaults_for(spec.id, spec.params)
         self.effect_from_params.set(key, defaults)
       }
     } else {
       self.effect_signatures.set(key, signature)
       self.effect_start_ms.set(key, self.timeline_ms)
-      let defaults = pixi_effect_defaults_for(spec.id, spec.params)
+      let defaults = @pixi.pixi_effect_defaults_for(spec.id, spec.params)
       self.effect_from_params.set(key, defaults)
     }
     let progress = match (spec.duration_ms, self.effect_start_ms.get(key)) {
@@ -182,7 +182,7 @@ fn PixiPresenter::apply_effects_to_target(
       }
       None => spec.params
     }
-    if pixi_apply_effect_to_target(
+    if @pixi.pixi_apply_effect_to_target(
         target,
         spec.id,
         render_params,

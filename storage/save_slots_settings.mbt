@@ -50,7 +50,7 @@ pub fn persistent_get_flag_in(
   key : String,
   default? : Bool = false,
 ) -> Bool {
-  match storage_get_item(persistent_key_in(ns, key)).to_option() {
+  match storage_get_item(persistent_key_in(ns, key)) {
     Some(raw) => raw == "1" || raw.to_lower() == "true"
     None => default
   }
@@ -67,7 +67,7 @@ pub fn persistent_get_int_in(
   key : String,
   default? : Int = 0,
 ) -> Int {
-  match storage_get_item(persistent_key_in(ns, key)).to_option() {
+  match storage_get_item(persistent_key_in(ns, key)) {
     Some(raw) => @string.parse_int(raw) catch { _ => default }
     None => default
   }
@@ -88,7 +88,7 @@ pub fn persistent_get_text_in(
   key : String,
   default? : String = "",
 ) -> String {
-  match storage_get_item(persistent_key_in(ns, key)).to_option() {
+  match storage_get_item(persistent_key_in(ns, key)) {
     Some(raw) => raw
     None => default
   }
@@ -111,9 +111,7 @@ pub fn settings_write_in(ns : String, settings : GameSettings) -> Unit {
 
 ///|
 pub fn settings_read_in(ns : String) -> GameSettings? {
-  (ns |> settings_key_in |> storage_get_item)
-  .to_option()
-  .bind(raw => {
+  (ns |> settings_key_in |> storage_get_item).bind(raw => {
     try {
       let decoded : GameSettings = raw |> @json.parse |> @json.from_json
       Some(
