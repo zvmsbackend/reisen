@@ -1,0 +1,7 @@
+import {
+  "sennenki/reisen/assets",
+  "sennenki/reisen/audio_core",
+  "Milky2018/selene/platform_audio" @selene_platform_audio,
+}
+
+supported_targets = "native"

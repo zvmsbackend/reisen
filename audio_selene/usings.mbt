@@ -1,0 +1,2 @@
+///|
+using @assets {trait AssetStore}
