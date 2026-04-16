@@ -25,6 +25,26 @@ using @engine {
 pub type UiOverlayProvider = () -> Array[@selene_render2d_types.DrawCommand2D]
 
 ///|
+pub fn combine_ui_overlay_providers(
+  primary : UiOverlayProvider?,
+  secondary : UiOverlayProvider?,
+) -> UiOverlayProvider? {
+  match (primary, secondary) {
+    (None, None) => None
+    (Some(provider), None) => Some(provider)
+    (None, Some(provider)) => Some(provider)
+    (Some(a), Some(b)) =>
+      Some(() => {
+        let commands = a()
+        for command in b() {
+          commands.push(command)
+        }
+        commands
+      })
+  }
+}
+
+///|
 pub struct SelenePresenterConfig {
   viewport_w : Double
   viewport_h : Double
@@ -107,6 +127,15 @@ pub fn SelenePresenter::set_ui_overlay_provider(
 ) -> Unit {
   self.ui_overlay_provider = provider
   self.force_submit = true
+}
+
+///|
+pub fn SelenePresenter::set_ui_overlay_providers(
+  self : SelenePresenter,
+  primary : UiOverlayProvider?,
+  secondary : UiOverlayProvider?,
+) -> Unit {
+  self.set_ui_overlay_provider(combine_ui_overlay_providers(primary, secondary))
 }
 
 ///|

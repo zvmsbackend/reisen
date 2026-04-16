@@ -96,10 +96,8 @@ fn SeleneAudio::stop_all_sfx(self : SeleneAudio) -> Unit {
 pub impl AudioPort for SeleneAudio with set_bgm_gain(self, gain) {
   self.bgm_gain = clamp_gain(gain)
   match self.bgm_instance {
-    Some(instance) => @selene_platform_audio.set_volume(
-      instance~,
-      volume=self.bgm_gain,
-    )
+    Some(instance) =>
+      @selene_platform_audio.set_volume(instance~, volume=self.bgm_gain)
     None => ()
   }
 }

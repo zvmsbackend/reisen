@@ -2,6 +2,7 @@
 package "sennenki/reisen/ui_selene"
 
 import {
+  "Milky2018/selene/render2d_types",
   "sennenki/reisen/core",
   "sennenki/reisen/ui_game",
 }
@@ -37,6 +38,8 @@ pub fn SeleneUiBackend::push_click(Self) -> Unit
 pub fn SeleneUiBackend::push_selected_choice(Self, String) -> Unit
 pub fn SeleneUiBackend::push_submitted_text_input(Self, String) -> Unit
 pub fn SeleneUiBackend::push_video_action(Self, String) -> Unit
+pub fn SeleneUiBackend::ui_overlay_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+pub fn SeleneUiBackend::ui_overlay_provider(Self, viewport_w? : Double, viewport_h? : Double) -> () -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_game.UiBackend for SeleneUiBackend
 pub impl @ui_game.UiPlatformHooks for SeleneUiBackend
 
@@ -50,6 +53,8 @@ pub fn SeleneUiPortFactory::push_click(Self) -> Unit
 pub fn SeleneUiPortFactory::push_selected_choice(Self, String) -> Unit
 pub fn SeleneUiPortFactory::push_submitted_text_input(Self, String) -> Unit
 pub fn SeleneUiPortFactory::push_video_action(Self, String) -> Unit
+pub fn SeleneUiPortFactory::ui_overlay_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+pub fn SeleneUiPortFactory::ui_overlay_provider(Self, viewport_w? : Double, viewport_h? : Double) -> () -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_game.UiPortFactory for SeleneUiPortFactory
 
 // Type aliases

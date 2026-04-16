@@ -312,6 +312,124 @@ pub impl UiPlatformHooks for SeleneUiBackend with set_media_volume(
 }
 
 ///|
+fn dialog_text_or_intro(view : UiViewModel) -> String {
+  let dialog = view.text.raw_text()
+  if dialog != "" {
+    return dialog
+  }
+  match view.intro_text {
+    Some(text) => text.raw_text()
+    None => ""
+  }
+}
+
+///|
+fn SeleneUiBackend::body_lines(view : UiViewModel) -> Array[String] {
+  let lines : Array[String] = []
+  let body = dialog_text_or_intro(view)
+  if body != "" {
+    lines.push(body)
+  }
+  if !view.choices.is_empty() {
+    for i = 0; i < view.choices.length(); i = i + 1 {
+      let choice = view.choices[i]
+      lines.push("\{i + 1}. \{choice.text.raw_text()}")
+      if i >= 2 {
+        break
+      }
+    }
+  }
+  if view.text_input is Some(input) {
+    lines.push("Input: \{input.prompt.raw_text()}")
+  }
+  if view.video is Some(video) {
+    let skip_hint = if video.can_skip { " (skip available)" } else { "" }
+    lines.push("Video: \{video.url}\{skip_hint}")
+  }
+  lines
+}
+
+///|
+pub fn SeleneUiBackend::ui_overlay_commands(
+  self : SeleneUiBackend,
+  viewport_w? : Double = 1280.0,
+  viewport_h? : Double = 720.0,
+) -> Array[@selene_render2d_types.DrawCommand2D] {
+  match self.last_view {
+    None => []
+    Some(view) => {
+      let speaker = view.speaker.raw_text()
+      let lines = SeleneUiBackend::body_lines(view)
+      if speaker == "" && lines.is_empty() {
+        return []
+      }
+      if !view.text_box_visible {
+        return []
+      }
+      let panel_rect : @selene_math.Rect = {
+        position: @selene_math.Vec2D(28.0, viewport_h - 236.0),
+        size: @selene_math.Vec2D(viewport_w - 56.0, 208.0),
+      }
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+        Rect({
+          rect: panel_rect,
+          transform: @selene_math.Transform::identity(),
+          fill_color: { r: 10, g: 14, b: 20, a: 0.82 },
+          stroke_color: Some({ r: 214, g: 224, b: 238, a: 0.92 }),
+        }),
+      ]
+      let mut y = viewport_h - 214.0
+      if speaker != "" {
+        commands.push(
+          Text({
+            text: speaker,
+            position: @selene_math.Vec2D(48.0, y),
+            transform: @selene_math.Transform::identity(),
+            style: {
+              font: None,
+              family: "sans-serif",
+              size: 28.0,
+              color: { r: 255, g: 221, b: 170, a: 1.0 },
+              align: @selene_math.HAlign::Left,
+              baseline: @selene_math.VAlign::Top,
+            },
+          }),
+        )
+        y += 38.0
+      }
+      for line in lines {
+        commands.push(
+          Text({
+            text: line,
+            position: @selene_math.Vec2D(48.0, y),
+            transform: @selene_math.Transform::identity(),
+            style: {
+              font: None,
+              family: "sans-serif",
+              size: 24.0,
+              color: { r: 238, g: 244, b: 252, a: 1.0 },
+              align: @selene_math.HAlign::Left,
+              baseline: @selene_math.VAlign::Top,
+            },
+          }),
+        )
+        y += 30.0
+      }
+      commands
+    }
+  }
+}
+
+///|
+pub fn SeleneUiBackend::ui_overlay_provider(
+  self : SeleneUiBackend,
+  viewport_w? : Double = 1280.0,
+  viewport_h? : Double = 720.0,
+) -> () -> Array[@selene_render2d_types.DrawCommand2D] {
+  () => self.ui_overlay_commands(viewport_w~, viewport_h~)
+}
+
+///|
 pub struct SeleneUiPortFactory {
   backend : SeleneUiBackend
 }
@@ -385,6 +503,24 @@ pub fn SeleneUiPortFactory::last_view(
   self : SeleneUiPortFactory,
 ) -> UiViewModel? {
   self.backend.last_view()
+}
+
+///|
+pub fn SeleneUiPortFactory::ui_overlay_commands(
+  self : SeleneUiPortFactory,
+  viewport_w? : Double = 1280.0,
+  viewport_h? : Double = 720.0,
+) -> Array[@selene_render2d_types.DrawCommand2D] {
+  self.backend.ui_overlay_commands(viewport_w~, viewport_h~)
+}
+
+///|
+pub fn SeleneUiPortFactory::ui_overlay_provider(
+  self : SeleneUiPortFactory,
+  viewport_w? : Double = 1280.0,
+  viewport_h? : Double = 720.0,
+) -> () -> Array[@selene_render2d_types.DrawCommand2D] {
+  self.backend.ui_overlay_provider(viewport_w~, viewport_h~)
 }
 
 ///|

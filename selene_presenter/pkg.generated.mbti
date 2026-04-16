@@ -10,6 +10,7 @@ import {
 }
 
 // Values
+pub fn combine_ui_overlay_providers((() -> Array[@render2d_types.DrawCommand2D])?, (() -> Array[@render2d_types.DrawCommand2D])?) -> (() -> Array[@render2d_types.DrawCommand2D])?
 
 // Errors
 
@@ -36,6 +37,7 @@ pub fn SelenePresenter::new(config? : SelenePresenterConfig) -> Self
 pub fn SelenePresenter::register_background_image(Self, String, @asset_types.ImageHandle) -> Unit
 pub fn SelenePresenter::register_figure_image(Self, String, @asset_types.ImageHandle) -> Unit
 pub fn SelenePresenter::set_ui_overlay_provider(Self, (() -> Array[@render2d_types.DrawCommand2D])?) -> Unit
+pub fn SelenePresenter::set_ui_overlay_providers(Self, (() -> Array[@render2d_types.DrawCommand2D])?, (() -> Array[@render2d_types.DrawCommand2D])?) -> Unit
 pub fn SelenePresenter::submit_core_snapshot(Self, @engine.CoreRenderSnapshot) -> Unit
 
 pub struct SelenePresenterConfig {
