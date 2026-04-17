@@ -29,7 +29,7 @@ pub fn localize_script_text(
 ) -> DialogText {
   match text {
     String(s) =>
-      String(
+      DialogText::new(
         localize_script_string(
           s, script_locale_json, script_default_locale_json,
         ),
