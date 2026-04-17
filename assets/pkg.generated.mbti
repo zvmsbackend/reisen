@@ -65,16 +65,7 @@ pub(open) trait AssetStore {
   put_bytes(Self, String, Bytes) -> Unit
   put_path(Self, String, String) -> Unit
   get_path(Self, String) -> String?
-  async load_image_and_cache(Self, String, String) -> Unit raise AssetStoreError
-  async load_video_and_cache(Self, String, String) -> Unit raise AssetStoreError
-  async load_live2d_and_cache(Self, String, String) -> Unit raise AssetStoreError
 }
-pub async fn &AssetStore::register_background(Self, String, id? : String) -> Background raise AssetStoreError
-pub async fn &AssetStore::register_background_video(Self, String, id? : String) -> Background raise AssetStoreError
-pub async fn &AssetStore::register_figure(Self, String, id? : String) -> PixiFigure raise AssetStoreError
-pub async fn &AssetStore::register_live2d_figure(Self, String, id? : String) -> Live2dFigure raise AssetStoreError
-pub fn &AssetStore::register_music(Self, String, id? : String) -> Music
-pub fn &AssetStore::register_sfx(Self, String, id? : String) -> Sfx
 
 pub trait Figure : AnimationTarget {
   dummy(Self) -> Unit

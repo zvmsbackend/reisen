@@ -36,10 +36,19 @@ pub struct WebAssetStore {
 pub fn WebAssetStore::get_image(Self, String) -> Image?
 pub fn WebAssetStore::get_live2d_model(Self, String) -> @pixi.PixiLive2dModel?
 pub fn WebAssetStore::get_video(Self, String) -> Video?
+pub async fn WebAssetStore::load_image_and_cache(Self, String, String) -> Unit raise @assets.AssetStoreError
+pub async fn WebAssetStore::load_live2d_and_cache(Self, String, String) -> Unit raise @assets.AssetStoreError
+pub async fn WebAssetStore::load_video_and_cache(Self, String, String) -> Unit raise @assets.AssetStoreError
 pub fn WebAssetStore::new() -> Self
 pub fn WebAssetStore::put_image(Self, String, Image) -> Unit
 pub fn WebAssetStore::put_live2d_model(Self, String, @pixi.PixiLive2dModel) -> Unit
 pub fn WebAssetStore::put_video(Self, String, Video) -> Unit
+pub async fn WebAssetStore::register_background(Self, String, id? : String) -> @assets.Background raise @assets.AssetStoreError
+pub async fn WebAssetStore::register_background_video(Self, String, id? : String) -> @assets.Background raise @assets.AssetStoreError
+pub async fn WebAssetStore::register_figure(Self, String, id? : String) -> @assets.PixiFigure raise @assets.AssetStoreError
+pub async fn WebAssetStore::register_live2d_figure(Self, String, id? : String) -> @assets.Live2dFigure raise @assets.AssetStoreError
+pub fn WebAssetStore::register_music(Self, String, id? : String) -> @assets.Music
+pub fn WebAssetStore::register_sfx(Self, String, id? : String) -> @assets.Sfx
 pub impl @assets.AssetStore for WebAssetStore
 
 // Type aliases

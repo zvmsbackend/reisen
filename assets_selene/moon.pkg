@@ -1,0 +1,8 @@
+import {
+  "sennenki/reisen/assets",
+  "sennenki/reisen/util",
+  "Milky2018/selene/asset" @selene_asset,
+  "Milky2018/selene/asset_types" @selene_asset_types,
+}
+
+supported_targets = "native"
