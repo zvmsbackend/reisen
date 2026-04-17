@@ -11,16 +11,16 @@ test "choose_continue_slot prefers newest metadata timestamp" {
     ),
     try! SaveSlotEntry::new("c"),
   ]
-  assert_eq(choose_continue_slot(entries), Some("b"))
+  assert_eq(@ui_menu.choose_continue_slot(entries), Some("b"))
 }
 
 ///|
 test "choose_continue_slot falls back when metadata missing" {
   let entries = [try! SaveSlotEntry::new("x"), try! SaveSlotEntry::new("y")]
-  assert_eq(choose_continue_slot(entries), Some("x"))
+  assert_eq(@ui_menu.choose_continue_slot(entries), Some("x"))
 }
 
 ///|
 test "choose_continue_slot none when no entries" {
-  assert_eq(choose_continue_slot([]), None)
+  assert_eq(@ui_menu.choose_continue_slot([]), None)
 }

@@ -2,6 +2,33 @@
 using @storage {trait SaveSlotStore}
 
 ///|
+pub fn choose_continue_slot(entries : Array[@storage.SaveSlotEntry]) -> String? {
+  for entry in entries; best_slot = None, best_ts = -1L {
+    let ts = match entry.meta {
+      Some(meta) => meta.updated_at_ms
+      None => -1L
+    }
+    if ts > best_ts || best_slot is None {
+      continue Some(entry.slot), ts
+    }
+  } nobreak {
+    best_slot
+  }
+}
+
+///|
+pub fn localize_script_string(
+  raw : String,
+  script_locale_json : String?,
+  script_default_locale_json : String?,
+) -> String {
+  let (localized, _, _) = @util.script_locale_resolve_at(
+    raw, script_locale_json, script_default_locale_json,
+  )
+  localized
+}
+
+///|
 using @ui_game {type UiStrings}
 
 ///|

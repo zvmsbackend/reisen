@@ -87,12 +87,11 @@ fn SettingsMenu::localize_save_preview(
   self : SettingsMenu,
   raw : String,
 ) -> String {
-  let (localized, _, _) = script_locale_resolve_at(
+  @ui_menu.localize_script_string(
     raw,
     self.script_locale_json,
     self.script_default_locale_json,
   )
-  localized
 }
 
 ///|

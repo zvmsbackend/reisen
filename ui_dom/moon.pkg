@@ -3,7 +3,6 @@ import {
   "sennenki/reisen/ui_game",
   "sennenki/reisen/core",
   "sennenki/reisen/state",
-  "sennenki/reisen/util",
 }
 
 import {

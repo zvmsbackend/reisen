@@ -22,6 +22,3 @@ using @core {
   type DialogLogEntry,
   animation_progress,
 }
-
-///|
-using @util {script_locale_resolve_at}

@@ -9,6 +9,13 @@ import {
 }
 
 // Values
+pub fn localize_script_string(String, String?, String?) -> String
+
+pub fn localize_script_text(@state.DialogText, String?, String?) -> @state.DialogText
+
+pub fn localize_vocal_url(String, String, String, String) -> String
+
+pub fn resolve_script_string(String, String?, String?) -> (String, String?, Bool)
 
 // Errors
 

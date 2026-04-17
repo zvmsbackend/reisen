@@ -125,21 +125,6 @@ pub impl @ui_menu.StartMenu for StartMenu with take_locale_action(self) {
 }
 
 ///|
-fn choose_continue_slot(entries : Array[SaveSlotEntry]) -> String? {
-  for entry in entries; best_slot = None, best_ts = -1L {
-    let ts = match entry.meta {
-      Some(meta) => meta.updated_at_ms
-      None => -1L
-    }
-    if ts > best_ts || best_slot is None {
-      continue Some(entry.slot), ts
-    }
-  } nobreak {
-    best_slot
-  }
-}
-
-///|
 extern "js" fn start_menu_dom_render(
   root_id : String,
   has_continue : Bool,
@@ -439,7 +424,7 @@ pub impl @ui_menu.StartMenu for StartMenu with render(self) {
   let entries = save_slot_store_entries_in(self.save_store, self.save_ns)
   let has_gallery = !@gallery.registered_images().is_empty()
   let has_credits = self.show_credits && self.ui_strings.menu_credits != ""
-  let continue_slot = choose_continue_slot(entries)
+  let continue_slot = @ui_menu.choose_continue_slot(entries)
   match continue_slot {
     Some(slot) =>
       start_menu_dom_render(

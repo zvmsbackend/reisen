@@ -2,4 +2,5 @@ import {
   "sennenki/reisen/storage",
   "sennenki/reisen/audio_core",
   "sennenki/reisen/ui_game",
+  "sennenki/reisen/util",
 }

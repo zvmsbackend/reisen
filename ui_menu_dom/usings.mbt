@@ -23,6 +23,3 @@ using @ui_menu {
   type SettingsViewMode,
   type SettingsAction,
 }
-
-///|
-using @util {script_locale_resolve_at}

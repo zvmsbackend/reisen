@@ -9,6 +9,9 @@ import {
 }
 
 // Values
+pub fn choose_continue_slot(Array[@storage.SaveSlotEntry]) -> String?
+
+pub fn localize_script_string(String, String?, String?) -> String
 
 // Errors
 

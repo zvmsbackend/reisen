@@ -150,21 +150,6 @@ pub fn SeleneStartMenu::new(
 }
 
 ///|
-fn choose_continue_slot(entries : Array[@storage.SaveSlotEntry]) -> String? {
-  for entry in entries; best_slot = None, best_ts = -1L {
-    let ts = match entry.meta {
-      Some(meta) => meta.updated_at_ms
-      None => -1L
-    }
-    if ts > best_ts || best_slot is None {
-      continue Some(entry.slot), ts
-    }
-  } nobreak {
-    best_slot
-  }
-}
-
-///|
 fn SeleneStartMenu::menu_rows(
   self : SeleneStartMenu,
 ) -> Array[(String, @ui_menu.StartMenuAction)] {
@@ -174,7 +159,7 @@ fn SeleneStartMenu::menu_rows(
     self.save_store,
     self.save_ns,
   )
-  let continue_slot = choose_continue_slot(entries)
+  let continue_slot = @ui_menu.choose_continue_slot(entries)
   if continue_slot is Some(slot) {
     rows.push((self.ui_strings.start_menu_continue, Continue(slot)))
   }

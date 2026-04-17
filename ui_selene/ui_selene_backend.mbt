@@ -180,17 +180,11 @@ fn SeleneUiBackend::localize_script_text(
   self : SeleneUiBackend,
   text : DialogText,
 ) -> DialogText {
-  match text {
-    String(s) => String(self.localize_script_text_string(s))
-    Concat(parts) => Concat(parts.map(part => self.localize_script_text(part)))
-    Interpolation(var_name) => Interpolation(var_name)
-    Enhanced(base, style~) => Enhanced(self.localize_script_text(base), style~)
-    Ruby(base, ruby~) =>
-      Ruby(
-        self.localize_script_text_string(base),
-        ruby=self.localize_script_text_string(ruby),
-      )
-  }
+  @ui_game.localize_script_text(
+    text,
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
 }
 
 ///|
@@ -198,12 +192,11 @@ fn SeleneUiBackend::localize_script_text_string(
   self : SeleneUiBackend,
   raw : String,
 ) -> String {
-  let (localized, _, _) = script_locale_resolve_at(
+  @ui_game.localize_script_string(
     raw,
     self.script_locale_json,
     self.script_default_locale_json,
   )
-  localized
 }
 
 ///|
@@ -276,24 +269,12 @@ fn SeleneUiBackend::selene_view_from_snapshot(
 
 ///|
 pub impl UiBackend for SeleneUiBackend with localize_vocal_url(self, raw) {
-  if !raw.has_prefix("@") {
-    return raw
-  }
-  let key = raw[1:].to_string()
-  if key == "" {
-    return raw
-  }
-  if self.vocal_locale_dir == "" {
-    return key
-  }
-  let locale = match self.script_locale {
-    "" => self.script_default_locale
-    _ => self.script_locale
-  }
-  match locale {
-    "" => "\{self.vocal_locale_dir}/\{key}"
-    _ => "\{self.vocal_locale_dir}/\{locale}/\{key}"
-  }
+  @ui_game.localize_vocal_url(
+    raw,
+    self.vocal_locale_dir,
+    self.script_locale,
+    self.script_default_locale,
+  )
 }
 
 ///|

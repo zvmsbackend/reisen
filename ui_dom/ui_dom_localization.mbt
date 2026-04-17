@@ -12,15 +12,16 @@ extern "js" fn script_locale_warn_missing(
 
 ///|
 fn UiDom::localize_script_text(self : UiDom, text : DialogText) -> DialogText {
-  match text {
-    String(s) => String(self.localize_script_text_string(s))
-    _ => text
-  }
+  @ui_game.localize_script_text(
+    text,
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
 }
 
 ///|
 fn UiDom::localize_script_text_string(self : UiDom, raw : String) -> String {
-  let (localized, key, found) = script_locale_resolve_at(
+  let (localized, key, found) = @ui_game.resolve_script_string(
     raw,
     self.script_locale_json,
     self.script_default_locale_json,
@@ -35,22 +36,10 @@ fn UiDom::localize_script_text_string(self : UiDom, raw : String) -> String {
 
 ///|
 pub fn UiDom::localize_vocal_url(self : UiDom, raw : String) -> String {
-  if !raw.has_prefix("@") {
-    return raw
-  }
-  let key = raw[1:].to_string()
-  if key == "" {
-    return raw
-  }
-  if self.vocal_locale_dir == "" {
-    return key
-  }
-  let locale = match self.script_locale {
-    "" => self.script_default_locale
-    _ => self.script_locale
-  }
-  match locale {
-    "" => "\{self.vocal_locale_dir}/\{key}"
-    _ => "\{self.vocal_locale_dir}/\{locale}/\{key}"
-  }
+  @ui_game.localize_vocal_url(
+    raw,
+    self.vocal_locale_dir,
+    self.script_locale,
+    self.script_default_locale,
+  )
 }

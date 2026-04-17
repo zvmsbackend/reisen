@@ -4,7 +4,6 @@ import {
   "sennenki/reisen/gallery",
   "sennenki/reisen/storage",
   "sennenki/reisen/ui_game",
-  "sennenki/reisen/util",
   "sennenki/reisen/audio_core",
   "sennenki/reisen/ui_menu",
 }
