@@ -68,15 +68,72 @@ pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu with clear(self) {
 
 ///|
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu with take_action(self) {
-  let result = match self.pending_action {
-    @ui_menu.GalleryAction::NoAction =>
-      if self.take_back_edge() {
-        @ui_menu.GalleryAction::Back
-      } else {
-        @ui_menu.GalleryAction::NoAction
-      }
+  let result : @ui_menu.GalleryAction = match self.pending_action {
+    NoAction => if self.take_back_edge() { Back } else { NoAction }
     other => other
   }
-  self.pending_action = @ui_menu.GalleryAction::NoAction
+  self.pending_action = NoAction
   result
+}
+
+///|
+pub fn SeleneGalleryMenu::render_commands(
+  self : SeleneGalleryMenu,
+  viewport_w? : Double = 1280.0,
+  viewport_h? : Double = 720.0,
+) -> Array[@selene_render2d_types.DrawCommand2D] {
+  if !self.visible {
+    return []
+  }
+  let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+    Rect({
+      rect: {
+        position: Vec2D(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 200.0),
+        size: Vec2D(600.0, 400.0),
+      },
+      transform: @selene_math.Transform::identity(),
+      fill_color: { r: 20, g: 28, b: 40, a: 0.92 },
+      stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+    }),
+    Text({
+      text: "Gallery",
+      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 160.0),
+      transform: @selene_math.Transform::identity(),
+      style: {
+        font: None,
+        family: "sans-serif",
+        size: 32.0,
+        color: { r: 245, g: 245, b: 250, a: 1.0 },
+        align: Center,
+        baseline: Top,
+      },
+    }),
+    Text({
+      text: "(Gallery items would be displayed here)",
+      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
+      transform: @selene_math.Transform::identity(),
+      style: {
+        font: None,
+        family: "sans-serif",
+        size: 20.0,
+        color: { r: 200, g: 210, b: 230, a: 1.0 },
+        align: Center,
+        baseline: Center,
+      },
+    }),
+    Text({
+      text: "(Press ESC to return)",
+      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 140.0),
+      transform: @selene_math.Transform::identity(),
+      style: {
+        font: None,
+        family: "sans-serif",
+        size: 16.0,
+        color: { r: 180, g: 190, b: 210, a: 0.8 },
+        align: Center,
+        baseline: Top,
+      },
+    }),
+  ]
+  commands
 }

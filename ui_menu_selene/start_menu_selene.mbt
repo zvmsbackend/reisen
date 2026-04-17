@@ -88,16 +88,11 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_gate(self) {
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_gate_action(self) {
-  let result = match self.pending_gate_action {
-    @ui_menu.StartGateAction::NoAction =>
-      if self.take_confirm_edge() {
-        @ui_menu.StartGateAction::Start
-      } else {
-        @ui_menu.StartGateAction::NoAction
-      }
+  let result : @ui_menu.StartGateAction = match self.pending_gate_action {
+    NoAction => if self.take_confirm_edge() { Start } else { NoAction }
     other => other
   }
-  self.pending_gate_action = @ui_menu.StartGateAction::NoAction
+  self.pending_gate_action = NoAction
   result
 }
 
@@ -115,16 +110,11 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_logo(self) {
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_logo_action(self) {
-  let result = match self.pending_logo_action {
-    @ui_menu.StartLogoAction::NoAction =>
-      if self.take_confirm_edge() {
-        @ui_menu.StartLogoAction::Done
-      } else {
-        @ui_menu.StartLogoAction::NoAction
-      }
+  let result : @ui_menu.StartLogoAction = match self.pending_logo_action {
+    NoAction => if self.take_confirm_edge() { Done } else { NoAction }
     other => other
   }
-  self.pending_logo_action = @ui_menu.StartLogoAction::NoAction
+  self.pending_logo_action = NoAction
   result
 }
 
@@ -165,4 +155,120 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
   let result = self.pending_action
   self.pending_action = NoAction
   result
+}
+
+///|
+pub fn SeleneStartMenu::render_commands(
+  self : SeleneStartMenu,
+  viewport_w? : Double = 1280.0,
+  viewport_h? : Double = 720.0,
+) -> Array[@selene_render2d_types.DrawCommand2D] {
+  match self.visible_mode {
+    None => []
+    Some("gate") => {
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+        Rect({
+          rect: {
+            position: Vec2D(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 60.0),
+            size: Vec2D(400.0, 120.0),
+          },
+          transform: @selene_math.Transform::identity(),
+          fill_color: { r: 20, g: 28, b: 40, a: 0.9 },
+          stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+        }),
+        Text({
+          text: self.ui_strings.start_gate_click_to_start,
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: None,
+            family: "sans-serif",
+            size: 32.0,
+            color: { r: 245, g: 245, b: 250, a: 1.0 },
+            align: Center,
+            baseline: Center,
+          },
+        }),
+      ]
+      commands
+    }
+    Some("logo") => []
+    Some("locale") => {
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+        Rect({
+          rect: {
+            position: Vec2D(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 150.0),
+            size: Vec2D(400.0, 300.0),
+          },
+          transform: @selene_math.Transform::identity(),
+          fill_color: { r: 20, g: 28, b: 40, a: 0.9 },
+          stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+        }),
+        Text({
+          text: "Select Language",
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 120.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: None,
+            family: "sans-serif",
+            size: 28.0,
+            color: { r: 245, g: 245, b: 250, a: 1.0 },
+            align: Center,
+            baseline: Center,
+          },
+        }),
+        Text({
+          text: "(Language selector UI placeholder)",
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: None,
+            family: "sans-serif",
+            size: 20.0,
+            color: { r: 200, g: 210, b: 230, a: 1.0 },
+            align: Center,
+            baseline: Center,
+          },
+        }),
+      ]
+      commands
+    }
+    Some("start") => {
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+        Rect({
+          rect: {
+            position: Vec2D(viewport_w / 2.0 - 250.0, viewport_h / 2.0 - 200.0),
+            size: Vec2D(500.0, 400.0),
+          },
+          transform: @selene_math.Transform::identity(),
+          fill_color: { r: 20, g: 28, b: 40, a: 0.9 },
+          stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+        }),
+      ]
+      let mut y = viewport_h / 2.0 - 160.0
+      let button_texts = [
+        "New Game", "Continue", "Load", "Settings", "Gallery", "Credits",
+      ]
+      for text in button_texts {
+        commands.push(
+          Text({
+            text,
+            position: Vec2D(viewport_w / 2.0, y),
+            transform: @selene_math.Transform::identity(),
+            style: {
+              font: None,
+              family: "sans-serif",
+              size: 24.0,
+              color: { r: 230, g: 238, b: 250, a: 1.0 },
+              align: Center,
+              baseline: Center,
+            },
+          }),
+        )
+        y += 50.0
+      }
+      commands
+    }
+    _ => []
+  }
 }

@@ -74,30 +74,6 @@ pub fn SeleneMenuFactory::push_credits_back(self : SeleneMenuFactory) -> Unit {
   self.credits_menu.push_back()
 }
 
-///|
-fn SeleneMenuFactory::overlay_panel_label(self : SeleneMenuFactory) -> String? {
-  if self.loading_menu.visible {
-    return Some(
-      match self.loading_menu.text {
-        "" => "Loading..."
-        text => "Loading: \{text}"
-      },
-    )
-  }
-  if self.credits_menu.visible {
-    return Some("Credits")
-  }
-  if self.settings_menu.visible {
-    return Some("Settings")
-  }
-  if self.gallery_menu.visible {
-    return Some("Gallery")
-  }
-  match self.start_menu.visible_mode {
-    Some(mode) => Some("Start (\{mode})")
-    None => None
-  }
-}
 
 ///|
 pub fn SeleneMenuFactory::ui_overlay_commands(
@@ -105,35 +81,13 @@ pub fn SeleneMenuFactory::ui_overlay_commands(
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,
 ) -> Array[@selene_render2d_types.DrawCommand2D] {
-  match self.overlay_panel_label() {
-    None => []
-    Some(label) => {
-      let panel_rect : @selene_math.Rect = {
-        position: @selene_math.Vec2D(24.0, viewport_h - 120.0),
-        size: @selene_math.Vec2D(viewport_w - 48.0, 88.0),
-      }
-      let bg : @selene_render2d_types.RectDrawCommand2D = {
-        rect: panel_rect,
-        transform: @selene_math.Transform::identity(),
-        fill_color: { r: 8, g: 12, b: 18, a: 0.78 },
-        stroke_color: Some({ r: 228, g: 236, b: 248, a: 0.95 }),
-      }
-      let text : @selene_render2d_types.TextDrawCommand2D = {
-        text: "Menu Overlay: \{label}",
-        position: @selene_math.Vec2D(44.0, viewport_h - 78.0),
-        transform: @selene_math.Transform::identity(),
-        style: {
-          font: None,
-          family: "sans-serif",
-          size: 28.0,
-          color: { r: 236, g: 242, b: 252, a: 1.0 },
-          align: @selene_math.HAlign::Left,
-          baseline: @selene_math.VAlign::Top,
-        },
-      }
-      [Rect(bg), Text(text)]
-    }
-  }
+  let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+  commands.append(self.start_menu.render_commands(viewport_w~, viewport_h~))
+  commands.append(self.settings_menu.render_commands(viewport_w~, viewport_h~))
+  commands.append(self.gallery_menu.render_commands(viewport_w~, viewport_h~))
+  commands.append(self.credits_menu.render_commands(viewport_w~, viewport_h~))
+  commands.append(self.loading_menu.render_commands(viewport_w~, viewport_h~))
+  commands
 }
 
 ///|

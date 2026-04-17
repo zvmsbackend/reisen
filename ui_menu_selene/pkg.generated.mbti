@@ -23,6 +23,7 @@ pub struct SeleneCreditsMenu {
 }
 pub fn SeleneCreditsMenu::new(ui_strings? : @ui_game.UiStrings) -> Self
 pub fn SeleneCreditsMenu::push_back(Self) -> Unit
+pub fn SeleneCreditsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu
 
 pub struct SeleneGalleryMenu {
@@ -35,6 +36,7 @@ pub struct SeleneGalleryMenu {
 }
 pub fn SeleneGalleryMenu::new(ui_strings? : @ui_game.UiStrings) -> Self
 pub fn SeleneGalleryMenu::push_action(Self, @ui_menu.GalleryAction) -> Unit
+pub fn SeleneGalleryMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu
 
 pub struct SeleneLoadingMenu {
@@ -42,6 +44,7 @@ pub struct SeleneLoadingMenu {
   mut visible : Bool
 }
 pub fn SeleneLoadingMenu::new() -> Self
+pub fn SeleneLoadingMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.LoadingMenu for SeleneLoadingMenu
 
 pub struct SeleneMenuFactory {
@@ -78,6 +81,7 @@ pub struct SeleneSettingsMenu {
 }
 pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings) -> Self
 pub fn SeleneSettingsMenu::push_action(Self, @ui_menu.SettingsAction) -> Unit
+pub fn SeleneSettingsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu
 
 pub struct SeleneStartMenu {
@@ -95,6 +99,7 @@ pub fn SeleneStartMenu::push_action(Self, @ui_menu.StartMenuAction) -> Unit
 pub fn SeleneStartMenu::push_gate_action(Self, @ui_menu.StartGateAction) -> Unit
 pub fn SeleneStartMenu::push_locale_code(Self, String) -> Unit
 pub fn SeleneStartMenu::push_logo_done(Self) -> Unit
+pub fn SeleneStartMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.StartMenu for SeleneStartMenu
 
 // Type aliases

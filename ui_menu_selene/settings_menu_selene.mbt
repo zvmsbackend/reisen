@@ -108,15 +108,125 @@ pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu with clear(self) {
 
 ///|
 pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu with take_action(self) {
-  let result = match self.pending_action {
-    @ui_menu.SettingsAction::NoAction =>
-      if self.take_back_edge() {
-        @ui_menu.SettingsAction::Back
-      } else {
-        @ui_menu.SettingsAction::NoAction
-      }
+  let result : @ui_menu.SettingsAction = match self.pending_action {
+    NoAction => if self.take_back_edge() { Back } else { NoAction }
     other => other
   }
-  self.pending_action = @ui_menu.SettingsAction::NoAction
+  self.pending_action = NoAction
   result
+}
+
+///|
+pub fn SeleneSettingsMenu::render_commands(
+  self : SeleneSettingsMenu,
+  viewport_w? : Double = 1280.0,
+  viewport_h? : Double = 720.0,
+) -> Array[@selene_render2d_types.DrawCommand2D] {
+  if !self.visible {
+    return []
+  }
+  let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+  let panel_rect : @selene_math.Rect = {
+    position: Vec2D(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 250.0),
+    size: Vec2D(600.0, 500.0),
+  }
+  commands.push(
+    Rect({
+      rect: panel_rect,
+      transform: @selene_math.Transform::identity(),
+      fill_color: { r: 20, g: 28, b: 40, a: 0.92 },
+      stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+    }),
+  )
+  let title = match self.view_mode {
+    Settings => "Settings"
+    SaveList => "Save Game"
+    LoadList => "Load Game"
+  }
+  commands.push(
+    Text({
+      text: title,
+      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 210.0),
+      transform: @selene_math.Transform::identity(),
+      style: {
+        font: None,
+        family: "sans-serif",
+        size: 32.0,
+        color: { r: 245, g: 245, b: 250, a: 1.0 },
+        align: @selene_math.HAlign::Center,
+        baseline: @selene_math.VAlign::Top,
+      },
+    }),
+  )
+  match self.view_mode {
+    Settings => {
+      commands.push(
+        Text({
+          text: "Language: \{self.locale}",
+          position: Vec2D(viewport_w / 2.0 - 280.0, viewport_h / 2.0 - 150.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: None,
+            family: "sans-serif",
+            size: 20.0,
+            color: { r: 230, g: 238, b: 250, a: 1.0 },
+            align: @selene_math.HAlign::Left,
+            baseline: @selene_math.VAlign::Top,
+          },
+        }),
+      )
+      commands.push(
+        Text({
+          text: {
+            match self.context {
+              FromStartMenu => "Context: Start Menu"
+              FromMidgame => "Context: Midgame"
+            }
+          },
+          position: Vec2D(viewport_w / 2.0 - 280.0, viewport_h / 2.0 - 110.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: None,
+            family: "sans-serif",
+            size: 20.0,
+            color: { r: 230, g: 238, b: 250, a: 1.0 },
+            align: @selene_math.HAlign::Left,
+            baseline: @selene_math.VAlign::Top,
+          },
+        }),
+      )
+      commands.push(
+        Text({
+          text: "(Press ESC to return)",
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 180.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: None,
+            family: "sans-serif",
+            size: 16.0,
+            color: { r: 180, g: 190, b: 210, a: 0.8 },
+            align: @selene_math.HAlign::Center,
+            baseline: @selene_math.VAlign::Top,
+          },
+        }),
+      )
+    }
+    SaveList | LoadList =>
+      commands.push(
+        Text({
+          text: "(Slot management - press ESC to return)",
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: None,
+            family: "sans-serif",
+            size: 20.0,
+            color: { r: 200, g: 210, b: 230, a: 1.0 },
+            align: @selene_math.HAlign::Center,
+            baseline: @selene_math.VAlign::Center,
+          },
+        }),
+      )
+  }
+  commands
 }
