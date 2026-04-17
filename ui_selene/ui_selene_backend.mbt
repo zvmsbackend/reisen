@@ -461,6 +461,66 @@ fn SeleneUiBackend::body_lines(view : UiViewModel) -> Array[String] {
 }
 
 ///|
+fn measure_text_width(
+  style : @selene_render2d_types.TextStyle2D,
+  text : String,
+) -> Double {
+  @selene_platform_render.measure_text(style, text)[X]
+}
+
+///|
+fn wrap_text_manual(
+  raw : String,
+  style : @selene_render2d_types.TextStyle2D,
+  max_width : Double,
+) -> Array[String] {
+  if max_width <= 0.0 {
+    return [""]
+  }
+  let wrapped : Array[String] = []
+  let mut line_builder = StringBuilder::new()
+  for c in raw {
+    if c == '\n' {
+      wrapped.push(line_builder.to_string())
+      line_builder = StringBuilder::new()
+    } else {
+      let candidate_builder = StringBuilder::new()
+      candidate_builder.write_string(line_builder.to_string())
+      candidate_builder.write_char(c)
+      let candidate = candidate_builder.to_string()
+      if line_builder.to_string() != "" &&
+        measure_text_width(style, candidate) > max_width {
+        wrapped.push(line_builder.to_string())
+        line_builder = StringBuilder::new()
+        line_builder.write_char(c)
+      } else {
+        line_builder.write_char(c)
+      }
+    }
+  }
+  let tail = line_builder.to_string()
+  if tail != "" || wrapped.is_empty() {
+    wrapped.push(tail)
+  }
+  wrapped
+}
+
+///|
+fn wrap_overlay_lines(
+  lines : Array[String],
+  style : @selene_render2d_types.TextStyle2D,
+  max_width : Double,
+) -> Array[String] {
+  let wrapped : Array[String] = []
+  for line in lines {
+    for segment in wrap_text_manual(line, style, max_width) {
+      wrapped.push(segment)
+    }
+  }
+  wrapped
+}
+
+///|
 pub fn SeleneUiBackend::ui_overlay_commands(
   self : SeleneUiBackend,
   viewport_w? : Double = 1280.0,
@@ -472,16 +532,50 @@ pub fn SeleneUiBackend::ui_overlay_commands(
       let speaker_text_style = self.overlay_text_theme.speaker
       let body_text_style = self.overlay_text_theme.body
       let speaker = view.speaker.raw_text()
-      let lines = SeleneUiBackend::body_lines(view)
-      if speaker == "" && lines.is_empty() {
-        return []
-      }
       if !view.text_box_visible {
         return []
       }
       let panel_rect : @selene_math.Rect = {
         position: @selene_math.Vec2D(28.0, viewport_h - 236.0),
         size: @selene_math.Vec2D(viewport_w - 56.0, 208.0),
+      }
+      let text_width = viewport_w - 96.0
+      let speaker_draw_style : @selene_render2d_types.TextStyle2D = {
+        font: speaker_text_style.font,
+        family: speaker_text_style.family,
+        size: speaker_text_style.size,
+        color: {
+          r: speaker_text_style.color_r,
+          g: speaker_text_style.color_g,
+          b: speaker_text_style.color_b,
+          a: speaker_text_style.color_a,
+        },
+        align: @selene_math.HAlign::Left,
+        baseline: @selene_math.VAlign::Top,
+      }
+      let body_draw_style : @selene_render2d_types.TextStyle2D = {
+        font: body_text_style.font,
+        family: body_text_style.family,
+        size: body_text_style.size,
+        color: {
+          r: body_text_style.color_r,
+          g: body_text_style.color_g,
+          b: body_text_style.color_b,
+          a: body_text_style.color_a,
+        },
+        align: @selene_math.HAlign::Left,
+        baseline: @selene_math.VAlign::Top,
+      }
+      let speaker_lines = wrap_text_manual(
+        speaker, speaker_draw_style, text_width,
+      )
+      let lines = wrap_overlay_lines(
+        SeleneUiBackend::body_lines(view),
+        body_draw_style,
+        text_width,
+      )
+      if (speaker == "" || speaker_lines.is_empty()) && lines.is_empty() {
+        return []
       }
       let commands : Array[@selene_render2d_types.DrawCommand2D] = [
         Rect({
@@ -493,27 +587,18 @@ pub fn SeleneUiBackend::ui_overlay_commands(
       ]
       let mut y = viewport_h - 214.0
       if speaker != "" {
-        commands.push(
-          Text({
-            text: speaker,
-            position: @selene_math.Vec2D(48.0, y),
-            transform: @selene_math.Transform::identity(),
-            style: {
-              font: speaker_text_style.font,
-              family: speaker_text_style.family,
-              size: speaker_text_style.size,
-              color: {
-                r: speaker_text_style.color_r,
-                g: speaker_text_style.color_g,
-                b: speaker_text_style.color_b,
-                a: speaker_text_style.color_a,
-              },
-              align: @selene_math.HAlign::Left,
-              baseline: @selene_math.VAlign::Top,
-            },
-          }),
-        )
-        y += 38.0
+        for line in speaker_lines {
+          commands.push(
+            Text({
+              text: line,
+              position: @selene_math.Vec2D(48.0, y),
+              transform: @selene_math.Transform::identity(),
+              style: speaker_draw_style,
+            }),
+          )
+          y += 34.0
+        }
+        y += 4.0
       }
       for line in lines {
         commands.push(
@@ -521,19 +606,7 @@ pub fn SeleneUiBackend::ui_overlay_commands(
             text: line,
             position: @selene_math.Vec2D(48.0, y),
             transform: @selene_math.Transform::identity(),
-            style: {
-              font: body_text_style.font,
-              family: body_text_style.family,
-              size: body_text_style.size,
-              color: {
-                r: body_text_style.color_r,
-                g: body_text_style.color_g,
-                b: body_text_style.color_b,
-                a: body_text_style.color_a,
-              },
-              align: @selene_math.HAlign::Left,
-              baseline: @selene_math.VAlign::Top,
-            },
+            style: body_draw_style,
           }),
         )
         y += 30.0

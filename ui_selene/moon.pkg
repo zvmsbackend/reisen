@@ -2,6 +2,7 @@ import {
   "Milky2018/selene/asset_types" @selene_asset_types,
   "Milky2018/selene/inputs" @selene_inputs,
   "Milky2018/selene/math" @selene_math,
+  "Milky2018/selene/platform_render" @selene_platform_render,
   "Milky2018/selene/render2d_types" @selene_render2d_types,
   "sennenki/reisen/ui_game",
   "sennenki/reisen/state",
