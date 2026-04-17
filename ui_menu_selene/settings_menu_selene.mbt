@@ -177,11 +177,9 @@ pub fn SeleneSettingsMenu::render_commands(
       )
       commands.push(
         Text({
-          text: {
-            match self.context {
-              FromStartMenu => "Context: Start Menu"
-              FromMidgame => "Context: Midgame"
-            }
+          text: match self.context {
+            FromStartMenu => "Context: Start Menu"
+            FromMidgame => "Context: Midgame"
           },
           position: Vec2D(viewport_w / 2.0 - 280.0, viewport_h / 2.0 - 110.0),
           transform: @selene_math.Transform::identity(),

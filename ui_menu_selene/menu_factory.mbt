@@ -74,7 +74,6 @@ pub fn SeleneMenuFactory::push_credits_back(self : SeleneMenuFactory) -> Unit {
   self.credits_menu.push_back()
 }
 
-
 ///|
 pub fn SeleneMenuFactory::ui_overlay_commands(
   self : SeleneMenuFactory,

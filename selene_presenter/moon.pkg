@@ -1,4 +1,5 @@
 import {
+  "sennenki/reisen/assets_selene" @assets_selene,
   "sennenki/reisen/core",
   "sennenki/reisen/engine",
   "sennenki/reisen/presenter_common" @presenter_common,
@@ -10,3 +11,5 @@ import {
   "Milky2018/selene/render2d_types" @selene_render2d_types,
   "Milky2018/selene/render_pipeline" @selene_render_pipeline,
 }
+
+supported_targets = "native"
