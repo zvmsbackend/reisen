@@ -78,6 +78,7 @@ fn SeleneLoadingMenuTextTheme::with_family(
 ///|
 pub struct SeleneMenuFactory {
   ui_strings : UiStrings
+  save_namespace : String
   start_menu : SeleneStartMenu
   gallery_menu : SeleneGalleryMenu
   settings_menu : SeleneSettingsMenu
@@ -88,6 +89,7 @@ pub struct SeleneMenuFactory {
 ///|
 pub fn SeleneMenuFactory::new(
   ui_strings? : UiStrings = UiStrings::default(),
+  save_namespace? : String = "global",
   text_font_family? : String = "",
   start_menu_text_theme? : SeleneStartMenuTextTheme = SeleneStartMenuTextTheme::default(),
   gallery_menu_text_theme? : SeleneGalleryMenuTextTheme = SeleneGalleryMenuTextTheme::default(),
@@ -117,6 +119,7 @@ pub fn SeleneMenuFactory::new(
   }
   {
     ui_strings,
+    save_namespace,
     start_menu: SeleneStartMenu::new(
       ui_strings~,
       text_theme=resolved_start_menu_text_theme,
@@ -127,6 +130,7 @@ pub fn SeleneMenuFactory::new(
     ),
     settings_menu: SeleneSettingsMenu::new(
       ui_strings~,
+      save_namespace~,
       text_theme=resolved_settings_menu_text_theme,
     ),
     credits_menu: SeleneCreditsMenu::new(
@@ -247,6 +251,7 @@ pub impl @ui_menu.MenuFactory for SeleneMenuFactory with create_settings_menu(
   self.settings_menu.set_audio(audio)
   self.settings_menu.set_background(background)
   self.settings_menu.set_show_credits(show_credits)
+  self.settings_menu.set_save_namespace(self.save_namespace)
   self.settings_menu
 }
 

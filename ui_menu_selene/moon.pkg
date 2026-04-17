@@ -7,4 +7,5 @@ import {
   "sennenki/reisen/storage",
   "sennenki/reisen/ui_game",
   "sennenki/reisen/ui_menu",
+  "sennenki/reisen/util",
 }

@@ -55,6 +55,7 @@ pub struct SeleneSettingsMenu {
   mut audio : &@audio_core.AudioPort
   mut background : String
   mut show_credits : Bool
+  mut save_namespace : String
   mut pending_action : @ui_menu.SettingsAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
@@ -85,6 +86,7 @@ pub fn SeleneSettingsMenu::new(
   audio? : &@audio_core.AudioPort = @audio_core.dummy,
   background? : String = "",
   show_credits? : Bool = false,
+  save_namespace? : String = "global",
   text_theme? : SeleneSettingsMenuTextTheme = SeleneSettingsMenuTextTheme::default(),
 ) -> SeleneSettingsMenu {
   {
@@ -93,6 +95,7 @@ pub fn SeleneSettingsMenu::new(
     audio,
     background,
     show_credits,
+    save_namespace,
     pending_action: NoAction,
     script_locale_json: None,
     script_default_locale_json: None,
@@ -143,6 +146,15 @@ pub fn SeleneSettingsMenu::set_show_credits(
 }
 
 ///|
+pub fn SeleneSettingsMenu::set_save_namespace(
+  self : SeleneSettingsMenu,
+  save_namespace : String,
+) -> Unit {
+  self.save_namespace = save_namespace
+  self.settings_loaded = false
+}
+
+///|
 fn clamp_int(v : Int, lo : Int, hi : Int) -> Int {
   if v < lo {
     lo
@@ -187,6 +199,63 @@ fn SeleneSettingsMenu::slot_name_at(
 }
 
 ///|
+fn SeleneSettingsMenu::localize_save_preview(
+  self : SeleneSettingsMenu,
+  raw : String,
+) -> String {
+  let (localized, _, _) = @util.script_locale_resolve_at(
+    raw,
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
+  localized
+}
+
+///|
+fn SeleneSettingsMenu::filtered_slot_entries(
+  self : SeleneSettingsMenu,
+) -> Array[@storage.SaveSlotEntry] {
+  let store = @storage.default_save_slot_storage()
+  let entries = @storage.save_slot_store_entries_in(store, self.save_namespace)
+  entries.filter(fn(entry) {
+    match self.slot_type_index {
+      0 => entry.slot.has_prefix("autosave")
+      1 => entry.slot.has_prefix("quicksave")
+      _ =>
+        !(entry.slot.has_prefix("autosave") ||
+        entry.slot.has_prefix("quicksave"))
+    }
+  })
+}
+
+///|
+fn SeleneSettingsMenu::slot_row_content(
+  self : SeleneSettingsMenu,
+  index : Int,
+) -> (String, String, String, Bool) {
+  let entries = self.filtered_slot_entries()
+  let idx = self.slot_page * 6 + index
+  if idx < entries.length() {
+    let entry = entries[idx]
+    let title = match entry.meta {
+      Some(meta) =>
+        match meta.title {
+          "" => entry.slot
+          _ => meta.title
+        }
+      None => entry.slot
+    }
+    let preview = match entry.meta {
+      Some(meta) => self.localize_save_preview(meta.preview)
+      None => ""
+    }
+    return (entry.slot, title, preview, true)
+  }
+  let slot = self.slot_name_at(index)
+  (slot, self.ui_strings.settings_slot_empty, "", false)
+}
+
+///|
 fn SeleneSettingsMenu::visible_rows(self : SeleneSettingsMenu) -> Int {
   match self.view_mode {
     Settings => {
@@ -218,7 +287,7 @@ fn SeleneSettingsMenu::load_settings_if_needed(
   if self.settings_loaded {
     return
   }
-  let settings = @storage.settings_read().unwrap_or_default()
+  let settings = @storage.settings_read_in(self.save_namespace).unwrap_or_default()
   self.text_speed = settings.text_speed
   self.bgm_volume = settings.bgm_volume
   self.sfx_volume = settings.sfx_volume
@@ -237,7 +306,7 @@ fn SeleneSettingsMenu::persist_settings(self : SeleneSettingsMenu) -> Unit {
   ) catch {
     _ => @storage.GameSettings::default()
   }
-  @storage.settings_write(settings)
+  @storage.settings_write_in(self.save_namespace, settings)
   self.audio.set_bgm_gain(self.bgm_volume)
   self.audio.set_sfx_gain(self.sfx_volume)
 }
@@ -471,7 +540,7 @@ fn SeleneSettingsMenu::confirm_slot_row(
     return ViewChanged
   }
   if self.selected_index >= 1 && self.selected_index <= 6 {
-    let slot = self.slot_name_at(self.selected_index - 1)
+    let (slot, _, _, _) = self.slot_row_content(self.selected_index - 1)
     return match self.view_mode {
       SaveList => SaveSlot(slot)
       LoadList => LoadSlot(slot)
@@ -894,13 +963,14 @@ pub fn SeleneSettingsMenu::render_commands(
 
       let mut slot_y = viewport_h / 2.0 - 110.0
       for i = 0; i < 6; i = i + 1 {
+        let (slot, title, preview, has_existing) = self.slot_row_content(i)
         let selected = self.selected_index == i + 1
         if selected {
           commands.push(
             Rect({
               rect: {
                 position: Vec2D(viewport_w / 2.0 - 286.0, slot_y - 4.0),
-                size: Vec2D(572.0, 30.0),
+                size: Vec2D(572.0, 46.0),
               },
               transform: @selene_math.Transform::identity(),
               fill_color: { r: 70, g: 110, b: 160, a: 0.35 },
@@ -910,7 +980,11 @@ pub fn SeleneSettingsMenu::render_commands(
         }
         commands.push(
           Text({
-            text: self.slot_name_at(i),
+            text: if has_existing {
+              "\{slot} | \{title}"
+            } else {
+              "\{slot} | \{self.ui_strings.settings_slot_empty}"
+            },
             position: Vec2D(viewport_w / 2.0 - 275.0, slot_y),
             transform: @selene_math.Transform::identity(),
             style: {
@@ -928,7 +1002,29 @@ pub fn SeleneSettingsMenu::render_commands(
             },
           }),
         )
-        slot_y += 34.0
+        if preview != "" {
+          commands.push(
+            Text({
+              text: preview,
+              position: Vec2D(viewport_w / 2.0 - 260.0, slot_y + 22.0),
+              transform: @selene_math.Transform::identity(),
+              style: {
+                font: hint_style.font,
+                family: hint_style.family,
+                size: hint_style.size,
+                color: {
+                  r: hint_style.color_r,
+                  g: hint_style.color_g,
+                  b: hint_style.color_b,
+                  a: hint_style.color_a,
+                },
+                align: @selene_math.HAlign::Left,
+                baseline: @selene_math.VAlign::Top,
+              },
+            }),
+          )
+        }
+        slot_y += 52.0
       }
 
       let nav_selected = self.selected_index == 7

@@ -73,13 +73,14 @@ pub impl Default for SeleneLoadingMenuTextTheme
 
 pub struct SeleneMenuFactory {
   ui_strings : @ui_game.UiStrings
+  save_namespace : String
   start_menu : SeleneStartMenu
   gallery_menu : SeleneGalleryMenu
   settings_menu : SeleneSettingsMenu
   credits_menu : SeleneCreditsMenu
   loading_menu : SeleneLoadingMenu
 }
-pub fn SeleneMenuFactory::new(ui_strings? : @ui_game.UiStrings, text_font_family? : String, start_menu_text_theme? : SeleneStartMenuTextTheme, gallery_menu_text_theme? : SeleneGalleryMenuTextTheme, settings_menu_text_theme? : SeleneSettingsMenuTextTheme, credits_menu_text_theme? : SeleneCreditsMenuTextTheme, loading_menu_text_theme? : SeleneLoadingMenuTextTheme) -> Self
+pub fn SeleneMenuFactory::new(ui_strings? : @ui_game.UiStrings, save_namespace? : String, text_font_family? : String, start_menu_text_theme? : SeleneStartMenuTextTheme, gallery_menu_text_theme? : SeleneGalleryMenuTextTheme, settings_menu_text_theme? : SeleneSettingsMenuTextTheme, credits_menu_text_theme? : SeleneCreditsMenuTextTheme, loading_menu_text_theme? : SeleneLoadingMenuTextTheme) -> Self
 pub fn SeleneMenuFactory::push_credits_back(Self) -> Unit
 pub fn SeleneMenuFactory::push_gallery_action(Self, @ui_menu.GalleryAction) -> Unit
 pub fn SeleneMenuFactory::push_settings_action(Self, @ui_menu.SettingsAction) -> Unit
@@ -108,6 +109,7 @@ pub struct SeleneSettingsMenu {
   mut audio : &@audio_core.AudioPort
   mut background : String
   mut show_credits : Bool
+  mut save_namespace : String
   mut pending_action : @ui_menu.SettingsAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
@@ -131,11 +133,12 @@ pub struct SeleneSettingsMenu {
   mut last_space_down : Bool
   mut visible : Bool
 }
-pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, audio? : &@audio_core.AudioPort, background? : String, show_credits? : Bool, text_theme? : SeleneSettingsMenuTextTheme) -> Self
+pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, audio? : &@audio_core.AudioPort, background? : String, show_credits? : Bool, save_namespace? : String, text_theme? : SeleneSettingsMenuTextTheme) -> Self
 pub fn SeleneSettingsMenu::push_action(Self, @ui_menu.SettingsAction) -> Unit
 pub fn SeleneSettingsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub fn SeleneSettingsMenu::set_audio(Self, &@audio_core.AudioPort) -> Unit
 pub fn SeleneSettingsMenu::set_background(Self, String) -> Unit
+pub fn SeleneSettingsMenu::set_save_namespace(Self, String) -> Unit
 pub fn SeleneSettingsMenu::set_show_credits(Self, Bool) -> Unit
 pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu
 
