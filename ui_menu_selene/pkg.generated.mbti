@@ -105,19 +105,38 @@ pub impl Default for SeleneMenuTextStyle
 pub struct SeleneSettingsMenu {
   mut ui_strings : @ui_game.UiStrings
   text_theme : SeleneSettingsMenuTextTheme
+  mut audio : &@audio_core.AudioPort
+  mut background : String
+  mut show_credits : Bool
   mut pending_action : @ui_menu.SettingsAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
   mut languages : Array[(String, String)]
   mut locale : String
+  mut text_speed : Int
+  mut bgm_volume : Double
+  mut sfx_volume : Double
+  mut selected_index : Int
+  mut slot_type_index : Int
+  mut slot_page : Int
+  mut last_up_down : Bool
+  mut last_down_down : Bool
+  mut last_left_down : Bool
+  mut last_right_down : Bool
   mut context : @ui_menu.SettingsContext
   mut view_mode : @ui_menu.SettingsViewMode
+  mut settings_loaded : Bool
   mut last_escape_down : Bool
+  mut last_enter_down : Bool
+  mut last_space_down : Bool
   mut visible : Bool
 }
-pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneSettingsMenuTextTheme) -> Self
+pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, audio? : &@audio_core.AudioPort, background? : String, show_credits? : Bool, text_theme? : SeleneSettingsMenuTextTheme) -> Self
 pub fn SeleneSettingsMenu::push_action(Self, @ui_menu.SettingsAction) -> Unit
 pub fn SeleneSettingsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+pub fn SeleneSettingsMenu::set_audio(Self, &@audio_core.AudioPort) -> Unit
+pub fn SeleneSettingsMenu::set_background(Self, String) -> Unit
+pub fn SeleneSettingsMenu::set_show_credits(Self, Bool) -> Unit
 pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu
 
 pub struct SeleneSettingsMenuTextTheme {

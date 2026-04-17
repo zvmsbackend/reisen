@@ -244,9 +244,9 @@ pub impl @ui_menu.MenuFactory for SeleneMenuFactory with create_settings_menu(
   background~,
   show_credits~,
 ) {
-  ignore(audio)
-  ignore(background)
-  ignore(show_credits)
+  self.settings_menu.set_audio(audio)
+  self.settings_menu.set_background(background)
+  self.settings_menu.set_show_credits(show_credits)
   self.settings_menu
 }
 
