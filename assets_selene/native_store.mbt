@@ -33,7 +33,17 @@ pub fn NativeAssetStore::get_image_handle(
   self : NativeAssetStore,
   id : String,
 ) -> @selene_asset_types.ImageHandle? {
-  self.image_handles.get(id)
+  match self.image_handles.get(id) {
+    Some(handle) => Some(handle)
+    None =>
+      match self.asset_paths.get(id) {
+        Some(path) => {
+          let handle = self.load_image_handle(id, path)
+          Some(handle)
+        }
+        None => None
+      }
+  }
 }
 
 ///|

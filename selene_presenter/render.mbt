@@ -81,3 +81,17 @@ fn SelenePresenter::submit_frame(
   let frame = { ..@selene_render_pipeline.empty_render_frame(), frame2d, }
   @selene_platform_render.submit_frame(frame)
 }
+
+///|
+pub fn SelenePresenter::submit_overlay_frame(self : SelenePresenter) -> Unit {
+  let ui_commands = match self.ui_overlay_provider {
+    Some(provider) => provider()
+    None => []
+  }
+  let frame2d : @selene_render2d_types.RenderFrame2D = {
+    world_commands: [],
+    ui_commands,
+  }
+  let frame = { ..@selene_render_pipeline.empty_render_frame(), frame2d, }
+  @selene_platform_render.submit_frame(frame)
+}

@@ -5,6 +5,7 @@ pub struct SeleneStartMenu {
   mut pending_gate_action : @ui_menu.StartGateAction
   mut pending_logo_action : @ui_menu.StartLogoAction
   mut pending_locale_action : @ui_menu.StartLocaleAction
+  mut locale_codes : Array[String]
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut visible_mode : String?
@@ -20,6 +21,7 @@ pub fn SeleneStartMenu::new(
     pending_gate_action: NoAction,
     pending_logo_action: NoAction,
     pending_locale_action: NoAction,
+    locale_codes: [],
     last_enter_down: false,
     last_space_down: false,
     visible_mode: None,
@@ -121,9 +123,10 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_logo_action(self) {
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with render_locale_picker(
   self,
-  _,
+  languages,
 ) {
   self.visible_mode = Some("locale")
+  self.locale_codes = languages.map(language => language.1)
 }
 
 ///|
@@ -131,11 +134,20 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_locale_picker(self) {
   if self.visible_mode == Some("locale") {
     self.visible_mode = None
   }
+  self.locale_codes = []
 }
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_locale_action(self) {
-  let result = self.pending_locale_action
+  let result : @ui_menu.StartLocaleAction = match self.pending_locale_action {
+    NoAction =>
+      if self.take_confirm_edge() && !self.locale_codes.is_empty() {
+        Select(self.locale_codes[0])
+      } else {
+        NoAction
+      }
+    other => other
+  }
   self.pending_locale_action = NoAction
   result
 }
@@ -152,7 +164,15 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear(self) {
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
-  let result = self.pending_action
+  let result : @ui_menu.StartMenuAction = match self.pending_action {
+    NoAction =>
+      if self.visible_mode == Some("start") && self.take_confirm_edge() {
+        NewGame
+      } else {
+        NoAction
+      }
+    other => other
+  }
   self.pending_action = NoAction
   result
 }

@@ -22,8 +22,6 @@ pub async fn preload_localization(save_namespace? : String, languages? : Array[(
 
 pub async fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T], ui_locale_path? : String, script_locale_dir? : String) -> Unit
 
-pub async fn[T] run_browser_loop(@engine.GameRunner[T]) -> Unit
-
 pub async fn[E : Error] run_browser_loop_port(async (Int) -> Bool raise E) -> Unit raise E
 
 pub async fn[E : Error] run_loop_with_port(async (Int) -> Bool raise E, async (async (Int) -> Bool raise E) -> Unit raise E) -> Unit raise E

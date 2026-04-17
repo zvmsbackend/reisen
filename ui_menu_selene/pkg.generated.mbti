@@ -90,6 +90,7 @@ pub struct SeleneStartMenu {
   mut pending_gate_action : @ui_menu.StartGateAction
   mut pending_logo_action : @ui_menu.StartLogoAction
   mut pending_locale_action : @ui_menu.StartLocaleAction
+  mut locale_codes : Array[String]
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut visible_mode : String?

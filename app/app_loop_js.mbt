@@ -34,11 +34,6 @@ pub async fn[E : Error] run_browser_loop_port(
 }
 
 ///|
-pub async fn[T] run_browser_loop(runner : GameRunner[T]) -> Unit {
-  run_loop_with_port(dt => runner.tick(elapsed_ms=dt), run_browser_loop_port)
-}
-
-///|
 pub async fn[T : FromJson + ToJson] run_browser_app_loop(
   app : AppController[T],
   ui_locale_path? : String = "locales/ui.json",
