@@ -106,14 +106,20 @@ pub impl Default for SeleneStartMenuTextTheme with default() {
 pub struct SeleneStartMenu {
   mut ui_strings : UiStrings
   text_theme : SeleneStartMenuTextTheme
+  mut save_ns : String
+  mut save_store : &@storage.SaveSlotStore
+  mut show_credits : Bool
   mut pending_action : @ui_menu.StartMenuAction
   mut pending_gate_action : @ui_menu.StartGateAction
   mut pending_logo_action : @ui_menu.StartLogoAction
   mut pending_locale_action : @ui_menu.StartLocaleAction
+  mut start_selected_index : Int
   mut locale_options : Array[(String, String)]
   mut locale_selected_index : Int
   mut last_enter_down : Bool
   mut last_space_down : Bool
+  mut last_up_down : Bool
+  mut last_down_down : Bool
   mut visible_mode : String?
 }
 
@@ -125,15 +131,71 @@ pub fn SeleneStartMenu::new(
   {
     ui_strings,
     text_theme,
+    save_ns: "global",
+    save_store: @storage.default_save_slot_storage(),
+    show_credits: false,
     pending_action: NoAction,
     pending_gate_action: NoAction,
     pending_logo_action: NoAction,
     pending_locale_action: NoAction,
+    start_selected_index: 0,
     locale_options: [],
     locale_selected_index: 0,
     last_enter_down: false,
     last_space_down: false,
+    last_up_down: false,
+    last_down_down: false,
     visible_mode: None,
+  }
+}
+
+///|
+fn choose_continue_slot(entries : Array[@storage.SaveSlotEntry]) -> String? {
+  for entry in entries; best_slot = None, best_ts = -1L {
+    let ts = match entry.meta {
+      Some(meta) => meta.updated_at_ms
+      None => -1L
+    }
+    if ts > best_ts || best_slot is None {
+      continue Some(entry.slot), ts
+    }
+  } nobreak {
+    best_slot
+  }
+}
+
+///|
+fn SeleneStartMenu::menu_rows(
+  self : SeleneStartMenu,
+) -> Array[(String, @ui_menu.StartMenuAction)] {
+  let rows : Array[(String, @ui_menu.StartMenuAction)] = []
+  rows.push((self.ui_strings.start_menu_new_game, NewGame))
+  let entries = @storage.save_slot_store_entries_in(
+    self.save_store,
+    self.save_ns,
+  )
+  let continue_slot = choose_continue_slot(entries)
+  if continue_slot is Some(slot) {
+    rows.push((self.ui_strings.start_menu_continue, Continue(slot)))
+  }
+  rows.push((self.ui_strings.start_menu_load, Load))
+  rows.push((self.ui_strings.start_menu_settings, Settings))
+  rows.push((self.ui_strings.start_menu_gallery, Gallery))
+  if self.show_credits && self.ui_strings.menu_credits != "" {
+    rows.push((self.ui_strings.menu_credits, Credits))
+  }
+  rows
+}
+
+///|
+fn SeleneStartMenu::normalize_start_selection(self : SeleneStartMenu) -> Unit {
+  let count = self.menu_rows().length()
+  if count <= 0 {
+    self.start_selected_index = 0
+    return
+  }
+  if self.start_selected_index < 0 || self.start_selected_index >= count {
+    self.start_selected_index = 0
   }
 }
 
@@ -167,6 +229,22 @@ fn SeleneStartMenu::take_confirm_edge(self : SeleneStartMenu) -> Bool {
   self.last_enter_down = enter_down
   self.last_space_down = space_down
   triggered
+}
+
+///|
+fn SeleneStartMenu::take_up_edge(self : SeleneStartMenu) -> Bool {
+  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowUp)
+  let edge = down && !self.last_up_down
+  self.last_up_down = down
+  edge
+}
+
+///|
+fn SeleneStartMenu::take_down_edge(self : SeleneStartMenu) -> Bool {
+  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowDown)
+  let edge = down && !self.last_down_down
+  self.last_down_down = down
+  edge
 }
 
 ///|
@@ -298,6 +376,7 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_locale_action(self) {
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with render(self) {
   self.visible_mode = Some("start")
+  self.normalize_start_selection()
 }
 
 ///|
@@ -307,17 +386,60 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear(self) {
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
+  if self.visible_mode == Some("start") {
+    let rows = self.menu_rows()
+    let count = rows.length()
+    if count > 0 {
+      self.normalize_start_selection()
+      if self.take_up_edge() {
+        self.start_selected_index = (self.start_selected_index - 1 + count) %
+          count
+      }
+      if self.take_down_edge() {
+        self.start_selected_index = (self.start_selected_index + 1) % count
+      }
+    }
+  }
   let result : @ui_menu.StartMenuAction = match self.pending_action {
-    NoAction =>
-      if self.visible_mode == Some("start") && self.take_confirm_edge() {
-        NewGame
+    NoAction => {
+      let rows = self.menu_rows()
+      if self.visible_mode == Some("start") &&
+        self.take_confirm_edge() &&
+        !rows.is_empty() {
+        self.normalize_start_selection()
+        rows[self.start_selected_index].1
       } else {
         NoAction
       }
+    }
     other => other
   }
   self.pending_action = NoAction
   result
+}
+
+///|
+pub fn SeleneStartMenu::set_save_namespace(
+  self : SeleneStartMenu,
+  save_namespace : String,
+) -> Unit {
+  self.save_ns = save_namespace
+}
+
+///|
+pub fn SeleneStartMenu::set_save_store(
+  self : SeleneStartMenu,
+  save_store : &@storage.SaveSlotStore,
+) -> Unit {
+  self.save_store = save_store
+}
+
+///|
+pub fn SeleneStartMenu::set_show_credits(
+  self : SeleneStartMenu,
+  show_credits : Bool,
+) -> Unit {
+  self.show_credits = show_credits
 }
 
 ///|
@@ -505,6 +627,8 @@ pub fn SeleneStartMenu::render_commands(
     }
     Some("start") => {
       let start_item_style = self.text_theme.start_item
+      let rows = self.menu_rows()
+      self.normalize_start_selection()
       let commands : Array[@selene_render2d_types.DrawCommand2D] = [
         Rect({
           rect: {
@@ -517,13 +641,25 @@ pub fn SeleneStartMenu::render_commands(
         }),
       ]
       let mut y = viewport_h / 2.0 - 160.0
-      let button_texts = [
-        "New Game", "Continue", "Load", "Settings", "Gallery", "Credits",
-      ]
-      for text in button_texts {
+      for i = 0; i < rows.length(); i = i + 1 {
+        let row = rows[i]
+        let is_selected = i == self.start_selected_index
+        if is_selected {
+          commands.push(
+            Rect({
+              rect: {
+                position: Vec2D(viewport_w / 2.0 - 180.0, y - 18.0),
+                size: Vec2D(360.0, 36.0),
+              },
+              transform: @selene_math.Transform::identity(),
+              fill_color: { r: 70, g: 110, b: 160, a: 0.45 },
+              stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+            }),
+          )
+        }
         commands.push(
           Text({
-            text,
+            text: row.0,
             position: Vec2D(viewport_w / 2.0, y),
             transform: @selene_math.Transform::identity(),
             style: {
@@ -531,9 +667,21 @@ pub fn SeleneStartMenu::render_commands(
               family: start_item_style.family,
               size: start_item_style.size,
               color: {
-                r: start_item_style.color_r,
-                g: start_item_style.color_g,
-                b: start_item_style.color_b,
+                r: if is_selected {
+                  245
+                } else {
+                  start_item_style.color_r
+                },
+                g: if is_selected {
+                  245
+                } else {
+                  start_item_style.color_g
+                },
+                b: if is_selected {
+                  250
+                } else {
+                  start_item_style.color_b
+                },
                 a: start_item_style.color_a,
               },
               align: Center,
@@ -543,6 +691,21 @@ pub fn SeleneStartMenu::render_commands(
         )
         y += 50.0
       }
+      commands.push(
+        Text({
+          text: "[↑/↓] Select  [Enter/Space] Confirm",
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 160.0),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: start_item_style.font,
+            family: start_item_style.family,
+            size: 16.0,
+            color: { r: 180, g: 190, b: 210, a: 1.0 },
+            align: Center,
+            baseline: Center,
+          },
+        }),
+      )
       commands
     }
     _ => []

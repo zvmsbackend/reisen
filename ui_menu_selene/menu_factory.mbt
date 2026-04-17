@@ -226,9 +226,10 @@ pub impl @ui_menu.MenuFactory for SeleneMenuFactory with create_start_menu(
   background~,
   show_credits~,
 ) {
-  ignore(save_store)
+  self.start_menu.set_save_store(save_store)
+  self.start_menu.set_save_namespace(self.save_namespace)
+  self.start_menu.set_show_credits(show_credits)
   ignore(background)
-  ignore(show_credits)
   self.start_menu
 }
 

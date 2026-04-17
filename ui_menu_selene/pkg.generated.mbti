@@ -153,14 +153,20 @@ pub impl Default for SeleneSettingsMenuTextTheme
 pub struct SeleneStartMenu {
   mut ui_strings : @ui_game.UiStrings
   text_theme : SeleneStartMenuTextTheme
+  mut save_ns : String
+  mut save_store : &@storage.SaveSlotStore
+  mut show_credits : Bool
   mut pending_action : @ui_menu.StartMenuAction
   mut pending_gate_action : @ui_menu.StartGateAction
   mut pending_logo_action : @ui_menu.StartLogoAction
   mut pending_locale_action : @ui_menu.StartLocaleAction
+  mut start_selected_index : Int
   mut locale_options : Array[(String, String)]
   mut locale_selected_index : Int
   mut last_enter_down : Bool
   mut last_space_down : Bool
+  mut last_up_down : Bool
+  mut last_down_down : Bool
   mut visible_mode : String?
 }
 pub fn SeleneStartMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneStartMenuTextTheme) -> Self
@@ -169,6 +175,9 @@ pub fn SeleneStartMenu::push_gate_action(Self, @ui_menu.StartGateAction) -> Unit
 pub fn SeleneStartMenu::push_locale_code(Self, String) -> Unit
 pub fn SeleneStartMenu::push_logo_done(Self) -> Unit
 pub fn SeleneStartMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+pub fn SeleneStartMenu::set_save_namespace(Self, String) -> Unit
+pub fn SeleneStartMenu::set_save_store(Self, &@storage.SaveSlotStore) -> Unit
+pub fn SeleneStartMenu::set_show_credits(Self, Bool) -> Unit
 pub impl @ui_menu.StartMenu for SeleneStartMenu
 
 pub struct SeleneStartMenuTextTheme {
