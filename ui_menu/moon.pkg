@@ -1,5 +1,6 @@
 import {
   "sennenki/reisen/storage",
+  "sennenki/reisen/gallery",
   "sennenki/reisen/audio_core",
   "sennenki/reisen/ui_game",
   "sennenki/reisen/util",

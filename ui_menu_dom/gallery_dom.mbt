@@ -62,85 +62,27 @@ pub impl @ui_menu.GalleryMenu for GalleryMenu with set_script_localization(
 }
 
 ///|
-fn GalleryMenu::localize_gallery_title(
+fn to_gallery_tile_view(tile : @ui_menu.GalleryTileState) -> GalleryTileView {
+  {
+    id: tile.id,
+    image_id: tile.image_id,
+    thumbnail_id: tile.thumbnail_id,
+    title: tile.title,
+    unlocked: tile.unlocked,
+    replay_label: tile.replay_label,
+  }
+}
+
+///|
+fn GalleryMenu::gallery_tiles(
   self : GalleryMenu,
-  raw : String,
-) -> String {
-  @ui_menu.localize_script_string(
-    raw,
+) -> Array[@ui_menu.GalleryTileState] {
+  @ui_menu.gallery_tiles_from_registry(
+    self.save_ns,
+    self.show_locked,
     self.script_locale_json,
     self.script_default_locale_json,
   )
-}
-
-///|
-fn to_gallery_tile_view(
-  ns : String,
-  image : GalleryImage,
-  title : String,
-) -> GalleryTileView {
-  {
-    id: image.id,
-    image_id: image.image_url,
-    thumbnail_id: image.thumbnail_url,
-    title,
-    unlocked: @gallery.is_image_unlocked_in(ns, image),
-    replay_label: image.replay_label,
-  }
-}
-
-///|
-fn GalleryMenu::gallery_tile_views(
-  self : GalleryMenu,
-) -> Array[GalleryTileView] {
-  let out : Array[GalleryTileView] = []
-  for image in @gallery.registered_images() {
-    let tile = to_gallery_tile_view(
-      self.save_ns,
-      image,
-      self.localize_gallery_title(image.title),
-    )
-    if tile.unlocked || self.show_locked {
-      out.push(tile)
-    }
-  }
-  out
-}
-
-///|
-fn find_tile(tiles : Array[GalleryTileView], id : String) -> GalleryTileView? {
-  tiles.iter().find_first(tile => tile.id == id)
-}
-
-///|
-fn next_unlocked_tile_id(
-  tiles : Array[GalleryTileView],
-  current_id : String?,
-  step : Int,
-) -> String? {
-  if tiles.is_empty() {
-    return None
-  }
-  let unlocked = tiles.filter(tile => tile.unlocked)
-  if unlocked.is_empty() {
-    return None
-  }
-  let current_idx = match current_id {
-    Some(id) =>
-      for i, tile in unlocked {
-        if tile.id == id {
-          break i
-        }
-      } nobreak {
-        0
-      }
-    None => 0
-  }
-  let dir = if step < 0 { -1 } else { 1 }
-  let size = unlocked.length()
-  let raw = if dir < 0 { current_idx - 1 } else { current_idx + 1 }
-  let wrapped = if raw < 0 { size - 1 } else if raw >= size { 0 } else { raw }
-  Some(unlocked[wrapped].id)
 }
 
 ///|
@@ -295,8 +237,9 @@ extern "js" fn gallery_dom_clear(root_id : String) -> Unit =
 
 ///|
 pub impl @ui_menu.GalleryMenu for GalleryMenu with render(self) {
-  let tiles = self.gallery_tile_views()
-  let tiles_json = tiles.to_json().stringify()
+  let tiles = self.gallery_tiles()
+  let dom_tiles = tiles.map(to_gallery_tile_view)
+  let tiles_json = dom_tiles.to_json().stringify()
   gallery_dom_render(
     self.root_id,
     self.background,
@@ -337,30 +280,10 @@ pub impl @ui_menu.GalleryMenu for GalleryMenu with take_action(self) {
     _ => GalleryAction::NoAction
   }
   gallery_action_clear(self.root_id)
-  match action {
-    Open(id) => {
-      let tiles = self.gallery_tile_views()
-      if find_tile(tiles, id) is Some(tile) {
-        self.active_id = if tile.unlocked { Some(id) } else { None }
-      } else {
-        self.active_id = None
-      }
-      action
-    }
-    Close => {
-      self.active_id = None
-      action
-    }
-    Prev => {
-      let tiles = self.gallery_tile_views()
-      self.active_id = next_unlocked_tile_id(tiles, self.active_id, -1)
-      action
-    }
-    Next => {
-      let tiles = self.gallery_tile_views()
-      self.active_id = next_unlocked_tile_id(tiles, self.active_id, 1)
-      action
-    }
-    _ => action
-  }
+  self.active_id = @ui_menu.reduce_gallery_active_id(
+    action,
+    self.active_id,
+    self.gallery_tiles(),
+  )
+  action
 }

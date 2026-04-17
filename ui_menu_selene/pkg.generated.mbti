@@ -36,15 +36,25 @@ pub struct SeleneCreditsMenuTextTheme {
 pub impl Default for SeleneCreditsMenuTextTheme
 
 pub struct SeleneGalleryMenu {
+  save_namespace : String
   mut ui_strings : @ui_game.UiStrings
   text_theme : SeleneGalleryMenuTextTheme
+  show_locked : Bool
   mut pending_action : @ui_menu.GalleryAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
+  mut active_id : String?
+  mut selected_index : Int
+  mut last_enter_down : Bool
+  mut last_space_down : Bool
+  mut last_left_down : Bool
+  mut last_right_down : Bool
+  mut last_up_down : Bool
+  mut last_down_down : Bool
   mut last_escape_down : Bool
   mut visible : Bool
 }
-pub fn SeleneGalleryMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneGalleryMenuTextTheme) -> Self
+pub fn SeleneGalleryMenu::new(save_namespace? : String, ui_strings? : @ui_game.UiStrings, show_locked? : Bool, text_theme? : SeleneGalleryMenuTextTheme) -> Self
 pub fn SeleneGalleryMenu::push_action(Self, @ui_menu.GalleryAction) -> Unit
 pub fn SeleneGalleryMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu

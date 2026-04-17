@@ -29,6 +29,103 @@ pub fn localize_script_string(
 }
 
 ///|
+pub struct GalleryTileState {
+  id : String
+  image_id : String
+  thumbnail_id : String?
+  title : String
+  unlocked : Bool
+  replay_label : String?
+}
+
+///|
+pub fn gallery_tiles_from_registry(
+  save_namespace : String,
+  show_locked : Bool,
+  script_locale_json : String?,
+  script_default_locale_json : String?,
+) -> Array[GalleryTileState] {
+  let out : Array[GalleryTileState] = []
+  for image in @gallery.registered_images() {
+    let title = localize_script_string(
+      image.title,
+      script_locale_json,
+      script_default_locale_json,
+    )
+    let tile : GalleryTileState = {
+      id: image.id,
+      image_id: image.image_url,
+      thumbnail_id: image.thumbnail_url,
+      title,
+      unlocked: @gallery.is_image_unlocked_in(save_namespace, image),
+      replay_label: image.replay_label,
+    }
+    if tile.unlocked || show_locked {
+      out.push(tile)
+    }
+  }
+  out
+}
+
+///|
+pub fn find_gallery_tile(
+  tiles : Array[GalleryTileState],
+  id : String,
+) -> GalleryTileState? {
+  tiles.iter().find_first(tile => tile.id == id)
+}
+
+///|
+pub fn next_unlocked_gallery_tile_id(
+  tiles : Array[GalleryTileState],
+  current_id : String?,
+  step : Int,
+) -> String? {
+  if tiles.is_empty() {
+    return None
+  }
+  let unlocked = tiles.filter(tile => tile.unlocked)
+  if unlocked.is_empty() {
+    return None
+  }
+  let current_idx = match current_id {
+    Some(id) =>
+      for i, tile in unlocked {
+        if tile.id == id {
+          break i
+        }
+      } nobreak {
+        0
+      }
+    None => 0
+  }
+  let dir = if step < 0 { -1 } else { 1 }
+  let size = unlocked.length()
+  let raw = if dir < 0 { current_idx - 1 } else { current_idx + 1 }
+  let wrapped = if raw < 0 { size - 1 } else if raw >= size { 0 } else { raw }
+  Some(unlocked[wrapped].id)
+}
+
+///|
+pub fn reduce_gallery_active_id(
+  action : GalleryAction,
+  active_id : String?,
+  tiles : Array[GalleryTileState],
+) -> String? {
+  match action {
+    Open(id) =>
+      match find_gallery_tile(tiles, id) {
+        Some(tile) => if tile.unlocked { Some(id) } else { None }
+        None => None
+      }
+    Close => None
+    Prev => next_unlocked_gallery_tile_id(tiles, active_id, -1)
+    Next => next_unlocked_gallery_tile_id(tiles, active_id, 1)
+    _ => active_id
+  }
+}
+
+///|
 using @ui_game {type UiStrings}
 
 ///|

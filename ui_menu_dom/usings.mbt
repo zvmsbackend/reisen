@@ -1,7 +1,4 @@
 ///|
-using @gallery {type GalleryImage}
-
-///|
 using @storage {
   type GameSettings,
   type SaveSlotEntry,

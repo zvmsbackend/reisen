@@ -11,7 +11,15 @@ import {
 // Values
 pub fn choose_continue_slot(Array[@storage.SaveSlotEntry]) -> String?
 
+pub fn find_gallery_tile(Array[GalleryTileState], String) -> GalleryTileState?
+
+pub fn gallery_tiles_from_registry(String, Bool, String?, String?) -> Array[GalleryTileState]
+
 pub fn localize_script_string(String, String?, String?) -> String
+
+pub fn next_unlocked_gallery_tile_id(Array[GalleryTileState], String?, Int) -> String?
+
+pub fn reduce_gallery_active_id(GalleryAction, String?, Array[GalleryTileState]) -> String?
 
 // Errors
 
@@ -29,6 +37,15 @@ pub(all) enum GalleryAction {
   Prev
   Next
   Replay(String)
+}
+
+pub struct GalleryTileState {
+  id : String
+  image_id : String
+  thumbnail_id : String?
+  title : String
+  unlocked : Bool
+  replay_label : String?
 }
 
 pub(all) enum SettingsAction {
