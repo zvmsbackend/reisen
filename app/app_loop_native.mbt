@@ -18,31 +18,20 @@ pub fn[T : FromJson + ToJson] run_native_app_loop(
     script_default_locale_json=localization.script_default_locale_json,
   )
   let mut keep_running = true
-  fn on_tick(dt) {
-    keep_running = app.tick(elapsed_ms=dt) catch {
-      error => {
-        default_app_error_handler(error.message())
-        false
-      }
-    }
-  }
   @selene_runtime.run_native_loop_with_selene(
-    _ => keep_running,
-    on_render=dt => {
-      if keep_running {
-        idle_render()
+    dt => {
+      if !keep_running {
+        return false
       }
-      on_tick(clamp_non_negative_ms(dt))
+      keep_running = app.tick(elapsed_ms=dt) catch {
+        error => {
+          default_app_error_handler(error.message())
+          false
+        }
+      }
+      keep_running
     },
+    on_render=_ => if keep_running { idle_render() },
     config~,
   )
-}
-
-///|
-fn clamp_non_negative_ms(raw_delta_seconds : Double) -> Int {
-  if raw_delta_seconds <= 0.0 {
-    0
-  } else {
-    @math.floor(raw_delta_seconds * 1000.0).to_int()
-  }
 }

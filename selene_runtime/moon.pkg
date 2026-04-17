@@ -1,4 +1,6 @@
 import {
+  "Milky2018/selene/inputs" @selene_inputs,
+  "Milky2018/selene/platform_input" @selene_platform_input,
   "Milky2018/selene/platform_window" @selene_window,
   "moonbitlang/core/math",
 }

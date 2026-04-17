@@ -47,6 +47,8 @@ pub fn run_native_loop_with_selene(
       startup: on_startup,
       render_loop: on_render,
       game_loop: raw_delta => {
+        let input_snapshot = @selene_platform_input.poll_input()
+        @selene_inputs.apply_input_snapshot(input_snapshot)
         let dt_ms = clamp_non_negative_ms(raw_delta)
         if !on_tick(dt_ms) {
           @selene_window.request_close()

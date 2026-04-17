@@ -5,7 +5,8 @@ pub struct SeleneStartMenu {
   mut pending_gate_action : @ui_menu.StartGateAction
   mut pending_logo_action : @ui_menu.StartLogoAction
   mut pending_locale_action : @ui_menu.StartLocaleAction
-  mut locale_codes : Array[String]
+  mut locale_options : Array[(String, String)]
+  mut locale_selected_index : Int
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut visible_mode : String?
@@ -21,11 +22,33 @@ pub fn SeleneStartMenu::new(
     pending_gate_action: NoAction,
     pending_logo_action: NoAction,
     pending_locale_action: NoAction,
-    locale_codes: [],
+    locale_options: [],
+    locale_selected_index: 0,
     last_enter_down: false,
     last_space_down: false,
     visible_mode: None,
   }
+}
+
+///|
+fn SeleneStartMenu::normalize_locale_selection(self : SeleneStartMenu) -> Unit {
+  if self.locale_options.is_empty() {
+    self.locale_selected_index = 0
+    return
+  }
+  let count = self.locale_options.length()
+  if self.locale_selected_index < 0 || self.locale_selected_index >= count {
+    self.locale_selected_index = 0
+  }
+}
+
+///|
+fn SeleneStartMenu::select_next_locale(self : SeleneStartMenu) -> Unit {
+  if self.locale_options.is_empty() {
+    return
+  }
+  let count = self.locale_options.length()
+  self.locale_selected_index = (self.locale_selected_index + 1) % count
 }
 
 ///|
@@ -126,7 +149,8 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with render_locale_picker(
   languages,
 ) {
   self.visible_mode = Some("locale")
-  self.locale_codes = languages.map(language => language.1)
+  self.locale_options = languages
+  self.normalize_locale_selection()
 }
 
 ///|
@@ -134,15 +158,27 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_locale_picker(self) {
   if self.visible_mode == Some("locale") {
     self.visible_mode = None
   }
-  self.locale_codes = []
+  self.locale_options = []
+  self.locale_selected_index = 0
 }
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_locale_action(self) {
+  let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
+  let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
+  let enter_edge = enter_down && !self.last_enter_down
+  let space_edge = space_down && !self.last_space_down
+  self.last_enter_down = enter_down
+  self.last_space_down = space_down
+
+  if space_edge {
+    self.select_next_locale()
+  }
+
   let result : @ui_menu.StartLocaleAction = match self.pending_locale_action {
     NoAction =>
-      if self.take_confirm_edge() && !self.locale_codes.is_empty() {
-        Select(self.locale_codes[0])
+      if enter_edge && !self.locale_options.is_empty() {
+        Select(self.locale_options[self.locale_selected_index].1)
       } else {
         NoAction
       }
@@ -225,7 +261,7 @@ pub fn SeleneStartMenu::render_commands(
           stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
         }),
         Text({
-          text: "Select Language",
+          text: self.ui_strings.start_locale_title,
           position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 120.0),
           transform: @selene_math.Transform::identity(),
           style: {
@@ -237,20 +273,79 @@ pub fn SeleneStartMenu::render_commands(
             baseline: Center,
           },
         }),
+      ]
+      self.normalize_locale_selection()
+      if self.locale_options.is_empty() {
+        commands.push(
+          Text({
+            text: "No language options",
+            position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 10.0),
+            transform: @selene_math.Transform::identity(),
+            style: {
+              font: None,
+              family: "sans-serif",
+              size: 20.0,
+              color: { r: 200, g: 210, b: 230, a: 1.0 },
+              align: Center,
+              baseline: Center,
+            },
+          }),
+        )
+      } else {
+        let mut y = viewport_h / 2.0 - 70.0
+        for i = 0; i < self.locale_options.length(); i = i + 1 {
+          let option = self.locale_options[i]
+          let is_selected = i == self.locale_selected_index
+          if is_selected {
+            commands.push(
+              Rect({
+                rect: {
+                  position: Vec2D(viewport_w / 2.0 - 160.0, y - 16.0),
+                  size: Vec2D(320.0, 34.0),
+                },
+                transform: @selene_math.Transform::identity(),
+                fill_color: { r: 70, g: 110, b: 160, a: 0.45 },
+                stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+              }),
+            )
+          }
+          commands.push(
+            Text({
+              text: option.0,
+              position: Vec2D(viewport_w / 2.0, y),
+              transform: @selene_math.Transform::identity(),
+              style: {
+                font: None,
+                family: "sans-serif",
+                size: 24.0,
+                color: if is_selected {
+                  { r: 245, g: 245, b: 250, a: 1.0 }
+                } else {
+                  { r: 200, g: 210, b: 230, a: 1.0 }
+                },
+                align: Center,
+                baseline: Center,
+              },
+            }),
+          )
+          y += 40.0
+        }
+      }
+      commands.push(
         Text({
-          text: "(Language selector UI placeholder)",
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
+          text: "Space: Next  Enter: Confirm",
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 120.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: None,
             family: "sans-serif",
-            size: 20.0,
-            color: { r: 200, g: 210, b: 230, a: 1.0 },
+            size: 16.0,
+            color: { r: 180, g: 190, b: 210, a: 1.0 },
             align: Center,
             baseline: Center,
           },
         }),
-      ]
+      )
       commands
     }
     Some("start") => {
