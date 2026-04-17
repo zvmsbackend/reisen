@@ -6,6 +6,7 @@ pub fn[T : FromJson + ToJson] run_native_app_loop(
   idle_render? : () -> Unit = () => (),
   config? : @selene_runtime.NativeLoopConfig = @selene_runtime.NativeLoopConfig::default(),
 ) -> Unit {
+  app.set_script_locale_dir(script_locale_dir)
   let localization = preload_localization(
     save_namespace=app.save_ns,
     languages=app.languages,

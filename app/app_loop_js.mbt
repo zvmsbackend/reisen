@@ -39,6 +39,7 @@ pub async fn[T : FromJson + ToJson] run_browser_app_loop(
   ui_locale_path? : String = "locales/ui.json",
   script_locale_dir? : String = "locales",
 ) -> Unit {
+  app.set_script_locale_dir(script_locale_dir)
   let localization = preload_localization(
     save_namespace=app.save_ns,
     languages=app.languages,

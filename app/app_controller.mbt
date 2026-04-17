@@ -60,6 +60,7 @@ struct AppController[T] {
   default_locale : String
   mut script_locale_json : String?
   mut script_default_locale_json : String?
+  mut script_locale_dir : String
   vocal_locale_dir : String
   credits : String?
   save_ns : String
@@ -116,6 +117,7 @@ pub fn[T] AppController::new(
   ui_locales_json? : String = "",
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
+  script_locale_dir? : String = "locales",
   vocal_locale_dir? : String = "",
   credits? : String,
   save_store? : &SaveSlotStore = default_save_slot_storage(),
@@ -174,6 +176,7 @@ pub fn[T] AppController::new(
       "" => None
       _ => Some(script_default_locale_json)
     },
+    script_locale_dir,
     vocal_locale_dir,
     credits,
     save_ns: save_namespace,
@@ -491,6 +494,55 @@ pub fn[T] AppController::set_localization_payload(
 }
 
 ///|
+pub fn[T] AppController::set_script_locale_dir(
+  self : AppController[T],
+  script_locale_dir : String,
+) -> Unit {
+  self.script_locale_dir = script_locale_dir
+}
+
+///|
+fn read_locale_file(path : String) -> String? {
+  if path == "" {
+    return None
+  }
+  match (try? @x_fs.read_file_to_string(path)).to_option() {
+    Some(text) => Some(text)
+    None => None
+  }
+}
+
+///|
+#cfg(target="native")
+fn[T] AppController::reload_script_localization_for_locale(
+  self : AppController[T],
+  locale : String,
+) -> Unit {
+  let selected_path = match (self.script_locale_dir, locale) {
+    ("", _) => ""
+    (_, "") => ""
+    _ => "\{self.script_locale_dir}/\{locale}.json"
+  }
+  let default_path = match (self.script_locale_dir, self.default_locale) {
+    ("", _) => ""
+    (_, "") => ""
+    _ => "\{self.script_locale_dir}/\{self.default_locale}.json"
+  }
+  self.script_locale_json = read_locale_file(selected_path)
+  self.script_default_locale_json = read_locale_file(default_path)
+}
+
+///|
+#cfg(target="js")
+fn[T] AppController::reload_script_localization_for_locale(
+  self : AppController[T],
+  locale : String,
+) -> Unit {
+  ignore(self)
+  ignore(locale)
+}
+
+///|
 fn[T] AppController::apply_locale(
   self : AppController[T],
   code : String,
@@ -498,6 +550,7 @@ fn[T] AppController::apply_locale(
   self.locale = code
   self.settings_menu.set_locale(code)
   persistent_set_text_in(self.save_ns, "locale", code)
+  self.reload_script_localization_for_locale(code)
   self.refresh_ui_strings()
 }
 
