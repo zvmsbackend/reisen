@@ -15,4 +15,7 @@ using @ui_game {
 using @state {type DialogText}
 
 ///|
-using @core {type UiSnapshot}
+using @core {type UiSnapshot, type DialogLogEntry}
+
+///|
+using @util {script_locale_resolve_at}

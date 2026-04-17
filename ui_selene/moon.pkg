@@ -5,4 +5,5 @@ import {
   "sennenki/reisen/ui_game",
   "sennenki/reisen/state",
   "sennenki/reisen/core",
+  "sennenki/reisen/util",
 }

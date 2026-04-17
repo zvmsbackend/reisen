@@ -73,6 +73,7 @@ fn UiCoreState::is_typewriter_done(self : UiCoreState) -> Bool {
 fn UiCoreState::sync_from_snapshot(
   self : UiCoreState,
   snapshot : UiSnapshot,
+  rendered_text : DialogText,
 ) -> Unit {
   if snapshot.intro_text is Some(_) {
     if snapshot.dialog_seq != self.last_intro_seq {
@@ -85,7 +86,7 @@ fn UiCoreState::sync_from_snapshot(
   defer {
     self.last_dialog_seq = snapshot.dialog_seq
   }
-  guard snapshot.dialog is Some((_, text, typewriter, append)) else {
+  guard snapshot.dialog is Some((_, _, typewriter, append)) else {
     self.typewriter_text = DialogText::empty()
     self.typewriter_visible = 0
     self.typewriter_last_update_ms = 0
@@ -95,7 +96,7 @@ fn UiCoreState::sync_from_snapshot(
   }
   if append && typewriter && !self.is_skip_active() {
     let prev_len = self.typewriter_text.length()
-    self.typewriter_text = text
+    self.typewriter_text = rendered_text
     if self.typewriter_visible < prev_len {
       self.typewriter_visible = prev_len
     }
@@ -104,11 +105,11 @@ fn UiCoreState::sync_from_snapshot(
     }
     self.typewriter_last_update_ms = 0
   } else if typewriter && !self.is_skip_active() {
-    self.typewriter_text = text
+    self.typewriter_text = rendered_text
     self.typewriter_visible = 0
     self.typewriter_last_update_ms = 0
   } else {
-    self.typewriter_text = text
+    self.typewriter_text = rendered_text
     self.typewriter_visible = self.typewriter_text.length()
     self.typewriter_last_update_ms = 0
   }

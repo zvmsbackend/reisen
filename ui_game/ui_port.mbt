@@ -37,8 +37,8 @@ pub fn UiPort::view_model_from_snapshot(
   self : UiPort,
   snapshot : UiSnapshot,
 ) -> UiViewModel {
-  self.core.sync_from_snapshot(snapshot)
   let view = self.backend.view_model_from_snapshot(snapshot)
+  self.core.sync_from_snapshot(snapshot, view.text)
   {
     ..view,
     text: self.core.visible_text(),

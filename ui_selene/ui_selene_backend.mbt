@@ -92,11 +92,47 @@ pub fn SeleneUiBackend::last_view(self : SeleneUiBackend) -> UiViewModel? {
 }
 
 ///|
-fn selene_view_from_snapshot(snapshot : UiSnapshot) -> UiViewModel {
-  let (speaker, text) = match snapshot.dialog {
+fn SeleneUiBackend::localize_script_text(
+  self : SeleneUiBackend,
+  text : DialogText,
+) -> DialogText {
+  match text {
+    String(s) => String(self.localize_script_text_string(s))
+    Concat(parts) => Concat(parts.map(part => self.localize_script_text(part)))
+    Interpolation(var_name) => Interpolation(var_name)
+    Enhanced(base, style~) => Enhanced(self.localize_script_text(base), style~)
+    Ruby(base, ruby~) =>
+      Ruby(
+        self.localize_script_text_string(base),
+        ruby=self.localize_script_text_string(ruby),
+      )
+  }
+}
+
+///|
+fn SeleneUiBackend::localize_script_text_string(
+  self : SeleneUiBackend,
+  raw : String,
+) -> String {
+  let (localized, _, _) = script_locale_resolve_at(
+    raw,
+    self.script_locale_json,
+    self.script_default_locale_json,
+  )
+  localized
+}
+
+///|
+fn SeleneUiBackend::selene_view_from_snapshot(
+  self : SeleneUiBackend,
+  snapshot : UiSnapshot,
+) -> UiViewModel {
+  let (raw_speaker, raw_text) = match snapshot.dialog {
     Some((speaker, text, _, _)) => (speaker, text)
     None => (DialogText::empty(), DialogText::empty())
   }
+  let speaker = self.localize_script_text(raw_speaker)
+  let text = self.localize_script_text(raw_text)
   let typewriter = match snapshot.dialog {
     Some((_, _, typewriter, _)) => typewriter
     None => true
@@ -111,25 +147,37 @@ fn selene_view_from_snapshot(snapshot : UiSnapshot) -> UiViewModel {
   }
   let choices = snapshot.choices.map(opt => UiChoiceView::{
     id: opt.id,
-    text: opt.text,
+    text: self.localize_script_text(opt.text),
   })
   let text_input = match snapshot.text_input {
-    Some((var_name, prompt)) => Some(UiTextInputView::{ var_name, prompt })
+    Some((var_name, prompt)) =>
+      Some(UiTextInputView::{
+        var_name,
+        prompt: self.localize_script_text(prompt),
+      })
     None => None
   }
+  let intro_text = snapshot.intro_text.map(text => {
+    self.localize_script_text(text)
+  })
+  let localized_dialog_history : Array[DialogLogEntry] = snapshot.dialog_history.map(entry => {
+      speaker: self.localize_script_text_string(entry.speaker),
+      text: self.localize_script_text_string(entry.text),
+    },
+  )
   {
     speaker,
     text,
     dialog_seq: snapshot.dialog_seq,
     typewriter,
-    intro_text: snapshot.intro_text,
+    intro_text,
     video,
     append,
     text_box_visible: snapshot.text_box_visible,
     avatar_id: snapshot.avatar_id,
     choices,
     text_input,
-    dialog_history: snapshot.dialog_history,
+    dialog_history: localized_dialog_history,
     dom_figures: [],
     auto_mode: false,
     skip_mode: false,
@@ -175,9 +223,7 @@ pub impl UiBackend for SeleneUiBackend with view_model_from_snapshot(
   snapshot,
 ) {
   ignore(self.ui_strings)
-  ignore(self.script_locale_json)
-  ignore(self.script_default_locale_json)
-  selene_view_from_snapshot(snapshot)
+  self.selene_view_from_snapshot(snapshot)
 }
 
 ///|
