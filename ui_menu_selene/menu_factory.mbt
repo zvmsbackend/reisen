@@ -1,4 +1,81 @@
 ///|
+fn SeleneMenuTextStyle::with_family(
+  self : SeleneMenuTextStyle,
+  family : String,
+) -> SeleneMenuTextStyle {
+  {
+    font: self.font,
+    family,
+    size: self.size,
+    color_r: self.color_r,
+    color_g: self.color_g,
+    color_b: self.color_b,
+    color_a: self.color_a,
+  }
+}
+
+///|
+fn SeleneStartMenuTextTheme::with_family(
+  self : SeleneStartMenuTextTheme,
+  family : String,
+) -> SeleneStartMenuTextTheme {
+  {
+    gate_title: self.gate_title.with_family(family),
+    locale_title: self.locale_title.with_family(family),
+    locale_empty: self.locale_empty.with_family(family),
+    locale_option_selected: self.locale_option_selected.with_family(family),
+    locale_option_normal: self.locale_option_normal.with_family(family),
+    locale_hint: self.locale_hint.with_family(family),
+    start_item: self.start_item.with_family(family),
+  }
+}
+
+///|
+fn SeleneGalleryMenuTextTheme::with_family(
+  self : SeleneGalleryMenuTextTheme,
+  family : String,
+) -> SeleneGalleryMenuTextTheme {
+  {
+    title: self.title.with_family(family),
+    body: self.body.with_family(family),
+    hint: self.hint.with_family(family),
+  }
+}
+
+///|
+fn SeleneSettingsMenuTextTheme::with_family(
+  self : SeleneSettingsMenuTextTheme,
+  family : String,
+) -> SeleneSettingsMenuTextTheme {
+  {
+    title: self.title.with_family(family),
+    row: self.row.with_family(family),
+    hint: self.hint.with_family(family),
+    placeholder: self.placeholder.with_family(family),
+  }
+}
+
+///|
+fn SeleneCreditsMenuTextTheme::with_family(
+  self : SeleneCreditsMenuTextTheme,
+  family : String,
+) -> SeleneCreditsMenuTextTheme {
+  {
+    title: self.title.with_family(family),
+    body: self.body.with_family(family),
+    hint: self.hint.with_family(family),
+  }
+}
+
+///|
+fn SeleneLoadingMenuTextTheme::with_family(
+  self : SeleneLoadingMenuTextTheme,
+  family : String,
+) -> SeleneLoadingMenuTextTheme {
+  { title: self.title.with_family(family), body: self.body.with_family(family) }
+}
+
+///|
 pub struct SeleneMenuFactory {
   ui_strings : UiStrings
   start_menu : SeleneStartMenu
@@ -11,31 +88,54 @@ pub struct SeleneMenuFactory {
 ///|
 pub fn SeleneMenuFactory::new(
   ui_strings? : UiStrings = UiStrings::default(),
+  text_font_family? : String = "",
   start_menu_text_theme? : SeleneStartMenuTextTheme = SeleneStartMenuTextTheme::default(),
   gallery_menu_text_theme? : SeleneGalleryMenuTextTheme = SeleneGalleryMenuTextTheme::default(),
   settings_menu_text_theme? : SeleneSettingsMenuTextTheme = SeleneSettingsMenuTextTheme::default(),
   credits_menu_text_theme? : SeleneCreditsMenuTextTheme = SeleneCreditsMenuTextTheme::default(),
   loading_menu_text_theme? : SeleneLoadingMenuTextTheme = SeleneLoadingMenuTextTheme::default(),
 ) -> SeleneMenuFactory {
+  let resolved_start_menu_text_theme = match text_font_family {
+    "" => start_menu_text_theme
+    _ => start_menu_text_theme.with_family(text_font_family)
+  }
+  let resolved_gallery_menu_text_theme = match text_font_family {
+    "" => gallery_menu_text_theme
+    _ => gallery_menu_text_theme.with_family(text_font_family)
+  }
+  let resolved_settings_menu_text_theme = match text_font_family {
+    "" => settings_menu_text_theme
+    _ => settings_menu_text_theme.with_family(text_font_family)
+  }
+  let resolved_credits_menu_text_theme = match text_font_family {
+    "" => credits_menu_text_theme
+    _ => credits_menu_text_theme.with_family(text_font_family)
+  }
+  let resolved_loading_menu_text_theme = match text_font_family {
+    "" => loading_menu_text_theme
+    _ => loading_menu_text_theme.with_family(text_font_family)
+  }
   {
     ui_strings,
     start_menu: SeleneStartMenu::new(
       ui_strings~,
-      text_theme=start_menu_text_theme,
+      text_theme=resolved_start_menu_text_theme,
     ),
     gallery_menu: SeleneGalleryMenu::new(
       ui_strings~,
-      text_theme=gallery_menu_text_theme,
+      text_theme=resolved_gallery_menu_text_theme,
     ),
     settings_menu: SeleneSettingsMenu::new(
       ui_strings~,
-      text_theme=settings_menu_text_theme,
+      text_theme=resolved_settings_menu_text_theme,
     ),
     credits_menu: SeleneCreditsMenu::new(
       ui_strings~,
-      text_theme=credits_menu_text_theme,
+      text_theme=resolved_credits_menu_text_theme,
     ),
-    loading_menu: SeleneLoadingMenu::new(text_theme=loading_menu_text_theme),
+    loading_menu: SeleneLoadingMenu::new(
+      text_theme=resolved_loading_menu_text_theme,
+    ),
   }
 }
 

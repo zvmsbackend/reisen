@@ -66,7 +66,7 @@ pub struct SeleneUiPortFactory {
   backend : SeleneUiBackend
 }
 pub fn SeleneUiPortFactory::last_view(Self) -> @ui_game.UiViewModel?
-pub fn SeleneUiPortFactory::new(ui_strings? : @ui_game.UiStrings, overlay_text_theme? : SeleneOverlayTextTheme, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn SeleneUiPortFactory::new(ui_strings? : @ui_game.UiStrings, overlay_text_theme? : SeleneOverlayTextTheme, text_font_family? : String, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
 pub fn SeleneUiPortFactory::push_action(Self, String) -> Unit
 pub fn SeleneUiPortFactory::push_click(Self) -> Unit
 pub fn SeleneUiPortFactory::push_selected_choice(Self, String) -> Unit

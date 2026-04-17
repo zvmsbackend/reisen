@@ -79,7 +79,7 @@ pub struct SeleneMenuFactory {
   credits_menu : SeleneCreditsMenu
   loading_menu : SeleneLoadingMenu
 }
-pub fn SeleneMenuFactory::new(ui_strings? : @ui_game.UiStrings, start_menu_text_theme? : SeleneStartMenuTextTheme, gallery_menu_text_theme? : SeleneGalleryMenuTextTheme, settings_menu_text_theme? : SeleneSettingsMenuTextTheme, credits_menu_text_theme? : SeleneCreditsMenuTextTheme, loading_menu_text_theme? : SeleneLoadingMenuTextTheme) -> Self
+pub fn SeleneMenuFactory::new(ui_strings? : @ui_game.UiStrings, text_font_family? : String, start_menu_text_theme? : SeleneStartMenuTextTheme, gallery_menu_text_theme? : SeleneGalleryMenuTextTheme, settings_menu_text_theme? : SeleneSettingsMenuTextTheme, credits_menu_text_theme? : SeleneCreditsMenuTextTheme, loading_menu_text_theme? : SeleneLoadingMenuTextTheme) -> Self
 pub fn SeleneMenuFactory::push_credits_back(Self) -> Unit
 pub fn SeleneMenuFactory::push_gallery_action(Self, @ui_menu.GalleryAction) -> Unit
 pub fn SeleneMenuFactory::push_settings_action(Self, @ui_menu.SettingsAction) -> Unit

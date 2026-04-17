@@ -53,6 +53,33 @@ pub impl Default for SeleneOverlayTextTheme with default() {
 }
 
 ///|
+fn SeleneOverlayTextStyle::with_family(
+  self : SeleneOverlayTextStyle,
+  family : String,
+) -> SeleneOverlayTextStyle {
+  {
+    font: self.font,
+    family,
+    size: self.size,
+    color_r: self.color_r,
+    color_g: self.color_g,
+    color_b: self.color_b,
+    color_a: self.color_a,
+  }
+}
+
+///|
+fn SeleneOverlayTextTheme::with_family(
+  self : SeleneOverlayTextTheme,
+  family : String,
+) -> SeleneOverlayTextTheme {
+  {
+    speaker: self.speaker.with_family(family),
+    body: self.body.with_family(family),
+  }
+}
+
+///|
 pub struct SeleneUiBackend {
   mut ui_strings : UiStrings
   overlay_text_theme : SeleneOverlayTextTheme
@@ -553,16 +580,21 @@ pub struct SeleneUiPortFactory {
 pub fn SeleneUiPortFactory::new(
   ui_strings? : UiStrings = UiStrings::default(),
   overlay_text_theme? : SeleneOverlayTextTheme = SeleneOverlayTextTheme::default(),
+  text_font_family? : String = "",
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
   vocal_locale_dir? : String = "",
   script_locale? : String = "",
   script_default_locale? : String = "",
 ) -> SeleneUiPortFactory {
+  let resolved_overlay_text_theme = match text_font_family {
+    "" => overlay_text_theme
+    _ => overlay_text_theme.with_family(text_font_family)
+  }
   {
     backend: SeleneUiBackend::new(
       ui_strings~,
-      overlay_text_theme~,
+      overlay_text_theme=resolved_overlay_text_theme,
       script_locale_json=match script_locale_json {
         "" => None
         _ => Some(script_locale_json)
