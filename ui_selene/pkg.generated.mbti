@@ -2,6 +2,7 @@
 package "sennenki/reisen/ui_selene"
 
 import {
+  "Milky2018/selene/asset_types",
   "Milky2018/selene/render2d_types",
   "sennenki/reisen/core",
   "sennenki/reisen/ui_game",
@@ -12,8 +13,26 @@ import {
 // Errors
 
 // Types and methods
+pub struct SeleneOverlayTextStyle {
+  font : @asset_types.FontHandle?
+  family : String
+  size : Double
+  color_r : UInt
+  color_g : UInt
+  color_b : UInt
+  color_a : Double
+}
+pub impl Default for SeleneOverlayTextStyle
+
+pub struct SeleneOverlayTextTheme {
+  speaker : SeleneOverlayTextStyle
+  body : SeleneOverlayTextStyle
+}
+pub impl Default for SeleneOverlayTextTheme
+
 pub struct SeleneUiBackend {
   mut ui_strings : @ui_game.UiStrings
+  overlay_text_theme : SeleneOverlayTextTheme
   mut script_locale_json : String?
   mut script_default_locale_json : String?
   mut vocal_locale_dir : String
@@ -32,7 +51,7 @@ pub struct SeleneUiBackend {
   mut last_view : @ui_game.UiViewModel?
 }
 pub fn SeleneUiBackend::last_view(Self) -> @ui_game.UiViewModel?
-pub fn SeleneUiBackend::new(ui_strings? : @ui_game.UiStrings, script_locale_json? : String?, script_default_locale_json? : String?, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn SeleneUiBackend::new(ui_strings? : @ui_game.UiStrings, overlay_text_theme? : SeleneOverlayTextTheme, script_locale_json? : String?, script_default_locale_json? : String?, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
 pub fn SeleneUiBackend::push_action(Self, String) -> Unit
 pub fn SeleneUiBackend::push_click(Self) -> Unit
 pub fn SeleneUiBackend::push_selected_choice(Self, String) -> Unit
@@ -47,7 +66,7 @@ pub struct SeleneUiPortFactory {
   backend : SeleneUiBackend
 }
 pub fn SeleneUiPortFactory::last_view(Self) -> @ui_game.UiViewModel?
-pub fn SeleneUiPortFactory::new(ui_strings? : @ui_game.UiStrings, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
+pub fn SeleneUiPortFactory::new(ui_strings? : @ui_game.UiStrings, overlay_text_theme? : SeleneOverlayTextTheme, script_locale_json? : String, script_default_locale_json? : String, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
 pub fn SeleneUiPortFactory::push_action(Self, String) -> Unit
 pub fn SeleneUiPortFactory::push_click(Self) -> Unit
 pub fn SeleneUiPortFactory::push_selected_choice(Self, String) -> Unit

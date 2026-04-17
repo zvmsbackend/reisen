@@ -1,6 +1,111 @@
 ///|
+pub struct SeleneMenuTextStyle {
+  font : @selene_asset_types.FontHandle?
+  family : String
+  size : Double
+  color_r : UInt
+  color_g : UInt
+  color_b : UInt
+  color_a : Double
+}
+
+///|
+pub impl Default for SeleneMenuTextStyle with default() {
+  {
+    font: None,
+    family: "sans-serif",
+    size: 24.0,
+    color_r: 230,
+    color_g: 238,
+    color_b: 250,
+    color_a: 1.0,
+  }
+}
+
+///|
+pub struct SeleneStartMenuTextTheme {
+  gate_title : SeleneMenuTextStyle
+  locale_title : SeleneMenuTextStyle
+  locale_empty : SeleneMenuTextStyle
+  locale_option_selected : SeleneMenuTextStyle
+  locale_option_normal : SeleneMenuTextStyle
+  locale_hint : SeleneMenuTextStyle
+  start_item : SeleneMenuTextStyle
+}
+
+///|
+pub impl Default for SeleneStartMenuTextTheme with default() {
+  {
+    gate_title: {
+      font: None,
+      family: "sans-serif",
+      size: 32.0,
+      color_r: 245,
+      color_g: 245,
+      color_b: 250,
+      color_a: 1.0,
+    },
+    locale_title: {
+      font: None,
+      family: "sans-serif",
+      size: 28.0,
+      color_r: 245,
+      color_g: 245,
+      color_b: 250,
+      color_a: 1.0,
+    },
+    locale_empty: {
+      font: None,
+      family: "sans-serif",
+      size: 20.0,
+      color_r: 200,
+      color_g: 210,
+      color_b: 230,
+      color_a: 1.0,
+    },
+    locale_option_selected: {
+      font: None,
+      family: "sans-serif",
+      size: 24.0,
+      color_r: 245,
+      color_g: 245,
+      color_b: 250,
+      color_a: 1.0,
+    },
+    locale_option_normal: {
+      font: None,
+      family: "sans-serif",
+      size: 24.0,
+      color_r: 200,
+      color_g: 210,
+      color_b: 230,
+      color_a: 1.0,
+    },
+    locale_hint: {
+      font: None,
+      family: "sans-serif",
+      size: 16.0,
+      color_r: 180,
+      color_g: 190,
+      color_b: 210,
+      color_a: 1.0,
+    },
+    start_item: {
+      font: None,
+      family: "sans-serif",
+      size: 24.0,
+      color_r: 230,
+      color_g: 238,
+      color_b: 250,
+      color_a: 1.0,
+    },
+  }
+}
+
+///|
 pub struct SeleneStartMenu {
   mut ui_strings : UiStrings
+  text_theme : SeleneStartMenuTextTheme
   mut pending_action : @ui_menu.StartMenuAction
   mut pending_gate_action : @ui_menu.StartGateAction
   mut pending_logo_action : @ui_menu.StartLogoAction
@@ -15,9 +120,11 @@ pub struct SeleneStartMenu {
 ///|
 pub fn SeleneStartMenu::new(
   ui_strings? : UiStrings = UiStrings::default(),
+  text_theme? : SeleneStartMenuTextTheme = SeleneStartMenuTextTheme::default(),
 ) -> SeleneStartMenu {
   {
     ui_strings,
+    text_theme,
     pending_action: NoAction,
     pending_gate_action: NoAction,
     pending_logo_action: NoAction,
@@ -222,6 +329,7 @@ pub fn SeleneStartMenu::render_commands(
   match self.visible_mode {
     None => []
     Some("gate") => {
+      let gate_title_style = self.text_theme.gate_title
       let commands : Array[@selene_render2d_types.DrawCommand2D] = [
         Rect({
           rect: {
@@ -237,10 +345,15 @@ pub fn SeleneStartMenu::render_commands(
           position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
           transform: @selene_math.Transform::identity(),
           style: {
-            font: None,
-            family: "sans-serif",
-            size: 32.0,
-            color: { r: 245, g: 245, b: 250, a: 1.0 },
+            font: gate_title_style.font,
+            family: gate_title_style.family,
+            size: gate_title_style.size,
+            color: {
+              r: gate_title_style.color_r,
+              g: gate_title_style.color_g,
+              b: gate_title_style.color_b,
+              a: gate_title_style.color_a,
+            },
             align: Center,
             baseline: Center,
           },
@@ -250,6 +363,11 @@ pub fn SeleneStartMenu::render_commands(
     }
     Some("logo") => []
     Some("locale") => {
+      let locale_title_style = self.text_theme.locale_title
+      let locale_empty_style = self.text_theme.locale_empty
+      let locale_selected_style = self.text_theme.locale_option_selected
+      let locale_normal_style = self.text_theme.locale_option_normal
+      let locale_hint_style = self.text_theme.locale_hint
       let commands : Array[@selene_render2d_types.DrawCommand2D] = [
         Rect({
           rect: {
@@ -265,10 +383,15 @@ pub fn SeleneStartMenu::render_commands(
           position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 120.0),
           transform: @selene_math.Transform::identity(),
           style: {
-            font: None,
-            family: "sans-serif",
-            size: 28.0,
-            color: { r: 245, g: 245, b: 250, a: 1.0 },
+            font: locale_title_style.font,
+            family: locale_title_style.family,
+            size: locale_title_style.size,
+            color: {
+              r: locale_title_style.color_r,
+              g: locale_title_style.color_g,
+              b: locale_title_style.color_b,
+              a: locale_title_style.color_a,
+            },
             align: Center,
             baseline: Center,
           },
@@ -282,10 +405,15 @@ pub fn SeleneStartMenu::render_commands(
             position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 10.0),
             transform: @selene_math.Transform::identity(),
             style: {
-              font: None,
-              family: "sans-serif",
-              size: 20.0,
-              color: { r: 200, g: 210, b: 230, a: 1.0 },
+              font: locale_empty_style.font,
+              family: locale_empty_style.family,
+              size: locale_empty_style.size,
+              color: {
+                r: locale_empty_style.color_r,
+                g: locale_empty_style.color_g,
+                b: locale_empty_style.color_b,
+                a: locale_empty_style.color_a,
+              },
               align: Center,
               baseline: Center,
             },
@@ -315,13 +443,35 @@ pub fn SeleneStartMenu::render_commands(
               position: Vec2D(viewport_w / 2.0, y),
               transform: @selene_math.Transform::identity(),
               style: {
-                font: None,
-                family: "sans-serif",
-                size: 24.0,
-                color: if is_selected {
-                  { r: 245, g: 245, b: 250, a: 1.0 }
+                font: if is_selected {
+                  locale_selected_style.font
                 } else {
-                  { r: 200, g: 210, b: 230, a: 1.0 }
+                  locale_normal_style.font
+                },
+                family: if is_selected {
+                  locale_selected_style.family
+                } else {
+                  locale_normal_style.family
+                },
+                size: if is_selected {
+                  locale_selected_style.size
+                } else {
+                  locale_normal_style.size
+                },
+                color: if is_selected {
+                  {
+                    r: locale_selected_style.color_r,
+                    g: locale_selected_style.color_g,
+                    b: locale_selected_style.color_b,
+                    a: locale_selected_style.color_a,
+                  }
+                } else {
+                  {
+                    r: locale_normal_style.color_r,
+                    g: locale_normal_style.color_g,
+                    b: locale_normal_style.color_b,
+                    a: locale_normal_style.color_a,
+                  }
                 },
                 align: Center,
                 baseline: Center,
@@ -337,10 +487,15 @@ pub fn SeleneStartMenu::render_commands(
           position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 120.0),
           transform: @selene_math.Transform::identity(),
           style: {
-            font: None,
-            family: "sans-serif",
-            size: 16.0,
-            color: { r: 180, g: 190, b: 210, a: 1.0 },
+            font: locale_hint_style.font,
+            family: locale_hint_style.family,
+            size: locale_hint_style.size,
+            color: {
+              r: locale_hint_style.color_r,
+              g: locale_hint_style.color_g,
+              b: locale_hint_style.color_b,
+              a: locale_hint_style.color_a,
+            },
             align: Center,
             baseline: Center,
           },
@@ -349,6 +504,7 @@ pub fn SeleneStartMenu::render_commands(
       commands
     }
     Some("start") => {
+      let start_item_style = self.text_theme.start_item
       let commands : Array[@selene_render2d_types.DrawCommand2D] = [
         Rect({
           rect: {
@@ -371,10 +527,15 @@ pub fn SeleneStartMenu::render_commands(
             position: Vec2D(viewport_w / 2.0, y),
             transform: @selene_math.Transform::identity(),
             style: {
-              font: None,
-              family: "sans-serif",
-              size: 24.0,
-              color: { r: 230, g: 238, b: 250, a: 1.0 },
+              font: start_item_style.font,
+              family: start_item_style.family,
+              size: start_item_style.size,
+              color: {
+                r: start_item_style.color_r,
+                g: start_item_style.color_g,
+                b: start_item_style.color_b,
+                a: start_item_style.color_a,
+              },
               align: Center,
               baseline: Center,
             },

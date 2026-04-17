@@ -2,6 +2,7 @@
 package "sennenki/reisen/ui_menu_selene"
 
 import {
+  "Milky2018/selene/asset_types",
   "Milky2018/selene/render2d_types",
   "sennenki/reisen/audio_core",
   "sennenki/reisen/storage",
@@ -16,36 +17,59 @@ import {
 // Types and methods
 pub struct SeleneCreditsMenu {
   mut ui_strings : @ui_game.UiStrings
+  text_theme : SeleneCreditsMenuTextTheme
   mut pending_action : @ui_menu.CreditsAction
   mut text : String
   mut last_escape_down : Bool
   mut visible : Bool
 }
-pub fn SeleneCreditsMenu::new(ui_strings? : @ui_game.UiStrings) -> Self
+pub fn SeleneCreditsMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneCreditsMenuTextTheme) -> Self
 pub fn SeleneCreditsMenu::push_back(Self) -> Unit
 pub fn SeleneCreditsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu
 
+pub struct SeleneCreditsMenuTextTheme {
+  title : SeleneMenuTextStyle
+  body : SeleneMenuTextStyle
+  hint : SeleneMenuTextStyle
+}
+pub impl Default for SeleneCreditsMenuTextTheme
+
 pub struct SeleneGalleryMenu {
   mut ui_strings : @ui_game.UiStrings
+  text_theme : SeleneGalleryMenuTextTheme
   mut pending_action : @ui_menu.GalleryAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
   mut last_escape_down : Bool
   mut visible : Bool
 }
-pub fn SeleneGalleryMenu::new(ui_strings? : @ui_game.UiStrings) -> Self
+pub fn SeleneGalleryMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneGalleryMenuTextTheme) -> Self
 pub fn SeleneGalleryMenu::push_action(Self, @ui_menu.GalleryAction) -> Unit
 pub fn SeleneGalleryMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu
 
+pub struct SeleneGalleryMenuTextTheme {
+  title : SeleneMenuTextStyle
+  body : SeleneMenuTextStyle
+  hint : SeleneMenuTextStyle
+}
+pub impl Default for SeleneGalleryMenuTextTheme
+
 pub struct SeleneLoadingMenu {
+  text_theme : SeleneLoadingMenuTextTheme
   mut text : String
   mut visible : Bool
 }
-pub fn SeleneLoadingMenu::new() -> Self
+pub fn SeleneLoadingMenu::new(text_theme? : SeleneLoadingMenuTextTheme) -> Self
 pub fn SeleneLoadingMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.LoadingMenu for SeleneLoadingMenu
+
+pub struct SeleneLoadingMenuTextTheme {
+  title : SeleneMenuTextStyle
+  body : SeleneMenuTextStyle
+}
+pub impl Default for SeleneLoadingMenuTextTheme
 
 pub struct SeleneMenuFactory {
   ui_strings : @ui_game.UiStrings
@@ -55,7 +79,7 @@ pub struct SeleneMenuFactory {
   credits_menu : SeleneCreditsMenu
   loading_menu : SeleneLoadingMenu
 }
-pub fn SeleneMenuFactory::new(ui_strings? : @ui_game.UiStrings) -> Self
+pub fn SeleneMenuFactory::new(ui_strings? : @ui_game.UiStrings, start_menu_text_theme? : SeleneStartMenuTextTheme, gallery_menu_text_theme? : SeleneGalleryMenuTextTheme, settings_menu_text_theme? : SeleneSettingsMenuTextTheme, credits_menu_text_theme? : SeleneCreditsMenuTextTheme, loading_menu_text_theme? : SeleneLoadingMenuTextTheme) -> Self
 pub fn SeleneMenuFactory::push_credits_back(Self) -> Unit
 pub fn SeleneMenuFactory::push_gallery_action(Self, @ui_menu.GalleryAction) -> Unit
 pub fn SeleneMenuFactory::push_settings_action(Self, @ui_menu.SettingsAction) -> Unit
@@ -67,8 +91,20 @@ pub fn SeleneMenuFactory::ui_overlay_commands(Self, viewport_w? : Double, viewpo
 pub fn SeleneMenuFactory::ui_overlay_provider(Self, viewport_w? : Double, viewport_h? : Double) -> () -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.MenuFactory for SeleneMenuFactory
 
+pub struct SeleneMenuTextStyle {
+  font : @asset_types.FontHandle?
+  family : String
+  size : Double
+  color_r : UInt
+  color_g : UInt
+  color_b : UInt
+  color_a : Double
+}
+pub impl Default for SeleneMenuTextStyle
+
 pub struct SeleneSettingsMenu {
   mut ui_strings : @ui_game.UiStrings
+  text_theme : SeleneSettingsMenuTextTheme
   mut pending_action : @ui_menu.SettingsAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
@@ -79,13 +115,22 @@ pub struct SeleneSettingsMenu {
   mut last_escape_down : Bool
   mut visible : Bool
 }
-pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings) -> Self
+pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneSettingsMenuTextTheme) -> Self
 pub fn SeleneSettingsMenu::push_action(Self, @ui_menu.SettingsAction) -> Unit
 pub fn SeleneSettingsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu
 
+pub struct SeleneSettingsMenuTextTheme {
+  title : SeleneMenuTextStyle
+  row : SeleneMenuTextStyle
+  hint : SeleneMenuTextStyle
+  placeholder : SeleneMenuTextStyle
+}
+pub impl Default for SeleneSettingsMenuTextTheme
+
 pub struct SeleneStartMenu {
   mut ui_strings : @ui_game.UiStrings
+  text_theme : SeleneStartMenuTextTheme
   mut pending_action : @ui_menu.StartMenuAction
   mut pending_gate_action : @ui_menu.StartGateAction
   mut pending_logo_action : @ui_menu.StartLogoAction
@@ -96,13 +141,24 @@ pub struct SeleneStartMenu {
   mut last_space_down : Bool
   mut visible_mode : String?
 }
-pub fn SeleneStartMenu::new(ui_strings? : @ui_game.UiStrings) -> Self
+pub fn SeleneStartMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneStartMenuTextTheme) -> Self
 pub fn SeleneStartMenu::push_action(Self, @ui_menu.StartMenuAction) -> Unit
 pub fn SeleneStartMenu::push_gate_action(Self, @ui_menu.StartGateAction) -> Unit
 pub fn SeleneStartMenu::push_locale_code(Self, String) -> Unit
 pub fn SeleneStartMenu::push_logo_done(Self) -> Unit
 pub fn SeleneStartMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.StartMenu for SeleneStartMenu
+
+pub struct SeleneStartMenuTextTheme {
+  gate_title : SeleneMenuTextStyle
+  locale_title : SeleneMenuTextStyle
+  locale_empty : SeleneMenuTextStyle
+  locale_option_selected : SeleneMenuTextStyle
+  locale_option_normal : SeleneMenuTextStyle
+  locale_hint : SeleneMenuTextStyle
+  start_item : SeleneMenuTextStyle
+}
+pub impl Default for SeleneStartMenuTextTheme
 
 // Type aliases
 

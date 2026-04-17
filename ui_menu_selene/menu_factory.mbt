@@ -11,14 +11,31 @@ pub struct SeleneMenuFactory {
 ///|
 pub fn SeleneMenuFactory::new(
   ui_strings? : UiStrings = UiStrings::default(),
+  start_menu_text_theme? : SeleneStartMenuTextTheme = SeleneStartMenuTextTheme::default(),
+  gallery_menu_text_theme? : SeleneGalleryMenuTextTheme = SeleneGalleryMenuTextTheme::default(),
+  settings_menu_text_theme? : SeleneSettingsMenuTextTheme = SeleneSettingsMenuTextTheme::default(),
+  credits_menu_text_theme? : SeleneCreditsMenuTextTheme = SeleneCreditsMenuTextTheme::default(),
+  loading_menu_text_theme? : SeleneLoadingMenuTextTheme = SeleneLoadingMenuTextTheme::default(),
 ) -> SeleneMenuFactory {
   {
     ui_strings,
-    start_menu: SeleneStartMenu::new(ui_strings~),
-    gallery_menu: SeleneGalleryMenu::new(ui_strings~),
-    settings_menu: SeleneSettingsMenu::new(ui_strings~),
-    credits_menu: SeleneCreditsMenu::new(ui_strings~),
-    loading_menu: SeleneLoadingMenu::new(),
+    start_menu: SeleneStartMenu::new(
+      ui_strings~,
+      text_theme=start_menu_text_theme,
+    ),
+    gallery_menu: SeleneGalleryMenu::new(
+      ui_strings~,
+      text_theme=gallery_menu_text_theme,
+    ),
+    settings_menu: SeleneSettingsMenu::new(
+      ui_strings~,
+      text_theme=settings_menu_text_theme,
+    ),
+    credits_menu: SeleneCreditsMenu::new(
+      ui_strings~,
+      text_theme=credits_menu_text_theme,
+    ),
+    loading_menu: SeleneLoadingMenu::new(text_theme=loading_menu_text_theme),
   }
 }
 

@@ -1,6 +1,61 @@
 ///|
+pub struct SeleneOverlayTextStyle {
+  font : @selene_asset_types.FontHandle?
+  family : String
+  size : Double
+  color_r : UInt
+  color_g : UInt
+  color_b : UInt
+  color_a : Double
+}
+
+///|
+pub impl Default for SeleneOverlayTextStyle with default() {
+  {
+    font: None,
+    family: "sans-serif",
+    size: 24.0,
+    color_r: 238,
+    color_g: 244,
+    color_b: 252,
+    color_a: 1.0,
+  }
+}
+
+///|
+pub struct SeleneOverlayTextTheme {
+  speaker : SeleneOverlayTextStyle
+  body : SeleneOverlayTextStyle
+}
+
+///|
+pub impl Default for SeleneOverlayTextTheme with default() {
+  {
+    speaker: {
+      font: None,
+      family: "sans-serif",
+      size: 28.0,
+      color_r: 255,
+      color_g: 221,
+      color_b: 170,
+      color_a: 1.0,
+    },
+    body: {
+      font: None,
+      family: "sans-serif",
+      size: 24.0,
+      color_r: 238,
+      color_g: 244,
+      color_b: 252,
+      color_a: 1.0,
+    },
+  }
+}
+
+///|
 pub struct SeleneUiBackend {
   mut ui_strings : UiStrings
+  overlay_text_theme : SeleneOverlayTextTheme
   mut script_locale_json : String?
   mut script_default_locale_json : String?
   mut vocal_locale_dir : String
@@ -22,6 +77,7 @@ pub struct SeleneUiBackend {
 ///|
 pub fn SeleneUiBackend::new(
   ui_strings? : UiStrings = UiStrings::default(),
+  overlay_text_theme? : SeleneOverlayTextTheme = SeleneOverlayTextTheme::default(),
   script_locale_json? : String? = None,
   script_default_locale_json? : String? = None,
   vocal_locale_dir? : String = "",
@@ -30,6 +86,7 @@ pub fn SeleneUiBackend::new(
 ) -> SeleneUiBackend {
   {
     ui_strings,
+    overlay_text_theme,
     script_locale_json,
     script_default_locale_json,
     vocal_locale_dir,
@@ -404,6 +461,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
   match self.last_view {
     None => []
     Some(view) => {
+      let speaker_text_style = self.overlay_text_theme.speaker
+      let body_text_style = self.overlay_text_theme.body
       let speaker = view.speaker.raw_text()
       let lines = SeleneUiBackend::body_lines(view)
       if speaker == "" && lines.is_empty() {
@@ -432,10 +491,15 @@ pub fn SeleneUiBackend::ui_overlay_commands(
             position: @selene_math.Vec2D(48.0, y),
             transform: @selene_math.Transform::identity(),
             style: {
-              font: None,
-              family: "sans-serif",
-              size: 28.0,
-              color: { r: 255, g: 221, b: 170, a: 1.0 },
+              font: speaker_text_style.font,
+              family: speaker_text_style.family,
+              size: speaker_text_style.size,
+              color: {
+                r: speaker_text_style.color_r,
+                g: speaker_text_style.color_g,
+                b: speaker_text_style.color_b,
+                a: speaker_text_style.color_a,
+              },
               align: @selene_math.HAlign::Left,
               baseline: @selene_math.VAlign::Top,
             },
@@ -450,10 +514,15 @@ pub fn SeleneUiBackend::ui_overlay_commands(
             position: @selene_math.Vec2D(48.0, y),
             transform: @selene_math.Transform::identity(),
             style: {
-              font: None,
-              family: "sans-serif",
-              size: 24.0,
-              color: { r: 238, g: 244, b: 252, a: 1.0 },
+              font: body_text_style.font,
+              family: body_text_style.family,
+              size: body_text_style.size,
+              color: {
+                r: body_text_style.color_r,
+                g: body_text_style.color_g,
+                b: body_text_style.color_b,
+                a: body_text_style.color_a,
+              },
               align: @selene_math.HAlign::Left,
               baseline: @selene_math.VAlign::Top,
             },
@@ -483,6 +552,7 @@ pub struct SeleneUiPortFactory {
 ///|
 pub fn SeleneUiPortFactory::new(
   ui_strings? : UiStrings = UiStrings::default(),
+  overlay_text_theme? : SeleneOverlayTextTheme = SeleneOverlayTextTheme::default(),
   script_locale_json? : String = "",
   script_default_locale_json? : String = "",
   vocal_locale_dir? : String = "",
@@ -492,6 +562,7 @@ pub fn SeleneUiPortFactory::new(
   {
     backend: SeleneUiBackend::new(
       ui_strings~,
+      overlay_text_theme~,
       script_locale_json=match script_locale_json {
         "" => None
         _ => Some(script_locale_json)
