@@ -6,44 +6,9 @@ fn[T] AppController::script(
     Some(script) => script
     None => {
       self.loading_menu.render(self.ui_strings.loading_text)
-      let script = (self.script_factory)() catch {
-        //PixiBindingError::ResourceLoadFailed(message~) => {
-        //  self.loading_menu.clear()
-        //  raise ScriptLoadFailed(
-        //    message="Pixi resource load failed: \{message}",
-        //  )
-        //}
-        AssetStoreError::ResourceLoadFailed(message~) => {
-          self.loading_menu.clear()
-          raise ScriptLoadFailed(
-            message="Asset resource load failed: \{message}",
-          )
-        }
-        error => {
-          self.loading_menu.clear()
-          raise ScriptLoadFailed(
-            message="Unknown script factory error \{error}",
-          )
-        }
-      }
+      let script = self.load_script_from_factory()
       self.loading_menu.clear()
-      validate_script_assets(script, self.assets) catch {
-        MissingImageAsset(id~) => raise ScriptValidationMissingImage(id~)
-        MissingAudioAsset(id~) => raise ScriptValidationMissingAudio(id~)
-        MissingSaveSlot(slot~) => raise SaveSlotMissing(slot~)
-        InvalidSavePayload(raw~) =>
-          raise ScriptLoadFailed(message="Invalid save payload: \{raw}")
-        UnsupportedSavePayloadVersion(expected~, found~) =>
-          raise ScriptLoadFailed(
-            message="Unsupported save payload version: expected \{expected}, found \{found}",
-          )
-        LocalizationLoadFailed(message~) =>
-          raise ScriptLoadFailed(
-            message="Localization preload failed: \{message}",
-          )
-      }
-      self.script = Some(script)
-      script
+      self.validate_and_cache_script(script)
     }
   }
 }
@@ -151,15 +116,14 @@ fn[T : FromJson + ToJson] AppController::tick_settings(
     Back => {
       self.emit_ui_click_sfx()
       self.settings_menu.clear()
-      match self.saved_director_json {
-        Some(json) => {
-          self.saved_director_json = None
-          let dialog_history = self.saved_dialog_history.unwrap_or([])
-          self.saved_dialog_history = None
+      match self.take_saved_resume_state() {
+        Some(saved) => {
           let script = self.script()
           try {
             let runner = self.resume_runner_from_json(
-              script, json, dialog_history,
+              script,
+              saved.director_json,
+              saved.dialog_history,
             )
             runner.sync_ui()
             self.runner = Some(runner)
@@ -171,17 +135,13 @@ fn[T : FromJson + ToJson] AppController::tick_settings(
             }
           }
         }
-        None => {
-          self.saved_dialog_history = None
-          self.enter_start_menu()
-        }
+        None => self.enter_start_menu()
       }
     }
     NewGame => {
       self.emit_ui_click_sfx()
       self.settings_menu.clear()
-      self.saved_director_json = None
-      self.saved_dialog_history = None
+      self.clear_saved_resume_state()
       self.start_menu_music_stop()
       let runner = self.make_runner(self.script(), (self.new_state)())
       self.runner = Some(runner)
@@ -196,8 +156,7 @@ fn[T : FromJson + ToJson] AppController::tick_settings(
       (self.event_hook)(MusicStopped)
       (self.event_hook)(SfxStopped)
       self.settings_menu.clear()
-      self.saved_director_json = None
-      self.saved_dialog_history = None
+      self.clear_saved_resume_state()
       self.runner = None
       self.enter_start_menu()
     }

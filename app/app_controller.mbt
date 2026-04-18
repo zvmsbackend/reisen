@@ -47,6 +47,12 @@ pub fn AppControllerError::message(self : AppControllerError) -> String {
 }
 
 ///|
+priv struct SavedResumeState {
+  director_json : String
+  dialog_history : Array[DialogLogEntry]
+}
+
+///|
 struct AppController[T] {
   script_factory : ScriptFactory[T]
   mut script : Script[T]?
@@ -88,8 +94,7 @@ struct AppController[T] {
   render_extension : RenderExtensionHook?
   event_hook : EventHook
   mut runner : GameRunner[T]?
-  mut saved_director_json : String?
-  mut saved_dialog_history : Array[DialogLogEntry]?
+  mut saved_resume_state : SavedResumeState?
   assets : &AssetStore
   audio : &AudioPort
 }
@@ -219,8 +224,7 @@ pub fn[T] AppController::new(
     render_extension,
     event_hook,
     runner: None,
-    saved_director_json: None,
-    saved_dialog_history: None,
+    saved_resume_state: None,
     gallery_replay_state_factories,
     assets,
     audio,
@@ -244,6 +248,53 @@ pub fn[T] AppController::new(
 
 ///|
 #cfg(target="js")
+async fn[T] AppController::load_script_from_factory(
+  self : AppController[T],
+) -> Script[T] raise AppControllerError {
+  (self.script_factory)() catch {
+    AssetStoreError::ResourceLoadFailed(message~) => {
+      self.loading_menu.clear()
+      raise ScriptLoadFailed(message="Asset resource load failed: \{message}")
+    }
+    error => {
+      self.loading_menu.clear()
+      raise ScriptLoadFailed(message="Unknown script factory error \{error}")
+    }
+  }
+}
+
+///|
+#cfg(target="native")
+fn[T] AppController::load_script_from_factory(
+  self : AppController[T],
+) -> Script[T] {
+  (self.script_factory)()
+}
+
+///|
+fn[T] AppController::validate_and_cache_script(
+  self : AppController[T],
+  script : Script[T],
+) -> Script[T] raise AppControllerError {
+  validate_script_assets(script, self.assets) catch {
+    MissingImageAsset(id~) => raise ScriptValidationMissingImage(id~)
+    MissingAudioAsset(id~) => raise ScriptValidationMissingAudio(id~)
+    MissingSaveSlot(slot~) => raise SaveSlotMissing(slot~)
+    InvalidSavePayload(raw~) =>
+      raise ScriptLoadFailed(message="Invalid save payload: \{raw}")
+    UnsupportedSavePayloadVersion(expected~, found~) =>
+      raise ScriptLoadFailed(
+        message="Unsupported save payload version: expected \{expected}, found \{found}",
+      )
+    LocalizationLoadFailed(message~) =>
+      raise ScriptLoadFailed(message="Localization preload failed: \{message}")
+  }
+  self.script = Some(script)
+  script
+}
+
+///|
+#cfg(target="js")
 async fn[T] AppController::script(
   self : AppController[T],
 ) -> Script[T] raise AppControllerError {
@@ -251,44 +302,9 @@ async fn[T] AppController::script(
     Some(script) => script
     None => {
       self.loading_menu.render(self.ui_strings.loading_text)
-      let script = (self.script_factory)() catch {
-        //PixiBindingError::ResourceLoadFailed(message~) => {
-        //  self.loading_menu.clear()
-        //  raise ScriptLoadFailed(
-        //    message="Pixi resource load failed: \{message}",
-        //  )
-        //}
-        AssetStoreError::ResourceLoadFailed(message~) => {
-          self.loading_menu.clear()
-          raise ScriptLoadFailed(
-            message="Asset resource load failed: \{message}",
-          )
-        }
-        error => {
-          self.loading_menu.clear()
-          raise ScriptLoadFailed(
-            message="Unknown script factory error \{error}",
-          )
-        }
-      }
+      let script = self.load_script_from_factory()
       self.loading_menu.clear()
-      validate_script_assets(script, self.assets) catch {
-        MissingImageAsset(id~) => raise ScriptValidationMissingImage(id~)
-        MissingAudioAsset(id~) => raise ScriptValidationMissingAudio(id~)
-        MissingSaveSlot(slot~) => raise SaveSlotMissing(slot~)
-        InvalidSavePayload(raw~) =>
-          raise ScriptLoadFailed(message="Invalid save payload: \{raw}")
-        UnsupportedSavePayloadVersion(expected~, found~) =>
-          raise ScriptLoadFailed(
-            message="Unsupported save payload version: expected \{expected}, found \{found}",
-          )
-        LocalizationLoadFailed(message~) =>
-          raise ScriptLoadFailed(
-            message="Localization preload failed: \{message}",
-          )
-      }
-      self.script = Some(script)
-      script
+      self.validate_and_cache_script(script)
     }
   }
 }
@@ -938,8 +954,7 @@ fn[T : ToJson] AppController::handle_in_game_pending_action(
 ) -> Unit {
   match action {
     "settings" => {
-      self.saved_director_json = Some(runner.director().save_json())
-      self.saved_dialog_history = Some(runner.dialog_history())
+      self.set_saved_resume_state(runner)
       runner.clear_ui()
       self.settings_menu.set_context(FromMidgame)
       self.settings_menu.set_view_mode(Settings)
@@ -955,8 +970,7 @@ fn[T : ToJson] AppController::handle_in_game_pending_action(
         save_store=self.save_store,
       )
     "save" => {
-      self.saved_director_json = Some(runner.director().save_json())
-      self.saved_dialog_history = Some(runner.dialog_history())
+      self.set_saved_resume_state(runner)
       runner.clear_ui()
       self.settings_menu.set_context(FromMidgame)
       self.settings_menu.set_view_mode(SaveList)
@@ -982,15 +996,14 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
     Back => {
       self.emit_ui_click_sfx()
       self.settings_menu.clear()
-      match self.saved_director_json {
-        Some(json) => {
-          self.saved_director_json = None
-          let dialog_history = self.saved_dialog_history.unwrap_or([])
-          self.saved_dialog_history = None
+      match self.take_saved_resume_state() {
+        Some(saved) => {
           let script = self.script()
           try {
             let runner = self.resume_runner_from_json(
-              script, json, dialog_history,
+              script,
+              saved.director_json,
+              saved.dialog_history,
             )
             runner.sync_ui()
             self.runner = Some(runner)
@@ -1002,17 +1015,13 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
             }
           }
         }
-        None => {
-          self.saved_dialog_history = None
-          self.enter_start_menu()
-        }
+        None => self.enter_start_menu()
       }
     }
     NewGame => {
       self.emit_ui_click_sfx()
       self.settings_menu.clear()
-      self.saved_director_json = None
-      self.saved_dialog_history = None
+      self.clear_saved_resume_state()
       self.start_menu_music_stop()
       let runner = self.make_runner(self.script(), (self.new_state)())
       self.runner = Some(runner)
@@ -1027,8 +1036,7 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
       (self.event_hook)(MusicStopped)
       (self.event_hook)(SfxStopped)
       self.settings_menu.clear()
-      self.saved_director_json = None
-      self.saved_dialog_history = None
+      self.clear_saved_resume_state()
       self.runner = None
       self.enter_start_menu()
     }
@@ -1085,6 +1093,31 @@ async fn[T : FromJson + ToJson] AppController::tick_settings(
     NoAction => ()
   }
   true
+}
+
+///|
+fn[T : ToJson] AppController::set_saved_resume_state(
+  self : AppController[T],
+  runner : GameRunner[T],
+) -> Unit {
+  self.saved_resume_state = Some({
+    director_json: runner.director().save_json(),
+    dialog_history: runner.dialog_history(),
+  })
+}
+
+///|
+fn[T] AppController::take_saved_resume_state(
+  self : AppController[T],
+) -> SavedResumeState? {
+  let state = self.saved_resume_state
+  self.saved_resume_state = None
+  state
+}
+
+///|
+fn[T] AppController::clear_saved_resume_state(self : AppController[T]) -> Unit {
+  self.saved_resume_state = None
 }
 
 ///|
