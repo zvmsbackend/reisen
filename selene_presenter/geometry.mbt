@@ -12,8 +12,8 @@ fn background_rect(
   viewport_h : Double,
 ) -> @selene_math.Rect {
   {
-    position: @selene_math.Vec2D(0.0, 0.0),
-    size: @selene_math.Vec2D(viewport_w, viewport_h),
+    position: @selene_math.Vec2(0.0, 0.0),
+    size: @selene_math.Vec2(viewport_w, viewport_h),
   }
 }
 
@@ -42,10 +42,7 @@ fn figure_rect(
     Custom(_, cy) => viewport_h * cy - height / 2.0
     _ => y
   }
-  {
-    position: @selene_math.Vec2D(x, y),
-    size: @selene_math.Vec2D(width, height),
-  }
+  { position: @selene_math.Vec2(x, y), size: @selene_math.Vec2(width, height) }
 }
 
 ///|
@@ -56,6 +53,9 @@ fn image_command(
   transform : @selene_math.Transform,
 ) -> @selene_render2d_types.DrawCommand2D {
   Image({
+    uv_transform: @selene_math.Transform::identity(),
+    alpha_mode: @selene_render.AlphaMode2D::Blend,
+    blend_mode: @selene_render.BlendMode2D::Alpha,
     image: handle,
     destination,
     source: None,
@@ -71,7 +71,14 @@ fn placeholder_rect_command(
   color : @selene_render.Color,
   transform : @selene_math.Transform,
 ) -> @selene_render2d_types.DrawCommand2D {
-  Rect({ rect, transform, fill_color: color, stroke_color: None })
+  Rect({
+    rect,
+    transform,
+    alpha_mode: @selene_render.AlphaMode2D::Blend,
+    blend_mode: @selene_render.BlendMode2D::Alpha,
+    fill_color: color,
+    stroke_color: None,
+  })
 }
 
 ///|

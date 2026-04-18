@@ -559,17 +559,20 @@ pub fn SeleneStartMenu::render_commands(
       let commands : Array[@selene_render2d_types.DrawCommand2D] = []
       commands.append([
         Rect({
+          alpha_mode: @selene_render.AlphaMode2D::Blend,
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           rect: {
-            position: Vec2D(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 60.0),
-            size: Vec2D(400.0, 120.0),
+            position: Vec2(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 60.0),
+            size: Vec2(400.0, 120.0),
           },
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 20, g: 28, b: 40, a: 0.9 },
           stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
         }),
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: self.ui_strings.start_gate_click_to_start,
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: gate_title_style.font,
@@ -609,17 +612,20 @@ pub fn SeleneStartMenu::render_commands(
       }
       commands.append([
         Rect({
+          alpha_mode: @selene_render.AlphaMode2D::Blend,
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           rect: {
-            position: Vec2D(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 150.0),
-            size: Vec2D(400.0, 300.0),
+            position: Vec2(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 150.0),
+            size: Vec2(400.0, 300.0),
           },
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 20, g: 28, b: 40, a: 0.9 },
           stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
         }),
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: self.ui_strings.start_locale_title,
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 120.0),
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 120.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: locale_title_style.font,
@@ -640,8 +646,9 @@ pub fn SeleneStartMenu::render_commands(
       if self.locale_options.is_empty() {
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: "No language options",
-            position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 10.0),
+            position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 10.0),
             transform: @selene_math.Transform::identity(),
             style: {
               font: locale_empty_style.font,
@@ -666,9 +673,11 @@ pub fn SeleneStartMenu::render_commands(
           if is_selected {
             commands.push(
               Rect({
+                alpha_mode: @selene_render.AlphaMode2D::Blend,
+                blend_mode: @selene_render.BlendMode2D::Alpha,
                 rect: {
-                  position: Vec2D(viewport_w / 2.0 - 160.0, y - 16.0),
-                  size: Vec2D(320.0, 34.0),
+                  position: Vec2(viewport_w / 2.0 - 160.0, y - 16.0),
+                  size: Vec2(320.0, 34.0),
                 },
                 transform: @selene_math.Transform::identity(),
                 fill_color: { r: 70, g: 110, b: 160, a: 0.45 },
@@ -678,8 +687,9 @@ pub fn SeleneStartMenu::render_commands(
           }
           commands.push(
             Text({
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               text: option.0,
-              position: Vec2D(viewport_w / 2.0, y),
+              position: Vec2(viewport_w / 2.0, y),
               transform: @selene_math.Transform::identity(),
               style: {
                 font: if is_selected {
@@ -722,8 +732,9 @@ pub fn SeleneStartMenu::render_commands(
       }
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: "Space: Next  Enter: Confirm",
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 120.0),
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 120.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: locale_hint_style.font,
@@ -753,9 +764,11 @@ pub fn SeleneStartMenu::render_commands(
       }
       commands.push(
         Rect({
+          alpha_mode: @selene_render.AlphaMode2D::Blend,
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           rect: {
-            position: Vec2D(viewport_w / 2.0 - 250.0, viewport_h / 2.0 - 200.0),
-            size: Vec2D(500.0, 400.0),
+            position: Vec2(viewport_w / 2.0 - 250.0, viewport_h / 2.0 - 200.0),
+            size: Vec2(500.0, 400.0),
           },
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 20, g: 28, b: 40, a: 0.9 },
@@ -769,9 +782,11 @@ pub fn SeleneStartMenu::render_commands(
         if is_selected {
           commands.push(
             Rect({
+              alpha_mode: @selene_render.AlphaMode2D::Blend,
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               rect: {
-                position: Vec2D(viewport_w / 2.0 - 180.0, y - 18.0),
-                size: Vec2D(360.0, 36.0),
+                position: Vec2(viewport_w / 2.0 - 180.0, y - 18.0),
+                size: Vec2(360.0, 36.0),
               },
               transform: @selene_math.Transform::identity(),
               fill_color: { r: 70, g: 110, b: 160, a: 0.45 },
@@ -781,8 +796,9 @@ pub fn SeleneStartMenu::render_commands(
         }
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: row.0,
-            position: Vec2D(viewport_w / 2.0, y),
+            position: Vec2(viewport_w / 2.0, y),
             transform: @selene_math.Transform::identity(),
             style: {
               font: start_item_style.font,
@@ -815,8 +831,9 @@ pub fn SeleneStartMenu::render_commands(
       }
       commands.push(
         Text({
-          text: "[↑/↓] Select  [Enter/Space] Confirm",
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 160.0),
+          blend_mode: @selene_render.BlendMode2D::Alpha,
+          text: "[Up/Down] Select  [Enter/Space] Confirm",
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 160.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: start_item_style.font,

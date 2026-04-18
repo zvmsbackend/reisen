@@ -45,7 +45,11 @@ pub fn run_native_loop_with_selene(
     },
     {
       startup: on_startup,
-      render_loop: on_render,
+      render_loop: dt => {
+        on_render(dt)
+
+        @platform_audio.tick()
+      },
       game_loop: raw_delta => {
         let input_snapshot = @selene_platform_input.poll_input()
         @selene_inputs.apply_input_snapshot(input_snapshot)

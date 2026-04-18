@@ -887,11 +887,13 @@ pub fn SeleneSettingsMenu::render_commands(
     None => ()
   }
   let panel_rect : @selene_math.Rect = {
-    position: Vec2D(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 250.0),
-    size: Vec2D(600.0, 500.0),
+    position: Vec2(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 250.0),
+    size: Vec2(600.0, 500.0),
   }
   commands.push(
     Rect({
+      alpha_mode: @selene_render.AlphaMode2D::Blend,
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       rect: panel_rect,
       transform: @selene_math.Transform::identity(),
       fill_color: { r: 20, g: 28, b: 40, a: 0.92 },
@@ -906,8 +908,9 @@ pub fn SeleneSettingsMenu::render_commands(
   }
   commands.push(
     Text({
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       text: title,
-      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 210.0),
+      position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 210.0),
       transform: @selene_math.Transform::identity(),
       style: {
         font: title_style.font,
@@ -959,9 +962,11 @@ pub fn SeleneSettingsMenu::render_commands(
         if selected {
           commands.push(
             Rect({
+              alpha_mode: @selene_render.AlphaMode2D::Blend,
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               rect: {
-                position: Vec2D(viewport_w / 2.0 - 286.0, row_y - 4.0),
-                size: Vec2D(572.0, 30.0),
+                position: Vec2(viewport_w / 2.0 - 286.0, row_y - 4.0),
+                size: Vec2(572.0, 30.0),
               },
               transform: @selene_math.Transform::identity(),
               fill_color: { r: 70, g: 110, b: 160, a: 0.35 },
@@ -971,8 +976,9 @@ pub fn SeleneSettingsMenu::render_commands(
         }
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: settings_rows[i].0,
-            position: Vec2D(viewport_w / 2.0 - 275.0, row_y),
+            position: Vec2(viewport_w / 2.0 - 275.0, row_y),
             transform: @selene_math.Transform::identity(),
             style: {
               font: row_style.font,
@@ -991,8 +997,9 @@ pub fn SeleneSettingsMenu::render_commands(
         )
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: settings_rows[i].1,
-            position: Vec2D(viewport_w / 2.0 + 275.0, row_y),
+            position: Vec2(viewport_w / 2.0 + 275.0, row_y),
             transform: @selene_math.Transform::identity(),
             style: {
               font: row_style.font,
@@ -1048,9 +1055,11 @@ pub fn SeleneSettingsMenu::render_commands(
         if selected {
           commands.push(
             Rect({
+              alpha_mode: @selene_render.AlphaMode2D::Blend,
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               rect: {
-                position: Vec2D(viewport_w / 2.0 - 286.0, action_y - 4.0),
-                size: Vec2D(572.0, 30.0),
+                position: Vec2(viewport_w / 2.0 - 286.0, action_y - 4.0),
+                size: Vec2(572.0, 30.0),
               },
               transform: @selene_math.Transform::identity(),
               fill_color: { r: 70, g: 110, b: 160, a: 0.35 },
@@ -1060,8 +1069,9 @@ pub fn SeleneSettingsMenu::render_commands(
         }
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: action_labels[i],
-            position: Vec2D(viewport_w / 2.0 - 275.0, action_y),
+            position: Vec2(viewport_w / 2.0 - 275.0, action_y),
             transform: @selene_math.Transform::identity(),
             style: {
               font: row_style.font,
@@ -1083,8 +1093,9 @@ pub fn SeleneSettingsMenu::render_commands(
 
       commands.push(
         Text({
-          text: "[↑/↓] Select  [←/→] Adjust  [Enter/Space] Confirm  [Esc] Back",
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 210.0),
+          blend_mode: @selene_render.BlendMode2D::Alpha,
+          text: "[Up/Down] Select  [Left/Right] Adjust  [Enter/Space] Confirm  [Esc] Back",
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 210.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: hint_style.font,
@@ -1108,12 +1119,11 @@ pub fn SeleneSettingsMenu::render_commands(
       if selected_tab {
         commands.push(
           Rect({
+            alpha_mode: @selene_render.AlphaMode2D::Blend,
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             rect: {
-              position: Vec2D(
-                viewport_w / 2.0 - 286.0,
-                viewport_h / 2.0 - 154.0,
-              ),
-              size: Vec2D(572.0, 30.0),
+              position: Vec2(viewport_w / 2.0 - 286.0, viewport_h / 2.0 - 154.0),
+              size: Vec2(572.0, 30.0),
             },
             transform: @selene_math.Transform::identity(),
             fill_color: { r: 70, g: 110, b: 160, a: 0.35 },
@@ -1123,8 +1133,9 @@ pub fn SeleneSettingsMenu::render_commands(
       }
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: title_text,
-          position: Vec2D(viewport_w / 2.0 - 275.0, viewport_h / 2.0 - 150.0),
+          position: Vec2(viewport_w / 2.0 - 275.0, viewport_h / 2.0 - 150.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: row_style.font,
@@ -1149,9 +1160,11 @@ pub fn SeleneSettingsMenu::render_commands(
         if selected {
           commands.push(
             Rect({
+              alpha_mode: @selene_render.AlphaMode2D::Blend,
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               rect: {
-                position: Vec2D(viewport_w / 2.0 - 286.0, slot_y - 4.0),
-                size: Vec2D(572.0, 46.0),
+                position: Vec2(viewport_w / 2.0 - 286.0, slot_y - 4.0),
+                size: Vec2(572.0, 46.0),
               },
               transform: @selene_math.Transform::identity(),
               fill_color: { r: 70, g: 110, b: 160, a: 0.35 },
@@ -1161,12 +1174,13 @@ pub fn SeleneSettingsMenu::render_commands(
         }
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: if has_existing {
               "\{slot} | \{title}"
             } else {
               "\{slot} | \{self.ui_strings.settings_slot_empty}"
             },
-            position: Vec2D(viewport_w / 2.0 - 275.0, slot_y),
+            position: Vec2(viewport_w / 2.0 - 275.0, slot_y),
             transform: @selene_math.Transform::identity(),
             style: {
               font: row_style.font,
@@ -1186,8 +1200,9 @@ pub fn SeleneSettingsMenu::render_commands(
         if preview != "" {
           commands.push(
             Text({
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               text: preview,
-              position: Vec2D(viewport_w / 2.0 - 260.0, slot_y + 22.0),
+              position: Vec2(viewport_w / 2.0 - 260.0, slot_y + 22.0),
               transform: @selene_math.Transform::identity(),
               style: {
                 font: hint_style.font,
@@ -1212,9 +1227,11 @@ pub fn SeleneSettingsMenu::render_commands(
       if nav_selected {
         commands.push(
           Rect({
+            alpha_mode: @selene_render.AlphaMode2D::Blend,
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             rect: {
-              position: Vec2D(viewport_w / 2.0 - 286.0, slot_y - 4.0),
-              size: Vec2D(572.0, 30.0),
+              position: Vec2(viewport_w / 2.0 - 286.0, slot_y - 4.0),
+              size: Vec2(572.0, 30.0),
             },
             transform: @selene_math.Transform::identity(),
             fill_color: { r: 70, g: 110, b: 160, a: 0.35 },
@@ -1224,8 +1241,9 @@ pub fn SeleneSettingsMenu::render_commands(
       }
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: "\{self.ui_strings.settings_page_prefix}: \{self.slot_page + 1}   \{self.ui_strings.settings_nav_prev}/\{self.ui_strings.settings_nav_next}",
-          position: Vec2D(viewport_w / 2.0 - 275.0, slot_y),
+          position: Vec2(viewport_w / 2.0 - 275.0, slot_y),
           transform: @selene_math.Transform::identity(),
           style: {
             font: row_style.font,
@@ -1248,9 +1266,11 @@ pub fn SeleneSettingsMenu::render_commands(
       if back_selected {
         commands.push(
           Rect({
+            alpha_mode: @selene_render.AlphaMode2D::Blend,
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             rect: {
-              position: Vec2D(viewport_w / 2.0 - 286.0, slot_y - 4.0),
-              size: Vec2D(572.0, 30.0),
+              position: Vec2(viewport_w / 2.0 - 286.0, slot_y - 4.0),
+              size: Vec2(572.0, 30.0),
             },
             transform: @selene_math.Transform::identity(),
             fill_color: { r: 70, g: 110, b: 160, a: 0.35 },
@@ -1260,8 +1280,9 @@ pub fn SeleneSettingsMenu::render_commands(
       }
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: self.ui_strings.settings_back,
-          position: Vec2D(viewport_w / 2.0 - 275.0, slot_y),
+          position: Vec2(viewport_w / 2.0 - 275.0, slot_y),
           transform: @selene_math.Transform::identity(),
           style: {
             font: placeholder_style.font,
@@ -1280,8 +1301,9 @@ pub fn SeleneSettingsMenu::render_commands(
       )
       commands.push(
         Text({
-          text: "[↑/↓] Select  [←/→] Tab/Page  [Enter/Space] Confirm  [Esc] Back",
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 210.0),
+          blend_mode: @selene_render.BlendMode2D::Alpha,
+          text: "[Up/Down] Select  [Left/Right] Tab/Page  [Enter/Space] Confirm  [Esc] Back",
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 210.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: hint_style.font,

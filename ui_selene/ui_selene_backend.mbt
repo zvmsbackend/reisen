@@ -536,8 +536,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
         return []
       }
       let panel_rect : @selene_math.Rect = {
-        position: @selene_math.Vec2D(28.0, viewport_h - 236.0),
-        size: @selene_math.Vec2D(viewport_w - 56.0, 208.0),
+        position: @selene_math.Vec2(28.0, viewport_h - 236.0),
+        size: @selene_math.Vec2(viewport_w - 56.0, 208.0),
       }
       let text_width = viewport_w - 96.0
       let speaker_draw_style : @selene_render2d_types.TextStyle2D = {
@@ -579,6 +579,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
       }
       let commands : Array[@selene_render2d_types.DrawCommand2D] = [
         Rect({
+          alpha_mode: @selene_render.AlphaMode2D::Blend,
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           rect: panel_rect,
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 10, g: 14, b: 20, a: 0.82 },
@@ -590,8 +592,9 @@ pub fn SeleneUiBackend::ui_overlay_commands(
         for line in speaker_lines {
           commands.push(
             Text({
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               text: line,
-              position: @selene_math.Vec2D(48.0, y),
+              position: @selene_math.Vec2(48.0, y),
               transform: @selene_math.Transform::identity(),
               style: speaker_draw_style,
             }),
@@ -603,8 +606,9 @@ pub fn SeleneUiBackend::ui_overlay_commands(
       for line in lines {
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: line,
-            position: @selene_math.Vec2D(48.0, y),
+            position: @selene_math.Vec2(48.0, y),
             transform: @selene_math.Transform::identity(),
             style: body_draw_style,
           }),

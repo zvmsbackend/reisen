@@ -66,6 +66,29 @@ fn SelenePresenter::build_world_commands(
 }
 
 ///|
+fn SelenePresenter::build_screen_pass(
+  self : SelenePresenter,
+  world_commands : Array[@selene_render2d_types.DrawCommand2D],
+  ui_commands : Array[@selene_render2d_types.DrawCommand2D],
+) -> @selene_render2d_types.RenderPass2D {
+  {
+    camera_entity_id: None,
+    order: 0,
+    viewport: {
+      position: @selene_math.Vec2(0.0, 0.0),
+      size: @selene_math.Vec2(self.config.viewport_w, self.config.viewport_h),
+    },
+    load_op: @selene_render2d_types.RenderPassLoadOp2D::Clear,
+    clear_color: { r: 0U, g: 0U, b: 0U, a: 1.0 },
+    target: @selene_render2d_types.RenderPassTarget2D::Screen,
+    world_commands,
+    ui_commands,
+    world_batches: [],
+    ui_batches: [],
+  }
+}
+
+///|
 fn SelenePresenter::submit_frame(
   self : SelenePresenter,
   snapshot : CoreRenderSnapshot,
@@ -76,7 +99,9 @@ fn SelenePresenter::submit_frame(
     Some(provider) => provider()
     None => []
   }
+  let screen_pass = self.build_screen_pass(world_commands, ui_commands)
   let frame2d : @selene_render2d_types.RenderFrame2D = {
+    passes: [screen_pass],
     world_commands,
     ui_commands,
   }
@@ -90,7 +115,12 @@ pub fn SelenePresenter::submit_overlay_frame(self : SelenePresenter) -> Unit {
     Some(provider) => provider()
     None => []
   }
+  let screen_pass = self.build_screen_pass(
+    self.last_world_commands,
+    ui_commands,
+  )
   let frame2d : @selene_render2d_types.RenderFrame2D = {
+    passes: [screen_pass],
     world_commands: self.last_world_commands,
     ui_commands,
   }

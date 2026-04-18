@@ -10,10 +10,13 @@ fn fullscreen_image_command(
   let image = @selene_asset.load_image(path)
   Some(
     Image({
+      uv_transform: @selene_math.Transform::identity(),
+      alpha_mode: @selene_render.AlphaMode2D::Blend,
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       image,
       destination: {
-        position: Vec2D(0.0, 0.0),
-        size: Vec2D(viewport_w, viewport_h),
+        position: Vec2(0.0, 0.0),
+        size: Vec2(viewport_w, viewport_h),
       },
       source: None,
       transform: @selene_math.Transform::identity(),

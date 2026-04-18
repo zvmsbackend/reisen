@@ -5,8 +5,8 @@
     "sennenki/js-ffi": "0.4.2",
     "moonbitlang/async": "0.16.6",
     "sennenki/sexp": "0.1.0",
-    "Milky2018/selene": "0.30.0",
-    "Milky2018/selene_raylib": "0.30.0",
+    "Milky2018/selene": "0.32.4",
+    "Milky2018/selene_raylib": "0.32.4",
     "moonbitlang/x": "0.4.43"
   },
   "readme": "README.mbt.md",

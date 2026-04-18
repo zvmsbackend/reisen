@@ -227,8 +227,8 @@ fn gallery_prev_button_rect(
   viewport_h : Double,
 ) -> @selene_math.Rect {
   {
-    position: Vec2D(viewport_w / 2.0 - 240.0, viewport_h / 2.0 + 125.0),
-    size: Vec2D(110.0, 34.0),
+    position: Vec2(viewport_w / 2.0 - 240.0, viewport_h / 2.0 + 125.0),
+    size: Vec2(110.0, 34.0),
   }
 }
 
@@ -238,8 +238,8 @@ fn gallery_next_button_rect(
   viewport_h : Double,
 ) -> @selene_math.Rect {
   {
-    position: Vec2D(viewport_w / 2.0 + 130.0, viewport_h / 2.0 + 125.0),
-    size: Vec2D(110.0, 34.0),
+    position: Vec2(viewport_w / 2.0 + 130.0, viewport_h / 2.0 + 125.0),
+    size: Vec2(110.0, 34.0),
   }
 }
 
@@ -249,8 +249,8 @@ fn gallery_replay_button_rect(
   viewport_h : Double,
 ) -> @selene_math.Rect {
   {
-    position: Vec2D(viewport_w / 2.0 - 55.0, viewport_h / 2.0 + 125.0),
-    size: Vec2D(110.0, 34.0),
+    position: Vec2(viewport_w / 2.0 - 55.0, viewport_h / 2.0 + 125.0),
+    size: Vec2(110.0, 34.0),
   }
 }
 
@@ -260,8 +260,8 @@ fn gallery_close_button_rect(
   viewport_h : Double,
 ) -> @selene_math.Rect {
   {
-    position: Vec2D(viewport_w / 2.0 - 55.0, viewport_h / 2.0 + 165.0),
-    size: Vec2D(110.0, 30.0),
+    position: Vec2(viewport_w / 2.0 - 55.0, viewport_h / 2.0 + 165.0),
+    size: Vec2(110.0, 30.0),
   }
 }
 
@@ -551,17 +551,20 @@ pub fn SeleneGalleryMenu::render_commands(
   }
   commands.append([
     Rect({
+      alpha_mode: @selene_render.AlphaMode2D::Blend,
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       rect: {
-        position: Vec2D(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 200.0),
-        size: Vec2D(600.0, 400.0),
+        position: Vec2(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 200.0),
+        size: Vec2(600.0, 400.0),
       },
       transform: @selene_math.Transform::identity(),
       fill_color: { r: 20, g: 28, b: 40, a: 0.92 },
       stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
     }),
     Text({
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       text: self.ui_strings.start_menu_gallery,
-      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 160.0),
+      position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 160.0),
       transform: @selene_math.Transform::identity(),
       style: {
         font: title_style.font,
@@ -583,8 +586,9 @@ pub fn SeleneGalleryMenu::render_commands(
     Some(tile) => {
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: tile.title,
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 110.0),
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 110.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: body_style.font,
@@ -603,8 +607,9 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: tile.image_id,
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 70.0),
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 70.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: hint_style.font,
@@ -638,6 +643,8 @@ pub fn SeleneGalleryMenu::render_commands(
       let close_rect = gallery_close_button_rect(viewport_w, viewport_h)
       commands.push(
         Rect({
+          alpha_mode: @selene_render.AlphaMode2D::Blend,
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           rect: prev_rect,
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 52, g: 78, b: 116, a: 0.65 },
@@ -646,8 +653,9 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: self.ui_strings.gallery_prev,
-          position: Vec2D(
+          position: Vec2(
             prev_rect.position.0 + prev_rect.size.0 / 2.0,
             prev_rect.position.1 + 18.0,
           ),
@@ -664,6 +672,8 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Rect({
+          alpha_mode: @selene_render.AlphaMode2D::Blend,
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           rect: next_rect,
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 52, g: 78, b: 116, a: 0.65 },
@@ -672,8 +682,9 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: self.ui_strings.gallery_next,
-          position: Vec2D(
+          position: Vec2(
             next_rect.position.0 + next_rect.size.0 / 2.0,
             next_rect.position.1 + 18.0,
           ),
@@ -692,6 +703,8 @@ pub fn SeleneGalleryMenu::render_commands(
         Some(_) => {
           commands.push(
             Rect({
+              alpha_mode: @selene_render.AlphaMode2D::Blend,
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               rect: replay_rect,
               transform: @selene_math.Transform::identity(),
               fill_color: { r: 40, g: 104, b: 92, a: 0.7 },
@@ -700,8 +713,9 @@ pub fn SeleneGalleryMenu::render_commands(
           )
           commands.push(
             Text({
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               text: self.ui_strings.gallery_replay,
-              position: Vec2D(
+              position: Vec2(
                 replay_rect.position.0 + replay_rect.size.0 / 2.0,
                 replay_rect.position.1 + 18.0,
               ),
@@ -721,6 +735,8 @@ pub fn SeleneGalleryMenu::render_commands(
       }
       commands.push(
         Rect({
+          alpha_mode: @selene_render.AlphaMode2D::Blend,
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           rect: close_rect,
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 112, g: 62, b: 62, a: 0.72 },
@@ -729,8 +745,9 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: self.ui_strings.gallery_close,
-          position: Vec2D(
+          position: Vec2(
             close_rect.position.0 + close_rect.size.0 / 2.0,
             close_rect.position.1 + 16.0,
           ),
@@ -747,8 +764,9 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
+          blend_mode: @selene_render.BlendMode2D::Alpha,
           text: viewer_controls,
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 204.0),
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 204.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: hint_style.font,
@@ -770,8 +788,9 @@ pub fn SeleneGalleryMenu::render_commands(
       if tiles.is_empty() {
         commands.push(
           Text({
+            blend_mode: @selene_render.BlendMode2D::Alpha,
             text: self.ui_strings.gallery_locked,
-            position: Vec2D(viewport_w / 2.0, viewport_h / 2.0),
+            position: Vec2(viewport_w / 2.0, viewport_h / 2.0),
             transform: @selene_math.Transform::identity(),
             style: {
               font: body_style.font,
@@ -809,8 +828,9 @@ pub fn SeleneGalleryMenu::render_commands(
           let prefix = if selected { "> " } else { "  " }
           commands.push(
             Text({
+              blend_mode: @selene_render.BlendMode2D::Alpha,
               text: prefix + label,
-              position: Vec2D(left, top + row_h * i.to_double()),
+              position: Vec2(left, top + row_h * i.to_double()),
               transform: @selene_math.Transform::identity(),
               style: {
                 font: body_style.font,
@@ -847,9 +867,10 @@ pub fn SeleneGalleryMenu::render_commands(
       }
       commands.push(
         Text({
-          text: "↑↓←→ Move   Enter Open   Esc=" +
+          blend_mode: @selene_render.BlendMode2D::Alpha,
+          text: "[Arrows] Move   Enter Open   Esc=" +
           self.ui_strings.gallery_back,
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 140.0),
+          position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 140.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: hint_style.font,

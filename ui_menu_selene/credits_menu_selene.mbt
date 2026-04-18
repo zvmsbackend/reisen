@@ -155,17 +155,20 @@ pub fn SeleneCreditsMenu::render_commands(
   }
   commands.append([
     Rect({
+      alpha_mode: @selene_render.AlphaMode2D::Blend,
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       rect: {
-        position: Vec2D(viewport_w / 2.0 - 350.0, viewport_h / 2.0 - 280.0),
-        size: Vec2D(700.0, 560.0),
+        position: Vec2(viewport_w / 2.0 - 350.0, viewport_h / 2.0 - 280.0),
+        size: Vec2(700.0, 560.0),
       },
       transform: @selene_math.Transform::identity(),
       fill_color: { r: 20, g: 28, b: 40, a: 0.92 },
       stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
     }),
     Text({
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       text: "Credits",
-      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 240.0),
+      position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 240.0),
       transform: @selene_math.Transform::identity(),
       style: {
         font: title_style.font,
@@ -182,8 +185,9 @@ pub fn SeleneCreditsMenu::render_commands(
       },
     }),
     Text({
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       text: self.text[:(self.text.length() / 2).max(0)].to_string(),
-      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 - 160.0),
+      position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 160.0),
       transform: @selene_math.Transform::identity(),
       style: {
         font: body_style.font,
@@ -200,8 +204,9 @@ pub fn SeleneCreditsMenu::render_commands(
       },
     }),
     Text({
+      blend_mode: @selene_render.BlendMode2D::Alpha,
       text: "(Press ESC to return)",
-      position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 220.0),
+      position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 220.0),
       transform: @selene_math.Transform::identity(),
       style: {
         font: hint_style.font,
