@@ -125,7 +125,7 @@ pub fn[T] AppController::new(
   start_logo_duration_ms? : Int = 2000,
   core_render_sync? : RenderSyncHook = noop_core_render_sync,
   render_extension? : RenderExtensionHook,
-  event_hook? : EventHook = _ => (),
+  event_hook? : EventHook = audio.as_event_hook(),
   gallery_replay_state_factories? : ReplayStateFactories[T] = ReplayStateFactories::new(),
 ) -> AppController[T] {
   let normalized_start_logos = start_logo_urls.filter(logo => logo != "")
