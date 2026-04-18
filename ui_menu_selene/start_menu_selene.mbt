@@ -451,10 +451,6 @@ pub fn SeleneStartMenu::render_commands(
     Some("gate") => {
       let gate_title_style = self.text_theme.gate_title
       let commands : Array[@selene_render2d_types.DrawCommand2D] = []
-      match fullscreen_image_command(self.background, viewport_w, viewport_h) {
-        Some(background_cmd) => commands.push(background_cmd)
-        None => ()
-      }
       commands.append([
         Rect({
           rect: {

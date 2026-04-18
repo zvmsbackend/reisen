@@ -159,7 +159,8 @@ pub struct RenderState {
   effects : Map[String, Array[@core.EffectSpec]]
   live2d_motions : @deque.Deque[(String, String, Int?)]
   live2d_expressions : @deque.Deque[(String, String?)]
-  render_epoch : String
+  mut core_render_epoch : String
+  extension_render_epoch : String
 } derive(ToJson, @json.FromJson)
 
 // Type aliases

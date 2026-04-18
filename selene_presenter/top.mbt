@@ -95,6 +95,7 @@ struct SelenePresenter {
   warned_capabilities : Set[String]
   mut ui_overlay_provider : UiOverlayProvider?
   mut has_active_timed_effects : Bool
+  mut last_world_commands : Array[@selene_render2d_types.DrawCommand2D]
   mut last_submitted_epoch : String?
   mut force_submit : Bool
 }
@@ -114,6 +115,7 @@ pub fn SelenePresenter::new(
     warned_capabilities: Set::new(),
     ui_overlay_provider: None,
     has_active_timed_effects: false,
+    last_world_commands: [],
     last_submitted_epoch: None,
     force_submit: true,
   }

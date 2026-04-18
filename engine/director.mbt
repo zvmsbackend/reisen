@@ -37,7 +37,8 @@ pub struct RenderState {
   effects : Map[String, Array[EffectSpec]]
   live2d_motions : @deque.Deque[(String, String, Int?)]
   live2d_expressions : @deque.Deque[(String, String?)]
-  render_epoch : String
+  mut core_render_epoch : String
+  extension_render_epoch : String
 } derive(ToJson, FromJson)
 
 ///|
@@ -118,7 +119,8 @@ pub fn[T] Director::new(
       effects: {},
       live2d_motions: @deque.new(),
       live2d_expressions: @deque.new(),
-      render_epoch: gensym(prefix="render"),
+      core_render_epoch: gensym(prefix="render.core"),
+      extension_render_epoch: gensym(prefix="render.extension"),
     },
     gallery_ns,
     last_event_needs_click: false,
@@ -252,6 +254,21 @@ fn[T] Director::apply_event(self : Director[T], event : RuntimeEvent) -> Unit {
     WaitCustomEventStarted(_) => ()
     Custom(_, _) => ()
     ScriptEnded => ()
+  }
+
+  if event
+    is (BackgroundShown(_)
+    | BackgroundShownState(_)
+    | FigureShown(_, _)
+    | FigureHidden(_)
+    | DomFigureShown(_, _, _)
+    | DomFigureHidden(_)
+    | DomFigureInteractiveSet(_, _)
+    | Animated(_, _, _)
+    | EffectApplied(_, _)
+    | Live2dMotionPlayed(_, _, _)
+    | Live2dExpressionSet(_, _)) {
+    self.render.core_render_epoch = gensym(prefix="render.core")
   }
 }
 
@@ -506,7 +523,7 @@ pub fn[T] Director::core_render_snapshot(
     figures: self.render.figures,
     music: self.render.music,
     last_sfx: self.render.last_sfx,
-    render_epoch: self.render.render_epoch,
+    render_epoch: self.render.core_render_epoch,
   }
 }
 
@@ -537,7 +554,7 @@ pub fn[T] Director::render_extension_view(
     }
   }
   {
-    render_epoch: self.render.render_epoch,
+    render_epoch: self.render.extension_render_epoch,
     background_state: self.render.background,
     figure_entries: figures,
     effects_by_id: self.render.effects,
@@ -634,7 +651,7 @@ pub fn[T] Director::live2d_expressions(
 
 ///|
 pub fn[T] Director::render_epoch(self : Director[T]) -> String {
-  self.render.render_epoch
+  self.render.core_render_epoch
 }
 
 ///|

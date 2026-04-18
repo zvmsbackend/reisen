@@ -70,12 +70,14 @@ fn SelenePresenter::submit_frame(
   self : SelenePresenter,
   snapshot : CoreRenderSnapshot,
 ) -> Unit {
+  let world_commands = self.build_world_commands(snapshot)
+  self.last_world_commands = world_commands
   let ui_commands = match self.ui_overlay_provider {
     Some(provider) => provider()
     None => []
   }
   let frame2d : @selene_render2d_types.RenderFrame2D = {
-    world_commands: self.build_world_commands(snapshot),
+    world_commands,
     ui_commands,
   }
   let frame = { ..@selene_render_pipeline.empty_render_frame(), frame2d, }
@@ -89,7 +91,7 @@ pub fn SelenePresenter::submit_overlay_frame(self : SelenePresenter) -> Unit {
     None => []
   }
   let frame2d : @selene_render2d_types.RenderFrame2D = {
-    world_commands: [],
+    world_commands: self.last_world_commands,
     ui_commands,
   }
   let frame = { ..@selene_render_pipeline.empty_render_frame(), frame2d, }
