@@ -106,6 +106,8 @@ pub impl Default for SeleneStartMenuTextTheme with default() {
 pub struct SeleneStartMenu {
   mut ui_strings : UiStrings
   text_theme : SeleneStartMenuTextTheme
+  mut background : String
+  mut logo_url : String
   mut save_ns : String
   mut save_store : &@storage.SaveSlotStore
   mut show_credits : Bool
@@ -131,6 +133,8 @@ pub fn SeleneStartMenu::new(
   {
     ui_strings,
     text_theme,
+    background: "",
+    logo_url: "",
     save_ns: "global",
     save_store: @storage.default_save_slot_storage(),
     show_credits: false,
@@ -292,7 +296,8 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_gate_action(self) {
 }
 
 ///|
-pub impl @ui_menu.StartMenu for SeleneStartMenu with render_logo(self, _, _) {
+pub impl @ui_menu.StartMenu for SeleneStartMenu with render_logo(self, url, _) {
+  self.logo_url = url
   self.visible_mode = Some("logo")
 }
 
@@ -428,6 +433,14 @@ pub fn SeleneStartMenu::set_show_credits(
 }
 
 ///|
+pub fn SeleneStartMenu::set_background(
+  self : SeleneStartMenu,
+  background : String,
+) -> Unit {
+  self.background = background
+}
+
+///|
 pub fn SeleneStartMenu::render_commands(
   self : SeleneStartMenu,
   viewport_w? : Double = 1280.0,
@@ -437,7 +450,12 @@ pub fn SeleneStartMenu::render_commands(
     None => []
     Some("gate") => {
       let gate_title_style = self.text_theme.gate_title
-      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+      match fullscreen_image_command(self.background, viewport_w, viewport_h) {
+        Some(background_cmd) => commands.push(background_cmd)
+        None => ()
+      }
+      commands.append([
         Rect({
           rect: {
             position: Vec2D(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 60.0),
@@ -465,17 +483,29 @@ pub fn SeleneStartMenu::render_commands(
             baseline: Center,
           },
         }),
-      ]
+      ])
       commands
     }
-    Some("logo") => []
+    Some("logo") => {
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+      match fullscreen_image_command(self.logo_url, viewport_w, viewport_h) {
+        Some(logo_cmd) => commands.push(logo_cmd)
+        None => ()
+      }
+      commands
+    }
     Some("locale") => {
       let locale_title_style = self.text_theme.locale_title
       let locale_empty_style = self.text_theme.locale_empty
       let locale_selected_style = self.text_theme.locale_option_selected
       let locale_normal_style = self.text_theme.locale_option_normal
       let locale_hint_style = self.text_theme.locale_hint
-      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+      match fullscreen_image_command(self.background, viewport_w, viewport_h) {
+        Some(background_cmd) => commands.push(background_cmd)
+        None => ()
+      }
+      commands.append([
         Rect({
           rect: {
             position: Vec2D(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 150.0),
@@ -503,7 +533,7 @@ pub fn SeleneStartMenu::render_commands(
             baseline: Center,
           },
         }),
-      ]
+      ])
       self.normalize_locale_selection()
       if self.locale_options.is_empty() {
         commands.push(
@@ -614,7 +644,12 @@ pub fn SeleneStartMenu::render_commands(
       let start_item_style = self.text_theme.start_item
       let rows = self.menu_rows()
       self.normalize_start_selection()
-      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+      let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+      match fullscreen_image_command(self.background, viewport_w, viewport_h) {
+        Some(background_cmd) => commands.push(background_cmd)
+        None => ()
+      }
+      commands.push(
         Rect({
           rect: {
             position: Vec2D(viewport_w / 2.0 - 250.0, viewport_h / 2.0 - 200.0),
@@ -624,7 +659,7 @@ pub fn SeleneStartMenu::render_commands(
           fill_color: { r: 20, g: 28, b: 40, a: 0.9 },
           stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
         }),
-      ]
+      )
       let mut y = viewport_h / 2.0 - 160.0
       for i = 0; i < rows.length(); i = i + 1 {
         let row = rows[i]

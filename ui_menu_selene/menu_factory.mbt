@@ -229,7 +229,7 @@ pub impl @ui_menu.MenuFactory for SeleneMenuFactory with create_start_menu(
   self.start_menu.set_save_store(save_store)
   self.start_menu.set_save_namespace(self.save_namespace)
   self.start_menu.set_show_credits(show_credits)
-  ignore(background)
+  self.start_menu.set_background(background)
   self.start_menu
 }
 
@@ -238,7 +238,7 @@ pub impl @ui_menu.MenuFactory for SeleneMenuFactory with create_gallery_menu(
   self,
   background~,
 ) {
-  ignore(background)
+  self.gallery_menu.set_background(background)
   self.gallery_menu
 }
 
@@ -261,7 +261,7 @@ pub impl @ui_menu.MenuFactory for SeleneMenuFactory with create_credits_menu(
   self,
   background~,
 ) {
-  ignore(background)
+  self.credits_menu.set_background(background)
   self.credits_menu
 }
 

@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/x/fs" @x_fs,
   "sennenki/reisen/assets",
   "sennenki/reisen/util",
   "Milky2018/selene/asset" @selene_asset,

@@ -44,6 +44,7 @@ pub struct SeleneGalleryMenu {
   mut ui_strings : UiStrings
   text_theme : SeleneGalleryMenuTextTheme
   show_locked : Bool
+  mut background : String
   mut pending_action : @ui_menu.GalleryAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
@@ -71,6 +72,7 @@ pub fn SeleneGalleryMenu::new(
     ui_strings,
     text_theme,
     show_locked,
+    background: "",
     pending_action: NoAction,
     script_locale_json: None,
     script_default_locale_json: None,
@@ -293,6 +295,14 @@ pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu with set_script_localization
 }
 
 ///|
+pub fn SeleneGalleryMenu::set_background(
+  self : SeleneGalleryMenu,
+  background : String,
+) -> Unit {
+  self.background = background
+}
+
+///|
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu with render(self) {
   self.visible = true
   self.normalize_selection()
@@ -336,7 +346,12 @@ pub fn SeleneGalleryMenu::render_commands(
   let title_style = self.text_theme.title
   let body_style = self.text_theme.body
   let hint_style = self.text_theme.hint
-  let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+  let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+  match fullscreen_image_command(self.background, viewport_w, viewport_h) {
+    Some(background_cmd) => commands.push(background_cmd)
+    None => ()
+  }
+  commands.append([
     Rect({
       rect: {
         position: Vec2D(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 200.0),
@@ -364,7 +379,7 @@ pub fn SeleneGalleryMenu::render_commands(
         baseline: Top,
       },
     }),
-  ]
+  ])
 
   match active_tile {
     Some(tile) => {

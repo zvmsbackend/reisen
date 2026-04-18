@@ -13,6 +13,18 @@ pub fn NativeAssetStore::new() -> NativeAssetStore {
 }
 
 ///|
+fn resolve_image_path(path : String) -> String {
+  if @x_fs.path_exists(path) {
+    return path
+  }
+  let public_path = "public/\{path}"
+  if @x_fs.path_exists(public_path) {
+    return public_path
+  }
+  path
+}
+
+///|
 fn NativeAssetStore::load_image_handle(
   self : NativeAssetStore,
   id : String,
@@ -21,7 +33,9 @@ fn NativeAssetStore::load_image_handle(
   match self.image_handles.get(id) {
     Some(handle) => handle
     None => {
-      let handle = @selene_asset.load_image(path)
+      let resolved_path = resolve_image_path(path)
+      self.asset_paths.set(id, resolved_path)
+      let handle = @selene_asset.load_image(resolved_path)
       self.image_handles.set(id, handle)
       handle
     }

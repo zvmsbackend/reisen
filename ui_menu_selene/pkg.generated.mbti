@@ -18,6 +18,7 @@ import {
 pub struct SeleneCreditsMenu {
   mut ui_strings : @ui_game.UiStrings
   text_theme : SeleneCreditsMenuTextTheme
+  mut background : String
   mut pending_action : @ui_menu.CreditsAction
   mut text : String
   mut last_escape_down : Bool
@@ -26,6 +27,7 @@ pub struct SeleneCreditsMenu {
 pub fn SeleneCreditsMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneCreditsMenuTextTheme) -> Self
 pub fn SeleneCreditsMenu::push_back(Self) -> Unit
 pub fn SeleneCreditsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+pub fn SeleneCreditsMenu::set_background(Self, String) -> Unit
 pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu
 
 pub struct SeleneCreditsMenuTextTheme {
@@ -40,6 +42,7 @@ pub struct SeleneGalleryMenu {
   mut ui_strings : @ui_game.UiStrings
   text_theme : SeleneGalleryMenuTextTheme
   show_locked : Bool
+  mut background : String
   mut pending_action : @ui_menu.GalleryAction
   mut script_locale_json : String?
   mut script_default_locale_json : String?
@@ -57,6 +60,7 @@ pub struct SeleneGalleryMenu {
 pub fn SeleneGalleryMenu::new(save_namespace? : String, ui_strings? : @ui_game.UiStrings, show_locked? : Bool, text_theme? : SeleneGalleryMenuTextTheme) -> Self
 pub fn SeleneGalleryMenu::push_action(Self, @ui_menu.GalleryAction) -> Unit
 pub fn SeleneGalleryMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+pub fn SeleneGalleryMenu::set_background(Self, String) -> Unit
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu
 
 pub struct SeleneGalleryMenuTextTheme {
@@ -163,6 +167,8 @@ pub impl Default for SeleneSettingsMenuTextTheme
 pub struct SeleneStartMenu {
   mut ui_strings : @ui_game.UiStrings
   text_theme : SeleneStartMenuTextTheme
+  mut background : String
+  mut logo_url : String
   mut save_ns : String
   mut save_store : &@storage.SaveSlotStore
   mut show_credits : Bool
@@ -185,6 +191,7 @@ pub fn SeleneStartMenu::push_gate_action(Self, @ui_menu.StartGateAction) -> Unit
 pub fn SeleneStartMenu::push_locale_code(Self, String) -> Unit
 pub fn SeleneStartMenu::push_logo_done(Self) -> Unit
 pub fn SeleneStartMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+pub fn SeleneStartMenu::set_background(Self, String) -> Unit
 pub fn SeleneStartMenu::set_save_namespace(Self, String) -> Unit
 pub fn SeleneStartMenu::set_save_store(Self, &@storage.SaveSlotStore) -> Unit
 pub fn SeleneStartMenu::set_show_credits(Self, Bool) -> Unit

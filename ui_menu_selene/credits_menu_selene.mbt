@@ -42,6 +42,7 @@ pub impl Default for SeleneCreditsMenuTextTheme with default() {
 pub struct SeleneCreditsMenu {
   mut ui_strings : UiStrings
   text_theme : SeleneCreditsMenuTextTheme
+  mut background : String
   mut pending_action : @ui_menu.CreditsAction
   mut text : String
   mut last_escape_down : Bool
@@ -56,6 +57,7 @@ pub fn SeleneCreditsMenu::new(
   {
     ui_strings,
     text_theme,
+    background: "",
     pending_action: NoAction,
     text: "",
     last_escape_down: false,
@@ -82,6 +84,14 @@ pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu with set_ui_strings(
   ui_strings,
 ) {
   self.ui_strings = ui_strings
+}
+
+///|
+pub fn SeleneCreditsMenu::set_background(
+  self : SeleneCreditsMenu,
+  background : String,
+) -> Unit {
+  self.background = background
 }
 
 ///|
@@ -118,7 +128,12 @@ pub fn SeleneCreditsMenu::render_commands(
   let title_style = self.text_theme.title
   let body_style = self.text_theme.body
   let hint_style = self.text_theme.hint
-  let commands : Array[@selene_render2d_types.DrawCommand2D] = [
+  let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+  match fullscreen_image_command(self.background, viewport_w, viewport_h) {
+    Some(background_cmd) => commands.push(background_cmd)
+    None => ()
+  }
+  commands.append([
     Rect({
       rect: {
         position: Vec2D(viewport_w / 2.0 - 350.0, viewport_h / 2.0 - 280.0),
@@ -182,6 +197,6 @@ pub fn SeleneCreditsMenu::render_commands(
         baseline: Top,
       },
     }),
-  ]
+  ])
   commands
 }

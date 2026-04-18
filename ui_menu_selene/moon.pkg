@@ -1,4 +1,5 @@
 import {
+  "Milky2018/selene/asset" @selene_asset,
   "Milky2018/selene/asset_types" @selene_asset_types,
   "Milky2018/selene/inputs" @selene_inputs,
   "Milky2018/selene/math" @selene_math,

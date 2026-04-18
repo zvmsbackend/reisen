@@ -704,6 +704,10 @@ pub fn SeleneSettingsMenu::render_commands(
   self.normalize_selection()
 
   let commands : Array[@selene_render2d_types.DrawCommand2D] = []
+  match fullscreen_image_command(self.background, viewport_w, viewport_h) {
+    Some(background_cmd) => commands.push(background_cmd)
+    None => ()
+  }
   let panel_rect : @selene_math.Rect = {
     position: Vec2D(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 250.0),
     size: Vec2D(600.0, 500.0),
