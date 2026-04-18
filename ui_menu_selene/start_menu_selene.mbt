@@ -103,7 +103,7 @@ pub impl Default for SeleneStartMenuTextTheme with default() {
 }
 
 ///|
-pub struct SeleneStartMenu {
+struct SeleneStartMenu {
   mut ui_strings : UiStrings
   text_theme : SeleneStartMenuTextTheme
   mut background : String
@@ -118,12 +118,7 @@ pub struct SeleneStartMenu {
   mut start_selected_index : Int
   mut locale_options : Array[(String, String)]
   mut locale_selected_index : Int
-  mut last_enter_down : Bool
-  mut last_space_down : Bool
-  mut last_up_down : Bool
-  mut last_down_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
+  edges : SeleneInputEdgeState
   mut visible_mode : String?
   mut last_viewport_w : Double
   mut last_viewport_h : Double
@@ -149,12 +144,7 @@ pub fn SeleneStartMenu::new(
     start_selected_index: 0,
     locale_options: [],
     locale_selected_index: 0,
-    last_enter_down: false,
-    last_space_down: false,
-    last_up_down: false,
-    last_down_down: false,
-    last_mouse_left_down: false,
-    last_mouse_right_down: false,
+    edges: SeleneInputEdgeState::new(),
     visible_mode: None,
     last_viewport_w: 1280.0,
     last_viewport_h: 720.0,
@@ -219,51 +209,13 @@ fn SeleneStartMenu::select_next_locale(self : SeleneStartMenu) -> Unit {
 
 ///|
 fn SeleneStartMenu::take_confirm_edge(self : SeleneStartMenu) -> Bool {
-  let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
-  let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
-  let triggered = (enter_down && !self.last_enter_down) ||
-    (space_down && !self.last_space_down)
-  self.last_enter_down = enter_down
-  self.last_space_down = space_down
+  let enter_down = @selene_inputs.is_pressed(Enter)
+  let space_down = @selene_inputs.is_pressed(Space)
+  let triggered = (enter_down && !self.edges.last_enter_down) ||
+    (space_down && !self.edges.last_space_down)
+  self.edges.last_enter_down = enter_down
+  self.edges.last_space_down = space_down
   triggered
-}
-
-///|
-fn SeleneStartMenu::take_up_edge(self : SeleneStartMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowUp)
-  let edge = down && !self.last_up_down
-  self.last_up_down = down
-  edge
-}
-
-///|
-fn SeleneStartMenu::take_down_edge(self : SeleneStartMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowDown)
-  let edge = down && !self.last_down_down
-  self.last_down_down = down
-  edge
-}
-
-///|
-fn SeleneStartMenu::mouse_position(_self : SeleneStartMenu) -> (Double, Double) {
-  let pos = @selene_inputs.mouse.pos
-  (pos.0, pos.1)
-}
-
-///|
-fn SeleneStartMenu::take_mouse_left_edge(self : SeleneStartMenu) -> Bool {
-  let down = @selene_inputs.mouse.left_button
-  let edge = down && !self.last_mouse_left_down
-  self.last_mouse_left_down = down
-  edge
-}
-
-///|
-fn SeleneStartMenu::take_mouse_right_edge(self : SeleneStartMenu) -> Bool {
-  let down = @selene_inputs.mouse.right_button
-  let edge = down && !self.last_mouse_right_down
-  self.last_mouse_right_down = down
-  edge
 }
 
 ///|
@@ -291,7 +243,7 @@ fn SeleneStartMenu::hover_start_row(self : SeleneStartMenu) -> Unit {
   if rows.is_empty() {
     return
   }
-  let (mx, my) = self.mouse_position()
+  let Vec2(mx, my) = @selene_inputs.mouse.pos
   let (viewport_w, viewport_h) = self.viewport_size()
   let row_left = viewport_w / 2.0 - 180.0
   let row_width = 360.0
@@ -310,7 +262,7 @@ fn SeleneStartMenu::hover_locale_option(self : SeleneStartMenu) -> Unit {
   if self.locale_options.is_empty() {
     return
   }
-  let (mx, my) = self.mouse_position()
+  let Vec2(mx, my) = @selene_inputs.mouse.pos
   let (viewport_w, viewport_h) = self.viewport_size()
   let left = viewport_w / 2.0 - 160.0
   let width = 320.0
@@ -377,7 +329,8 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_gate(self) {
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_gate_action(self) {
   let result : @ui_menu.StartGateAction = match self.pending_gate_action {
     NoAction =>
-      if self.take_confirm_edge() || self.take_mouse_left_edge() {
+      if self.take_confirm_edge() ||
+        self.edges.take_mouse_left_edge(@selene_inputs.mouse.left_button) {
         Start
       } else {
         NoAction
@@ -405,7 +358,8 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_logo(self) {
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_logo_action(self) {
   let result : @ui_menu.StartLogoAction = match self.pending_logo_action {
     NoAction =>
-      if self.take_confirm_edge() || self.take_mouse_left_edge() {
+      if self.take_confirm_edge() ||
+        self.edges.take_mouse_left_edge(@selene_inputs.mouse.left_button) {
         Done
       } else {
         NoAction
@@ -437,20 +391,24 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_locale_picker(self) {
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_locale_action(self) {
-  let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
-  let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
-  let enter_edge = enter_down && !self.last_enter_down
-  let space_edge = space_down && !self.last_space_down
-  self.last_enter_down = enter_down
-  self.last_space_down = space_down
+  let enter_down = @selene_inputs.is_pressed(Enter)
+  let space_down = @selene_inputs.is_pressed(Space)
+  let enter_edge = enter_down && !self.edges.last_enter_down
+  let space_edge = space_down && !self.edges.last_space_down
+  self.edges.last_enter_down = enter_down
+  self.edges.last_space_down = space_down
 
   if space_edge {
     self.select_next_locale()
   }
 
   self.hover_locale_option()
-  let mouse_confirm = self.take_mouse_left_edge()
-  let mouse_back = self.take_mouse_right_edge()
+  let mouse_confirm = self.edges.take_mouse_left_edge(
+    @selene_inputs.mouse.left_button,
+  )
+  let mouse_back = self.edges.take_mouse_right_edge(
+    @selene_inputs.mouse.right_button,
+  )
 
   let result : @ui_menu.StartLocaleAction = match self.pending_locale_action {
     NoAction =>
@@ -485,11 +443,11 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
     if count > 0 {
       self.hover_start_row()
       self.normalize_start_selection()
-      if self.take_up_edge() {
+      if self.edges.take_up_edge(@selene_inputs.is_pressed(ArrowUp)) {
         self.start_selected_index = (self.start_selected_index - 1 + count) %
           count
       }
-      if self.take_down_edge() {
+      if self.edges.take_down_edge(@selene_inputs.is_pressed(ArrowDown)) {
         self.start_selected_index = (self.start_selected_index + 1) % count
       }
     }
@@ -498,7 +456,8 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
     NoAction => {
       let rows = self.menu_rows()
       if self.visible_mode == Some("start") &&
-        (self.take_confirm_edge() || self.take_mouse_left_edge()) &&
+        (self.take_confirm_edge() ||
+        self.edges.take_mouse_left_edge(@selene_inputs.mouse.left_button)) &&
         !rows.is_empty() {
         self.normalize_start_selection()
         rows[self.start_selected_index].1
@@ -556,11 +515,10 @@ pub fn SeleneStartMenu::render_commands(
     None => []
     Some("gate") => {
       let gate_title_style = self.text_theme.gate_title
-      let commands : Array[@selene_render2d_types.DrawCommand2D] = []
-      commands.append([
+      [
         Rect({
-          alpha_mode: @selene_render.AlphaMode2D::Blend,
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          alpha_mode: Blend,
+          blend_mode: Alpha,
           rect: {
             position: Vec2(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 60.0),
             size: Vec2(400.0, 120.0),
@@ -570,7 +528,7 @@ pub fn SeleneStartMenu::render_commands(
           stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
         }),
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: self.ui_strings.start_gate_click_to_start,
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0),
           transform: @selene_math.Transform::identity(),
@@ -588,17 +546,15 @@ pub fn SeleneStartMenu::render_commands(
             baseline: Center,
           },
         }),
-      ])
-      commands
+      ]
     }
-    Some("logo") => {
-      let commands : Array[@selene_render2d_types.DrawCommand2D] = []
-      match fullscreen_image_command(self.logo_url, viewport_w, viewport_h) {
-        Some(logo_cmd) => commands.push(logo_cmd)
-        None => ()
+    Some("logo") =>
+      if fullscreen_image_command(self.logo_url, viewport_w, viewport_h)
+        is Some(logo_cmd) {
+        [logo_cmd]
+      } else {
+        []
       }
-      commands
-    }
     Some("locale") => {
       let locale_title_style = self.text_theme.locale_title
       let locale_empty_style = self.text_theme.locale_empty
@@ -612,8 +568,8 @@ pub fn SeleneStartMenu::render_commands(
       }
       commands.append([
         Rect({
-          alpha_mode: @selene_render.AlphaMode2D::Blend,
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          alpha_mode: Blend,
+          blend_mode: Alpha,
           rect: {
             position: Vec2(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 150.0),
             size: Vec2(400.0, 300.0),
@@ -623,7 +579,7 @@ pub fn SeleneStartMenu::render_commands(
           stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
         }),
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: self.ui_strings.start_locale_title,
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 120.0),
           transform: @selene_math.Transform::identity(),
@@ -646,7 +602,7 @@ pub fn SeleneStartMenu::render_commands(
       if self.locale_options.is_empty() {
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: "No language options",
             position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 10.0),
             transform: @selene_math.Transform::identity(),
@@ -673,8 +629,8 @@ pub fn SeleneStartMenu::render_commands(
           if is_selected {
             commands.push(
               Rect({
-                alpha_mode: @selene_render.AlphaMode2D::Blend,
-                blend_mode: @selene_render.BlendMode2D::Alpha,
+                alpha_mode: Blend,
+                blend_mode: Alpha,
                 rect: {
                   position: Vec2(viewport_w / 2.0 - 160.0, y - 16.0),
                   size: Vec2(320.0, 34.0),
@@ -687,7 +643,7 @@ pub fn SeleneStartMenu::render_commands(
           }
           commands.push(
             Text({
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              blend_mode: Alpha,
               text: option.0,
               position: Vec2(viewport_w / 2.0, y),
               transform: @selene_math.Transform::identity(),
@@ -732,7 +688,7 @@ pub fn SeleneStartMenu::render_commands(
       }
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: "Space: Next  Enter: Confirm",
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 120.0),
           transform: @selene_math.Transform::identity(),
@@ -758,14 +714,14 @@ pub fn SeleneStartMenu::render_commands(
       let rows = self.menu_rows()
       self.normalize_start_selection()
       let commands : Array[@selene_render2d_types.DrawCommand2D] = []
-      match fullscreen_image_command(self.background, viewport_w, viewport_h) {
-        Some(background_cmd) => commands.push(background_cmd)
-        None => ()
+      if fullscreen_image_command(self.background, viewport_w, viewport_h)
+        is Some(background_cmd) {
+        commands.push(background_cmd)
       }
       commands.push(
         Rect({
-          alpha_mode: @selene_render.AlphaMode2D::Blend,
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          alpha_mode: Blend,
+          blend_mode: Alpha,
           rect: {
             position: Vec2(viewport_w / 2.0 - 250.0, viewport_h / 2.0 - 200.0),
             size: Vec2(500.0, 400.0),
@@ -782,8 +738,8 @@ pub fn SeleneStartMenu::render_commands(
         if is_selected {
           commands.push(
             Rect({
-              alpha_mode: @selene_render.AlphaMode2D::Blend,
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              alpha_mode: Blend,
+              blend_mode: Alpha,
               rect: {
                 position: Vec2(viewport_w / 2.0 - 180.0, y - 18.0),
                 size: Vec2(360.0, 36.0),
@@ -796,7 +752,7 @@ pub fn SeleneStartMenu::render_commands(
         }
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: row.0,
             position: Vec2(viewport_w / 2.0, y),
             transform: @selene_math.Transform::identity(),
@@ -831,7 +787,7 @@ pub fn SeleneStartMenu::render_commands(
       }
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: "[Up/Down] Select  [Enter/Space] Confirm",
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 160.0),
           transform: @selene_math.Transform::identity(),

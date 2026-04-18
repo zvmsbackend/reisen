@@ -39,7 +39,7 @@ pub impl Default for SeleneGalleryMenuTextTheme with default() {
 }
 
 ///|
-pub struct SeleneGalleryMenu {
+struct SeleneGalleryMenu {
   save_namespace : String
   mut ui_strings : UiStrings
   text_theme : SeleneGalleryMenuTextTheme
@@ -50,15 +50,7 @@ pub struct SeleneGalleryMenu {
   mut script_default_locale_json : String?
   mut active_id : String?
   mut selected_index : Int
-  mut last_enter_down : Bool
-  mut last_space_down : Bool
-  mut last_left_down : Bool
-  mut last_right_down : Bool
-  mut last_up_down : Bool
-  mut last_down_down : Bool
-  mut last_escape_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
+  edges : SeleneInputEdgeState
   mut visible : Bool
   mut last_viewport_w : Double
   mut last_viewport_h : Double
@@ -82,15 +74,7 @@ pub fn SeleneGalleryMenu::new(
     script_default_locale_json: None,
     active_id: None,
     selected_index: 0,
-    last_enter_down: false,
-    last_space_down: false,
-    last_left_down: false,
-    last_right_down: false,
-    last_up_down: false,
-    last_down_down: false,
-    last_escape_down: false,
-    last_mouse_left_down: false,
-    last_mouse_right_down: false,
+    edges: SeleneInputEdgeState::new(),
     visible: false,
     last_viewport_w: 1280.0,
     last_viewport_h: 720.0,
@@ -116,88 +100,26 @@ fn SeleneGalleryMenu::normalize_selection(self : SeleneGalleryMenu) -> Unit {
     self.selected_index = 0
     return
   }
-  let count = tiles.length()
-  if self.selected_index < 0 {
-    self.selected_index = count - 1
-  }
-  if self.selected_index >= count {
-    self.selected_index = 0
-  }
+  self.selected_index = self.selected_index.clamp(min=0, max=tiles.length() - 1)
 }
 
 ///|
 fn SeleneGalleryMenu::take_back_edge(self : SeleneGalleryMenu) -> Bool {
-  let escape_down = @selene_inputs.is_pressed(@selene_inputs.Escape)
-  let triggered = escape_down && !self.last_escape_down
-  self.last_escape_down = escape_down
+  let escape_down = @selene_inputs.is_pressed(Escape)
+  let triggered = escape_down && !self.edges.last_escape_down
+  self.edges.last_escape_down = escape_down
   triggered
 }
 
 ///|
 fn SeleneGalleryMenu::take_confirm_edge(self : SeleneGalleryMenu) -> Bool {
-  let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
-  let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
-  let triggered = (enter_down && !self.last_enter_down) ||
-    (space_down && !self.last_space_down)
-  self.last_enter_down = enter_down
-  self.last_space_down = space_down
+  let enter_down = @selene_inputs.is_pressed(Enter)
+  let space_down = @selene_inputs.is_pressed(Space)
+  let triggered = (enter_down && !self.edges.last_enter_down) ||
+    (space_down && !self.edges.last_space_down)
+  self.edges.last_enter_down = enter_down
+  self.edges.last_space_down = space_down
   triggered
-}
-
-///|
-fn SeleneGalleryMenu::take_left_edge(self : SeleneGalleryMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowLeft)
-  let triggered = down && !self.last_left_down
-  self.last_left_down = down
-  triggered
-}
-
-///|
-fn SeleneGalleryMenu::take_right_edge(self : SeleneGalleryMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowRight)
-  let triggered = down && !self.last_right_down
-  self.last_right_down = down
-  triggered
-}
-
-///|
-fn SeleneGalleryMenu::take_up_edge(self : SeleneGalleryMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowUp)
-  let triggered = down && !self.last_up_down
-  self.last_up_down = down
-  triggered
-}
-
-///|
-fn SeleneGalleryMenu::take_down_edge(self : SeleneGalleryMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowDown)
-  let triggered = down && !self.last_down_down
-  self.last_down_down = down
-  triggered
-}
-
-///|
-fn SeleneGalleryMenu::mouse_position(
-  _self : SeleneGalleryMenu,
-) -> (Double, Double) {
-  let pos = @selene_inputs.mouse.pos
-  (pos.0, pos.1)
-}
-
-///|
-fn SeleneGalleryMenu::take_mouse_left_edge(self : SeleneGalleryMenu) -> Bool {
-  let down = @selene_inputs.mouse.left_button
-  let edge = down && !self.last_mouse_left_down
-  self.last_mouse_left_down = down
-  edge
-}
-
-///|
-fn SeleneGalleryMenu::take_mouse_right_edge(self : SeleneGalleryMenu) -> Bool {
-  let down = @selene_inputs.mouse.right_button
-  let edge = down && !self.last_mouse_right_down
-  self.last_mouse_right_down = down
-  edge
 }
 
 ///|
@@ -274,7 +196,7 @@ fn SeleneGalleryMenu::hover_tile_row(self : SeleneGalleryMenu) -> Unit {
   if tiles.is_empty() {
     return
   }
-  let (mx, my) = self.mouse_position()
+  let Vec2(mx, my) = @selene_inputs.mouse.pos
   let (viewport_w, viewport_h) = self.viewport_size()
   let left = viewport_w / 2.0 - 250.0
   let top = viewport_h / 2.0 - 110.0
@@ -294,8 +216,12 @@ fn SeleneGalleryMenu::input_action(
   self : SeleneGalleryMenu,
 ) -> @ui_menu.GalleryAction {
   self.hover_tile_row()
-  let mouse_left = self.take_mouse_left_edge()
-  let mouse_right = self.take_mouse_right_edge()
+  let mouse_left = self.edges.take_mouse_left_edge(
+    @selene_inputs.mouse.left_button,
+  )
+  let mouse_right = self.edges.take_mouse_right_edge(
+    @selene_inputs.mouse.right_button,
+  )
 
   if mouse_right {
     return match self.active_id {
@@ -314,7 +240,7 @@ fn SeleneGalleryMenu::input_action(
   if self.active_id is Some(_) {
     if mouse_left {
       let (viewport_w, viewport_h) = self.viewport_size()
-      let (mx, my) = self.mouse_position()
+      let Vec2(mx, my) = @selene_inputs.mouse.pos
       let prev_rect = gallery_prev_button_rect(viewport_w, viewport_h)
       let next_rect = gallery_next_button_rect(viewport_w, viewport_h)
       let replay_rect = gallery_replay_button_rect(viewport_w, viewport_h)
@@ -340,61 +266,48 @@ fn SeleneGalleryMenu::input_action(
         return Next
       }
       let tiles = self.gallery_tiles()
-      return match self.active_id {
-        Some(active_id) =>
-          match @ui_menu.find_gallery_tile(tiles, active_id) {
-            Some(tile) =>
-              if gallery_point_in_box(
-                  mx,
-                  my,
-                  close_rect.position.0,
-                  close_rect.position.1,
-                  close_rect.size.0,
-                  close_rect.size.1,
-                ) {
-                Close
-              } else {
-                match tile.replay_label {
-                  Some(label) =>
-                    if gallery_point_in_box(
-                        mx,
-                        my,
-                        replay_rect.position.0,
-                        replay_rect.position.1,
-                        replay_rect.size.0,
-                        replay_rect.size.1,
-                      ) {
-                      Replay(label)
-                    } else {
-                      Close
-                    }
-                  None => Close
-                }
-              }
-            None => Close
-          }
-        None => NoAction
+      guard self.active_id is Some(active_id) else { return NoAction }
+      guard @ui_menu.find_gallery_tile(tiles, active_id) is Some(tile) else {
+        return Close
       }
+      if gallery_point_in_box(
+          mx,
+          my,
+          close_rect.position.0,
+          close_rect.position.1,
+          close_rect.size.0,
+          close_rect.size.1,
+        ) {
+        return Close
+      }
+      guard tile.replay_label is Some(label) else { return Close }
+      if gallery_point_in_box(
+          mx,
+          my,
+          replay_rect.position.0,
+          replay_rect.position.1,
+          replay_rect.size.0,
+          replay_rect.size.1,
+        ) {
+        return Replay(label)
+      }
+      return Close
     }
-    if self.take_left_edge() {
+    if self.edges.take_left_edge(@selene_inputs.is_pressed(ArrowLeft)) {
       return Prev
     }
-    if self.take_right_edge() {
+    if self.edges.take_right_edge(@selene_inputs.is_pressed(ArrowRight)) {
       return Next
     }
     if self.take_confirm_edge() {
       let tiles = self.gallery_tiles()
-      match self.active_id {
-        Some(active_id) =>
-          match @ui_menu.find_gallery_tile(tiles, active_id) {
-            Some(tile) =>
-              match tile.replay_label {
-                Some(label) => Replay(label)
-                None => Close
-              }
-            None => Close
-          }
-        None => NoAction
+      guard self.active_id is Some(active_id) else { return NoAction }
+      guard @ui_menu.find_gallery_tile(tiles, active_id) is Some(tile) else {
+        return Close
+      }
+      match tile.replay_label {
+        Some(label) => Replay(label)
+        None => Close
       }
     } else {
       NoAction
@@ -404,19 +317,19 @@ fn SeleneGalleryMenu::input_action(
     let tiles = self.gallery_tiles()
     if !tiles.is_empty() {
       let columns = 3
-      if self.take_left_edge() {
+      if self.edges.take_left_edge(@selene_inputs.is_pressed(ArrowLeft)) {
         self.selected_index -= 1
         moved = true
       }
-      if self.take_right_edge() {
+      if self.edges.take_right_edge(@selene_inputs.is_pressed(ArrowRight)) {
         self.selected_index += 1
         moved = true
       }
-      if self.take_up_edge() {
+      if self.edges.take_up_edge(@selene_inputs.is_pressed(ArrowUp)) {
         self.selected_index -= columns
         moved = true
       }
-      if self.take_down_edge() {
+      if self.edges.take_down_edge(@selene_inputs.is_pressed(ArrowDown)) {
         self.selected_index += columns
         moved = true
       }
@@ -446,21 +359,12 @@ fn SeleneGalleryMenu::apply_action_state(
     self.active_id,
     tiles,
   )
-  match action {
-    Open(id) =>
-      match @ui_menu.find_gallery_tile(tiles, id) {
-        Some(tile) =>
-          if tile.unlocked {
-            for i, t in tiles {
-              if t.id == id {
-                self.selected_index = i
-                break
-              }
-            }
-          }
-        None => ()
-      }
-    _ => ()
+  if action is Open(id) {
+    if @ui_menu.find_gallery_tile(tiles, id) is Some(tile) && tile.unlocked {
+      self.selected_index = tiles
+        .search_by(t => t.id == id)
+        .unwrap_or(self.selected_index)
+    }
   }
 }
 
@@ -537,22 +441,18 @@ pub fn SeleneGalleryMenu::render_commands(
     return []
   }
   let tiles = self.gallery_tiles()
-  let active_tile = match self.active_id {
-    Some(id) => @ui_menu.find_gallery_tile(tiles, id)
-    None => None
-  }
+  let active_tile = self.active_id.bind(id => @ui_menu.find_gallery_tile(tiles, id))
   let title_style = self.text_theme.title
   let body_style = self.text_theme.body
   let hint_style = self.text_theme.hint
   let commands : Array[@selene_render2d_types.DrawCommand2D] = []
-  match fullscreen_image_command(self.background, viewport_w, viewport_h) {
-    Some(background_cmd) => commands.push(background_cmd)
-    None => ()
+  if fullscreen_image_command(self.background, viewport_w, viewport_h) is Some(background_cmd) {
+    commands.push(background_cmd)
   }
   commands.append([
     Rect({
-      alpha_mode: @selene_render.AlphaMode2D::Blend,
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      alpha_mode: Blend,
+      blend_mode: Alpha,
       rect: {
         position: Vec2(viewport_w / 2.0 - 300.0, viewport_h / 2.0 - 200.0),
         size: Vec2(600.0, 400.0),
@@ -562,7 +462,7 @@ pub fn SeleneGalleryMenu::render_commands(
       stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
     }),
     Text({
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      blend_mode: Alpha,
       text: self.ui_strings.start_menu_gallery,
       position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 160.0),
       transform: @selene_math.Transform::identity(),
@@ -586,7 +486,7 @@ pub fn SeleneGalleryMenu::render_commands(
     Some(tile) => {
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: tile.title,
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 110.0),
           transform: @selene_math.Transform::identity(),
@@ -607,7 +507,7 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: tile.image_id,
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 70.0),
           transform: @selene_math.Transform::identity(),
@@ -643,8 +543,8 @@ pub fn SeleneGalleryMenu::render_commands(
       let close_rect = gallery_close_button_rect(viewport_w, viewport_h)
       commands.push(
         Rect({
-          alpha_mode: @selene_render.AlphaMode2D::Blend,
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          alpha_mode: Blend,
+          blend_mode: Alpha,
           rect: prev_rect,
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 52, g: 78, b: 116, a: 0.65 },
@@ -653,7 +553,7 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: self.ui_strings.gallery_prev,
           position: Vec2(
             prev_rect.position.0 + prev_rect.size.0 / 2.0,
@@ -672,8 +572,8 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Rect({
-          alpha_mode: @selene_render.AlphaMode2D::Blend,
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          alpha_mode: Blend,
+          blend_mode: Alpha,
           rect: next_rect,
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 52, g: 78, b: 116, a: 0.65 },
@@ -682,7 +582,7 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: self.ui_strings.gallery_next,
           position: Vec2(
             next_rect.position.0 + next_rect.size.0 / 2.0,
@@ -703,8 +603,8 @@ pub fn SeleneGalleryMenu::render_commands(
         Some(_) => {
           commands.push(
             Rect({
-              alpha_mode: @selene_render.AlphaMode2D::Blend,
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              alpha_mode: Blend,
+              blend_mode: Alpha,
               rect: replay_rect,
               transform: @selene_math.Transform::identity(),
               fill_color: { r: 40, g: 104, b: 92, a: 0.7 },
@@ -713,7 +613,7 @@ pub fn SeleneGalleryMenu::render_commands(
           )
           commands.push(
             Text({
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              blend_mode: Alpha,
               text: self.ui_strings.gallery_replay,
               position: Vec2(
                 replay_rect.position.0 + replay_rect.size.0 / 2.0,
@@ -735,8 +635,8 @@ pub fn SeleneGalleryMenu::render_commands(
       }
       commands.push(
         Rect({
-          alpha_mode: @selene_render.AlphaMode2D::Blend,
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          alpha_mode: Blend,
+          blend_mode: Alpha,
           rect: close_rect,
           transform: @selene_math.Transform::identity(),
           fill_color: { r: 112, g: 62, b: 62, a: 0.72 },
@@ -745,7 +645,7 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: self.ui_strings.gallery_close,
           position: Vec2(
             close_rect.position.0 + close_rect.size.0 / 2.0,
@@ -764,7 +664,7 @@ pub fn SeleneGalleryMenu::render_commands(
       )
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: viewer_controls,
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 204.0),
           transform: @selene_math.Transform::identity(),
@@ -788,7 +688,7 @@ pub fn SeleneGalleryMenu::render_commands(
       if tiles.is_empty() {
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: self.ui_strings.gallery_locked,
             position: Vec2(viewport_w / 2.0, viewport_h / 2.0),
             transform: @selene_math.Transform::identity(),
@@ -828,7 +728,7 @@ pub fn SeleneGalleryMenu::render_commands(
           let prefix = if selected { "> " } else { "  " }
           commands.push(
             Text({
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              blend_mode: Alpha,
               text: prefix + label,
               position: Vec2(left, top + row_h * i.to_double()),
               transform: @selene_math.Transform::identity(),
@@ -867,7 +767,7 @@ pub fn SeleneGalleryMenu::render_commands(
       }
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: "[Arrows] Move   Enter Open   Esc=" +
           self.ui_strings.gallery_back,
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 140.0),

@@ -344,9 +344,8 @@ fn[T] AppController::start_menu_music_stop(self : AppController[T]) -> Unit {
 
 ///|
 fn[T] AppController::emit_ui_click_sfx(self : AppController[T]) -> Unit {
-  match self.ui_click_sfx_id {
-    Some(sfx_id) => (self.event_hook)(SfxPlayed(sfx_id, false))
-    None => ()
+  if self.ui_click_sfx_id is Some(sfx_id) {
+    (self.event_hook)(SfxPlayed(sfx_id, false))
   }
 }
 
@@ -355,12 +354,11 @@ fn[T] AppController::localize_credits_text(
   self : AppController[T],
   raw : String,
 ) -> String {
-  let (localized, _, _) = script_locale_resolve_at(
+  script_locale_resolve_at(
     raw,
     self.script_locale_json,
     self.script_default_locale_json,
-  )
-  localized
+  ).0
 }
 
 ///|
@@ -376,16 +374,13 @@ fn[T] AppController::enter_credits(
   self : AppController[T],
   return_phase : AppPhase,
 ) -> Unit {
-  match self.credits {
-    Some(_) => {
-      self.start_menu.clear()
-      self.settings_menu.clear()
-      self.gallery_menu.clear()
-      self.credits_return_phase = return_phase
-      self.credits_menu.render(self.credits_html())
-      self.phase = Credits
-    }
-    None => ()
+  if self.credits is Some(_) {
+    self.start_menu.clear()
+    self.settings_menu.clear()
+    self.gallery_menu.clear()
+    self.credits_return_phase = return_phase
+    self.credits_menu.render(self.credits_html())
+    self.phase = Credits
   }
 }
 
@@ -522,10 +517,7 @@ fn read_locale_file(path : String) -> String? {
   if path == "" {
     return None
   }
-  match (try? @x_fs.read_file_to_string(path)).to_option() {
-    Some(text) => Some(text)
-    None => None
-  }
+  (try? @x_fs.read_file_to_string(path)).to_option()
 }
 
 ///|
@@ -551,11 +543,10 @@ fn[T] AppController::reload_script_localization_for_locale(
 ///|
 #cfg(target="js")
 fn[T] AppController::reload_script_localization_for_locale(
-  self : AppController[T],
-  locale : String,
+  _self : AppController[T],
+  _locale : String,
 ) -> Unit {
-  ignore(self)
-  ignore(locale)
+
 }
 
 ///|
@@ -575,9 +566,8 @@ fn[T] AppController::apply_settings_from_storage(
   self : AppController[T],
   runner : GameRunner[T],
 ) -> Unit {
-  match settings_read_in(self.save_ns) {
-    Some(settings) => runner.apply_settings(settings)
-    None => ()
+  if settings_read_in(self.save_ns) is Some(settings) {
+    runner.apply_settings(settings)
   }
 }
 
@@ -589,7 +579,7 @@ fn[T] AppController::make_runner(
   self : AppController[T],
   script : Script[T],
   state : GameState[T],
-) -> GameRunner[T] noraise {
+) -> GameRunner[T] {
   let runner = start_game(
     script,
     state,
@@ -698,14 +688,9 @@ fn[T] AppController::replay_factory_for_image(
   self : AppController[T],
   image : GalleryImage,
 ) -> () -> GameState[T] {
-  match image.replay_state_factory_key {
-    Some(key) =>
-      match self.gallery_replay_state_factories.get(key) {
-        Some(factory) => factory
-        None => self.new_state
-      }
-    None => self.new_state
-  }
+  image.replay_state_factory_key
+  .bind(key => self.gallery_replay_state_factories.get(key))
+  .unwrap_or(self.new_state)
 }
 
 ///|
@@ -808,25 +793,22 @@ fn[T : ToJson] AppController::save_autosave_if_enabled(
     "" => return
     _ => ()
   }
-  match self.runner {
-    Some(runner) => {
-      let slot = next_save_slot(
-        self.save_store,
-        self.save_ns,
-        self.autosave_slot,
-        6,
-      )
-      let preview = dialog_preview(runner)
-      save_runner_to_slot_with_meta(
-        runner,
-        slot,
-        title=self.autosave_title,
-        preview~,
-        save_namespace=self.save_ns,
-        save_store=self.save_store,
-      )
-    }
-    None => ()
+  if self.runner is Some(runner) {
+    let slot = next_save_slot(
+      self.save_store,
+      self.save_ns,
+      self.autosave_slot,
+      6,
+    )
+    let preview = dialog_preview(runner)
+    save_runner_to_slot_with_meta(
+      runner,
+      slot,
+      title=self.autosave_title,
+      preview~,
+      save_namespace=self.save_ns,
+      save_store=self.save_store,
+    )
   }
 }
 
@@ -874,14 +856,14 @@ fn[T] AppController::render_phase_on_locale_change(
 ///|
 fn[T] AppController::tick_locale_select(self : AppController[T]) -> Bool {
   match self.start_menu.take_locale_action() {
-    StartLocaleAction::Select(code) => {
+    Select(code) => {
       self.emit_ui_click_sfx()
       self.apply_locale(code)
       self.start_menu.clear_locale_picker()
       self.start_menu.render_gate()
       self.phase = StartGate
     }
-    StartLocaleAction::NoAction => ()
+    NoAction => ()
   }
   true
 }
@@ -1144,7 +1126,7 @@ async fn[T] AppController::tick_gallery(
 ///|
 fn[T] AppController::tick_credits(self : AppController[T]) -> Bool {
   match self.credits_menu.take_action() {
-    CreditsAction::Back => {
+    Back => {
       self.emit_ui_click_sfx()
       self.credits_menu.clear()
       match self.credits_return_phase {
@@ -1158,7 +1140,7 @@ fn[T] AppController::tick_credits(self : AppController[T]) -> Bool {
         }
       }
     }
-    CreditsAction::NoAction => ()
+    NoAction => ()
   }
   true
 }

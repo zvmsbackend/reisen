@@ -20,7 +20,7 @@ pub fn[T] create_app_controller(async () -> @core.Script[T], () -> @state.GameSt
 
 pub fn default_app_error_handler(String) -> Unit
 
-pub async fn preload_localization(save_namespace? : String, languages? : Array[(String, String)], ui_locale_path? : String, script_locale_dir? : String) -> LocalizationPayload raise AppBootstrapError
+pub async fn preload_localization(save_namespace? : String, languages? : Array[(String, String)], ui_locale_path? : String, script_locale_dir? : String) -> LocalizationPayload
 
 pub async fn[T : @json.FromJson + ToJson] run_browser_app_loop(AppController[T], ui_locale_path? : String, script_locale_dir? : String) -> Unit
 

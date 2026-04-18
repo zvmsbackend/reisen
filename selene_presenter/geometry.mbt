@@ -54,8 +54,8 @@ fn image_command(
 ) -> @selene_render2d_types.DrawCommand2D {
   Image({
     uv_transform: @selene_math.Transform::identity(),
-    alpha_mode: @selene_render.AlphaMode2D::Blend,
-    blend_mode: @selene_render.BlendMode2D::Alpha,
+    alpha_mode: Blend,
+    blend_mode: Alpha,
     image: handle,
     destination,
     source: None,
@@ -74,8 +74,8 @@ fn placeholder_rect_command(
   Rect({
     rect,
     transform,
-    alpha_mode: @selene_render.AlphaMode2D::Blend,
-    blend_mode: @selene_render.BlendMode2D::Alpha,
+    alpha_mode: Blend,
+    blend_mode: Alpha,
     fill_color: color,
     stroke_color: None,
   })

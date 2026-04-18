@@ -390,9 +390,9 @@ pub impl UiPlatformHooks for SeleneUiBackend with advance_ui_animation_timer(
   _elapsed_ms,
 ) {
   let mouse_left_down = @selene_inputs.mouse.left_button
-  let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
-  let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
-  let escape_down = @selene_inputs.is_pressed(@selene_inputs.Escape)
+  let enter_down = @selene_inputs.is_pressed(Enter)
+  let space_down = @selene_inputs.is_pressed(Space)
+  let escape_down = @selene_inputs.is_pressed(Escape)
   let click_edge = mouse_left_down && !self.last_mouse_left_down
 
   let toolbar_consumed = if click_edge {

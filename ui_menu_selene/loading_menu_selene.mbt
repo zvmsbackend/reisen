@@ -67,8 +67,8 @@ pub fn SeleneLoadingMenu::render_commands(
   let body_style = self.text_theme.body
   let commands : Array[@selene_render2d_types.DrawCommand2D] = [
     Rect({
-      alpha_mode: @selene_render.AlphaMode2D::Blend,
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      alpha_mode: Blend,
+      blend_mode: Alpha,
       rect: {
         position: Vec2(viewport_w / 2.0 - 200.0, viewport_h / 2.0 - 80.0),
         size: Vec2(400.0, 160.0),
@@ -78,7 +78,7 @@ pub fn SeleneLoadingMenu::render_commands(
       stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
     }),
     Text({
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      blend_mode: Alpha,
       text: "Loading...",
       position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 40.0),
       transform: @selene_math.Transform::identity(),
@@ -100,7 +100,7 @@ pub fn SeleneLoadingMenu::render_commands(
   if self.text != "" {
     commands.push(
       Text({
-        blend_mode: @selene_render.BlendMode2D::Alpha,
+        blend_mode: Alpha,
         text: self.text,
         position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 30.0),
         transform: @selene_math.Transform::identity(),

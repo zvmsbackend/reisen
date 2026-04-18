@@ -49,7 +49,7 @@ pub impl Default for SeleneSettingsMenuTextTheme with default() {
 }
 
 ///|
-pub struct SeleneSettingsMenu {
+struct SeleneSettingsMenu {
   mut ui_strings : UiStrings
   text_theme : SeleneSettingsMenuTextTheme
   mut audio : &@audio_core.AudioPort
@@ -67,18 +67,10 @@ pub struct SeleneSettingsMenu {
   mut selected_index : Int
   mut slot_type_index : Int
   mut slot_page : Int
-  mut last_up_down : Bool
-  mut last_down_down : Bool
-  mut last_left_down : Bool
-  mut last_right_down : Bool
+  edges : SeleneInputEdgeState
   mut context : @ui_menu.SettingsContext
   mut view_mode : @ui_menu.SettingsViewMode
   mut settings_loaded : Bool
-  mut last_escape_down : Bool
-  mut last_enter_down : Bool
-  mut last_space_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
   mut visible : Bool
   mut last_viewport_w : Double
   mut last_viewport_h : Double
@@ -111,18 +103,10 @@ pub fn SeleneSettingsMenu::new(
     selected_index: 0,
     slot_type_index: 2,
     slot_page: 0,
-    last_up_down: false,
-    last_down_down: false,
-    last_left_down: false,
-    last_right_down: false,
+    edges: SeleneInputEdgeState::new(),
     context: FromStartMenu,
     view_mode: Settings,
     settings_loaded: false,
-    last_escape_down: false,
-    last_enter_down: false,
-    last_space_down: false,
-    last_mouse_left_down: false,
-    last_mouse_right_down: false,
     visible: false,
     last_viewport_w: 1280.0,
     last_viewport_h: 720.0,
@@ -160,28 +144,6 @@ pub fn SeleneSettingsMenu::set_save_namespace(
 ) -> Unit {
   self.save_namespace = save_namespace
   self.settings_loaded = false
-}
-
-///|
-fn clamp_int(v : Int, lo : Int, hi : Int) -> Int {
-  if v < lo {
-    lo
-  } else if v > hi {
-    hi
-  } else {
-    v
-  }
-}
-
-///|
-fn clamp_double(v : Double, lo : Double, hi : Double) -> Double {
-  if v < lo {
-    lo
-  } else if v > hi {
-    hi
-  } else {
-    v
-  }
 }
 
 ///|
@@ -284,7 +246,7 @@ fn SeleneSettingsMenu::normalize_selection(self : SeleneSettingsMenu) -> Unit {
     self.selected_index = 0
     return
   }
-  self.selected_index = clamp_int(self.selected_index, 0, count - 1)
+  self.selected_index = self.selected_index.clamp(min=0, max=count - 1)
 }
 
 ///|
@@ -303,9 +265,9 @@ fn SeleneSettingsMenu::load_settings_if_needed(
 
 ///|
 fn SeleneSettingsMenu::persist_settings(self : SeleneSettingsMenu) -> Unit {
-  self.text_speed = clamp_int(self.text_speed, 10, 100)
-  self.bgm_volume = clamp_double(self.bgm_volume, 0.0, 1.0)
-  self.sfx_volume = clamp_double(self.sfx_volume, 0.0, 1.0)
+  self.text_speed = self.text_speed.clamp(min=10, max=100)
+  self.bgm_volume = self.bgm_volume.clamp(min=0.0, max=1.0)
+  self.sfx_volume = self.sfx_volume.clamp(min=0.0, max=1.0)
   let settings = @storage.GameSettings::new(
     self.text_speed,
     self.bgm_volume,
@@ -320,53 +282,21 @@ fn SeleneSettingsMenu::persist_settings(self : SeleneSettingsMenu) -> Unit {
 
 ///|
 fn SeleneSettingsMenu::take_back_edge(self : SeleneSettingsMenu) -> Bool {
-  let escape_down = @selene_inputs.is_pressed(@selene_inputs.Escape)
-  let triggered = escape_down && !self.last_escape_down
-  self.last_escape_down = escape_down
+  let escape_down = @selene_inputs.is_pressed(Escape)
+  let triggered = escape_down && !self.edges.last_escape_down
+  self.edges.last_escape_down = escape_down
   triggered
 }
 
 ///|
 fn SeleneSettingsMenu::take_confirm_edge(self : SeleneSettingsMenu) -> Bool {
-  let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
-  let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
-  let triggered = (enter_down && !self.last_enter_down) ||
-    (space_down && !self.last_space_down)
-  self.last_enter_down = enter_down
-  self.last_space_down = space_down
+  let enter_down = @selene_inputs.is_pressed(Enter)
+  let space_down = @selene_inputs.is_pressed(Space)
+  let triggered = (enter_down && !self.edges.last_enter_down) ||
+    (space_down && !self.edges.last_space_down)
+  self.edges.last_enter_down = enter_down
+  self.edges.last_space_down = space_down
   triggered
-}
-
-///|
-fn SeleneSettingsMenu::take_up_edge(self : SeleneSettingsMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowUp)
-  let edge = down && !self.last_up_down
-  self.last_up_down = down
-  edge
-}
-
-///|
-fn SeleneSettingsMenu::take_down_edge(self : SeleneSettingsMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowDown)
-  let edge = down && !self.last_down_down
-  self.last_down_down = down
-  edge
-}
-
-///|
-fn SeleneSettingsMenu::take_left_edge(self : SeleneSettingsMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowLeft)
-  let edge = down && !self.last_left_down
-  self.last_left_down = down
-  edge
-}
-
-///|
-fn SeleneSettingsMenu::take_right_edge(self : SeleneSettingsMenu) -> Bool {
-  let down = @selene_inputs.is_pressed(@selene_inputs.ArrowRight)
-  let edge = down && !self.last_right_down
-  self.last_right_down = down
-  edge
 }
 
 ///|
@@ -375,22 +305,6 @@ fn SeleneSettingsMenu::mouse_position(
 ) -> (Double, Double) {
   let pos = @selene_inputs.mouse.pos
   (pos.0, pos.1)
-}
-
-///|
-fn SeleneSettingsMenu::take_mouse_left_edge(self : SeleneSettingsMenu) -> Bool {
-  let down = @selene_inputs.mouse.left_button
-  let edge = down && !self.last_mouse_left_down
-  self.last_mouse_left_down = down
-  edge
-}
-
-///|
-fn SeleneSettingsMenu::take_mouse_right_edge(self : SeleneSettingsMenu) -> Bool {
-  let down = @selene_inputs.mouse.right_button
-  let edge = down && !self.last_mouse_right_down
-  self.last_mouse_right_down = down
-  edge
 }
 
 ///|
@@ -440,7 +354,7 @@ fn SeleneSettingsMenu::hover_row_by_mouse(self : SeleneSettingsMenu) -> Unit {
       }
       action_count += 2
 
-      let action_base = settings_action_row_base()
+      let action_base = settings_action_row_base
       let mut action_y = row_y + 10.0
       for i in 0..<action_count {
         if settings_point_in_box(
@@ -501,8 +415,10 @@ fn SeleneSettingsMenu::hover_row_by_mouse(self : SeleneSettingsMenu) -> Unit {
 fn SeleneSettingsMenu::mouse_action(
   self : SeleneSettingsMenu,
 ) -> @ui_menu.SettingsAction {
-  let click = self.take_mouse_left_edge()
-  let right_click = self.take_mouse_right_edge()
+  let click = self.edges.take_mouse_left_edge(@selene_inputs.mouse.left_button)
+  let right_click = self.edges.take_mouse_right_edge(
+    @selene_inputs.mouse.right_button,
+  )
 
   if right_click {
     return Back
@@ -559,9 +475,7 @@ fn SeleneSettingsMenu::cycle_language(
 }
 
 ///|
-fn settings_action_row_base() -> Int {
-  4
-}
+let settings_action_row_base = 4
 
 ///|
 fn SeleneSettingsMenu::apply_horizontal_in_settings(
@@ -573,7 +487,7 @@ fn SeleneSettingsMenu::apply_horizontal_in_settings(
   let delta_volume = if move_right { 0.05 } else { -0.05 }
   match self.selected_index {
     0 => {
-      self.text_speed = clamp_int(self.text_speed + delta_int, 10, 100)
+      self.text_speed = (self.text_speed + delta_int).clamp(min=10, max=100)
       self.persist_settings()
       NoAction
     }
@@ -583,12 +497,12 @@ fn SeleneSettingsMenu::apply_horizontal_in_settings(
         None => NoAction
       }
     2 => {
-      self.bgm_volume = clamp_double(self.bgm_volume + delta_volume, 0.0, 1.0)
+      self.bgm_volume = (self.bgm_volume + delta_volume).clamp(min=0.0, max=1.0)
       self.persist_settings()
       NoAction
     }
     3 => {
-      self.sfx_volume = clamp_double(self.sfx_volume + delta_volume, 0.0, 1.0)
+      self.sfx_volume = (self.sfx_volume + delta_volume).clamp(min=0.0, max=1.0)
       self.persist_settings()
       NoAction
     }
@@ -601,7 +515,7 @@ fn SeleneSettingsMenu::confirm_settings_row(
   self : SeleneSettingsMenu,
 ) -> @ui_menu.SettingsAction {
   self.load_settings_if_needed()
-  let base = settings_action_row_base()
+  let base = settings_action_row_base
   let mut row = self.selected_index - base
   if row < 0 {
     if self.selected_index == 1 {
@@ -689,7 +603,7 @@ fn SeleneSettingsMenu::apply_horizontal_in_slots(
   }
   if self.selected_index == 7 && self.slot_type_index == 2 {
     if move_right {
-      self.slot_page = clamp_int(self.slot_page + 1, 0, 99)
+      self.slot_page = (self.slot_page + 1).clamp(min=0, max=99)
       return ViewChanged
     }
     if self.slot_page > 0 {
@@ -822,16 +736,20 @@ pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu with take_action(self) {
         Back
       } else {
         self.hover_row_by_mouse()
-        if self.take_up_edge() {
+        if self.edges.take_up_edge(@selene_inputs.is_pressed(ArrowUp)) {
           self.selected_index -= 1
           self.normalize_selection()
         }
-        if self.take_down_edge() {
+        if self.edges.take_down_edge(@selene_inputs.is_pressed(ArrowDown)) {
           self.selected_index += 1
           self.normalize_selection()
         }
-        let left_edge = self.take_left_edge()
-        let right_edge = self.take_right_edge()
+        let left_edge = self.edges.take_left_edge(
+          @selene_inputs.is_pressed(ArrowLeft),
+        )
+        let right_edge = self.edges.take_right_edge(
+          @selene_inputs.is_pressed(ArrowRight),
+        )
         let confirm = self.take_confirm_edge()
         let mouse_action = self.mouse_action()
 
@@ -892,8 +810,8 @@ pub fn SeleneSettingsMenu::render_commands(
   }
   commands.push(
     Rect({
-      alpha_mode: @selene_render.AlphaMode2D::Blend,
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      alpha_mode: Blend,
+      blend_mode: Alpha,
       rect: panel_rect,
       transform: @selene_math.Transform::identity(),
       fill_color: { r: 20, g: 28, b: 40, a: 0.92 },
@@ -908,7 +826,7 @@ pub fn SeleneSettingsMenu::render_commands(
   }
   commands.push(
     Text({
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      blend_mode: Alpha,
       text: title,
       position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 210.0),
       transform: @selene_math.Transform::identity(),
@@ -922,8 +840,8 @@ pub fn SeleneSettingsMenu::render_commands(
           b: title_style.color_b,
           a: title_style.color_a,
         },
-        align: @selene_math.HAlign::Center,
-        baseline: @selene_math.VAlign::Top,
+        align: Center,
+        baseline: Top,
       },
     }),
   )
@@ -962,8 +880,8 @@ pub fn SeleneSettingsMenu::render_commands(
         if selected {
           commands.push(
             Rect({
-              alpha_mode: @selene_render.AlphaMode2D::Blend,
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              alpha_mode: Blend,
+              blend_mode: Alpha,
               rect: {
                 position: Vec2(viewport_w / 2.0 - 286.0, row_y - 4.0),
                 size: Vec2(572.0, 30.0),
@@ -976,7 +894,7 @@ pub fn SeleneSettingsMenu::render_commands(
         }
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: settings_rows[i].0,
             position: Vec2(viewport_w / 2.0 - 275.0, row_y),
             transform: @selene_math.Transform::identity(),
@@ -990,14 +908,14 @@ pub fn SeleneSettingsMenu::render_commands(
                 b: row_style.color_b,
                 a: row_style.color_a,
               },
-              align: @selene_math.HAlign::Left,
-              baseline: @selene_math.VAlign::Top,
+              align: Left,
+              baseline: Top,
             },
           }),
         )
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: settings_rows[i].1,
             position: Vec2(viewport_w / 2.0 + 275.0, row_y),
             transform: @selene_math.Transform::identity(),
@@ -1011,8 +929,8 @@ pub fn SeleneSettingsMenu::render_commands(
                 b: row_style.color_b,
                 a: row_style.color_a,
               },
-              align: @selene_math.HAlign::Right,
-              baseline: @selene_math.VAlign::Top,
+              align: Right,
+              baseline: Top,
             },
           }),
         )
@@ -1048,15 +966,15 @@ pub fn SeleneSettingsMenu::render_commands(
       action_rows.push(Back)
       action_labels.push(self.ui_strings.settings_back)
 
-      let action_base = settings_action_row_base()
+      let action_base = settings_action_row_base
       let mut action_y = row_y + 10.0
       for i = 0; i < action_labels.length(); i = i + 1 {
         let selected = self.selected_index == action_base + i
         if selected {
           commands.push(
             Rect({
-              alpha_mode: @selene_render.AlphaMode2D::Blend,
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              alpha_mode: Blend,
+              blend_mode: Alpha,
               rect: {
                 position: Vec2(viewport_w / 2.0 - 286.0, action_y - 4.0),
                 size: Vec2(572.0, 30.0),
@@ -1069,7 +987,7 @@ pub fn SeleneSettingsMenu::render_commands(
         }
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: action_labels[i],
             position: Vec2(viewport_w / 2.0 - 275.0, action_y),
             transform: @selene_math.Transform::identity(),
@@ -1083,8 +1001,8 @@ pub fn SeleneSettingsMenu::render_commands(
                 b: row_style.color_b,
                 a: row_style.color_a,
               },
-              align: @selene_math.HAlign::Left,
-              baseline: @selene_math.VAlign::Top,
+              align: Left,
+              baseline: Top,
             },
           }),
         )
@@ -1093,7 +1011,7 @@ pub fn SeleneSettingsMenu::render_commands(
 
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: "[Up/Down] Select  [Left/Right] Adjust  [Enter/Space] Confirm  [Esc] Back",
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 210.0),
           transform: @selene_math.Transform::identity(),
@@ -1107,8 +1025,8 @@ pub fn SeleneSettingsMenu::render_commands(
               b: hint_style.color_b,
               a: hint_style.color_a,
             },
-            align: @selene_math.HAlign::Center,
-            baseline: @selene_math.VAlign::Top,
+            align: Center,
+            baseline: Top,
           },
         }),
       )
@@ -1119,8 +1037,8 @@ pub fn SeleneSettingsMenu::render_commands(
       if selected_tab {
         commands.push(
           Rect({
-            alpha_mode: @selene_render.AlphaMode2D::Blend,
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            alpha_mode: Blend,
+            blend_mode: Alpha,
             rect: {
               position: Vec2(viewport_w / 2.0 - 286.0, viewport_h / 2.0 - 154.0),
               size: Vec2(572.0, 30.0),
@@ -1133,7 +1051,7 @@ pub fn SeleneSettingsMenu::render_commands(
       }
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: title_text,
           position: Vec2(viewport_w / 2.0 - 275.0, viewport_h / 2.0 - 150.0),
           transform: @selene_math.Transform::identity(),
@@ -1147,8 +1065,8 @@ pub fn SeleneSettingsMenu::render_commands(
               b: row_style.color_b,
               a: row_style.color_a,
             },
-            align: @selene_math.HAlign::Left,
-            baseline: @selene_math.VAlign::Top,
+            align: Left,
+            baseline: Top,
           },
         }),
       )
@@ -1160,8 +1078,8 @@ pub fn SeleneSettingsMenu::render_commands(
         if selected {
           commands.push(
             Rect({
-              alpha_mode: @selene_render.AlphaMode2D::Blend,
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              alpha_mode: Blend,
+              blend_mode: Alpha,
               rect: {
                 position: Vec2(viewport_w / 2.0 - 286.0, slot_y - 4.0),
                 size: Vec2(572.0, 46.0),
@@ -1174,7 +1092,7 @@ pub fn SeleneSettingsMenu::render_commands(
         }
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: if has_existing {
               "\{slot} | \{title}"
             } else {
@@ -1192,15 +1110,15 @@ pub fn SeleneSettingsMenu::render_commands(
                 b: row_style.color_b,
                 a: row_style.color_a,
               },
-              align: @selene_math.HAlign::Left,
-              baseline: @selene_math.VAlign::Top,
+              align: Left,
+              baseline: Top,
             },
           }),
         )
         if preview != "" {
           commands.push(
             Text({
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              blend_mode: Alpha,
               text: preview,
               position: Vec2(viewport_w / 2.0 - 260.0, slot_y + 22.0),
               transform: @selene_math.Transform::identity(),
@@ -1214,8 +1132,8 @@ pub fn SeleneSettingsMenu::render_commands(
                   b: hint_style.color_b,
                   a: hint_style.color_a,
                 },
-                align: @selene_math.HAlign::Left,
-                baseline: @selene_math.VAlign::Top,
+                align: Left,
+                baseline: Top,
               },
             }),
           )
@@ -1227,8 +1145,8 @@ pub fn SeleneSettingsMenu::render_commands(
       if nav_selected {
         commands.push(
           Rect({
-            alpha_mode: @selene_render.AlphaMode2D::Blend,
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            alpha_mode: Blend,
+            blend_mode: Alpha,
             rect: {
               position: Vec2(viewport_w / 2.0 - 286.0, slot_y - 4.0),
               size: Vec2(572.0, 30.0),
@@ -1241,7 +1159,7 @@ pub fn SeleneSettingsMenu::render_commands(
       }
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: "\{self.ui_strings.settings_page_prefix}: \{self.slot_page + 1}   \{self.ui_strings.settings_nav_prev}/\{self.ui_strings.settings_nav_next}",
           position: Vec2(viewport_w / 2.0 - 275.0, slot_y),
           transform: @selene_math.Transform::identity(),
@@ -1255,8 +1173,8 @@ pub fn SeleneSettingsMenu::render_commands(
               b: row_style.color_b,
               a: row_style.color_a,
             },
-            align: @selene_math.HAlign::Left,
-            baseline: @selene_math.VAlign::Top,
+            align: Left,
+            baseline: Top,
           },
         }),
       )
@@ -1266,8 +1184,8 @@ pub fn SeleneSettingsMenu::render_commands(
       if back_selected {
         commands.push(
           Rect({
-            alpha_mode: @selene_render.AlphaMode2D::Blend,
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            alpha_mode: Blend,
+            blend_mode: Alpha,
             rect: {
               position: Vec2(viewport_w / 2.0 - 286.0, slot_y - 4.0),
               size: Vec2(572.0, 30.0),
@@ -1280,7 +1198,7 @@ pub fn SeleneSettingsMenu::render_commands(
       }
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: self.ui_strings.settings_back,
           position: Vec2(viewport_w / 2.0 - 275.0, slot_y),
           transform: @selene_math.Transform::identity(),
@@ -1294,14 +1212,14 @@ pub fn SeleneSettingsMenu::render_commands(
               b: placeholder_style.color_b,
               a: placeholder_style.color_a,
             },
-            align: @selene_math.HAlign::Left,
-            baseline: @selene_math.VAlign::Top,
+            align: Left,
+            baseline: Top,
           },
         }),
       )
       commands.push(
         Text({
-          blend_mode: @selene_render.BlendMode2D::Alpha,
+          blend_mode: Alpha,
           text: "[Up/Down] Select  [Left/Right] Tab/Page  [Enter/Space] Confirm  [Esc] Back",
           position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 210.0),
           transform: @selene_math.Transform::identity(),
@@ -1315,8 +1233,8 @@ pub fn SeleneSettingsMenu::render_commands(
               b: hint_style.color_b,
               a: hint_style.color_a,
             },
-            align: @selene_math.HAlign::Center,
-            baseline: @selene_math.VAlign::Top,
+            align: Center,
+            baseline: Top,
           },
         }),
       )

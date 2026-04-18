@@ -76,8 +76,7 @@ fn SeleneLoadingMenuTextTheme::with_family(
 }
 
 ///|
-pub struct SeleneMenuFactory {
-  ui_strings : UiStrings
+struct SeleneMenuFactory {
   save_namespace : String
   start_menu : SeleneStartMenu
   gallery_menu : SeleneGalleryMenu
@@ -118,7 +117,6 @@ pub fn SeleneMenuFactory::new(
     _ => loading_menu_text_theme.with_family(text_font_family)
   }
   {
-    ui_strings,
     save_namespace,
     start_menu: SeleneStartMenu::new(
       ui_strings~,

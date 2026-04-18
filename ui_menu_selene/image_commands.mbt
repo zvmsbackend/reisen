@@ -11,8 +11,8 @@ fn fullscreen_image_command(
   Some(
     Image({
       uv_transform: @selene_math.Transform::identity(),
-      alpha_mode: @selene_render.AlphaMode2D::Blend,
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      alpha_mode: Blend,
+      blend_mode: Alpha,
       image,
       destination: {
         position: Vec2(0.0, 0.0),

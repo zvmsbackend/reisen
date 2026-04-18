@@ -39,15 +39,12 @@ pub impl Default for SeleneCreditsMenuTextTheme with default() {
 }
 
 ///|
-pub struct SeleneCreditsMenu {
-  mut ui_strings : UiStrings
+struct SeleneCreditsMenu {
   text_theme : SeleneCreditsMenuTextTheme
   mut background : String
   mut pending_action : @ui_menu.CreditsAction
   mut text : String
-  mut last_escape_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
+  edges : SeleneInputEdgeState
   mut visible : Bool
 }
 
@@ -56,24 +53,22 @@ pub fn SeleneCreditsMenu::new(
   ui_strings? : UiStrings = UiStrings::default(),
   text_theme? : SeleneCreditsMenuTextTheme = SeleneCreditsMenuTextTheme::default(),
 ) -> SeleneCreditsMenu {
+  ignore(ui_strings)
   {
-    ui_strings,
     text_theme,
     background: "",
     pending_action: NoAction,
     text: "",
-    last_escape_down: false,
-    last_mouse_left_down: false,
-    last_mouse_right_down: false,
+    edges: SeleneInputEdgeState::new(),
     visible: false,
   }
 }
 
 ///|
 fn SeleneCreditsMenu::take_back_edge(self : SeleneCreditsMenu) -> Bool {
-  let escape_down = @selene_inputs.is_pressed(@selene_inputs.Escape)
-  let triggered = escape_down && !self.last_escape_down
-  self.last_escape_down = escape_down
+  let escape_down = @selene_inputs.is_pressed(Escape)
+  let triggered = escape_down && !self.edges.last_escape_down
+  self.edges.last_escape_down = escape_down
   triggered
 }
 
@@ -81,10 +76,8 @@ fn SeleneCreditsMenu::take_back_edge(self : SeleneCreditsMenu) -> Bool {
 fn SeleneCreditsMenu::take_mouse_back_edge(self : SeleneCreditsMenu) -> Bool {
   let left_down = @selene_inputs.mouse.left_button
   let right_down = @selene_inputs.mouse.right_button
-  let left_edge = left_down && !self.last_mouse_left_down
-  let right_edge = right_down && !self.last_mouse_right_down
-  self.last_mouse_left_down = left_down
-  self.last_mouse_right_down = right_down
+  let left_edge = self.edges.take_mouse_left_edge(left_down)
+  let right_edge = self.edges.take_mouse_right_edge(right_down)
   left_edge || right_edge
 }
 
@@ -95,10 +88,10 @@ pub fn SeleneCreditsMenu::push_back(self : SeleneCreditsMenu) -> Unit {
 
 ///|
 pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu with set_ui_strings(
-  self,
-  ui_strings,
+  _self,
+  _ui_strings,
 ) {
-  self.ui_strings = ui_strings
+
 }
 
 ///|
@@ -155,8 +148,8 @@ pub fn SeleneCreditsMenu::render_commands(
   }
   commands.append([
     Rect({
-      alpha_mode: @selene_render.AlphaMode2D::Blend,
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      alpha_mode: Blend,
+      blend_mode: Alpha,
       rect: {
         position: Vec2(viewport_w / 2.0 - 350.0, viewport_h / 2.0 - 280.0),
         size: Vec2(700.0, 560.0),
@@ -166,7 +159,7 @@ pub fn SeleneCreditsMenu::render_commands(
       stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
     }),
     Text({
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      blend_mode: Alpha,
       text: "Credits",
       position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 240.0),
       transform: @selene_math.Transform::identity(),
@@ -185,7 +178,7 @@ pub fn SeleneCreditsMenu::render_commands(
       },
     }),
     Text({
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      blend_mode: Alpha,
       text: self.text[:(self.text.length() / 2).max(0)].to_string(),
       position: Vec2(viewport_w / 2.0, viewport_h / 2.0 - 160.0),
       transform: @selene_math.Transform::identity(),
@@ -204,7 +197,7 @@ pub fn SeleneCreditsMenu::render_commands(
       },
     }),
     Text({
-      blend_mode: @selene_render.BlendMode2D::Alpha,
+      blend_mode: Alpha,
       text: "(Press ESC to return)",
       position: Vec2(viewport_w / 2.0, viewport_h / 2.0 + 220.0),
       transform: @selene_math.Transform::identity(),

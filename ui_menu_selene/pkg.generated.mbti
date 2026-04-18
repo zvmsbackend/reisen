@@ -14,17 +14,7 @@ import {
 // Errors
 
 // Types and methods
-pub struct SeleneCreditsMenu {
-  mut ui_strings : @ui_game.UiStrings
-  text_theme : SeleneCreditsMenuTextTheme
-  mut background : String
-  mut pending_action : @ui_menu.CreditsAction
-  mut text : String
-  mut last_escape_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
-  mut visible : Bool
-}
+type SeleneCreditsMenu
 pub fn SeleneCreditsMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneCreditsMenuTextTheme) -> Self
 pub fn SeleneCreditsMenu::push_back(Self) -> Unit
 pub fn SeleneCreditsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
@@ -34,30 +24,7 @@ pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu
 type SeleneCreditsMenuTextTheme
 pub impl Default for SeleneCreditsMenuTextTheme
 
-pub struct SeleneGalleryMenu {
-  save_namespace : String
-  mut ui_strings : @ui_game.UiStrings
-  text_theme : SeleneGalleryMenuTextTheme
-  show_locked : Bool
-  mut background : String
-  mut pending_action : @ui_menu.GalleryAction
-  mut script_locale_json : String?
-  mut script_default_locale_json : String?
-  mut active_id : String?
-  mut selected_index : Int
-  mut last_enter_down : Bool
-  mut last_space_down : Bool
-  mut last_left_down : Bool
-  mut last_right_down : Bool
-  mut last_up_down : Bool
-  mut last_down_down : Bool
-  mut last_escape_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
-  mut visible : Bool
-  mut last_viewport_w : Double
-  mut last_viewport_h : Double
-}
+type SeleneGalleryMenu
 pub fn SeleneGalleryMenu::new(save_namespace? : String, ui_strings? : @ui_game.UiStrings, show_locked? : Bool, text_theme? : SeleneGalleryMenuTextTheme) -> Self
 pub fn SeleneGalleryMenu::push_action(Self, @ui_menu.GalleryAction) -> Unit
 pub fn SeleneGalleryMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
@@ -79,15 +46,7 @@ pub impl @ui_menu.LoadingMenu for SeleneLoadingMenu
 type SeleneLoadingMenuTextTheme
 pub impl Default for SeleneLoadingMenuTextTheme
 
-pub struct SeleneMenuFactory {
-  ui_strings : @ui_game.UiStrings
-  save_namespace : String
-  start_menu : SeleneStartMenu
-  gallery_menu : SeleneGalleryMenu
-  settings_menu : SeleneSettingsMenu
-  credits_menu : SeleneCreditsMenu
-  loading_menu : SeleneLoadingMenu
-}
+type SeleneMenuFactory
 pub fn SeleneMenuFactory::new(ui_strings? : @ui_game.UiStrings, save_namespace? : String, text_font_family? : String, start_menu_text_theme? : SeleneStartMenuTextTheme, gallery_menu_text_theme? : SeleneGalleryMenuTextTheme, settings_menu_text_theme? : SeleneSettingsMenuTextTheme, credits_menu_text_theme? : SeleneCreditsMenuTextTheme, loading_menu_text_theme? : SeleneLoadingMenuTextTheme) -> Self
 pub fn SeleneMenuFactory::push_credits_back(Self) -> Unit
 pub fn SeleneMenuFactory::push_gallery_action(Self, @ui_menu.GalleryAction) -> Unit
@@ -103,40 +62,7 @@ pub impl @ui_menu.MenuFactory for SeleneMenuFactory
 type SeleneMenuTextStyle
 pub impl Default for SeleneMenuTextStyle
 
-pub struct SeleneSettingsMenu {
-  mut ui_strings : @ui_game.UiStrings
-  text_theme : SeleneSettingsMenuTextTheme
-  mut audio : &@audio_core.AudioPort
-  mut background : String
-  mut show_credits : Bool
-  mut save_namespace : String
-  mut pending_action : @ui_menu.SettingsAction
-  mut script_locale_json : String?
-  mut script_default_locale_json : String?
-  mut languages : Array[(String, String)]
-  mut locale : String
-  mut text_speed : Int
-  mut bgm_volume : Double
-  mut sfx_volume : Double
-  mut selected_index : Int
-  mut slot_type_index : Int
-  mut slot_page : Int
-  mut last_up_down : Bool
-  mut last_down_down : Bool
-  mut last_left_down : Bool
-  mut last_right_down : Bool
-  mut context : @ui_menu.SettingsContext
-  mut view_mode : @ui_menu.SettingsViewMode
-  mut settings_loaded : Bool
-  mut last_escape_down : Bool
-  mut last_enter_down : Bool
-  mut last_space_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
-  mut visible : Bool
-  mut last_viewport_w : Double
-  mut last_viewport_h : Double
-}
+type SeleneSettingsMenu
 pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, audio? : &@audio_core.AudioPort, background? : String, show_credits? : Bool, save_namespace? : String, text_theme? : SeleneSettingsMenuTextTheme) -> Self
 pub fn SeleneSettingsMenu::push_action(Self, @ui_menu.SettingsAction) -> Unit
 pub fn SeleneSettingsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
@@ -149,31 +75,7 @@ pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu
 type SeleneSettingsMenuTextTheme
 pub impl Default for SeleneSettingsMenuTextTheme
 
-pub struct SeleneStartMenu {
-  mut ui_strings : @ui_game.UiStrings
-  text_theme : SeleneStartMenuTextTheme
-  mut background : String
-  mut logo_url : String
-  mut save_ns : String
-  mut save_store : &@storage.SaveSlotStore
-  mut show_credits : Bool
-  mut pending_action : @ui_menu.StartMenuAction
-  mut pending_gate_action : @ui_menu.StartGateAction
-  mut pending_logo_action : @ui_menu.StartLogoAction
-  mut pending_locale_action : @ui_menu.StartLocaleAction
-  mut start_selected_index : Int
-  mut locale_options : Array[(String, String)]
-  mut locale_selected_index : Int
-  mut last_enter_down : Bool
-  mut last_space_down : Bool
-  mut last_up_down : Bool
-  mut last_down_down : Bool
-  mut last_mouse_left_down : Bool
-  mut last_mouse_right_down : Bool
-  mut visible_mode : String?
-  mut last_viewport_w : Double
-  mut last_viewport_h : Double
-}
+type SeleneStartMenu
 pub fn SeleneStartMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneStartMenuTextTheme) -> Self
 pub fn SeleneStartMenu::push_action(Self, @ui_menu.StartMenuAction) -> Unit
 pub fn SeleneStartMenu::push_gate_action(Self, @ui_menu.StartGateAction) -> Unit

@@ -126,8 +126,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
           b: speaker_text_style.color_b,
           a: speaker_text_style.color_a,
         },
-        align: @selene_math.HAlign::Left,
-        baseline: @selene_math.VAlign::Top,
+        align: Left,
+        baseline: Top,
       }
       let body_draw_style : @selene_render2d_types.TextStyle2D = {
         font: body_text_style.font,
@@ -139,8 +139,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
           b: body_text_style.color_b,
           a: body_text_style.color_a,
         },
-        align: @selene_math.HAlign::Left,
-        baseline: @selene_math.VAlign::Top,
+        align: Left,
+        baseline: Top,
       }
       let speaker_lines = wrap_text_manual(
         speaker, speaker_draw_style, text_width,
@@ -156,8 +156,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
       if view.text_box_visible && has_dialog_lines {
         commands.push(
           Rect({
-            alpha_mode: @selene_render.AlphaMode2D::Blend,
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            alpha_mode: Blend,
+            blend_mode: Alpha,
             rect: panel_rect,
             transform: @selene_math.Transform::identity(),
             fill_color: { r: 10, g: 14, b: 20, a: 0.82 },
@@ -169,7 +169,7 @@ pub fn SeleneUiBackend::ui_overlay_commands(
           for line in speaker_lines {
             commands.push(
               Text({
-                blend_mode: @selene_render.BlendMode2D::Alpha,
+                blend_mode: Alpha,
                 text: line,
                 position: @selene_math.Vec2(48.0, y),
                 transform: @selene_math.Transform::identity(),
@@ -183,7 +183,7 @@ pub fn SeleneUiBackend::ui_overlay_commands(
         for line in lines {
           commands.push(
             Text({
-              blend_mode: @selene_render.BlendMode2D::Alpha,
+              blend_mode: Alpha,
               text: line,
               position: @selene_math.Vec2(48.0, y),
               transform: @selene_math.Transform::identity(),
@@ -204,14 +204,14 @@ pub fn SeleneUiBackend::ui_overlay_commands(
           b: body_text_style.color_b,
           a: body_text_style.color_a,
         },
-        align: @selene_math.HAlign::Center,
-        baseline: @selene_math.VAlign::Center,
+        align: Center,
+        baseline: Center,
       }
       for button in toolbar_buttons {
         commands.push(
           Rect({
-            alpha_mode: @selene_render.AlphaMode2D::Blend,
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            alpha_mode: Blend,
+            blend_mode: Alpha,
             rect: button.rect,
             transform: @selene_math.Transform::identity(),
             fill_color: if button.active {
@@ -226,7 +226,7 @@ pub fn SeleneUiBackend::ui_overlay_commands(
         let center_y = button.rect.position[Y] + button.rect.size[Y] * 0.5
         commands.push(
           Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
+            blend_mode: Alpha,
             text: button.label,
             position: @selene_math.Vec2(center_x, center_y),
             transform: @selene_math.Transform::identity(),

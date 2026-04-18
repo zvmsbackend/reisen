@@ -4,3 +4,4 @@ _build/
 .moonagent/
 .agents
 .repos
+save_data/
