@@ -1,0 +1,41 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "sennenki/reisen/app_web_facade"
+
+import {
+  "moonbitlang/core/json",
+  "sennenki/reisen/app",
+  "sennenki/reisen/assets_web",
+  "sennenki/reisen/core",
+  "sennenki/reisen/gallery",
+  "sennenki/reisen/state",
+  "sennenki/reisen/storage",
+}
+
+// Values
+pub fn default_app_error_handler(String) -> Unit
+
+pub fn default_save_slot_storage() -> &@storage.SaveSlotStore
+
+pub async fn[T : @json.FromJson + ToJson] run_browser_game(async (@assets_web.WebAssetStore) -> @core.Script[T], () -> @state.GameState[T], root_id? : String, canvas_id? : String, config? : @app.AppContentConfig, save_store? : &@storage.SaveSlotStore, gallery_replay_state_factories? : @gallery.ReplayStateFactories[T], on_controller_ready? : (@app.AppController[T]) -> Unit) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+pub using @app {type AppContentConfig}
+
+pub using @app {type AppController}
+
+pub using @state {type GameState}
+
+pub using @gallery {type ReplayStateFactories}
+
+pub type ScriptFactory[T] = async () -> @core.Script[T]
+
+pub using @assets_web {type WebAssetStore}
+
+pub using @storage {trait SaveSlotStore}
+
+// Traits
+

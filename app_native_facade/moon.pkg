@@ -1,0 +1,21 @@
+import {
+  "sennenki/reisen/app",
+  "sennenki/reisen/assets",
+  "sennenki/reisen/assets_selene",
+  "sennenki/reisen/audio_core",
+  "sennenki/reisen/audio_selene",
+  "sennenki/reisen/core",
+  "sennenki/reisen/gallery",
+  "sennenki/reisen/selene_runtime",
+  "sennenki/reisen/selene_presenter",
+  "sennenki/reisen/state",
+  "sennenki/reisen/storage",
+  "sennenki/reisen/ui_menu_selene",
+  "sennenki/reisen/ui_selene",
+}
+
+supported_targets = "native"
+
+options(
+  targets: { "run_native_game.mbt": [ "native" ] },
+)

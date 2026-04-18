@@ -16,6 +16,8 @@ import {
 }
 
 // Values
+pub fn[T] create_app_controller(async () -> @core.Script[T], () -> @state.GameState[T], AppRuntimePorts, config? : AppContentConfig, save_store? : &@storage.SaveSlotStore, gallery_replay_state_factories? : @gallery.ReplayStateFactories[T]) -> AppController[T]
+
 pub fn default_app_error_handler(String) -> Unit
 
 pub async fn preload_localization(save_namespace? : String, languages? : Array[(String, String)], ui_locale_path? : String, script_locale_dir? : String) -> LocalizationPayload raise AppBootstrapError
@@ -57,6 +59,32 @@ pub suberror AppControllerError {
 pub fn AppControllerError::message(Self) -> String
 
 // Types and methods
+pub struct AppContentConfig {
+  save_namespace : String
+  autosave_slot : String
+  autosave_title : String
+  menu_background : String
+  settings_background : String
+  gallery_background : String
+  credits_background : String
+  menu_music : @assets.Music?
+  ui_click_sfx_url : String
+  menu_music_loop : Bool
+  ui_strings : @ui_game.UiStrings
+  languages : Array[(String, String)]
+  ui_locales_json : String
+  ui_locale_path : String
+  script_locale_json : String
+  script_default_locale_json : String
+  script_locale_dir : String
+  vocal_locale_dir : String
+  credits : String?
+  start_logo_urls : Array[String]
+  start_logo_duration_ms : Int
+}
+pub fn AppContentConfig::new(save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, credits_background? : String, menu_music? : @assets.Music, ui_click_sfx_url? : String, menu_music_loop? : Bool, ui_strings? : @ui_game.UiStrings, languages? : Array[(String, String)], ui_locales_json? : String, ui_locale_path? : String, script_locale_json? : String, script_default_locale_json? : String, script_locale_dir? : String, vocal_locale_dir? : String, credits? : String, start_logo_urls? : Array[String], start_logo_duration_ms? : Int) -> Self
+pub impl Default for AppContentConfig
+
 type AppController[T]
 pub fn[T] AppController::new(async () -> @core.Script[T], () -> @state.GameState[T], &@ui_game.UiPortFactory, &@assets.AssetStore, &@ui_menu.MenuFactory, audio? : &@audio_core.AudioPort, save_namespace? : String, autosave_slot? : String, autosave_title? : String, menu_background? : String, settings_background? : String, gallery_background? : String, credits_background? : String, menu_music? : @assets.Music, ui_click_sfx_url? : String, menu_music_loop? : Bool, ui_strings? : @ui_game.UiStrings, languages? : Array[(String, String)], ui_locales_json? : String, script_locale_json? : String, script_default_locale_json? : String, script_locale_dir? : String, vocal_locale_dir? : String, credits? : String, save_store? : &@storage.SaveSlotStore, start_logo_urls? : Array[String], start_logo_duration_ms? : Int, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, gallery_replay_state_factories? : @gallery.ReplayStateFactories[T]) -> Self[T]
 pub fn[T] AppController::phase(Self[T]) -> AppPhase
@@ -75,6 +103,18 @@ pub enum AppPhase {
   Credits
   InGame
 } derive(Eq, @debug.Debug)
+
+pub struct AppRuntimePorts {
+  ui_port_factory : &@ui_game.UiPortFactory
+  menu_factory : &@ui_menu.MenuFactory
+  assets : &@assets.AssetStore
+  audio : &@audio_core.AudioPort
+  core_render_sync : (@engine.CoreRenderSnapshot, Bool) -> Unit
+  render_extension : ((@engine.RenderExtensionView, Bool) -> Unit)?
+  event_hook : (@core.RuntimeEvent) -> Unit
+  idle_render : () -> Unit
+}
+pub fn AppRuntimePorts::new(&@ui_game.UiPortFactory, &@ui_menu.MenuFactory, &@assets.AssetStore, audio? : &@audio_core.AudioPort, core_render_sync? : (@engine.CoreRenderSnapshot, Bool) -> Unit, render_extension? : (@engine.RenderExtensionView, Bool) -> Unit, event_hook? : (@core.RuntimeEvent) -> Unit, idle_render? : () -> Unit) -> Self
 
 pub struct LocalizationPayload {
   locale : String

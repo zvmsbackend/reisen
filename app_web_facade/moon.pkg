@@ -1,0 +1,21 @@
+import {
+  "sennenki/reisen/app",
+  "sennenki/reisen/assets",
+  "sennenki/reisen/assets_web",
+  "sennenki/reisen/audio_core",
+  "sennenki/reisen/audio_web",
+  "sennenki/reisen/core",
+  "sennenki/reisen/gallery",
+  "sennenki/reisen/presenter",
+  "sennenki/reisen/state",
+  "sennenki/reisen/storage",
+  "sennenki/reisen/ui_dom",
+  "sennenki/reisen/ui_game",
+  "sennenki/reisen/ui_menu_dom",
+}
+
+supported_targets = "js"
+
+options(
+  targets: { "run_browser_game.mbt": [ "js" ] },
+)
