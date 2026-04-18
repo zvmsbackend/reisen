@@ -1,5 +1,5 @@
 ///|
-pub struct SeleneMenuTextStyle {
+struct SeleneMenuTextStyle {
   font : @selene_asset_types.FontHandle?
   family : String
   size : Double
@@ -23,7 +23,7 @@ pub impl Default for SeleneMenuTextStyle with default() {
 }
 
 ///|
-pub struct SeleneStartMenuTextTheme {
+struct SeleneStartMenuTextTheme {
   gate_title : SeleneMenuTextStyle
   locale_title : SeleneMenuTextStyle
   locale_empty : SeleneMenuTextStyle

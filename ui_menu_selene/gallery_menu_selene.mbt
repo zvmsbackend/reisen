@@ -1,5 +1,5 @@
 ///|
-pub struct SeleneGalleryMenuTextTheme {
+struct SeleneGalleryMenuTextTheme {
   title : SeleneMenuTextStyle
   body : SeleneMenuTextStyle
   hint : SeleneMenuTextStyle

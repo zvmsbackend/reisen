@@ -1,5 +1,5 @@
 ///|
-pub struct SeleneCreditsMenuTextTheme {
+struct SeleneCreditsMenuTextTheme {
   title : SeleneMenuTextStyle
   body : SeleneMenuTextStyle
   hint : SeleneMenuTextStyle
