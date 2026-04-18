@@ -14,7 +14,7 @@ pub async fn preload_localization(
   languages? : Array[(String, String)] = [],
   ui_locale_path? : String = "locales/ui.json",
   script_locale_dir? : String = "locales",
-) -> LocalizationPayload raise AppBootstrapError {
+) -> LocalizationPayload {
   let (locale, default_locale) = resolve_selected_locale(
     save_namespace, languages,
   )
