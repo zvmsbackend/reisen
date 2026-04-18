@@ -98,6 +98,8 @@ pub struct SeleneUiBackend {
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut last_escape_down : Bool
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
   mut last_view : UiViewModel?
 }
 
@@ -129,6 +131,8 @@ pub fn SeleneUiBackend::new(
     last_enter_down: false,
     last_space_down: false,
     last_escape_down: false,
+    last_viewport_w: 1280.0,
+    last_viewport_h: 720.0,
     last_view: None,
   }
 }
@@ -389,8 +393,15 @@ pub impl UiPlatformHooks for SeleneUiBackend with advance_ui_animation_timer(
   let enter_down = @selene_inputs.is_pressed(@selene_inputs.Enter)
   let space_down = @selene_inputs.is_pressed(@selene_inputs.Space)
   let escape_down = @selene_inputs.is_pressed(@selene_inputs.Escape)
+  let click_edge = mouse_left_down && !self.last_mouse_left_down
 
-  if (mouse_left_down && !self.last_mouse_left_down) ||
+  let toolbar_consumed = if click_edge {
+    self.take_toolbar_action_on_click()
+  } else {
+    false
+  }
+
+  if (!toolbar_consumed && click_edge) ||
     (enter_down && !self.last_enter_down) ||
     (space_down && !self.last_space_down) {
     self.pending_click = true
@@ -420,213 +431,6 @@ pub impl UiPlatformHooks for SeleneUiBackend with set_media_volume(
   _volume,
 ) {
   ignore(self)
-}
-
-///|
-fn dialog_text_or_intro(view : UiViewModel) -> String {
-  let dialog = view.text.raw_text()
-  if dialog != "" {
-    return dialog
-  }
-  match view.intro_text {
-    Some(text) => text.raw_text()
-    None => ""
-  }
-}
-
-///|
-fn SeleneUiBackend::body_lines(view : UiViewModel) -> Array[String] {
-  let lines : Array[String] = []
-  let body = dialog_text_or_intro(view)
-  if body != "" {
-    lines.push(body)
-  }
-  if !view.choices.is_empty() {
-    for i = 0; i < view.choices.length(); i = i + 1 {
-      let choice = view.choices[i]
-      lines.push("\{i + 1}. \{choice.text.raw_text()}")
-      if i >= 2 {
-        break
-      }
-    }
-  }
-  if view.text_input is Some(input) {
-    lines.push("Input: \{input.prompt.raw_text()}")
-  }
-  if view.video is Some(video) {
-    let skip_hint = if video.can_skip { " (skip available)" } else { "" }
-    lines.push("Video: \{video.url}\{skip_hint}")
-  }
-  lines
-}
-
-///|
-fn measure_text_width(
-  style : @selene_render2d_types.TextStyle2D,
-  text : String,
-) -> Double {
-  @selene_platform_render.measure_text(style, text)[X]
-}
-
-///|
-fn wrap_text_manual(
-  raw : String,
-  style : @selene_render2d_types.TextStyle2D,
-  max_width : Double,
-) -> Array[String] {
-  if max_width <= 0.0 {
-    return [""]
-  }
-  let wrapped : Array[String] = []
-  let mut line_builder = StringBuilder::new()
-  for c in raw {
-    if c == '\n' {
-      wrapped.push(line_builder.to_string())
-      line_builder = StringBuilder::new()
-    } else {
-      let candidate_builder = StringBuilder::new()
-      candidate_builder.write_string(line_builder.to_string())
-      candidate_builder.write_char(c)
-      let candidate = candidate_builder.to_string()
-      if line_builder.to_string() != "" &&
-        measure_text_width(style, candidate) > max_width {
-        wrapped.push(line_builder.to_string())
-        line_builder = StringBuilder::new()
-        line_builder.write_char(c)
-      } else {
-        line_builder.write_char(c)
-      }
-    }
-  }
-  let tail = line_builder.to_string()
-  if tail != "" || wrapped.is_empty() {
-    wrapped.push(tail)
-  }
-  wrapped
-}
-
-///|
-fn wrap_overlay_lines(
-  lines : Array[String],
-  style : @selene_render2d_types.TextStyle2D,
-  max_width : Double,
-) -> Array[String] {
-  let wrapped : Array[String] = []
-  for line in lines {
-    for segment in wrap_text_manual(line, style, max_width) {
-      wrapped.push(segment)
-    }
-  }
-  wrapped
-}
-
-///|
-pub fn SeleneUiBackend::ui_overlay_commands(
-  self : SeleneUiBackend,
-  viewport_w? : Double = 1280.0,
-  viewport_h? : Double = 720.0,
-) -> Array[@selene_render2d_types.DrawCommand2D] {
-  match self.last_view {
-    None => []
-    Some(view) => {
-      let speaker_text_style = self.overlay_text_theme.speaker
-      let body_text_style = self.overlay_text_theme.body
-      let speaker = view.speaker.raw_text()
-      if !view.text_box_visible {
-        return []
-      }
-      let panel_rect : @selene_math.Rect = {
-        position: @selene_math.Vec2(28.0, viewport_h - 236.0),
-        size: @selene_math.Vec2(viewport_w - 56.0, 208.0),
-      }
-      let text_width = viewport_w - 96.0
-      let speaker_draw_style : @selene_render2d_types.TextStyle2D = {
-        font: speaker_text_style.font,
-        family: speaker_text_style.family,
-        size: speaker_text_style.size,
-        color: {
-          r: speaker_text_style.color_r,
-          g: speaker_text_style.color_g,
-          b: speaker_text_style.color_b,
-          a: speaker_text_style.color_a,
-        },
-        align: @selene_math.HAlign::Left,
-        baseline: @selene_math.VAlign::Top,
-      }
-      let body_draw_style : @selene_render2d_types.TextStyle2D = {
-        font: body_text_style.font,
-        family: body_text_style.family,
-        size: body_text_style.size,
-        color: {
-          r: body_text_style.color_r,
-          g: body_text_style.color_g,
-          b: body_text_style.color_b,
-          a: body_text_style.color_a,
-        },
-        align: @selene_math.HAlign::Left,
-        baseline: @selene_math.VAlign::Top,
-      }
-      let speaker_lines = wrap_text_manual(
-        speaker, speaker_draw_style, text_width,
-      )
-      let lines = wrap_overlay_lines(
-        SeleneUiBackend::body_lines(view),
-        body_draw_style,
-        text_width,
-      )
-      if (speaker == "" || speaker_lines.is_empty()) && lines.is_empty() {
-        return []
-      }
-      let commands : Array[@selene_render2d_types.DrawCommand2D] = [
-        Rect({
-          alpha_mode: @selene_render.AlphaMode2D::Blend,
-          blend_mode: @selene_render.BlendMode2D::Alpha,
-          rect: panel_rect,
-          transform: @selene_math.Transform::identity(),
-          fill_color: { r: 10, g: 14, b: 20, a: 0.82 },
-          stroke_color: Some({ r: 214, g: 224, b: 238, a: 0.92 }),
-        }),
-      ]
-      let mut y = viewport_h - 214.0
-      if speaker != "" {
-        for line in speaker_lines {
-          commands.push(
-            Text({
-              blend_mode: @selene_render.BlendMode2D::Alpha,
-              text: line,
-              position: @selene_math.Vec2(48.0, y),
-              transform: @selene_math.Transform::identity(),
-              style: speaker_draw_style,
-            }),
-          )
-          y += 34.0
-        }
-        y += 4.0
-      }
-      for line in lines {
-        commands.push(
-          Text({
-            blend_mode: @selene_render.BlendMode2D::Alpha,
-            text: line,
-            position: @selene_math.Vec2(48.0, y),
-            transform: @selene_math.Transform::identity(),
-            style: body_draw_style,
-          }),
-        )
-        y += 30.0
-      }
-      commands
-    }
-  }
-}
-
-///|
-pub fn SeleneUiBackend::ui_overlay_provider(
-  self : SeleneUiBackend,
-  viewport_w? : Double = 1280.0,
-  viewport_h? : Double = 720.0,
-) -> () -> Array[@selene_render2d_types.DrawCommand2D] {
-  () => self.ui_overlay_commands(viewport_w~, viewport_h~)
 }
 
 ///|

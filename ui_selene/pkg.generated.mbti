@@ -48,6 +48,8 @@ pub struct SeleneUiBackend {
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut last_escape_down : Bool
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
   mut last_view : @ui_game.UiViewModel?
 }
 pub fn SeleneUiBackend::last_view(Self) -> @ui_game.UiViewModel?
