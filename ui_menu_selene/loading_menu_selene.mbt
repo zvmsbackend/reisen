@@ -29,14 +29,14 @@ pub impl Default for SeleneLoadingMenuTextTheme with default() {
 }
 
 ///|
-pub struct SeleneLoadingMenu {
+struct SeleneLoadingMenu {
   text_theme : SeleneLoadingMenuTextTheme
   mut text : String
   mut visible : Bool
 }
 
 ///|
-pub fn SeleneLoadingMenu::new(
+fn SeleneLoadingMenu::new(
   text_theme? : SeleneLoadingMenuTextTheme = SeleneLoadingMenuTextTheme::default(),
 ) -> SeleneLoadingMenu {
   { text_theme, text: "", visible: false }
@@ -55,7 +55,7 @@ pub impl @ui_menu.LoadingMenu for SeleneLoadingMenu with clear(self) {
 }
 
 ///|
-pub fn SeleneLoadingMenu::render_commands(
+fn SeleneLoadingMenu::render_commands(
   self : SeleneLoadingMenu,
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,

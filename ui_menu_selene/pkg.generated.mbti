@@ -15,32 +15,18 @@ import {
 
 // Types and methods
 type SeleneCreditsMenu
-pub fn SeleneCreditsMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneCreditsMenuTextTheme) -> Self
-pub fn SeleneCreditsMenu::push_back(Self) -> Unit
-pub fn SeleneCreditsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
-pub fn SeleneCreditsMenu::set_background(Self, String) -> Unit
 pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu
 
 type SeleneCreditsMenuTextTheme
 pub impl Default for SeleneCreditsMenuTextTheme
 
 type SeleneGalleryMenu
-pub fn SeleneGalleryMenu::new(save_namespace? : String, ui_strings? : @ui_game.UiStrings, show_locked? : Bool, text_theme? : SeleneGalleryMenuTextTheme) -> Self
-pub fn SeleneGalleryMenu::push_action(Self, @ui_menu.GalleryAction) -> Unit
-pub fn SeleneGalleryMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
-pub fn SeleneGalleryMenu::set_background(Self, String) -> Unit
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu
 
 type SeleneGalleryMenuTextTheme
 pub impl Default for SeleneGalleryMenuTextTheme
 
-pub struct SeleneLoadingMenu {
-  text_theme : SeleneLoadingMenuTextTheme
-  mut text : String
-  mut visible : Bool
-}
-pub fn SeleneLoadingMenu::new(text_theme? : SeleneLoadingMenuTextTheme) -> Self
-pub fn SeleneLoadingMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
+type SeleneLoadingMenu
 pub impl @ui_menu.LoadingMenu for SeleneLoadingMenu
 
 type SeleneLoadingMenuTextTheme
@@ -63,29 +49,12 @@ type SeleneMenuTextStyle
 pub impl Default for SeleneMenuTextStyle
 
 type SeleneSettingsMenu
-pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, audio? : &@audio_core.AudioPort, background? : String, show_credits? : Bool, save_namespace? : String, text_theme? : SeleneSettingsMenuTextTheme) -> Self
-pub fn SeleneSettingsMenu::push_action(Self, @ui_menu.SettingsAction) -> Unit
-pub fn SeleneSettingsMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
-pub fn SeleneSettingsMenu::set_audio(Self, &@audio_core.AudioPort) -> Unit
-pub fn SeleneSettingsMenu::set_background(Self, String) -> Unit
-pub fn SeleneSettingsMenu::set_save_namespace(Self, String) -> Unit
-pub fn SeleneSettingsMenu::set_show_credits(Self, Bool) -> Unit
 pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu
 
 type SeleneSettingsMenuTextTheme
 pub impl Default for SeleneSettingsMenuTextTheme
 
 type SeleneStartMenu
-pub fn SeleneStartMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneStartMenuTextTheme) -> Self
-pub fn SeleneStartMenu::push_action(Self, @ui_menu.StartMenuAction) -> Unit
-pub fn SeleneStartMenu::push_gate_action(Self, @ui_menu.StartGateAction) -> Unit
-pub fn SeleneStartMenu::push_locale_code(Self, String) -> Unit
-pub fn SeleneStartMenu::push_logo_done(Self) -> Unit
-pub fn SeleneStartMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
-pub fn SeleneStartMenu::set_background(Self, String) -> Unit
-pub fn SeleneStartMenu::set_save_namespace(Self, String) -> Unit
-pub fn SeleneStartMenu::set_save_store(Self, &@storage.SaveSlotStore) -> Unit
-pub fn SeleneStartMenu::set_show_credits(Self, Bool) -> Unit
 pub impl @ui_menu.StartMenu for SeleneStartMenu
 
 type SeleneStartMenuTextTheme

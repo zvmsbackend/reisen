@@ -49,7 +49,7 @@ struct SeleneCreditsMenu {
 }
 
 ///|
-pub fn SeleneCreditsMenu::new(
+fn SeleneCreditsMenu::new(
   ui_strings? : UiStrings = UiStrings::default(),
   text_theme? : SeleneCreditsMenuTextTheme = SeleneCreditsMenuTextTheme::default(),
 ) -> SeleneCreditsMenu {
@@ -66,10 +66,7 @@ pub fn SeleneCreditsMenu::new(
 
 ///|
 fn SeleneCreditsMenu::take_back_edge(self : SeleneCreditsMenu) -> Bool {
-  let escape_down = @selene_inputs.is_pressed(Escape)
-  let triggered = escape_down && !self.edges.last_escape_down
-  self.edges.last_escape_down = escape_down
-  triggered
+  self.edges.take_escape_edge(@selene_inputs.is_pressed(Escape))
 }
 
 ///|
@@ -82,7 +79,7 @@ fn SeleneCreditsMenu::take_mouse_back_edge(self : SeleneCreditsMenu) -> Bool {
 }
 
 ///|
-pub fn SeleneCreditsMenu::push_back(self : SeleneCreditsMenu) -> Unit {
+fn SeleneCreditsMenu::push_back(self : SeleneCreditsMenu) -> Unit {
   self.pending_action = Back
 }
 
@@ -95,7 +92,7 @@ pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu with set_ui_strings(
 }
 
 ///|
-pub fn SeleneCreditsMenu::set_background(
+fn SeleneCreditsMenu::set_background(
   self : SeleneCreditsMenu,
   background : String,
 ) -> Unit {
@@ -130,7 +127,7 @@ pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu with take_action(self) {
 }
 
 ///|
-pub fn SeleneCreditsMenu::render_commands(
+fn SeleneCreditsMenu::render_commands(
   self : SeleneCreditsMenu,
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,

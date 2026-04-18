@@ -77,7 +77,7 @@ struct SeleneSettingsMenu {
 }
 
 ///|
-pub fn SeleneSettingsMenu::new(
+fn SeleneSettingsMenu::new(
   ui_strings? : UiStrings = UiStrings::default(),
   audio? : &@audio_core.AudioPort = @audio_core.dummy,
   background? : String = "",
@@ -114,7 +114,7 @@ pub fn SeleneSettingsMenu::new(
 }
 
 ///|
-pub fn SeleneSettingsMenu::set_audio(
+fn SeleneSettingsMenu::set_audio(
   self : SeleneSettingsMenu,
   audio : &@audio_core.AudioPort,
 ) -> Unit {
@@ -122,7 +122,7 @@ pub fn SeleneSettingsMenu::set_audio(
 }
 
 ///|
-pub fn SeleneSettingsMenu::set_background(
+fn SeleneSettingsMenu::set_background(
   self : SeleneSettingsMenu,
   background : String,
 ) -> Unit {
@@ -130,7 +130,7 @@ pub fn SeleneSettingsMenu::set_background(
 }
 
 ///|
-pub fn SeleneSettingsMenu::set_show_credits(
+fn SeleneSettingsMenu::set_show_credits(
   self : SeleneSettingsMenu,
   show_credits : Bool,
 ) -> Unit {
@@ -138,7 +138,7 @@ pub fn SeleneSettingsMenu::set_show_credits(
 }
 
 ///|
-pub fn SeleneSettingsMenu::set_save_namespace(
+fn SeleneSettingsMenu::set_save_namespace(
   self : SeleneSettingsMenu,
   save_namespace : String,
 ) -> Unit {
@@ -282,21 +282,15 @@ fn SeleneSettingsMenu::persist_settings(self : SeleneSettingsMenu) -> Unit {
 
 ///|
 fn SeleneSettingsMenu::take_back_edge(self : SeleneSettingsMenu) -> Bool {
-  let escape_down = @selene_inputs.is_pressed(Escape)
-  let triggered = escape_down && !self.edges.last_escape_down
-  self.edges.last_escape_down = escape_down
-  triggered
+  self.edges.take_escape_edge(@selene_inputs.is_pressed(Escape))
 }
 
 ///|
 fn SeleneSettingsMenu::take_confirm_edge(self : SeleneSettingsMenu) -> Bool {
-  let enter_down = @selene_inputs.is_pressed(Enter)
-  let space_down = @selene_inputs.is_pressed(Space)
-  let triggered = (enter_down && !self.edges.last_enter_down) ||
-    (space_down && !self.edges.last_space_down)
-  self.edges.last_enter_down = enter_down
-  self.edges.last_space_down = space_down
-  triggered
+  self.edges.take_confirm_edge(
+    @selene_inputs.is_pressed(Enter),
+    @selene_inputs.is_pressed(Space),
+  )
 }
 
 ///|
@@ -645,7 +639,7 @@ fn SeleneSettingsMenu::confirm_slot_row(
 }
 
 ///|
-pub fn SeleneSettingsMenu::push_action(
+fn SeleneSettingsMenu::push_action(
   self : SeleneSettingsMenu,
   action : @ui_menu.SettingsAction,
 ) -> Unit {
@@ -783,7 +777,7 @@ pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu with take_action(self) {
 }
 
 ///|
-pub fn SeleneSettingsMenu::render_commands(
+fn SeleneSettingsMenu::render_commands(
   self : SeleneSettingsMenu,
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,

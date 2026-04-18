@@ -67,6 +67,47 @@ fn SeleneInputEdgeState::take_right_edge(
 }
 
 ///|
+fn SeleneInputEdgeState::take_enter_edge(
+  self : SeleneInputEdgeState,
+  down : Bool,
+) -> Bool {
+  let edge = down && !self.last_enter_down
+  self.last_enter_down = down
+  edge
+}
+
+///|
+fn SeleneInputEdgeState::take_space_edge(
+  self : SeleneInputEdgeState,
+  down : Bool,
+) -> Bool {
+  let edge = down && !self.last_space_down
+  self.last_space_down = down
+  edge
+}
+
+///|
+fn SeleneInputEdgeState::take_escape_edge(
+  self : SeleneInputEdgeState,
+  down : Bool,
+) -> Bool {
+  let edge = down && !self.last_escape_down
+  self.last_escape_down = down
+  edge
+}
+
+///|
+fn SeleneInputEdgeState::take_confirm_edge(
+  self : SeleneInputEdgeState,
+  enter_down : Bool,
+  space_down : Bool,
+) -> Bool {
+  let enter_edge = self.take_enter_edge(enter_down)
+  let space_edge = self.take_space_edge(space_down)
+  enter_edge || space_edge
+}
+
+///|
 fn SeleneInputEdgeState::take_mouse_left_edge(
   self : SeleneInputEdgeState,
   down : Bool,

@@ -57,7 +57,7 @@ struct SeleneGalleryMenu {
 }
 
 ///|
-pub fn SeleneGalleryMenu::new(
+fn SeleneGalleryMenu::new(
   save_namespace? : String = "global",
   ui_strings? : UiStrings = UiStrings::default(),
   show_locked? : Bool = true,
@@ -100,26 +100,26 @@ fn SeleneGalleryMenu::normalize_selection(self : SeleneGalleryMenu) -> Unit {
     self.selected_index = 0
     return
   }
-  self.selected_index = self.selected_index.clamp(min=0, max=tiles.length() - 1)
+  let count = tiles.length()
+  if self.selected_index < 0 {
+    self.selected_index = count - 1
+  }
+  if self.selected_index >= count {
+    self.selected_index = 0
+  }
 }
 
 ///|
 fn SeleneGalleryMenu::take_back_edge(self : SeleneGalleryMenu) -> Bool {
-  let escape_down = @selene_inputs.is_pressed(Escape)
-  let triggered = escape_down && !self.edges.last_escape_down
-  self.edges.last_escape_down = escape_down
-  triggered
+  self.edges.take_escape_edge(@selene_inputs.is_pressed(Escape))
 }
 
 ///|
 fn SeleneGalleryMenu::take_confirm_edge(self : SeleneGalleryMenu) -> Bool {
-  let enter_down = @selene_inputs.is_pressed(Enter)
-  let space_down = @selene_inputs.is_pressed(Space)
-  let triggered = (enter_down && !self.edges.last_enter_down) ||
-    (space_down && !self.edges.last_space_down)
-  self.edges.last_enter_down = enter_down
-  self.edges.last_space_down = space_down
-  triggered
+  self.edges.take_confirm_edge(
+    @selene_inputs.is_pressed(Enter),
+    @selene_inputs.is_pressed(Space),
+  )
 }
 
 ///|
@@ -369,7 +369,7 @@ fn SeleneGalleryMenu::apply_action_state(
 }
 
 ///|
-pub fn SeleneGalleryMenu::push_action(
+fn SeleneGalleryMenu::push_action(
   self : SeleneGalleryMenu,
   action : @ui_menu.GalleryAction,
 ) -> Unit {
@@ -395,7 +395,7 @@ pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu with set_script_localization
 }
 
 ///|
-pub fn SeleneGalleryMenu::set_background(
+fn SeleneGalleryMenu::set_background(
   self : SeleneGalleryMenu,
   background : String,
 ) -> Unit {
@@ -430,7 +430,7 @@ pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu with take_action(self) {
 }
 
 ///|
-pub fn SeleneGalleryMenu::render_commands(
+fn SeleneGalleryMenu::render_commands(
   self : SeleneGalleryMenu,
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,
@@ -441,12 +441,15 @@ pub fn SeleneGalleryMenu::render_commands(
     return []
   }
   let tiles = self.gallery_tiles()
-  let active_tile = self.active_id.bind(id => @ui_menu.find_gallery_tile(tiles, id))
+  let active_tile = self.active_id.bind(id => {
+    @ui_menu.find_gallery_tile(tiles, id)
+  })
   let title_style = self.text_theme.title
   let body_style = self.text_theme.body
   let hint_style = self.text_theme.hint
   let commands : Array[@selene_render2d_types.DrawCommand2D] = []
-  if fullscreen_image_command(self.background, viewport_w, viewport_h) is Some(background_cmd) {
+  if fullscreen_image_command(self.background, viewport_w, viewport_h)
+    is Some(background_cmd) {
     commands.push(background_cmd)
   }
   commands.append([

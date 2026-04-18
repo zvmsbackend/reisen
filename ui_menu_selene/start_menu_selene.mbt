@@ -125,7 +125,7 @@ struct SeleneStartMenu {
 }
 
 ///|
-pub fn SeleneStartMenu::new(
+fn SeleneStartMenu::new(
   ui_strings? : UiStrings = UiStrings::default(),
   text_theme? : SeleneStartMenuTextTheme = SeleneStartMenuTextTheme::default(),
 ) -> SeleneStartMenu {
@@ -209,13 +209,10 @@ fn SeleneStartMenu::select_next_locale(self : SeleneStartMenu) -> Unit {
 
 ///|
 fn SeleneStartMenu::take_confirm_edge(self : SeleneStartMenu) -> Bool {
-  let enter_down = @selene_inputs.is_pressed(Enter)
-  let space_down = @selene_inputs.is_pressed(Space)
-  let triggered = (enter_down && !self.edges.last_enter_down) ||
-    (space_down && !self.edges.last_space_down)
-  self.edges.last_enter_down = enter_down
-  self.edges.last_space_down = space_down
-  triggered
+  self.edges.take_confirm_edge(
+    @selene_inputs.is_pressed(Enter),
+    @selene_inputs.is_pressed(Space),
+  )
 }
 
 ///|
@@ -277,7 +274,7 @@ fn SeleneStartMenu::hover_locale_option(self : SeleneStartMenu) -> Unit {
 }
 
 ///|
-pub fn SeleneStartMenu::push_action(
+fn SeleneStartMenu::push_action(
   self : SeleneStartMenu,
   action : @ui_menu.StartMenuAction,
 ) -> Unit {
@@ -285,7 +282,7 @@ pub fn SeleneStartMenu::push_action(
 }
 
 ///|
-pub fn SeleneStartMenu::push_gate_action(
+fn SeleneStartMenu::push_gate_action(
   self : SeleneStartMenu,
   action : @ui_menu.StartGateAction,
 ) -> Unit {
@@ -293,12 +290,12 @@ pub fn SeleneStartMenu::push_gate_action(
 }
 
 ///|
-pub fn SeleneStartMenu::push_logo_done(self : SeleneStartMenu) -> Unit {
+fn SeleneStartMenu::push_logo_done(self : SeleneStartMenu) -> Unit {
   self.pending_logo_action = Done
 }
 
 ///|
-pub fn SeleneStartMenu::push_locale_code(
+fn SeleneStartMenu::push_locale_code(
   self : SeleneStartMenu,
   code : String,
 ) -> Unit {
@@ -391,12 +388,8 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_locale_picker(self) {
 
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_locale_action(self) {
-  let enter_down = @selene_inputs.is_pressed(Enter)
-  let space_down = @selene_inputs.is_pressed(Space)
-  let enter_edge = enter_down && !self.edges.last_enter_down
-  let space_edge = space_down && !self.edges.last_space_down
-  self.edges.last_enter_down = enter_down
-  self.edges.last_space_down = space_down
+  let enter_edge = self.edges.take_enter_edge(@selene_inputs.is_pressed(Enter))
+  let space_edge = self.edges.take_space_edge(@selene_inputs.is_pressed(Space))
 
   if space_edge {
     self.select_next_locale()
@@ -456,8 +449,10 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
     NoAction => {
       let rows = self.menu_rows()
       if self.visible_mode == Some("start") &&
-        (self.take_confirm_edge() ||
-        self.edges.take_mouse_left_edge(@selene_inputs.mouse.left_button)) &&
+        (
+          self.take_confirm_edge() ||
+          self.edges.take_mouse_left_edge(@selene_inputs.mouse.left_button)
+        ) &&
         !rows.is_empty() {
         self.normalize_start_selection()
         rows[self.start_selected_index].1
@@ -472,7 +467,7 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
 }
 
 ///|
-pub fn SeleneStartMenu::set_save_namespace(
+fn SeleneStartMenu::set_save_namespace(
   self : SeleneStartMenu,
   save_namespace : String,
 ) -> Unit {
@@ -480,7 +475,7 @@ pub fn SeleneStartMenu::set_save_namespace(
 }
 
 ///|
-pub fn SeleneStartMenu::set_save_store(
+fn SeleneStartMenu::set_save_store(
   self : SeleneStartMenu,
   save_store : &@storage.SaveSlotStore,
 ) -> Unit {
@@ -488,7 +483,7 @@ pub fn SeleneStartMenu::set_save_store(
 }
 
 ///|
-pub fn SeleneStartMenu::set_show_credits(
+fn SeleneStartMenu::set_show_credits(
   self : SeleneStartMenu,
   show_credits : Bool,
 ) -> Unit {
@@ -496,7 +491,7 @@ pub fn SeleneStartMenu::set_show_credits(
 }
 
 ///|
-pub fn SeleneStartMenu::set_background(
+fn SeleneStartMenu::set_background(
   self : SeleneStartMenu,
   background : String,
 ) -> Unit {
@@ -504,7 +499,7 @@ pub fn SeleneStartMenu::set_background(
 }
 
 ///|
-pub fn SeleneStartMenu::render_commands(
+fn SeleneStartMenu::render_commands(
   self : SeleneStartMenu,
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,
