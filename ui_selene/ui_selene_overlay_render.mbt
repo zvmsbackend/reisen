@@ -11,27 +11,36 @@ fn dialog_text_or_intro(view : UiViewModel) -> String {
 }
 
 ///|
-fn SeleneUiBackend::body_lines(view : UiViewModel) -> Array[String] {
-  let lines : Array[String] = []
+priv struct OverlayBodyLine {
+  text : String
+  is_choice : Bool
+}
+
+///|
+fn SeleneUiBackend::body_lines(view : UiViewModel) -> Array[OverlayBodyLine] {
+  let lines : Array[OverlayBodyLine] = []
   let body = dialog_text_or_intro(view)
   if body != "" {
-    lines.push(body)
+    lines.push({ text: body, is_choice: false })
   }
   if !view.choices.is_empty() {
     for i = 0; i < view.choices.length(); i = i + 1 {
       let choice = view.choices[i]
-      lines.push("\{i + 1}. \{choice.text.raw_text()}")
+      lines.push({
+        text: "\{i + 1}. \{choice.text.raw_text()}",
+        is_choice: true,
+      })
       if i >= 2 {
         break
       }
     }
   }
   if view.text_input is Some(input) {
-    lines.push("Input: \{input.prompt.raw_text()}")
+    lines.push({ text: "Input: \{input.prompt.raw_text()}", is_choice: false })
   }
   if view.video is Some(video) {
     let skip_hint = if video.can_skip { " (skip available)" } else { "" }
-    lines.push("Video: \{video.url}\{skip_hint}")
+    lines.push({ text: "Video: \{video.url}\{skip_hint}", is_choice: false })
   }
   lines
 }
@@ -83,14 +92,14 @@ fn wrap_text_manual(
 
 ///|
 fn wrap_overlay_lines(
-  lines : Array[String],
+  lines : Array[OverlayBodyLine],
   style : @selene_render2d_types.TextStyle2D,
   max_width : Double,
-) -> Array[String] {
-  let wrapped : Array[String] = []
+) -> Array[OverlayBodyLine] {
+  let wrapped : Array[OverlayBodyLine] = []
   for line in lines {
-    for segment in wrap_text_manual(line, style, max_width) {
-      wrapped.push(segment)
+    for segment in wrap_text_manual(line.text, style, max_width) {
+      wrapped.push({ text: segment, is_choice: line.is_choice })
     }
   }
   wrapped
@@ -107,6 +116,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
   match self.last_view {
     None => []
     Some(view) => {
+      let panel_alpha = self.panel_alpha.clamp(min=0.0, max=1.0)
+      let choice_alpha = self.choices_alpha.clamp(min=0.0, max=1.0)
       let speaker_text_style = self.overlay_text_theme.speaker
       let body_text_style = self.overlay_text_theme.body
       let speaker = view.speaker.raw_text()
@@ -124,7 +135,7 @@ pub fn SeleneUiBackend::ui_overlay_commands(
           r: speaker_text_style.color_r,
           g: speaker_text_style.color_g,
           b: speaker_text_style.color_b,
-          a: speaker_text_style.color_a,
+          a: speaker_text_style.color_a * panel_alpha,
         },
         align: Left,
         baseline: Top,
@@ -160,8 +171,8 @@ pub fn SeleneUiBackend::ui_overlay_commands(
             blend_mode: Alpha,
             rect: panel_rect,
             transform: @selene_math.Transform::identity(),
-            fill_color: { r: 10, g: 14, b: 20, a: 0.82 },
-            stroke_color: Some({ r: 214, g: 224, b: 238, a: 0.92 }),
+            fill_color: { r: 10, g: 14, b: 20, a: 0.82 * panel_alpha },
+            stroke_color: Some({ r: 214, g: 224, b: 238, a: 0.92 * panel_alpha }),
           }),
         )
         let mut y = viewport_h - 214.0
@@ -181,13 +192,26 @@ pub fn SeleneUiBackend::ui_overlay_commands(
           y += 4.0
         }
         for line in lines {
+          let line_alpha = if line.is_choice {
+            panel_alpha * choice_alpha
+          } else {
+            panel_alpha
+          }
           commands.push(
             Text({
               blend_mode: Alpha,
-              text: line,
+              text: line.text,
               position: @selene_math.Vec2(48.0, y),
               transform: @selene_math.Transform::identity(),
-              style: body_draw_style,
+              style: {
+                ..body_draw_style,
+                color: {
+                  r: body_text_style.color_r,
+                  g: body_text_style.color_g,
+                  b: body_text_style.color_b,
+                  a: body_text_style.color_a * line_alpha,
+                },
+              },
             }),
           )
           y += 30.0

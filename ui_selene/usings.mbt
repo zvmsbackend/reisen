@@ -16,3 +16,6 @@ using @state {type DialogText}
 
 ///|
 using @core {type UiSnapshot, type DialogLogEntry}
+
+///|
+using @core {type Easing, animation_progress}

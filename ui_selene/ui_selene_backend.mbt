@@ -80,7 +80,62 @@ fn SeleneOverlayTextTheme::with_family(
 }
 
 ///|
-pub struct SeleneUiBackend {
+priv struct UiScalarAnim {
+  start_ms : Int
+  duration_ms : Int
+  easing : Easing
+  from : Double
+  to : Double
+}
+
+///|
+fn sample_ui_scalar(now_ms : Int, anim : UiScalarAnim) -> (Double, Bool) {
+  let (p, done) = animation_progress(
+    now_ms,
+    anim.start_ms,
+    anim.duration_ms,
+    anim.easing,
+  )
+  (anim.from + (anim.to - anim.from) * p, done)
+}
+
+///|
+fn start_ui_scalar_anim(
+  now_ms : Int,
+  from : Double,
+  to : Double,
+  duration_ms : Int,
+) -> UiScalarAnim {
+  {
+    start_ms: now_ms,
+    duration_ms: if duration_ms <= 0 {
+      1
+    } else {
+      duration_ms
+    },
+    easing: Linear,
+    from,
+    to,
+  }
+}
+
+///|
+fn choices_signature(choices : Array[UiChoiceView]) -> String {
+  if choices.is_empty() {
+    return ""
+  }
+  let sig = StringBuilder::new()
+  for choice in choices {
+    sig.write_string(choice.id)
+    sig.write_string("::")
+    sig.write_string(choice.text.raw_text())
+    sig.write_string("||")
+  }
+  sig.to_string()
+}
+
+///|
+struct SeleneUiBackend {
   mut ui_strings : UiStrings
   overlay_text_theme : SeleneOverlayTextTheme
   mut script_locale_json : String?
@@ -98,6 +153,14 @@ pub struct SeleneUiBackend {
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut last_escape_down : Bool
+  mut ui_timeline_ms : Int
+  mut panel_alpha : Double
+  mut choices_alpha : Double
+  mut panel_alpha_anim : UiScalarAnim?
+  mut choices_alpha_anim : UiScalarAnim?
+  mut last_dialog_seq : Int
+  mut last_text_box_visible : Bool
+  mut last_choices_signature : String
   mut last_viewport_w : Double
   mut last_viewport_h : Double
   mut last_view : UiViewModel?
@@ -131,6 +194,14 @@ pub fn SeleneUiBackend::new(
     last_enter_down: false,
     last_space_down: false,
     last_escape_down: false,
+    ui_timeline_ms: 0,
+    panel_alpha: 1.0,
+    choices_alpha: 1.0,
+    panel_alpha_anim: None,
+    choices_alpha_anim: None,
+    last_dialog_seq: -1,
+    last_text_box_visible: false,
+    last_choices_signature: "",
     last_viewport_w: 1280.0,
     last_viewport_h: 720.0,
     last_view: None,
@@ -283,6 +354,50 @@ pub impl UiBackend for SeleneUiBackend with localize_vocal_url(self, raw) {
 
 ///|
 pub impl UiBackend for SeleneUiBackend with render(self, view) {
+  let current_choice_signature = choices_signature(view.choices)
+  if view.text_box_visible && !self.last_text_box_visible {
+    self.panel_alpha = 0.0
+    self.panel_alpha_anim = Some(
+      start_ui_scalar_anim(self.ui_timeline_ms, 0.0, 1.0, 220),
+    )
+    if !view.choices.is_empty() {
+      self.choices_alpha = 0.0
+      self.choices_alpha_anim = Some(
+        start_ui_scalar_anim(self.ui_timeline_ms, 0.0, 1.0, 180),
+      )
+    } else {
+      self.choices_alpha = 1.0
+      self.choices_alpha_anim = None
+    }
+  } else if view.text_box_visible && view.dialog_seq != self.last_dialog_seq {
+    self.panel_alpha = 0.72
+    self.panel_alpha_anim = Some(
+      start_ui_scalar_anim(self.ui_timeline_ms, 0.72, 1.0, 120),
+    )
+  }
+
+  if current_choice_signature != self.last_choices_signature {
+    if !view.choices.is_empty() {
+      self.choices_alpha = 0.0
+      self.choices_alpha_anim = Some(
+        start_ui_scalar_anim(self.ui_timeline_ms, 0.0, 1.0, 180),
+      )
+    } else {
+      self.choices_alpha = 1.0
+      self.choices_alpha_anim = None
+    }
+  }
+
+  if !view.text_box_visible {
+    self.panel_alpha = 0.0
+    self.panel_alpha_anim = None
+    self.choices_alpha = 1.0
+    self.choices_alpha_anim = None
+  }
+
+  self.last_dialog_seq = view.dialog_seq
+  self.last_text_box_visible = view.text_box_visible
+  self.last_choices_signature = current_choice_signature
   self.last_view = Some(view)
 }
 
@@ -355,6 +470,14 @@ pub impl UiBackend for SeleneUiBackend with clear_game_ui(self) {
   self.last_enter_down = false
   self.last_space_down = false
   self.last_escape_down = false
+  self.ui_timeline_ms = 0
+  self.panel_alpha = 1.0
+  self.choices_alpha = 1.0
+  self.panel_alpha_anim = None
+  self.choices_alpha_anim = None
+  self.last_dialog_seq = -1
+  self.last_text_box_visible = false
+  self.last_choices_signature = ""
   self.last_view = None
 }
 
@@ -387,8 +510,27 @@ pub impl UiBackend for SeleneUiBackend with simulate_click(self) {
 ///|
 pub impl UiPlatformHooks for SeleneUiBackend with advance_ui_animation_timer(
   self,
-  _elapsed_ms,
+  elapsed_ms,
 ) {
+  if elapsed_ms > 0 {
+    self.ui_timeline_ms += elapsed_ms
+  }
+
+  if self.panel_alpha_anim is Some(anim) {
+    let (value, done) = sample_ui_scalar(self.ui_timeline_ms, anim)
+    self.panel_alpha = value.clamp(min=0.0, max=1.0)
+    if done {
+      self.panel_alpha_anim = None
+    }
+  }
+  if self.choices_alpha_anim is Some(anim) {
+    let (value, done) = sample_ui_scalar(self.ui_timeline_ms, anim)
+    self.choices_alpha = value.clamp(min=0.0, max=1.0)
+    if done {
+      self.choices_alpha_anim = None
+    }
+  }
+
   let mouse_left_down = @selene_inputs.mouse.left_button
   let enter_down = @selene_inputs.is_pressed(Enter)
   let space_down = @selene_inputs.is_pressed(Space)
@@ -421,8 +563,7 @@ pub impl UiPlatformHooks for SeleneUiBackend with advance_ui_animation_timer(
 
 ///|
 pub impl UiPlatformHooks for SeleneUiBackend with has_active_ui_animations(self) {
-  ignore(self)
-  false
+  self.panel_alpha_anim is Some(_) || self.choices_alpha_anim is Some(_)
 }
 
 ///|

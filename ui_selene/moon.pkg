@@ -3,9 +3,12 @@ import {
   "Milky2018/selene/inputs" @selene_inputs,
   "Milky2018/selene/math" @selene_math,
   "Milky2018/selene/platform_render" @selene_platform_render,
-  "Milky2018/selene/render" @selene_render,
   "Milky2018/selene/render2d_types" @selene_render2d_types,
   "sennenki/reisen/ui_game",
   "sennenki/reisen/state",
   "sennenki/reisen/core",
 }
+
+import {
+  "moonbitlang/core/debug",
+} for "wbtest"

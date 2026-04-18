@@ -30,28 +30,7 @@ pub struct SeleneOverlayTextTheme {
 }
 pub impl Default for SeleneOverlayTextTheme
 
-pub struct SeleneUiBackend {
-  mut ui_strings : @ui_game.UiStrings
-  overlay_text_theme : SeleneOverlayTextTheme
-  mut script_locale_json : String?
-  mut script_default_locale_json : String?
-  mut vocal_locale_dir : String
-  mut script_locale : String
-  mut script_default_locale : String
-  mut pending_choice : String?
-  mut pending_text_input : String?
-  mut pending_action : String?
-  mut pending_video_action : String?
-  mut pending_click : Bool
-  mut pending_intro_done : Bool
-  mut last_mouse_left_down : Bool
-  mut last_enter_down : Bool
-  mut last_space_down : Bool
-  mut last_escape_down : Bool
-  mut last_viewport_w : Double
-  mut last_viewport_h : Double
-  mut last_view : @ui_game.UiViewModel?
-}
+type SeleneUiBackend
 pub fn SeleneUiBackend::last_view(Self) -> @ui_game.UiViewModel?
 pub fn SeleneUiBackend::new(ui_strings? : @ui_game.UiStrings, overlay_text_theme? : SeleneOverlayTextTheme, script_locale_json? : String?, script_default_locale_json? : String?, vocal_locale_dir? : String, script_locale? : String, script_default_locale? : String) -> Self
 pub fn SeleneUiBackend::push_action(Self, String) -> Unit
