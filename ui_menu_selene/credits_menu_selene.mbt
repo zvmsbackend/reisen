@@ -46,6 +46,8 @@ pub struct SeleneCreditsMenu {
   mut pending_action : @ui_menu.CreditsAction
   mut text : String
   mut last_escape_down : Bool
+  mut last_mouse_left_down : Bool
+  mut last_mouse_right_down : Bool
   mut visible : Bool
 }
 
@@ -61,6 +63,8 @@ pub fn SeleneCreditsMenu::new(
     pending_action: NoAction,
     text: "",
     last_escape_down: false,
+    last_mouse_left_down: false,
+    last_mouse_right_down: false,
     visible: false,
   }
 }
@@ -74,9 +78,14 @@ fn SeleneCreditsMenu::take_back_edge(self : SeleneCreditsMenu) -> Bool {
 }
 
 ///|
-fn SeleneCreditsMenu::take_mouse_back_edge(_self : SeleneCreditsMenu) -> Bool {
-  @selene_inputs.just_pressed_mouse.left_button ||
-  @selene_inputs.just_pressed_mouse.right_button
+fn SeleneCreditsMenu::take_mouse_back_edge(self : SeleneCreditsMenu) -> Bool {
+  let left_down = @selene_inputs.mouse.left_button
+  let right_down = @selene_inputs.mouse.right_button
+  let left_edge = left_down && !self.last_mouse_left_down
+  let right_edge = right_down && !self.last_mouse_right_down
+  self.last_mouse_left_down = left_down
+  self.last_mouse_right_down = right_down
+  left_edge || right_edge
 }
 
 ///|

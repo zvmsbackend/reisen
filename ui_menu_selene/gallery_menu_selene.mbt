@@ -57,6 +57,8 @@ pub struct SeleneGalleryMenu {
   mut last_up_down : Bool
   mut last_down_down : Bool
   mut last_escape_down : Bool
+  mut last_mouse_left_down : Bool
+  mut last_mouse_right_down : Bool
   mut visible : Bool
   mut last_viewport_w : Double
   mut last_viewport_h : Double
@@ -87,6 +89,8 @@ pub fn SeleneGalleryMenu::new(
     last_up_down: false,
     last_down_down: false,
     last_escape_down: false,
+    last_mouse_left_down: false,
+    last_mouse_right_down: false,
     visible: false,
     last_viewport_w: 1280.0,
     last_viewport_h: 720.0,
@@ -181,13 +185,19 @@ fn SeleneGalleryMenu::mouse_position(
 }
 
 ///|
-fn SeleneGalleryMenu::take_mouse_left_edge(_self : SeleneGalleryMenu) -> Bool {
-  @selene_inputs.just_pressed_mouse.left_button
+fn SeleneGalleryMenu::take_mouse_left_edge(self : SeleneGalleryMenu) -> Bool {
+  let down = @selene_inputs.mouse.left_button
+  let edge = down && !self.last_mouse_left_down
+  self.last_mouse_left_down = down
+  edge
 }
 
 ///|
-fn SeleneGalleryMenu::take_mouse_right_edge(_self : SeleneGalleryMenu) -> Bool {
-  @selene_inputs.just_pressed_mouse.right_button
+fn SeleneGalleryMenu::take_mouse_right_edge(self : SeleneGalleryMenu) -> Bool {
+  let down = @selene_inputs.mouse.right_button
+  let edge = down && !self.last_mouse_right_down
+  self.last_mouse_right_down = down
+  edge
 }
 
 ///|

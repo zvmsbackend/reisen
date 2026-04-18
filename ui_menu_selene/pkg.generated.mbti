@@ -22,6 +22,8 @@ pub struct SeleneCreditsMenu {
   mut pending_action : @ui_menu.CreditsAction
   mut text : String
   mut last_escape_down : Bool
+  mut last_mouse_left_down : Bool
+  mut last_mouse_right_down : Bool
   mut visible : Bool
 }
 pub fn SeleneCreditsMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneCreditsMenuTextTheme) -> Self
@@ -55,6 +57,8 @@ pub struct SeleneGalleryMenu {
   mut last_up_down : Bool
   mut last_down_down : Bool
   mut last_escape_down : Bool
+  mut last_mouse_left_down : Bool
+  mut last_mouse_right_down : Bool
   mut visible : Bool
   mut last_viewport_w : Double
   mut last_viewport_h : Double
@@ -147,6 +151,8 @@ pub struct SeleneSettingsMenu {
   mut last_escape_down : Bool
   mut last_enter_down : Bool
   mut last_space_down : Bool
+  mut last_mouse_left_down : Bool
+  mut last_mouse_right_down : Bool
   mut visible : Bool
   mut last_viewport_w : Double
   mut last_viewport_h : Double
@@ -187,6 +193,8 @@ pub struct SeleneStartMenu {
   mut last_space_down : Bool
   mut last_up_down : Bool
   mut last_down_down : Bool
+  mut last_mouse_left_down : Bool
+  mut last_mouse_right_down : Bool
   mut visible_mode : String?
   mut last_viewport_w : Double
   mut last_viewport_h : Double

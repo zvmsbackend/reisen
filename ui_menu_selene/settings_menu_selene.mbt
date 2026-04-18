@@ -77,6 +77,8 @@ pub struct SeleneSettingsMenu {
   mut last_escape_down : Bool
   mut last_enter_down : Bool
   mut last_space_down : Bool
+  mut last_mouse_left_down : Bool
+  mut last_mouse_right_down : Bool
   mut visible : Bool
   mut last_viewport_w : Double
   mut last_viewport_h : Double
@@ -119,6 +121,8 @@ pub fn SeleneSettingsMenu::new(
     last_escape_down: false,
     last_enter_down: false,
     last_space_down: false,
+    last_mouse_left_down: false,
+    last_mouse_right_down: false,
     visible: false,
     last_viewport_w: 1280.0,
     last_viewport_h: 720.0,
@@ -374,15 +378,19 @@ fn SeleneSettingsMenu::mouse_position(
 }
 
 ///|
-fn SeleneSettingsMenu::take_mouse_left_edge(_self : SeleneSettingsMenu) -> Bool {
-  @selene_inputs.just_pressed_mouse.left_button
+fn SeleneSettingsMenu::take_mouse_left_edge(self : SeleneSettingsMenu) -> Bool {
+  let down = @selene_inputs.mouse.left_button
+  let edge = down && !self.last_mouse_left_down
+  self.last_mouse_left_down = down
+  edge
 }
 
 ///|
-fn SeleneSettingsMenu::take_mouse_right_edge(
-  _self : SeleneSettingsMenu,
-) -> Bool {
-  @selene_inputs.just_pressed_mouse.right_button
+fn SeleneSettingsMenu::take_mouse_right_edge(self : SeleneSettingsMenu) -> Bool {
+  let down = @selene_inputs.mouse.right_button
+  let edge = down && !self.last_mouse_right_down
+  self.last_mouse_right_down = down
+  edge
 }
 
 ///|
