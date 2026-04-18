@@ -56,6 +56,8 @@ pub struct SeleneGalleryMenu {
   mut last_down_down : Bool
   mut last_escape_down : Bool
   mut visible : Bool
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
 }
 pub fn SeleneGalleryMenu::new(save_namespace? : String, ui_strings? : @ui_game.UiStrings, show_locked? : Bool, text_theme? : SeleneGalleryMenuTextTheme) -> Self
 pub fn SeleneGalleryMenu::push_action(Self, @ui_menu.GalleryAction) -> Unit
@@ -146,6 +148,8 @@ pub struct SeleneSettingsMenu {
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut visible : Bool
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
 }
 pub fn SeleneSettingsMenu::new(ui_strings? : @ui_game.UiStrings, audio? : &@audio_core.AudioPort, background? : String, show_credits? : Bool, save_namespace? : String, text_theme? : SeleneSettingsMenuTextTheme) -> Self
 pub fn SeleneSettingsMenu::push_action(Self, @ui_menu.SettingsAction) -> Unit
@@ -184,6 +188,8 @@ pub struct SeleneStartMenu {
   mut last_up_down : Bool
   mut last_down_down : Bool
   mut visible_mode : String?
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
 }
 pub fn SeleneStartMenu::new(ui_strings? : @ui_game.UiStrings, text_theme? : SeleneStartMenuTextTheme) -> Self
 pub fn SeleneStartMenu::push_action(Self, @ui_menu.StartMenuAction) -> Unit

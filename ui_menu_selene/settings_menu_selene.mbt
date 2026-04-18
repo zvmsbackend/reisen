@@ -78,6 +78,8 @@ pub struct SeleneSettingsMenu {
   mut last_enter_down : Bool
   mut last_space_down : Bool
   mut visible : Bool
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
 }
 
 ///|
@@ -118,6 +120,8 @@ pub fn SeleneSettingsMenu::new(
     last_enter_down: false,
     last_space_down: false,
     visible: false,
+    last_viewport_w: 1280.0,
+    last_viewport_h: 720.0,
   }
 }
 
@@ -359,6 +363,165 @@ fn SeleneSettingsMenu::take_right_edge(self : SeleneSettingsMenu) -> Bool {
   let edge = down && !self.last_right_down
   self.last_right_down = down
   edge
+}
+
+///|
+fn SeleneSettingsMenu::mouse_position(
+  _self : SeleneSettingsMenu,
+) -> (Double, Double) {
+  let pos = @selene_inputs.mouse.pos
+  (pos.0, pos.1)
+}
+
+///|
+fn SeleneSettingsMenu::take_mouse_left_edge(_self : SeleneSettingsMenu) -> Bool {
+  @selene_inputs.just_pressed_mouse.left_button
+}
+
+///|
+fn SeleneSettingsMenu::take_mouse_right_edge(
+  _self : SeleneSettingsMenu,
+) -> Bool {
+  @selene_inputs.just_pressed_mouse.right_button
+}
+
+///|
+fn SeleneSettingsMenu::viewport_size(
+  self : SeleneSettingsMenu,
+) -> (Double, Double) {
+  let w = if self.last_viewport_w > 0.0 { self.last_viewport_w } else { 1280.0 }
+  let h = if self.last_viewport_h > 0.0 { self.last_viewport_h } else { 720.0 }
+  (w, h)
+}
+
+///|
+fn settings_point_in_box(
+  x : Double,
+  y : Double,
+  left : Double,
+  top : Double,
+  width : Double,
+  height : Double,
+) -> Bool {
+  x >= left && x <= left + width && y >= top && y <= top + height
+}
+
+///|
+fn SeleneSettingsMenu::hover_row_by_mouse(self : SeleneSettingsMenu) -> Unit {
+  let (mx, my) = self.mouse_position()
+  let (viewport_w, viewport_h) = self.viewport_size()
+  let row_left = viewport_w / 2.0 - 286.0
+  let row_width = 572.0
+  match self.view_mode {
+    Settings => {
+      let mut row_y = viewport_h / 2.0 - 150.0
+      for i in 0..<4 {
+        if settings_point_in_box(mx, my, row_left, row_y - 4.0, row_width, 30.0) {
+          self.selected_index = i
+          return
+        }
+        row_y += 36.0
+      }
+
+      let mut action_count = match self.context {
+        FromStartMenu => 2
+        FromMidgame => 4
+      }
+      if self.show_credits {
+        action_count += 1
+      }
+      action_count += 2
+
+      let action_base = settings_action_row_base()
+      let mut action_y = row_y + 10.0
+      for i in 0..<action_count {
+        if settings_point_in_box(
+            mx,
+            my,
+            row_left,
+            action_y - 4.0,
+            row_width,
+            30.0,
+          ) {
+          self.selected_index = action_base + i
+          return
+        }
+        action_y += 32.0
+      }
+    }
+    SaveList | LoadList => {
+      if settings_point_in_box(
+          mx,
+          my,
+          row_left,
+          viewport_h / 2.0 - 154.0,
+          row_width,
+          30.0,
+        ) {
+        self.selected_index = 0
+        return
+      }
+      let mut slot_y = viewport_h / 2.0 - 110.0
+      for i in 0..<6 {
+        if settings_point_in_box(
+            mx,
+            my,
+            row_left,
+            slot_y - 4.0,
+            row_width,
+            46.0,
+          ) {
+          self.selected_index = i + 1
+          return
+        }
+        slot_y += 52.0
+      }
+      if settings_point_in_box(mx, my, row_left, slot_y - 4.0, row_width, 30.0) {
+        self.selected_index = 7
+        return
+      }
+      slot_y += 34.0
+      if settings_point_in_box(mx, my, row_left, slot_y - 4.0, row_width, 30.0) {
+        self.selected_index = 8
+        return
+      }
+    }
+  }
+}
+
+///|
+fn SeleneSettingsMenu::mouse_action(
+  self : SeleneSettingsMenu,
+) -> @ui_menu.SettingsAction {
+  let click = self.take_mouse_left_edge()
+  let right_click = self.take_mouse_right_edge()
+
+  if right_click {
+    return Back
+  }
+  if !click {
+    return NoAction
+  }
+
+  self.hover_row_by_mouse()
+  let (mx, _) = self.mouse_position()
+  let (viewport_w, _) = self.viewport_size()
+  let panel_center_x = viewport_w / 2.0
+  let move_right = mx >= panel_center_x
+  match self.view_mode {
+    Settings =>
+      if self.selected_index <= 3 {
+        self.apply_horizontal_in_settings(move_right)
+      } else {
+        self.confirm_settings_row()
+      }
+    SaveList | LoadList =>
+      if self.selected_index == 0 || self.selected_index == 7 {
+        self.apply_horizontal_in_slots(move_right)
+      } else {
+        self.confirm_slot_row()
+      }
+  }
 }
 
 ///|
@@ -650,6 +813,7 @@ pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu with take_action(self) {
       if self.take_back_edge() {
         Back
       } else {
+        self.hover_row_by_mouse()
         if self.take_up_edge() {
           self.selected_index -= 1
           self.normalize_selection()
@@ -661,6 +825,7 @@ pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu with take_action(self) {
         let left_edge = self.take_left_edge()
         let right_edge = self.take_right_edge()
         let confirm = self.take_confirm_edge()
+        let mouse_action = self.mouse_action()
 
         if left_edge {
           match self.view_mode {
@@ -678,7 +843,10 @@ pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu with take_action(self) {
             SaveList | LoadList => self.confirm_slot_row()
           }
         } else {
-          NoAction
+          match mouse_action {
+            NoAction => NoAction
+            other => other
+          }
         }
       }
     other => other
@@ -694,6 +862,8 @@ pub fn SeleneSettingsMenu::render_commands(
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,
 ) -> Array[@selene_render2d_types.DrawCommand2D] {
+  self.last_viewport_w = viewport_w
+  self.last_viewport_h = viewport_h
   if !self.visible {
     return []
   }

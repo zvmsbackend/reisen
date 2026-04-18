@@ -74,6 +74,12 @@ fn SeleneCreditsMenu::take_back_edge(self : SeleneCreditsMenu) -> Bool {
 }
 
 ///|
+fn SeleneCreditsMenu::take_mouse_back_edge(_self : SeleneCreditsMenu) -> Bool {
+  @selene_inputs.just_pressed_mouse.left_button ||
+  @selene_inputs.just_pressed_mouse.right_button
+}
+
+///|
 pub fn SeleneCreditsMenu::push_back(self : SeleneCreditsMenu) -> Unit {
   self.pending_action = Back
 }
@@ -109,7 +115,12 @@ pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu with clear(self) {
 ///|
 pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu with take_action(self) {
   let result : @ui_menu.CreditsAction = match self.pending_action {
-    NoAction => if self.take_back_edge() { Back } else { NoAction }
+    NoAction =>
+      if self.take_back_edge() || self.take_mouse_back_edge() {
+        Back
+      } else {
+        NoAction
+      }
     other => other
   }
   self.pending_action = NoAction

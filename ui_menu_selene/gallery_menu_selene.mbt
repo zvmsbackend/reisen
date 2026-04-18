@@ -58,6 +58,8 @@ pub struct SeleneGalleryMenu {
   mut last_down_down : Bool
   mut last_escape_down : Bool
   mut visible : Bool
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
 }
 
 ///|
@@ -86,6 +88,8 @@ pub fn SeleneGalleryMenu::new(
     last_down_down: false,
     last_escape_down: false,
     visible: false,
+    last_viewport_w: 1280.0,
+    last_viewport_h: 720.0,
   }
 }
 
@@ -169,9 +173,127 @@ fn SeleneGalleryMenu::take_down_edge(self : SeleneGalleryMenu) -> Bool {
 }
 
 ///|
+fn SeleneGalleryMenu::mouse_position(
+  _self : SeleneGalleryMenu,
+) -> (Double, Double) {
+  let pos = @selene_inputs.mouse.pos
+  (pos.0, pos.1)
+}
+
+///|
+fn SeleneGalleryMenu::take_mouse_left_edge(_self : SeleneGalleryMenu) -> Bool {
+  @selene_inputs.just_pressed_mouse.left_button
+}
+
+///|
+fn SeleneGalleryMenu::take_mouse_right_edge(_self : SeleneGalleryMenu) -> Bool {
+  @selene_inputs.just_pressed_mouse.right_button
+}
+
+///|
+fn SeleneGalleryMenu::viewport_size(
+  self : SeleneGalleryMenu,
+) -> (Double, Double) {
+  let w = if self.last_viewport_w > 0.0 { self.last_viewport_w } else { 1280.0 }
+  let h = if self.last_viewport_h > 0.0 { self.last_viewport_h } else { 720.0 }
+  (w, h)
+}
+
+///|
+fn gallery_point_in_box(
+  x : Double,
+  y : Double,
+  left : Double,
+  top : Double,
+  width : Double,
+  height : Double,
+) -> Bool {
+  x >= left && x <= left + width && y >= top && y <= top + height
+}
+
+///|
+fn gallery_prev_button_rect(
+  viewport_w : Double,
+  viewport_h : Double,
+) -> @selene_math.Rect {
+  {
+    position: Vec2D(viewport_w / 2.0 - 240.0, viewport_h / 2.0 + 125.0),
+    size: Vec2D(110.0, 34.0),
+  }
+}
+
+///|
+fn gallery_next_button_rect(
+  viewport_w : Double,
+  viewport_h : Double,
+) -> @selene_math.Rect {
+  {
+    position: Vec2D(viewport_w / 2.0 + 130.0, viewport_h / 2.0 + 125.0),
+    size: Vec2D(110.0, 34.0),
+  }
+}
+
+///|
+fn gallery_replay_button_rect(
+  viewport_w : Double,
+  viewport_h : Double,
+) -> @selene_math.Rect {
+  {
+    position: Vec2D(viewport_w / 2.0 - 55.0, viewport_h / 2.0 + 125.0),
+    size: Vec2D(110.0, 34.0),
+  }
+}
+
+///|
+fn gallery_close_button_rect(
+  viewport_w : Double,
+  viewport_h : Double,
+) -> @selene_math.Rect {
+  {
+    position: Vec2D(viewport_w / 2.0 - 55.0, viewport_h / 2.0 + 165.0),
+    size: Vec2D(110.0, 30.0),
+  }
+}
+
+///|
+fn SeleneGalleryMenu::hover_tile_row(self : SeleneGalleryMenu) -> Unit {
+  if self.active_id is Some(_) {
+    return
+  }
+  let tiles = self.gallery_tiles()
+  if tiles.is_empty() {
+    return
+  }
+  let (mx, my) = self.mouse_position()
+  let (viewport_w, viewport_h) = self.viewport_size()
+  let left = viewport_w / 2.0 - 250.0
+  let top = viewport_h / 2.0 - 110.0
+  let row_h = 36.0
+  let max_rows = if tiles.length() > 8 { 8 } else { tiles.length() }
+  for i in 0..<max_rows {
+    let y = top + row_h * i.to_double()
+    if gallery_point_in_box(mx, my, left, y, 500.0, row_h) {
+      self.selected_index = i
+      return
+    }
+  }
+}
+
+///|
 fn SeleneGalleryMenu::input_action(
   self : SeleneGalleryMenu,
 ) -> @ui_menu.GalleryAction {
+  self.hover_tile_row()
+  let mouse_left = self.take_mouse_left_edge()
+  let mouse_right = self.take_mouse_right_edge()
+
+  if mouse_right {
+    return match self.active_id {
+      Some(_) => Close
+      None => Back
+    }
+  }
+
   if self.take_back_edge() {
     return match self.active_id {
       Some(_) => Close
@@ -180,6 +302,70 @@ fn SeleneGalleryMenu::input_action(
   }
 
   if self.active_id is Some(_) {
+    if mouse_left {
+      let (viewport_w, viewport_h) = self.viewport_size()
+      let (mx, my) = self.mouse_position()
+      let prev_rect = gallery_prev_button_rect(viewport_w, viewport_h)
+      let next_rect = gallery_next_button_rect(viewport_w, viewport_h)
+      let replay_rect = gallery_replay_button_rect(viewport_w, viewport_h)
+      let close_rect = gallery_close_button_rect(viewport_w, viewport_h)
+      if gallery_point_in_box(
+          mx,
+          my,
+          prev_rect.position.0,
+          prev_rect.position.1,
+          prev_rect.size.0,
+          prev_rect.size.1,
+        ) {
+        return Prev
+      }
+      if gallery_point_in_box(
+          mx,
+          my,
+          next_rect.position.0,
+          next_rect.position.1,
+          next_rect.size.0,
+          next_rect.size.1,
+        ) {
+        return Next
+      }
+      let tiles = self.gallery_tiles()
+      return match self.active_id {
+        Some(active_id) =>
+          match @ui_menu.find_gallery_tile(tiles, active_id) {
+            Some(tile) =>
+              if gallery_point_in_box(
+                  mx,
+                  my,
+                  close_rect.position.0,
+                  close_rect.position.1,
+                  close_rect.size.0,
+                  close_rect.size.1,
+                ) {
+                Close
+              } else {
+                match tile.replay_label {
+                  Some(label) =>
+                    if gallery_point_in_box(
+                        mx,
+                        my,
+                        replay_rect.position.0,
+                        replay_rect.position.1,
+                        replay_rect.size.0,
+                        replay_rect.size.1,
+                      ) {
+                      Replay(label)
+                    } else {
+                      Close
+                    }
+                  None => Close
+                }
+              }
+            None => Close
+          }
+        None => NoAction
+      }
+    }
     if self.take_left_edge() {
       return Prev
     }
@@ -227,7 +413,7 @@ fn SeleneGalleryMenu::input_action(
       if moved {
         self.normalize_selection()
       }
-      if self.take_confirm_edge() {
+      if self.take_confirm_edge() || mouse_left {
         self.normalize_selection()
         let tile = tiles[self.selected_index]
         if tile.unlocked {
@@ -335,6 +521,8 @@ pub fn SeleneGalleryMenu::render_commands(
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,
 ) -> Array[@selene_render2d_types.DrawCommand2D] {
+  self.last_viewport_w = viewport_w
+  self.last_viewport_h = viewport_h
   if !self.visible {
     return []
   }
@@ -434,10 +622,123 @@ pub fn SeleneGalleryMenu::render_commands(
         replay_hint +
         "   Esc=" +
         self.ui_strings.gallery_close
+      let prev_rect = gallery_prev_button_rect(viewport_w, viewport_h)
+      let next_rect = gallery_next_button_rect(viewport_w, viewport_h)
+      let replay_rect = gallery_replay_button_rect(viewport_w, viewport_h)
+      let close_rect = gallery_close_button_rect(viewport_w, viewport_h)
+      commands.push(
+        Rect({
+          rect: prev_rect,
+          transform: @selene_math.Transform::identity(),
+          fill_color: { r: 52, g: 78, b: 116, a: 0.65 },
+          stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+        }),
+      )
+      commands.push(
+        Text({
+          text: self.ui_strings.gallery_prev,
+          position: Vec2D(
+            prev_rect.position.0 + prev_rect.size.0 / 2.0,
+            prev_rect.position.1 + 18.0,
+          ),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: hint_style.font,
+            family: hint_style.family,
+            size: hint_style.size,
+            color: { r: 235, g: 240, b: 248, a: 1.0 },
+            align: Center,
+            baseline: Center,
+          },
+        }),
+      )
+      commands.push(
+        Rect({
+          rect: next_rect,
+          transform: @selene_math.Transform::identity(),
+          fill_color: { r: 52, g: 78, b: 116, a: 0.65 },
+          stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+        }),
+      )
+      commands.push(
+        Text({
+          text: self.ui_strings.gallery_next,
+          position: Vec2D(
+            next_rect.position.0 + next_rect.size.0 / 2.0,
+            next_rect.position.1 + 18.0,
+          ),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: hint_style.font,
+            family: hint_style.family,
+            size: hint_style.size,
+            color: { r: 235, g: 240, b: 248, a: 1.0 },
+            align: Center,
+            baseline: Center,
+          },
+        }),
+      )
+      match tile.replay_label {
+        Some(_) => {
+          commands.push(
+            Rect({
+              rect: replay_rect,
+              transform: @selene_math.Transform::identity(),
+              fill_color: { r: 40, g: 104, b: 92, a: 0.7 },
+              stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+            }),
+          )
+          commands.push(
+            Text({
+              text: self.ui_strings.gallery_replay,
+              position: Vec2D(
+                replay_rect.position.0 + replay_rect.size.0 / 2.0,
+                replay_rect.position.1 + 18.0,
+              ),
+              transform: @selene_math.Transform::identity(),
+              style: {
+                font: hint_style.font,
+                family: hint_style.family,
+                size: hint_style.size,
+                color: { r: 235, g: 248, b: 244, a: 1.0 },
+                align: Center,
+                baseline: Center,
+              },
+            }),
+          )
+        }
+        None => ()
+      }
+      commands.push(
+        Rect({
+          rect: close_rect,
+          transform: @selene_math.Transform::identity(),
+          fill_color: { r: 112, g: 62, b: 62, a: 0.72 },
+          stroke_color: Some({ r: 220, g: 228, b: 242, a: 1.0 }),
+        }),
+      )
+      commands.push(
+        Text({
+          text: self.ui_strings.gallery_close,
+          position: Vec2D(
+            close_rect.position.0 + close_rect.size.0 / 2.0,
+            close_rect.position.1 + 16.0,
+          ),
+          transform: @selene_math.Transform::identity(),
+          style: {
+            font: hint_style.font,
+            family: hint_style.family,
+            size: hint_style.size,
+            color: { r: 248, g: 238, b: 238, a: 1.0 },
+            align: Center,
+            baseline: Center,
+          },
+        }),
+      )
       commands.push(
         Text({
           text: viewer_controls,
-          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 140.0),
+          position: Vec2D(viewport_w / 2.0, viewport_h / 2.0 + 204.0),
           transform: @selene_math.Transform::identity(),
           style: {
             font: hint_style.font,

@@ -123,6 +123,8 @@ pub struct SeleneStartMenu {
   mut last_up_down : Bool
   mut last_down_down : Bool
   mut visible_mode : String?
+  mut last_viewport_w : Double
+  mut last_viewport_h : Double
 }
 
 ///|
@@ -150,6 +152,8 @@ pub fn SeleneStartMenu::new(
     last_up_down: false,
     last_down_down: false,
     visible_mode: None,
+    last_viewport_w: 1280.0,
+    last_viewport_h: 720.0,
   }
 }
 
@@ -237,6 +241,80 @@ fn SeleneStartMenu::take_down_edge(self : SeleneStartMenu) -> Bool {
 }
 
 ///|
+fn SeleneStartMenu::mouse_position(_self : SeleneStartMenu) -> (Double, Double) {
+  let pos = @selene_inputs.mouse.pos
+  (pos.0, pos.1)
+}
+
+///|
+fn SeleneStartMenu::take_mouse_left_edge(_self : SeleneStartMenu) -> Bool {
+  @selene_inputs.just_pressed_mouse.left_button
+}
+
+///|
+fn SeleneStartMenu::take_mouse_right_edge(_self : SeleneStartMenu) -> Bool {
+  @selene_inputs.just_pressed_mouse.right_button
+}
+
+///|
+fn SeleneStartMenu::viewport_size(self : SeleneStartMenu) -> (Double, Double) {
+  let w = if self.last_viewport_w > 0.0 { self.last_viewport_w } else { 1280.0 }
+  let h = if self.last_viewport_h > 0.0 { self.last_viewport_h } else { 720.0 }
+  (w, h)
+}
+
+///|
+fn start_point_in_box(
+  x : Double,
+  y : Double,
+  left : Double,
+  top : Double,
+  width : Double,
+  height : Double,
+) -> Bool {
+  x >= left && x <= left + width && y >= top && y <= top + height
+}
+
+///|
+fn SeleneStartMenu::hover_start_row(self : SeleneStartMenu) -> Unit {
+  let rows = self.menu_rows()
+  if rows.is_empty() {
+    return
+  }
+  let (mx, my) = self.mouse_position()
+  let (viewport_w, viewport_h) = self.viewport_size()
+  let row_left = viewport_w / 2.0 - 180.0
+  let row_width = 360.0
+  let mut y = viewport_h / 2.0 - 160.0
+  for i in 0..<rows.length() {
+    if start_point_in_box(mx, my, row_left, y - 18.0, row_width, 36.0) {
+      self.start_selected_index = i
+      return
+    }
+    y += 50.0
+  }
+}
+
+///|
+fn SeleneStartMenu::hover_locale_option(self : SeleneStartMenu) -> Unit {
+  if self.locale_options.is_empty() {
+    return
+  }
+  let (mx, my) = self.mouse_position()
+  let (viewport_w, viewport_h) = self.viewport_size()
+  let left = viewport_w / 2.0 - 160.0
+  let width = 320.0
+  let mut y = viewport_h / 2.0 - 70.0
+  for i in 0..<self.locale_options.length() {
+    if start_point_in_box(mx, my, left, y - 16.0, width, 34.0) {
+      self.locale_selected_index = i
+      return
+    }
+    y += 40.0
+  }
+}
+
+///|
 pub fn SeleneStartMenu::push_action(
   self : SeleneStartMenu,
   action : @ui_menu.StartMenuAction,
@@ -288,7 +366,12 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_gate(self) {
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_gate_action(self) {
   let result : @ui_menu.StartGateAction = match self.pending_gate_action {
-    NoAction => if self.take_confirm_edge() { Start } else { NoAction }
+    NoAction =>
+      if self.take_confirm_edge() || self.take_mouse_left_edge() {
+        Start
+      } else {
+        NoAction
+      }
     other => other
   }
   self.pending_gate_action = NoAction
@@ -311,7 +394,12 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with clear_logo(self) {
 ///|
 pub impl @ui_menu.StartMenu for SeleneStartMenu with take_logo_action(self) {
   let result : @ui_menu.StartLogoAction = match self.pending_logo_action {
-    NoAction => if self.take_confirm_edge() { Done } else { NoAction }
+    NoAction =>
+      if self.take_confirm_edge() || self.take_mouse_left_edge() {
+        Done
+      } else {
+        NoAction
+      }
     other => other
   }
   self.pending_logo_action = NoAction
@@ -350,9 +438,14 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_locale_action(self) {
     self.select_next_locale()
   }
 
+  self.hover_locale_option()
+  let mouse_confirm = self.take_mouse_left_edge()
+  let mouse_back = self.take_mouse_right_edge()
+
   let result : @ui_menu.StartLocaleAction = match self.pending_locale_action {
     NoAction =>
-      if enter_edge && !self.locale_options.is_empty() {
+      if (enter_edge || mouse_confirm || mouse_back) &&
+        !self.locale_options.is_empty() {
         Select(self.locale_options[self.locale_selected_index].1)
       } else {
         NoAction
@@ -380,6 +473,7 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
     let rows = self.menu_rows()
     let count = rows.length()
     if count > 0 {
+      self.hover_start_row()
       self.normalize_start_selection()
       if self.take_up_edge() {
         self.start_selected_index = (self.start_selected_index - 1 + count) %
@@ -394,7 +488,7 @@ pub impl @ui_menu.StartMenu for SeleneStartMenu with take_action(self) {
     NoAction => {
       let rows = self.menu_rows()
       if self.visible_mode == Some("start") &&
-        self.take_confirm_edge() &&
+        (self.take_confirm_edge() || self.take_mouse_left_edge()) &&
         !rows.is_empty() {
         self.normalize_start_selection()
         rows[self.start_selected_index].1
@@ -446,6 +540,8 @@ pub fn SeleneStartMenu::render_commands(
   viewport_w? : Double = 1280.0,
   viewport_h? : Double = 720.0,
 ) -> Array[@selene_render2d_types.DrawCommand2D] {
+  self.last_viewport_w = viewport_w
+  self.last_viewport_h = viewport_h
   match self.visible_mode {
     None => []
     Some("gate") => {
