@@ -8,18 +8,35 @@ using @core {label, option, script, anim_opacity, type AnimationGroup}
 using @state {type GameState}
 
 ///|
-extern "js" fn read_sfx_gain() -> Double =
-  #| () => globalThis.__reisenSfxGain ?? -1
+struct TestAudio {
+  mut bgm_gain : Double
+  mut sfx_gain : Double
+}
 
 ///|
-extern "js" fn set_dummy_bgm() -> Unit =
-  #| () => {
-  #|   globalThis.__reisenBgm = { volume: 0 };
-  #| }
+fn TestAudio::new() -> TestAudio {
+  { bgm_gain: -1.0, sfx_gain: -1.0 }
+}
 
 ///|
-extern "js" fn read_bgm_volume() -> Double =
-  #| () => (globalThis.__reisenBgm?.volume ?? -1)
+impl @audio.AudioPort for TestAudio with set_bgm_gain(self, gain) {
+  self.bgm_gain = gain
+}
+
+///|
+impl @audio.AudioPort for TestAudio with set_sfx_gain(self, gain) {
+  self.sfx_gain = gain
+}
+
+///|
+impl @audio.AudioPort for TestAudio with has_active_sfx(_) {
+  false
+}
+
+///|
+impl @audio.AudioPort for TestAudio with handle_command(_, _) {
+
+}
 
 ///|
 async test "runner drives script and choice flow" {
@@ -74,13 +91,19 @@ async test "runner drives script and choice flow" {
 test "runner apply settings updates text speed and audio gains" {
   let runtime = Runtime::new(script(_ => ()), GameState::new(0))
   let ui = UiDom::new("app")
-  let runner = GameRunner::new(Director::new(runtime), ui)
+  let audio = TestAudio::new()
+  let runner = GameRunner::new_with_ports(
+    Director::new(runtime),
+    UiPort::from_dom(ui),
+    audio,
+    noop_core_render_sync,
+    _ => (),
+  )
 
-  set_dummy_bgm()
   runner.apply_settings(try! GameSettings::new(25, 0.42, 0.33))
 
-  let bgm = read_bgm_volume()
-  let sfx = read_sfx_gain()
+  let bgm = audio.bgm_gain
+  let sfx = audio.sfx_gain
   if bgm < 0.4199 || bgm > 0.4201 {
     fail("Expected bgm volume ~0.42")
   }

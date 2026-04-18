@@ -22,6 +22,142 @@ fn dummy_sfx(id : String) -> @assets.Sfx {
 }
 
 ///|
+struct DummyUiBackend {}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with localize_vocal_url(_, raw) {
+  raw
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with render(_, view) {
+  ignore(view)
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with view_model_from_snapshot(
+  _,
+  snapshot,
+) {
+  ignore(snapshot)
+  {
+    speaker: @state.DialogText::empty(),
+    text: @state.DialogText::empty(),
+    dialog_seq: 0,
+    typewriter: false,
+    intro_text: None,
+    video: None,
+    append: false,
+    text_box_visible: true,
+    avatar_id: None,
+    choices: [],
+    text_input: None,
+    dialog_history: [],
+    dom_figures: [],
+    auto_mode: false,
+    skip_mode: false,
+    log_visible: false,
+    dirty_speaker: false,
+    dirty_text: false,
+    dirty_choices: false,
+    dirty_text_input: false,
+    dirty_action_buttons: false,
+  }
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with take_selected_choice(_) {
+  None
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with take_submitted_text_input(_) {
+  None
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with take_action(_) {
+  None
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with take_video_action(_) {
+  None
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with check_typewriter_click(_) {
+  false
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with check_intro_done(_) {
+  false
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with reveal_intro_line(_) {
+  false
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with clear_game_ui(_) {
+
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with set_ui_strings(_, ui_strings) {
+  ignore(ui_strings)
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with set_script_localization(
+  _,
+  script_locale_json~,
+  script_default_locale_json~,
+  vocal_locale_dir~,
+  script_locale~,
+  script_default_locale~,
+) {
+  ignore(script_locale_json)
+  ignore(script_default_locale_json)
+  ignore(vocal_locale_dir)
+  ignore(script_locale)
+  ignore(script_default_locale)
+}
+
+///|
+impl @ui_game.UiBackend for DummyUiBackend with simulate_click(_) {
+
+}
+
+///|
+impl @ui_game.UiPlatformHooks for DummyUiBackend with advance_ui_animation_timer(
+  _,
+  elapsed_ms,
+) {
+  ignore(elapsed_ms)
+}
+
+///|
+impl @ui_game.UiPlatformHooks for DummyUiBackend with has_active_ui_animations(
+  _,
+) {
+  false
+}
+
+///|
+impl @ui_game.UiPlatformHooks for DummyUiBackend with set_media_volume(
+  _,
+  volume,
+) {
+  ignore(volume)
+}
+
+///|
+let dummy_ui_backend : DummyUiBackend = DummyUiBackend::{  }
+
+///|
 struct DummyUiPortFactory {}
 
 ///|
@@ -40,7 +176,7 @@ impl @ui_game.UiPortFactory for DummyUiPortFactory with create_port(
   ignore(vocal_locale_dir)
   ignore(script_locale)
   ignore(script_default_locale)
-  @js.Value::cast_from(()).cast()
+  @ui_game.UiPort::from_backend(dummy_ui_backend, dummy_ui_backend)
 }
 
 ///|

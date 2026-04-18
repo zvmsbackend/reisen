@@ -2,7 +2,6 @@
 package "sennenki/reisen/ui_menu_selene"
 
 import {
-  "Milky2018/selene/asset_types",
   "Milky2018/selene/render2d_types",
   "sennenki/reisen/audio_core",
   "sennenki/reisen/storage",
@@ -32,11 +31,7 @@ pub fn SeleneCreditsMenu::render_commands(Self, viewport_w? : Double, viewport_h
 pub fn SeleneCreditsMenu::set_background(Self, String) -> Unit
 pub impl @ui_menu.CreditsMenu for SeleneCreditsMenu
 
-pub struct SeleneCreditsMenuTextTheme {
-  title : SeleneMenuTextStyle
-  body : SeleneMenuTextStyle
-  hint : SeleneMenuTextStyle
-}
+type SeleneCreditsMenuTextTheme
 pub impl Default for SeleneCreditsMenuTextTheme
 
 pub struct SeleneGalleryMenu {
@@ -69,11 +64,7 @@ pub fn SeleneGalleryMenu::render_commands(Self, viewport_w? : Double, viewport_h
 pub fn SeleneGalleryMenu::set_background(Self, String) -> Unit
 pub impl @ui_menu.GalleryMenu for SeleneGalleryMenu
 
-pub struct SeleneGalleryMenuTextTheme {
-  title : SeleneMenuTextStyle
-  body : SeleneMenuTextStyle
-  hint : SeleneMenuTextStyle
-}
+type SeleneGalleryMenuTextTheme
 pub impl Default for SeleneGalleryMenuTextTheme
 
 pub struct SeleneLoadingMenu {
@@ -85,10 +76,7 @@ pub fn SeleneLoadingMenu::new(text_theme? : SeleneLoadingMenuTextTheme) -> Self
 pub fn SeleneLoadingMenu::render_commands(Self, viewport_w? : Double, viewport_h? : Double) -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.LoadingMenu for SeleneLoadingMenu
 
-pub struct SeleneLoadingMenuTextTheme {
-  title : SeleneMenuTextStyle
-  body : SeleneMenuTextStyle
-}
+type SeleneLoadingMenuTextTheme
 pub impl Default for SeleneLoadingMenuTextTheme
 
 pub struct SeleneMenuFactory {
@@ -112,15 +100,7 @@ pub fn SeleneMenuFactory::ui_overlay_commands(Self, viewport_w? : Double, viewpo
 pub fn SeleneMenuFactory::ui_overlay_provider(Self, viewport_w? : Double, viewport_h? : Double) -> () -> Array[@render2d_types.DrawCommand2D]
 pub impl @ui_menu.MenuFactory for SeleneMenuFactory
 
-pub struct SeleneMenuTextStyle {
-  font : @asset_types.FontHandle?
-  family : String
-  size : Double
-  color_r : UInt
-  color_g : UInt
-  color_b : UInt
-  color_a : Double
-}
+type SeleneMenuTextStyle
 pub impl Default for SeleneMenuTextStyle
 
 pub struct SeleneSettingsMenu {
@@ -166,12 +146,7 @@ pub fn SeleneSettingsMenu::set_save_namespace(Self, String) -> Unit
 pub fn SeleneSettingsMenu::set_show_credits(Self, Bool) -> Unit
 pub impl @ui_menu.SettingsMenu for SeleneSettingsMenu
 
-pub struct SeleneSettingsMenuTextTheme {
-  title : SeleneMenuTextStyle
-  row : SeleneMenuTextStyle
-  hint : SeleneMenuTextStyle
-  placeholder : SeleneMenuTextStyle
-}
+type SeleneSettingsMenuTextTheme
 pub impl Default for SeleneSettingsMenuTextTheme
 
 pub struct SeleneStartMenu {
@@ -211,15 +186,7 @@ pub fn SeleneStartMenu::set_save_store(Self, &@storage.SaveSlotStore) -> Unit
 pub fn SeleneStartMenu::set_show_credits(Self, Bool) -> Unit
 pub impl @ui_menu.StartMenu for SeleneStartMenu
 
-pub struct SeleneStartMenuTextTheme {
-  gate_title : SeleneMenuTextStyle
-  locale_title : SeleneMenuTextStyle
-  locale_empty : SeleneMenuTextStyle
-  locale_option_selected : SeleneMenuTextStyle
-  locale_option_normal : SeleneMenuTextStyle
-  locale_hint : SeleneMenuTextStyle
-  start_item : SeleneMenuTextStyle
-}
+type SeleneStartMenuTextTheme
 pub impl Default for SeleneStartMenuTextTheme
 
 // Type aliases

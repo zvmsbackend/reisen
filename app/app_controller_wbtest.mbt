@@ -14,8 +14,35 @@ using @storage {persistent_delete_in, settings_write_in}
 using @core {label, type RuntimeEvent}
 
 ///|
-extern "js" fn read_bgm_gain() -> Double =
-  #| () => globalThis.__reisenBgmGain ?? -1
+struct TestAudio {
+  mut bgm_gain : Double
+}
+
+///|
+fn TestAudio::new() -> TestAudio {
+  { bgm_gain: -1.0 }
+}
+
+///|
+impl @audio.AudioPort for TestAudio with set_bgm_gain(self, gain) {
+  self.bgm_gain = gain
+}
+
+///|
+impl @audio.AudioPort for TestAudio with set_sfx_gain(self, gain) {
+  ignore(self)
+  ignore(gain)
+}
+
+///|
+impl @audio.AudioPort for TestAudio with has_active_sfx(_) {
+  false
+}
+
+///|
+impl @audio.AudioPort for TestAudio with handle_command(_, _) {
+
+}
 
 ///|
 let dummy_assets : WebAssetStore = WebAssetStore::new()
@@ -262,6 +289,7 @@ let dummy_menu_factory : &MenuFactory = DummyMenuFactory::{  }
 ///|
 test "app controller applies stored bgm gain on startup" {
   settings_write_in("app_test_bgm_init", try! GameSettings::new(50, 0.37, 0.91))
+  let audio = TestAudio::new()
   ignore(
     AppController::new(
       () => script(builder => builder.say("n", "hello")),
@@ -269,10 +297,11 @@ test "app controller applies stored bgm gain on startup" {
       dummy_ui_port_factory,
       dummy_assets,
       dummy_menu_factory,
+      audio~,
       save_namespace="app_test_bgm_init",
     ),
   )
-  assert_eq(read_bgm_gain(), 0.37)
+  assert_eq(audio.bgm_gain, 0.37)
 }
 
 ///|

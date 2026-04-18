@@ -953,14 +953,7 @@ fn[T : ToJson] AppController::handle_in_game_pending_action(
   action : String,
 ) -> Unit {
   match action {
-    "settings" => {
-      self.set_saved_resume_state(runner)
-      runner.clear_ui()
-      self.settings_menu.set_context(FromMidgame)
-      self.settings_menu.set_view_mode(Settings)
-      self.settings_menu.render()
-      self.phase = Settings
-    }
+    "settings" => self.enter_settings_from_runner(runner, Settings)
     "qsave" =>
       save_runner_to_slot_with_meta(
         runner,
@@ -969,17 +962,24 @@ fn[T : ToJson] AppController::handle_in_game_pending_action(
         save_namespace=self.save_ns,
         save_store=self.save_store,
       )
-    "save" => {
-      self.set_saved_resume_state(runner)
-      runner.clear_ui()
-      self.settings_menu.set_context(FromMidgame)
-      self.settings_menu.set_view_mode(SaveList)
-      self.settings_menu.render()
-      self.phase = Settings
-    }
+    "save" => self.enter_settings_from_runner(runner, SaveList)
     "log" => runner.toggle_log_visible()
     _ => ()
   }
+}
+
+///|
+fn[T : ToJson] AppController::enter_settings_from_runner(
+  self : AppController[T],
+  runner : GameRunner[T],
+  view_mode : @ui_menu.SettingsViewMode,
+) -> Unit {
+  self.set_saved_resume_state(runner)
+  runner.clear_ui()
+  self.settings_menu.set_context(FromMidgame)
+  self.settings_menu.set_view_mode(view_mode)
+  self.settings_menu.render()
+  self.phase = Settings
 }
 
 ///|
