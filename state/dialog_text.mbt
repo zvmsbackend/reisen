@@ -13,103 +13,198 @@ pub fn DialogText::empty() -> DialogText {
 }
 
 ///|
-pub fn DialogText::new(text : String) -> DialogText {
-  let parts : Array[DialogText] = []
-  let buf = StringBuilder::new()
-  let chars = text.to_array()
-  let len = chars.length()
-  let mut i = 0
+// pub fn DialogText::new(text : String) -> DialogText {
+//   let parts : Array[DialogText] = []
+//   let buf = StringBuilder::new()
+//   let chars = text.to_array()
+//   let len = chars.length()
+//   let mut i = 0
 
-  fn flush_buf() {
-    let s = buf.to_string()
-    if !s.is_empty() {
-      parts.push(String(s))
-      buf.reset()
+//   fn flush_buf() {
+//     let s = buf.to_string()
+//     if !s.is_empty() {
+//       parts.push(String(s))
+//       buf.reset()
+//     }
+//   }
+
+//   fn read_until(start : Int, stop : Char) -> (String, Int)? {
+//     let inner = StringBuilder::new()
+//     let mut j = start
+//     while j < len && chars[j] != stop {
+//       inner.write_char(chars[j])
+//       j += 1
+//     }
+//     if j < len {
+//       Some((inner.to_string(), j))
+//     } else {
+//       None
+//     }
+//   }
+
+//   while i < len {
+//     let c = chars[i]
+//     match c {
+//       '[' =>
+//         // Try to parse [base](ruby) or [base]{style}
+//         match read_until(i + 1, ']') {
+//           None => {
+//             buf.write_char('[')
+//             i += 1
+//           }
+//           Some((base_text, close_bracket)) => {
+//             let after = close_bracket + 1
+//             if after < len && chars[after] == '(' {
+//               match read_until(after + 1, ')') {
+//                 Some((ruby_text, close_paren)) => {
+//                   flush_buf()
+//                   parts.push(Ruby(base_text, ruby=ruby_text))
+//                   i = close_paren + 1
+//                 }
+//                 None => {
+//                   buf.write_char('[')
+//                   i += 1
+//                 }
+//               }
+//             } else if after < len && chars[after] == '{' {
+//               match read_until(after + 1, '}') {
+//                 Some((style_text, close_brace)) => {
+//                   flush_buf()
+//                   parts.push(
+//                     Enhanced(DialogText::new(base_text), style=style_text),
+//                   )
+//                   i = close_brace + 1
+//                 }
+//                 None => {
+//                   buf.write_char('[')
+//                   i += 1
+//                 }
+//               }
+//             } else {
+//               buf.write_char('[')
+//               i += 1
+//             }
+//           }
+//         }
+//       '{' =>
+//         // Try to parse {varname} interpolation
+//         match read_until(i + 1, '}') {
+//           Some((var_name, close_brace)) => {
+//             flush_buf()
+//             parts.push(Interpolation(var_name))
+//             i = close_brace + 1
+//           }
+//           None => {
+//             buf.write_char(c)
+//             i += 1
+//           }
+//         }
+//       _ => {
+//         buf.write_char(c)
+//         i += 1
+//       }
+//     }
+//   }
+//   flush_buf()
+//   match parts.length() {
+//     0 => String("")
+//     1 => parts[0]
+//     _ => Concat(parts)
+//   }
+// }
+
+///|
+pub fn DialogText::new(text : StringView) -> DialogText {
+  let mut text = text
+  letrec parse_until_close_bracket = fn() {
+    let acc = []
+    for ;; {
+      match text {
+        [] => break
+        [']', .. remaining] => {
+          text = remaining
+          break
+        }
+        _ => acc.push(parse())
+      }
+    }
+    match acc {
+      [single] => single
+      multiple => Concat(multiple)
     }
   }
-
-  fn read_until(start : Int, stop : Char) -> (String, Int)? {
-    let inner = StringBuilder::new()
-    let mut j = start
-    while j < len && chars[j] != stop {
-      inner.write_char(chars[j])
-      j += 1
-    }
-    if j < len {
-      Some((inner.to_string(), j))
-    } else {
-      None
-    }
-  }
-
-  while i < len {
-    let c = chars[i]
-    match c {
-      '[' =>
-        // Try to parse [base](ruby) or [base]{style}
-        match read_until(i + 1, ']') {
-          None => {
-            buf.write_char('[')
-            i += 1
+  and parse = fn() {
+    for ;; {
+      match text {
+        ['[', .. remaining] => {
+          text = remaining
+          let inner = parse_until_close_bracket()
+          match text {
+            ['(', .. remaining] =>
+              match remaining.split_once(")") {
+                Some((ruby, remaining)) => {
+                  text = remaining
+                  break Ruby(inner.raw_text(), ruby=ruby.to_string())
+                }
+                None => {
+                  let text_ = text.to_string()
+                  text = ""
+                  break Concat([inner, String(text_)])
+                }
+              }
+            ['{', .. remaining] =>
+              match remaining.split_once("}") {
+                Some((style, remaining)) => {
+                  text = remaining
+                  break Enhanced(inner, style=style.to_string())
+                }
+                None => {
+                  let text_ = text.to_string()
+                  text = ""
+                  break Concat([inner, String(text_)])
+                }
+              }
+            _ => break Concat([String("["), inner, String("]")])
           }
-          Some((base_text, close_bracket)) => {
-            let after = close_bracket + 1
-            if after < len && chars[after] == '(' {
-              match read_until(after + 1, ')') {
-                Some((ruby_text, close_paren)) => {
-                  flush_buf()
-                  parts.push(Ruby(base_text, ruby=ruby_text))
-                  i = close_paren + 1
-                }
-                None => {
-                  buf.write_char('[')
-                  i += 1
-                }
+        }
+        ['{', .. remaining] =>
+          match remaining.split_once("}") {
+            Some((var_name, remaining)) => {
+              text = remaining
+              break Interpolation(var_name.to_string())
+            }
+            None => {
+              let text_ = text.to_string()
+              text = ""
+              break Concat([String("{"), String(text_)])
+            }
+          }
+        [c, .. remaining] => {
+          let buf = StringBuilder::new()
+          buf.write_char(c)
+          text = remaining
+          break for ;; {
+            match text {
+              ['[' | ']', ..] => break String(buf.to_string())
+              [c, .. remaining] => {
+                text = remaining
+                buf.write_char(c)
               }
-            } else if after < len && chars[after] == '{' {
-              match read_until(after + 1, '}') {
-                Some((style_text, close_brace)) => {
-                  flush_buf()
-                  parts.push(
-                    Enhanced(DialogText::new(base_text), style=style_text),
-                  )
-                  i = close_brace + 1
-                }
-                None => {
-                  buf.write_char('[')
-                  i += 1
-                }
-              }
-            } else {
-              buf.write_char('[')
-              i += 1
+              [] => break String(buf.to_string())
             }
           }
         }
-      '{' =>
-        // Try to parse {varname} interpolation
-        match read_until(i + 1, '}') {
-          Some((var_name, close_brace)) => {
-            flush_buf()
-            parts.push(Interpolation(var_name))
-            i = close_brace + 1
-          }
-          None => {
-            buf.write_char(c)
-            i += 1
-          }
-        }
-      _ => {
-        buf.write_char(c)
-        i += 1
+        [] => break String("")
       }
     }
   }
-  flush_buf()
-  match parts.length() {
-    0 => String("")
-    1 => parts[0]
-    _ => Concat(parts)
+  let acc = []
+  while !text.is_empty() {
+    acc.push(parse())
+  }
+  match acc {
+    [single] => single
+    multiple => Concat(multiple)
   }
 }
 

@@ -37,9 +37,17 @@ pub fn ui_view_model_from_snapshot(
       color_b: placement.scalars.color_b,
     })
   }
-  let (speaker, text) = match snapshot.dialog {
+  let (raw_speaker, raw_text) = match snapshot.dialog {
     Some((speaker, text, _, _)) => (speaker, text)
     None => (DialogText::empty(), DialogText::empty())
+  }
+  let speaker = match raw_speaker {
+    String("") => DialogText::empty()
+    _ => ui.localize_script_text(raw_speaker)
+  }
+  let text = match raw_text {
+    String("") => DialogText::empty()
+    _ => ui.localize_script_text(raw_text)
   }
   let typewriter = match snapshot.dialog {
     Some((_, _, typewriter, _)) => typewriter
@@ -49,7 +57,7 @@ pub fn ui_view_model_from_snapshot(
     Some((_, _, _, append)) => append
     None => false
   }
-  let intro_text = snapshot.intro_text
+  let intro_text = snapshot.intro_text.map(text => ui.localize_script_text(text))
   let video = match snapshot.video {
     Some((url, can_skip)) => Some(UiVideoView::{ url, can_skip })
     None => None
@@ -58,12 +66,17 @@ pub fn ui_view_model_from_snapshot(
   let avatar_id = snapshot.avatar_id
   let choices = snapshot.choices.map(opt => UiChoiceView::{
     id: opt.id,
-    text: opt.text,
+    text: ui.localize_script_text(opt.text),
   })
   let text_input = snapshot.text_input.map(entry => UiTextInputView::{
     var_name: entry.0,
-    prompt: entry.1,
+    prompt: ui.localize_script_text(entry.1),
   })
+  let localized_dialog_history : Array[DialogLogEntry] = snapshot.dialog_history.map(entry => {
+      speaker: ui.localize_script_text_string(entry.speaker),
+      text: ui.localize_script_text_string(entry.text),
+    },
+  )
   {
     speaker,
     text,
@@ -76,7 +89,7 @@ pub fn ui_view_model_from_snapshot(
     avatar_id,
     choices,
     text_input,
-    dialog_history: snapshot.dialog_history,
+    dialog_history: localized_dialog_history,
     dom_figures,
     auto_mode: ui.auto_mode,
     skip_mode: ui.is_skip_active(),

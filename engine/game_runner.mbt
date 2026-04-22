@@ -435,8 +435,13 @@ fn[T] GameRunner::apply_event_and_render(
 ) -> Unit noraise {
   self.apply_event_effects(event, mark_ui_for_text)
   match mode {
-    RenderMode::RenderUi => self.render_ui()
-    RenderMode::MaybeRenderUi => self.maybe_render_ui()
+    RenderUi => {
+      self.render_ui()
+      if self.render_sync_dirty {
+        self.sync_canvas()
+      }
+    }
+    MaybeRenderUi => self.maybe_render_ui()
   }
 }
 

@@ -83,8 +83,8 @@ fn escape_html(s : String) -> String {
       '&' => result.write_string("&amp;")
       '<' => result.write_string("&lt;")
       '>' => result.write_string("&gt;")
-      '"' => result.write_string("&gt;")
-      '\'' => result.write_string("&quot;")
+      '"' => result.write_string("&quot;")
+      '\'' => result.write_string("&apos;")
       _ => result.write_char(c)
     }
   }

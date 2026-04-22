@@ -568,6 +568,51 @@ async test "skip mode ignores waits" {
 }
 
 ///|
+async test "skip mode flushes canvas sync on render state changes" {
+  let script : Script[Int] = script(builder => {
+    builder
+    ..say("n", "first")
+    ..scene({ id: "bg_skip", url: "" })
+    .say("n", "after")
+  })
+  let sync_calls : Array[Int] = []
+  let hook : RenderSyncHook = (_, _) => sync_calls.push(1)
+  let runner = GameRunner::new(
+    Director::new(Runtime::new(script, GameState::new(0))),
+    UiDom::new("app"),
+    render_sync=hook,
+  )
+
+  assert_true(
+    runner.step()
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("first"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+  runner.toggle_skip_mode()
+
+  assert_true(
+    runner.step(elapsed_ms=200)
+    is Said(
+      speaker=DialogText::String("n"),
+      text=DialogText::String("first"),
+      typewriter=true,
+      append=false,
+      voice=None
+    ),
+  )
+
+  let before = sync_calls.length()
+  assert_eq(runner.step(elapsed_ms=60), BackgroundShown("bg_skip"))
+  let after = sync_calls.length()
+  assert_true(after > before)
+}
+
+///|
 async test "intro advances when display completes" {
   let script : Script[Int] = script(builder => {
     builder..intro("Prelude").say("n", "after")

@@ -76,6 +76,51 @@ test "ui view model includes dom figures and applies dom animation" {
 }
 
 ///|
+test "ui view model localizes dialog fields before typewriter stage" {
+  let route = label(name="route")
+  let locale_json = "{\"demo.line\":\"こんにちは\"}"
+  let default_json = "{\"demo.line\":\"Hello\"}"
+  let snapshot = {
+    ..UiSnapshot::default(),
+    dialog: Some(
+      (
+        DialogText::String("@demo.line"),
+        DialogText::String("@demo.line"),
+        true,
+        false,
+      ),
+    ),
+    dialog_seq: 1,
+    choices: [option("@demo.line", route)],
+    text_input: Some(("name", DialogText::String("@demo.line"))),
+    dialog_history: [{ speaker: "@demo.line", text: "@demo.line" }],
+  }
+  let ui = UiDom::new(
+    "ui-root",
+    script_locale_json=locale_json,
+    script_default_locale_json=default_json,
+    script_locale="ja",
+    script_default_locale="en",
+  )
+
+  let view = ui_view_model_from_snapshot(snapshot, ui)
+  assert_eq(view.speaker, DialogText::String("こんにちは"))
+  assert_eq(view.text, DialogText::String("こんにちは"))
+  assert_eq(view.choices.length(), 1)
+  assert_eq(view.choices[0].text, DialogText::String("こんにちは"))
+  assert_eq(
+    view.text_input,
+    Some(UiTextInputView::{
+      var_name: "name",
+      prompt: DialogText::String("こんにちは"),
+    }),
+  )
+  assert_eq(view.dialog_history, [
+    { speaker: "こんにちは", text: "こんにちは" },
+  ])
+}
+
+///|
 test "ui dom localizes script key with selected locale" {
   let locale_json = "{\"demo.line\":\"こんにちは\"}"
   let default_json = "{\"demo.line\":\"Hello\"}"
