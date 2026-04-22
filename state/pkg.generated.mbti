@@ -22,7 +22,7 @@ pub(all) enum DialogText {
 pub fn DialogText::empty() -> Self
 pub fn DialogText::is_empty(Self) -> Bool
 pub fn DialogText::length(Self) -> Int
-pub fn DialogText::new(String) -> Self
+pub fn DialogText::new(StringView) -> Self
 pub fn DialogText::raw_text(Self) -> String
 pub fn DialogText::render(Self) -> String
 pub fn DialogText::slice(Self, Int) -> Self
