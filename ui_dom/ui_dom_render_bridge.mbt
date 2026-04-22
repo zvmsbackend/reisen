@@ -17,7 +17,7 @@ extern "js" fn dom_render_speaker_text(
   #|     root.appendChild(nameEl);
   #|   }
   #|   nameEl.style.zIndex = '220';
-  #|   nameEl.textContent = speaker;
+  #|   nameEl.innerHTML = speaker;
   #|   if (!speaker || speaker.trim() === '') nameEl.style.display = 'none';
   #|
   #|   let dialog = root.querySelector('[data-reisen="dialog"]');
