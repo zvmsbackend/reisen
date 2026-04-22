@@ -18,16 +18,10 @@ pub fn script_locale_resolve_at(
   selected_locale_json : String?,
   default_locale_json : String?,
 ) -> (String, String?, Bool) {
-  if !raw.has_prefix("@") {
-    return (raw, None, true)
-  }
   let key = match raw {
-    "" => ""
-    _ => raw[1:].to_string()
-  }
-  match key {
-    "" => return (raw, None, true)
-    _ => ()
+    "@" => return (raw, None, true)
+    ['@', .. key] => key.to_string()
+    _ => return (raw, None, true)
   }
   fn fallback_default() {
     guard default_locale_json is Some(default_json) else {

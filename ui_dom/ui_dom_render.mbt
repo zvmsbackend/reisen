@@ -1,23 +1,5 @@
 ///|
 pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
-  let localized_speaker = self.localize_script_text(view.speaker)
-  let localized_text = self.localize_script_text(view.text)
-  let localized_intro_text = view.intro_text.map(text => {
-    self.localize_script_text(text)
-  })
-  let localized_choices = view.choices.map(choice => UiChoiceView::{
-    id: choice.id,
-    text: self.localize_script_text(choice.text),
-  })
-  let localized_text_input = view.text_input.map(input_view => UiTextInputView::{
-    var_name: input_view.var_name,
-    prompt: self.localize_script_text(input_view.prompt),
-  })
-  let localized_dialog_history : Array[DialogLogEntry] = view.dialog_history.map(entry => {
-      speaker: self.localize_script_text_string(entry.speaker),
-      text: self.localize_script_text_string(entry.text),
-    },
-  )
   let dom_figures_json = view.dom_figures.to_json().stringify()
   dom_render_dom_figures(self.root_id, dom_figures_json)
   if view.video is Some(video) {
@@ -27,7 +9,7 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   } else {
     dom_clear_video(self.root_id)
   }
-  if localized_intro_text is Some(text) {
+  if view.intro_text is Some(text) {
     dom_render_intro(self.root_id, text.render())
     dom_setup_typewriter_click(self.root_id)
     return
@@ -35,22 +17,21 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     dom_clear_intro(self.root_id)
   }
   if !view.typewriter {
-    self.typewriter_text = localized_text
+    self.typewriter_text = view.text
     self.typewriter_visible = self.typewriter_text.length()
     self.typewriter_last_update_ms = 0
-  } else if view.dialog_seq != self.last_dialog_seq &&
-    !localized_text.is_empty() {
+  } else if view.dialog_seq != self.last_dialog_seq && !view.text.is_empty() {
     if view.append && !self.is_skip_active() {
       let prev_len = self.typewriter_text.length()
-      self.typewriter_text = localized_text
+      self.typewriter_text = view.text
       if self.typewriter_visible < prev_len {
         self.typewriter_visible = prev_len
       }
       self.typewriter_last_update_ms = 0
     } else if !self.is_skip_active() {
-      self.start_typewriter(localized_text)
+      self.start_typewriter(view.text)
     } else {
-      self.typewriter_text = localized_text
+      self.typewriter_text = view.text
       self.typewriter_visible = self.typewriter_text.length()
       self.typewriter_last_update_ms = 0
     }
@@ -58,24 +39,20 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
   self.last_dialog_seq = view.dialog_seq
   dom_setup_typewriter_click(self.root_id)
   if view.dirty_speaker || view.dirty_text {
-    let visible_html = if localized_text.is_empty() {
+    let visible_html = if view.text.is_empty() {
       ""
     } else if self.is_typewriter_done() {
       self.typewriter_text.render()
     } else {
       self.typewriter_text.slice(self.typewriter_visible).render()
     }
-    dom_render_speaker_text(
-      self.root_id,
-      localized_speaker.render(),
-      visible_html,
-    )
+    dom_render_speaker_text(self.root_id, view.speaker.render(), visible_html)
   }
   dom_set_text_box_visible(self.root_id, view.text_box_visible)
   dom_set_avatar(self.root_id, view.avatar_id)
   if view.dirty_choices {
-    let ids = localized_choices.map(c => c.id)
-    let texts = localized_choices.map(c => c.text.render())
+    let ids = view.choices.map(c => c.id)
+    let texts = view.choices.map(c => c.text.render())
     dom_render_choices(self.root_id, ids, texts)
   }
   if view.dirty_action_buttons {
@@ -97,12 +74,12 @@ pub fn UiDom::render(self : UiDom, view : UiViewModel) -> Unit {
     )
   }
   if view.log_visible {
-    dom_render_log(self.root_id, localized_dialog_history.to_json().stringify())
+    dom_render_log(self.root_id, view.dialog_history.to_json().stringify())
   } else {
     dom_clear_log(self.root_id)
   }
   if view.dirty_text_input {
-    match localized_text_input {
+    match view.text_input {
       Some(input_view) =>
         dom_render_text_input(
           self.root_id,
