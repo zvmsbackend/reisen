@@ -66,6 +66,7 @@ struct AppController[T] {
   default_locale : String
   mut script_locale_json : String?
   mut script_default_locale_json : String?
+  mut script_locale_cache : Array[(String, String)]
   mut script_locale_dir : String
   vocal_locale_dir : String
   credits : String?
@@ -181,6 +182,7 @@ pub fn[T] AppController::new(
       "" => None
       _ => Some(script_default_locale_json)
     },
+    script_locale_cache: [],
     script_locale_dir,
     vocal_locale_dir,
     credits,
@@ -459,6 +461,17 @@ fn[T] AppController::sync_runner_localization(self : AppController[T]) -> Unit {
 }
 
 ///|
+fn script_locale_from_cache(
+  cache : Array[(String, String)],
+  locale : String,
+) -> String? {
+  if locale == "" {
+    return None
+  }
+  cache.iter().find_first(entry => entry.0 == locale).map(entry => entry.1)
+}
+
+///|
 fn[T] AppController::refresh_ui_strings(self : AppController[T]) -> Unit {
   let effective_locale = match self.locale {
     "" => self.default_locale
@@ -501,6 +514,25 @@ pub fn[T] AppController::set_localization_payload(
   self.ui_locales_json = next_ui_locales_json
   self.script_locale_json = next_script_locale_json
   self.script_default_locale_json = next_script_default_locale_json
+  if self.script_locale_cache.is_empty() {
+    let cache_entries : Array[(String, String)] = []
+    let effective_locale = match self.locale {
+      "" => self.default_locale
+      _ => self.locale
+    }
+    if effective_locale != "" {
+      if next_script_locale_json is Some(selected_json) {
+        cache_entries.push((effective_locale, selected_json))
+      }
+    }
+    if self.default_locale != "" {
+      if next_script_default_locale_json is Some(default_json) &&
+        !cache_entries.any(entry => entry.0 == self.default_locale) {
+        cache_entries.push((self.default_locale, default_json))
+      }
+    }
+    self.script_locale_cache = cache_entries
+  }
   self.refresh_ui_strings()
 }
 
@@ -510,6 +542,20 @@ pub fn[T] AppController::set_script_locale_dir(
   script_locale_dir : String,
 ) -> Unit {
   self.script_locale_dir = script_locale_dir
+}
+
+///|
+pub fn[T] AppController::set_script_locale_cache(
+  self : AppController[T],
+  locale_payloads : Array[(String, String)],
+) -> Unit {
+  self.script_locale_cache = locale_payloads
+  let effective_locale = match self.locale {
+    "" => self.default_locale
+    _ => self.locale
+  }
+  self.reload_script_localization_for_locale(effective_locale)
+  self.sync_runner_localization()
 }
 
 ///|
@@ -543,10 +589,19 @@ fn[T] AppController::reload_script_localization_for_locale(
 ///|
 #cfg(target="js")
 fn[T] AppController::reload_script_localization_for_locale(
-  _self : AppController[T],
-  _locale : String,
+  self : AppController[T],
+  locale : String,
 ) -> Unit {
-
+  let default_json = script_locale_from_cache(
+    self.script_locale_cache,
+    self.default_locale,
+  )
+  let selected_json = script_locale_from_cache(self.script_locale_cache, locale)
+  self.script_locale_json = match selected_json {
+    Some(_) => selected_json
+    None => default_json
+  }
+  self.script_default_locale_json = default_json
 }
 
 ///|
