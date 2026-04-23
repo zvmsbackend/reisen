@@ -723,6 +723,33 @@ test "app controller skips locale select when language already chosen" {
 }
 
 ///|
+test "app controller switches script localization from cache on web locale change" {
+  persistent_delete_in("app_test_script_locale_cache", "locale")
+  let script : Script[Int] = script(builder => builder.say("n", "hello"))
+  let app = AppController::new(
+    () => script,
+    () => GameState::new(0),
+    dummy_ui_port_factory,
+    dummy_assets,
+    dummy_menu_factory,
+    save_namespace="app_test_script_locale_cache",
+    languages=[("English", "en"), ("Japanese", "ja")],
+    script_locale_json="{\"demo.line\":\"Hello\"}",
+    script_default_locale_json="{\"demo.line\":\"Hello\"}",
+  )
+
+  app.set_script_locale_cache([
+    ("en", "{\"demo.line\":\"Hello\"}"),
+    ("ja", "{\"demo.line\":\"こんにちは\"}"),
+  ])
+
+  app.apply_locale("ja")
+
+  assert_eq(app.script_locale_json, Some("{\"demo.line\":\"こんにちは\"}"))
+  assert_eq(app.script_default_locale_json, Some("{\"demo.line\":\"Hello\"}"))
+}
+
+///|
 async test "app controller emits ui click sfx on menu action" {
   let assets = WebAssetStore::new()
   let click_sfx_url = "assets/ui_click.ogg"

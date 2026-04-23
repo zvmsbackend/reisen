@@ -34,6 +34,48 @@ pub async fn[E : Error] run_browser_loop_port(
 }
 
 ///|
+async fn preload_script_locale_cache(
+  languages : Array[(String, String)],
+  script_locale_dir : String,
+  selected_locale : String,
+  selected_locale_json : String,
+  default_locale : String,
+  default_locale_json : String,
+) -> Array[(String, String)] {
+  let locale_payloads : Array[(String, String)] = []
+  if selected_locale != "" && selected_locale_json != "" {
+    locale_payloads.push((selected_locale, selected_locale_json))
+  }
+  if default_locale != "" &&
+    default_locale_json != "" &&
+    !locale_payloads.any(entry => entry.0 == default_locale) {
+    locale_payloads.push((default_locale, default_locale_json))
+  }
+  if script_locale_dir == "" {
+    return locale_payloads
+  }
+  for lang in languages {
+    let code = lang.1
+    if code == "" || locale_payloads.any(entry => entry.0 == code) {
+      continue
+    }
+    let path = "\{script_locale_dir}/\{code}.json"
+    let payload = load_text(path) catch {
+      error => {
+        log_app_warn(
+          "failed to preload script locale '\{path}': \{error.message()}",
+        )
+        ""
+      }
+    }
+    if payload != "" {
+      locale_payloads.push((code, payload))
+    }
+  }
+  locale_payloads
+}
+
+///|
 pub async fn[T : FromJson + ToJson] run_browser_app_loop(
   app : AppController[T],
   ui_locale_path? : String = "locales/ui.json",
@@ -70,6 +112,15 @@ pub async fn[T : FromJson + ToJson] run_browser_app_loop(
     script_locale_json=localization.script_locale_json,
     script_default_locale_json=localization.script_default_locale_json,
   )
+  let locale_payloads = preload_script_locale_cache(
+    app.languages,
+    script_locale_dir,
+    localization.locale,
+    localization.script_locale_json,
+    localization.default_locale,
+    localization.script_default_locale_json,
+  )
+  app.set_script_locale_cache(locale_payloads)
   run_loop_with_port(
     dt => {
       app.tick(elapsed_ms=dt) catch {
