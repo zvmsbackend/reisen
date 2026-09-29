@@ -187,7 +187,7 @@ extern "js" fn settings_dom_install_confirm_helper(
   #| }
 
 ///|
-extern "js" fn settings_dom_render(
+extern "js" fn settings_dom_render_ffi(
   root_id : String,
   text_speed : Int,
   bgm_volume : Double,
@@ -207,8 +207,8 @@ extern "js" fn settings_dom_render(
   back_label : String,
   confirm_start_menu_text : String,
   language_label : String,
-  language_names : Array[String],
-  language_codes : Array[String],
+  language_names : FixedArray[String],
+  language_codes : FixedArray[String],
   selected_locale : String,
 ) -> Unit =
   #| (root_id, text_speed, bgm_volume, sfx_volume, background, context, text_speed_label, bgm_volume_label, sfx_volume_label, save_label, load_label, log_label, start_menu_label, new_game_label, credits_label, defaults_label, back_label, confirm_start_menu_text, language_label, language_names, language_codes, selected_locale) => {
@@ -344,6 +344,33 @@ extern "js" fn settings_dom_render(
   #|   menu.appendChild(actions);
   #| }
 
+fn settings_dom_render(
+  root_id : String,
+  text_speed : Int,
+  bgm_volume : Double,
+  sfx_volume : Double,
+  background : String,
+  context : String,
+  text_speed_label : String,
+  bgm_volume_label : String,
+  sfx_volume_label : String,
+  save_label : String,
+  load_label : String,
+  log_label : String,
+  start_menu_label : String,
+  new_game_label : String,
+  credits_label : String,
+  defaults_label : String,
+  back_label : String,
+  confirm_start_menu_text : String,
+  language_label : String,
+  language_names : Array[String],
+  language_codes : Array[String],
+  selected_locale : String,
+) -> Unit {
+  settings_dom_render_ffi(root_id, text_speed, bgm_volume, sfx_volume, background, context, text_speed_label, bgm_volume_label, sfx_volume_label, save_label, load_label, log_label, start_menu_label, new_game_label, credits_label, defaults_label, back_label, confirm_start_menu_text, language_label, FixedArray::from_array(language_names), FixedArray::from_array(language_codes), selected_locale)
+}
+
 ///|
 extern "js" fn settings_action_kind(root_id : String) -> @js.Nullable[String] =
   #| (root_id) => {
@@ -405,11 +432,11 @@ extern "js" fn settings_action_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn settings_dom_render_slots(
+extern "js" fn settings_dom_render_slots_ffi(
   root_id : String,
-  slots : Array[String],
-  titles : Array[String],
-  previews : Array[String],
+  slots : FixedArray[String],
+  titles : FixedArray[String],
+  previews : FixedArray[String],
   mode : String,
   slot_type : String,
   current_page : Int,
@@ -570,6 +597,34 @@ extern "js" fn settings_dom_render_slots(
   #|   });
   #|   menu.appendChild(backBtn);
   #| }
+
+fn settings_dom_render_slots(
+  root_id : String,
+  slots : Array[String],
+  titles : Array[String],
+  previews : Array[String],
+  mode : String,
+  slot_type : String,
+  current_page : Int,
+  total_pages : Int,
+  max_pages : Int,
+  background : String,
+  save_game_title : String,
+  load_game_title : String,
+  tab_auto : String,
+  tab_quick : String,
+  tab_save : String,
+  slot_delete_label : String,
+  confirm_delete_slot_text : String,
+  confirm_overwrite_slot_text : String,
+  nav_prev_label : String,
+  nav_next_label : String,
+  page_prefix : String,
+  slot_empty_title : String,
+  back_label : String,
+) -> Unit {
+  settings_dom_render_slots_ffi(root_id, FixedArray::from_array(slots), FixedArray::from_array(titles), FixedArray::from_array(previews), mode, slot_type, current_page, total_pages, max_pages, background, save_game_title, load_game_title, tab_auto, tab_quick, tab_save, slot_delete_label, confirm_delete_slot_text, confirm_overwrite_slot_text, nav_prev_label, nav_next_label, page_prefix, slot_empty_title, back_label)
+}
 
 ///|
 extern "js" fn settings_dom_read(root_id : String) -> @js.Nullable[String] =

@@ -247,11 +247,18 @@ pub extern "js" fn PixiSprite::set_texture(
   #| (self, texture) => { self.texture = texture; }
 
 ///|
-pub extern "js" fn PixiSprite::set_filters(
+pub extern "js" fn PixiSprite::set_filters_ffi(
   self : PixiSprite,
-  filters : Array[@js.Value],
+  filters : FixedArray[@js.Value],
 ) -> Unit =
   #| (self, filters) => { self.filters = filters.length > 0 ? filters : null; }
+
+pub fn PixiSprite::set_filters(
+  self : PixiSprite,
+  filters : Array[@js.Value],
+) -> Unit {
+  PixiSprite::set_filters_ffi(self, FixedArray::from_array(filters))
+}
 
 ///|
 pub extern "js" fn PixiSprite::set_anchor(
@@ -403,11 +410,18 @@ pub extern "js" fn PixiLive2dModel::set_visible(
   #| (self, visible) => { self.visible = visible; }
 
 ///|
-pub extern "js" fn PixiLive2dModel::set_filters(
+pub extern "js" fn PixiLive2dModel::set_filters_ffi(
   self : PixiLive2dModel,
-  filters : Array[@js.Value],
+  filters : FixedArray[@js.Value],
 ) -> Unit =
   #| (self, filters) => { self.filters = filters.length > 0 ? filters : null; }
+
+pub fn PixiLive2dModel::set_filters(
+  self : PixiLive2dModel,
+  filters : Array[@js.Value],
+) -> Unit {
+  PixiLive2dModel::set_filters_ffi(self, FixedArray::from_array(filters))
+}
 
 ///|
 pub extern "js" fn PixiLive2dModel::set_interactive(
