@@ -65,8 +65,12 @@ extern "js" fn arraybuffer_to_u8array(buf : @js.Value) -> @js.Value =
   #| (buf) => new Uint8Array(buf)
 
 ///|
-extern "js" fn u8array_to_int_array(u8 : @js.Value) -> Array[Int] =
+extern "js" fn u8array_to_int_array_ffi(u8 : @js.Value) -> FixedArray[Int] =
   #| (u8) => Array.from(u8)
+
+fn u8array_to_int_array(u8 : @js.Value) -> Array[Int] {
+  Array::from_fixed_array(u8array_to_int_array_ffi(u8))
+}
 
 ///|
 fn int_array_to_bytes(xs : Array[Int]) -> Bytes {

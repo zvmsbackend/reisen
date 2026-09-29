@@ -231,10 +231,10 @@ extern "js" fn start_gate_dom_clear(root_id : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn start_locale_dom_render(
+extern "js" fn start_locale_dom_render_ffi(
   root_id : String,
-  names : Array[String],
-  codes : Array[String],
+  names : FixedArray[String],
+  codes : FixedArray[String],
   title : String,
 ) -> Unit =
   #| (root_id, names, codes, title) => {
@@ -265,6 +265,15 @@ extern "js" fn start_locale_dom_render(
   #|   }
   #|   host.appendChild(list);
   #| }
+
+fn start_locale_dom_render(
+  root_id : String,
+  names : Array[String],
+  codes : Array[String],
+  title : String,
+) -> Unit {
+  start_locale_dom_render_ffi(root_id, FixedArray::from_array(names), FixedArray::from_array(codes), title)
+}
 
 ///|
 extern "js" fn start_locale_action_code(

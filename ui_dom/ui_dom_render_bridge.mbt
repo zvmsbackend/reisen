@@ -183,10 +183,10 @@ extern "js" fn dom_clear_intro(root_id : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn dom_render_choices(
+extern "js" fn dom_render_choices_ffi(
   root_id : String,
-  choice_ids : Array[String],
-  choice_texts : Array[String],
+  choice_ids : FixedArray[String],
+  choice_texts : FixedArray[String],
 ) -> Unit =
   #| (root_id, choice_ids, choice_texts) => {
   #|   const doc = globalThis.document;
@@ -218,6 +218,14 @@ extern "js" fn dom_render_choices(
   #|     }
   #|   }
   #| }
+
+fn dom_render_choices(
+  root_id : String,
+  choice_ids : Array[String],
+  choice_texts : Array[String],
+) -> Unit {
+  dom_render_choices_ffi(root_id, FixedArray::from_array(choice_ids), FixedArray::from_array(choice_texts))
+}
 
 ///|
 extern "js" fn dom_render_video(

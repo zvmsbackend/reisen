@@ -50,7 +50,7 @@ extern "js" fn storage_remove_item(key : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn storage_list_slots(prefix : String) -> Array[String] =
+extern "js" fn storage_list_slots_ffi(prefix : String) -> FixedArray[String] =
   #| (prefix) => {
   #|   const out = new Set();
   #|   const suffix = (key) => key.slice(prefix.length);
@@ -69,3 +69,8 @@ extern "js" fn storage_list_slots(prefix : String) -> Array[String] =
   #|   }
   #|   return Array.from(out);
   #| }
+
+fn storage_list_slots(prefix : String) -> Array[String] {
+  Array::from_fixed_array(storage_list_slots_ffi(prefix))
+}
+

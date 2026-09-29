@@ -39,10 +39,10 @@ extern "js" fn idb_cache_delete_slot(db_name : String, key : String) -> Unit =
   #| }
 
 ///|
-extern "js" fn idb_cache_list_slots(
+extern "js" fn idb_cache_list_slots_ffi(
   db_name : String,
   prefix : String,
-) -> Array[String] =
+) -> FixedArray[String] =
   #| (db_name, prefix) => {
   #|   const out = [];
   #|   const cacheRoot = globalThis.__reisenIdbSlotCache;
@@ -56,6 +56,13 @@ extern "js" fn idb_cache_list_slots(
   #|   }
   #|   return out;
   #| }
+
+fn idb_cache_list_slots(
+  db_name : String,
+  prefix : String,
+) -> Array[String] {
+  Array::from_fixed_array(idb_cache_list_slots_ffi(db_name, prefix))
+}
 
 ///|
 extern "js" fn idb_cache_set_meta(
